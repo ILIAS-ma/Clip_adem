@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\EnsureAccountIsNotBanned;
+use App\Http\Middleware\EnsureProfileIsComplete;
+use App\Http\Middleware\RedirectStaffToPanel;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -16,6 +19,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // par sa signature, vérifiée dans PayPalWebhookController.
         $middleware->validateCsrfTokens(except: [
             'webhooks/paypal',
+        ]);
+
+        $middleware->alias([
+            'staff.redirect' => RedirectStaffToPanel::class,
+            'profile.completed' => EnsureProfileIsComplete::class,
+            'not.banned' => EnsureAccountIsNotBanned::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

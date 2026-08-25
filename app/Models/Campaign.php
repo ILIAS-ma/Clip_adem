@@ -6,6 +6,7 @@ use App\Enums\CampaignStatus;
 use App\Enums\Platform;
 use App\Exceptions\InvalidCampaignTransition;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -121,6 +122,34 @@ class Campaign extends Model
     public function isExhausted(): bool
     {
         return $this->spent_cents >= $this->budget_total_cents;
+    }
+
+    /**
+     * Visible dans l'espace clippeur.
+     *
+     * Une campagne épuisée reste consultable — grisée et non rejoignable — pour
+     * que les clippeurs qui y ont des clips puissent continuer d'en suivre les
+     * vues. Un brouillon ou une archive, non.
+     */
+    public function isVisibleToClippers(): bool
+    {
+        return in_array($this->status, [
+            CampaignStatus::Active,
+            CampaignStatus::Paused,
+            CampaignStatus::Exhausted,
+            CampaignStatus::Completed,
+        ], true);
+    }
+
+    /** @param  Builder<self>  $query */
+    public function scopeVisibleToClippers($query)
+    {
+        return $query->whereIn('status', [
+            CampaignStatus::Active,
+            CampaignStatus::Paused,
+            CampaignStatus::Exhausted,
+            CampaignStatus::Completed,
+        ]);
     }
 
     // ------------------------------------------------------------------

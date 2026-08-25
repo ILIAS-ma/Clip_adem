@@ -12,8 +12,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'user_id', 'platform', 'external_account_id', 'handle',
-    'access_token', 'refresh_token', 'token_expires_at',
+    'access_token', 'refresh_token', 'token_expires_at', 'scopes',
     'followers_count', 'verified_at', 'is_active',
+    'last_refreshed_at', 'needs_reconnect', 'last_error',
 ])]
 #[Hidden(['access_token', 'refresh_token'])]
 class SocialAccount extends Model
@@ -32,7 +33,26 @@ class SocialAccount extends Model
             'verified_at' => 'datetime',
             'followers_count' => 'integer',
             'is_active' => 'boolean',
+            'scopes' => 'array',
+            'last_refreshed_at' => 'datetime',
+            'needs_reconnect' => 'boolean',
         ];
+    }
+
+    /**
+     * Un compte exploitable par le job de synchronisation.
+     *
+     * Interroger un compte à reconnecter ne rapporte que des 401 et consomme
+     * du quota d'API qui manquera aux comptes valides.
+     */
+    public function isSyncable(): bool
+    {
+        return $this->is_active && ! $this->needs_reconnect;
+    }
+
+    public function tokenHasExpired(): bool
+    {
+        return $this->token_expires_at !== null && $this->token_expires_at->isPast();
     }
 
     public function user(): BelongsTo

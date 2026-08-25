@@ -92,10 +92,13 @@ class DatabaseSeeder extends Seeder
                 ['email' => "{$handle}@clippeur.test"],
                 [
                     'name' => ucfirst($handle),
+                    'pseudo' => $handle.'.clips',
+                    'country' => 'FR',
                     'password' => Hash::make('password'),
                     'role' => UserRole::Clipper,
                     'paypal_email' => "{$handle}@clippeur.test",
                     'email_verified_at' => now(),
+                    'profile_completed_at' => now(),
                 ],
             );
 
@@ -154,10 +157,13 @@ class DatabaseSeeder extends Seeder
             ['email' => 'karim@clippeur.test'],
             [
                 'name' => 'Karim',
+                'pseudo' => 'karim.clips',
+                'country' => 'FR',
                 'password' => Hash::make('password'),
                 'role' => UserRole::Clipper,
                 'paypal_email' => 'karim@clippeur.test',
                 'email_verified_at' => now(),
+                'profile_completed_at' => now(),
             ],
         );
 

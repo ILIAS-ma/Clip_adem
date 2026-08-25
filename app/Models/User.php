@@ -9,6 +9,7 @@ use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthenticationRecovery;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,9 +19,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use SensitiveParameter;
 
-#[Fillable(['name', 'email', 'password', 'role', 'paypal_email'])]
+#[Fillable(['name', 'pseudo', 'country', 'email', 'password', 'role', 'paypal_email'])]
 #[Hidden(['password', 'remember_token', 'app_authentication_secret', 'app_authentication_recovery_codes'])]
-class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery
+class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, SoftDeletes;
@@ -42,7 +43,46 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
             // d'un administrateur.
             'app_authentication_secret' => 'encrypted',
             'app_authentication_recovery_codes' => 'encrypted:array',
+            'profile_completed_at' => 'datetime',
         ];
+    }
+
+    // ------------------------------------------------------------------
+    // Espace clippeur
+    // ------------------------------------------------------------------
+
+    public function isClipper(): bool
+    {
+        return $this->role === UserRole::Clipper;
+    }
+
+    /** Nom affiché publiquement : le pseudo s'il existe, le prénom sinon. */
+    public function displayName(): string
+    {
+        return $this->pseudo ?: $this->name;
+    }
+
+    /**
+     * Ce qu'il manque pour participer et être payé.
+     *
+     * Vérifié à chaque requête plutôt qu'au seul moment du retrait : découvrir
+     * qu'il manque une adresse PayPal après avoir généré 200 000 vues est la
+     * meilleure façon de perdre un clippeur.
+     *
+     * @return array<int, string>
+     */
+    public function missingProfileFields(): array
+    {
+        return collect([
+            'pseudo' => $this->pseudo,
+            'country' => $this->country,
+            'paypal_email' => $this->paypal_email,
+        ])->filter(fn ($value) => blank($value))->keys()->all();
+    }
+
+    public function hasCompleteProfile(): bool
+    {
+        return $this->missingProfileFields() === [];
     }
 
     // ------------------------------------------------------------------

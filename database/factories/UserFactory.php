@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -29,6 +30,10 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
+            // Explicite : la colonne a bien « clipper » pour défaut, mais le
+            // modèle en mémoire ne le connaîtrait pas, et tout appel à
+            // $user->role->isStaff() planterait sur un null.
+            'role' => UserRole::Clipper,
             'remember_token' => Str::random(10),
         ];
     }

@@ -20,8 +20,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 #[Fillable([
     'campaign_id', 'participation_id', 'user_id', 'social_account_id',
-    'platform', 'external_post_id', 'url', 'posted_at', 'status',
-    'rejection_reason', 'views_total', 'last_synced_at',
+    'platform', 'external_post_id', 'url', 'caption', 'duration_seconds',
+    'posted_at', 'submitted_at', 'status', 'rejection_reason',
+    'compliance_status', 'compliance', 'views_total', 'last_synced_at',
 ])]
 class Clip extends Model
 {
@@ -35,7 +36,10 @@ class Clip extends Model
             'views_total' => 'integer',
             'paid_views' => 'integer',
             'earned_cents' => 'integer',
+            'duration_seconds' => 'integer',
+            'compliance' => 'array',
             'posted_at' => 'datetime',
+            'submitted_at' => 'datetime',
             'last_synced_at' => 'datetime',
         ];
     }

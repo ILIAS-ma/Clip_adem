@@ -7,10 +7,11 @@ Des clippeurs publient des clips, et sont payés selon les vues générées, jus
 
 Le dépôt est partagé entre deux périmètres :
 
-| Périmètre | Responsable | Contenu |
+| Périmètre | Responsable | État |
 |---|---|---|
-| Espace admin + moteur de campagne / budget | Ilias | Ce qui est décrit ci-dessous |
-| Espace clippeur + intégrations réseaux sociaux | Anas | `social_accounts`, `campaign_participations`, `clips`, `clip_view_snapshots`, `payouts` |
+| Espace admin + moteur de campagne / budget | Ilias | Livré |
+| Espace clippeur : auth, profil, catalogue, participation | Ilias | Livré |
+| Intégrations réseaux (OAuth), synchro des vues, dashboard complet | Anas | À faire |
 
 ## Démarrage
 
@@ -114,6 +115,49 @@ clip plafonné seraient marquées comme payées et perdues.
 Aucun appel réseau ni job dans la transaction : un verrou de campagne tenu
 pendant un appel PayPal bloquerait tous les autres crédits.
 
+## Espace clippeur
+
+Front public sur `/`, espace connecté sur `/dashboard` et `/campagnes`.
+Authentification par **Laravel Breeze préset Blade** — le préset Livewire épingle
+Livewire 3 alors que Filament 5 exige Livewire 4 ; les parties interactives
+(catalogue, adhésion, soumission) sont donc des composants Livewire 4 écrits à
+la main, dans `app/Livewire/`.
+
+**Une seule table `users`, un seul guard.** Le rôle décide de la destination :
+un `clipper` atterrit sur `/dashboard`, un membre du staff est renvoyé vers
+`/admin` par le middleware `staff.redirect`.
+
+Trois middlewares gardent l'espace :
+
+| Middleware | Rôle |
+|---|---|
+| `not.banned` | Déconnecte un compte suspendu à sa requête suivante, sans attendre l'expiration de sa session |
+| `staff.redirect` | Renvoie administrateurs et modérateurs vers le panel |
+| `profile.completed` | Impose pseudo, pays et adresse PayPal avant de participer |
+
+Le profil est vérifié à chaque requête, pas au seul moment du retrait :
+découvrir qu'il manque une adresse PayPal après avoir généré 200 000 vues est
+la meilleure façon de perdre un clippeur.
+
+### Catalogue et participation
+
+Le catalogue lit le reliquat via `CampaignBudgetService::remaining()`, jamais par
+une requête sur `campaigns.spent_cents` : la valeur affichée au clippeur est
+exactement celle du back-office. Une campagne épuisée reste consultable, grisée
+et non rejoignable.
+
+Les plafonds anti-abus sont affichés d'emblée sur la fiche. Les découvrir après
+coup, quand les gains cessent de monter, fait croire à un bug.
+
+`ClipUrlParser` normalise les liens TikTok, YouTube et Instagram vers un
+`external_post_id` canonique : deux URLs du même post — avec ou sans paramètres
+de suivi, `youtu.be` ou `youtube.com/watch` — produisent le même identifiant,
+sans quoi la contrainte d'unicité ne protégerait pas des doublons.
+
+Un clip soumis naît toujours en `pending_review`. La vérification de conformité
+(phase suivante, nécessite les API) produira un rapport, jamais une validation :
+un hashtag correct ne dit rien du respect réel du brief.
+
 ## Modération
 
 `ClipModerationService` porte les décisions ; il ne touche jamais aux compteurs
@@ -205,6 +249,18 @@ Blade, sans quoi une erreur de template ne se verrait qu'à l'œil nu.
 
 ## Périmètre restant
 
-Ce dépôt couvre l'intégralité du périmètre « Espace Admin + moteur de campagne
-et budget ». Reste le module clippeur (Anas) : OAuth TikTok/YouTube/Instagram,
-synchronisation des vues, espace clippeur.
+Tout le périmètre admin est livré, ainsi que l'espace clippeur jusqu'à la
+soumission de clip. Reste, côté module clippeur :
+
+- **OAuth des trois plateformes** derrière un contrat `SocialProvider`, avec un
+  `FakeSocialProvider` pour développer sans clés. Bloqué par les revues
+  d'application TikTok et Meta, à lancer en amont du code.
+- **Vérification automatique de conformité** — hashtags, durée, son imposé,
+  fenêtre de diffusion. Les colonnes `compliance` et `compliance_status`
+  attendent déjà sur `clips`.
+- **Job de synchronisation des vues** : batch par plateforme, cadence
+  dégressive, quotas journalisés dans `social_sync_runs`. Il appelle
+  `creditViews()` avec `BudgetTransaction::snapshotKey($clipId, $snapshotId)`.
+- **Dashboard clippeur complet** : courbes par plateforme, revenus estimés via
+  `quote()` — jamais un `vues × taux` maison, qui ignorerait le reliquat et les
+  plafonds — et demande de retrait branchée sur `PayoutService::request()`.
