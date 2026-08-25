@@ -12,7 +12,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // PayPal ne peut pas porter de jeton CSRF : la requête est authentifiée
+        // par sa signature, vérifiée dans PayPalWebhookController.
+        $middleware->validateCsrfTokens(except: [
+            'webhooks/paypal',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

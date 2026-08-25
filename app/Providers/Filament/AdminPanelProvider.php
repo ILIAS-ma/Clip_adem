@@ -2,6 +2,10 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Widgets\BudgetConsumptionChart;
+use App\Filament\Widgets\PlatformOverview;
+use App\Filament\Widgets\SpendPerArtist;
+use App\Filament\Widgets\TopClippers;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -50,8 +54,16 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
+            /*
+             * Enregistrement explicite plutôt qu'auto-découverte :
+             * CampaignBudgetOverview attend une campagne et n'a rien à faire
+             * sur le tableau de bord, où elle s'afficherait vide.
+             */
             ->widgets([
+                PlatformOverview::class,
+                BudgetConsumptionChart::class,
+                SpendPerArtist::class,
+                TopClippers::class,
                 AccountWidget::class,
             ])
             ->middleware([

@@ -35,4 +35,16 @@ return [
         ],
     ],
 
+    /*
+    | PayPal Payouts. Les identifiants restent en .env : les stocker en base
+    | reviendrait à mettre la trésorerie derrière un accès SQL.
+    */
+    'paypal' => [
+        'mode' => env('PAYPAL_MODE', 'sandbox'), // sandbox | live
+        'client_id' => env('PAYPAL_CLIENT_ID'),
+        'client_secret' => env('PAYPAL_CLIENT_SECRET'),
+        'webhook_id' => env('PAYPAL_WEBHOOK_ID'),
+        'email_subject' => env('PAYPAL_EMAIL_SUBJECT', 'Votre rémunération Clip Adem'),
+    ],
+
 ];

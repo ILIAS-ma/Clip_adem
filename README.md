@@ -114,6 +114,66 @@ clip plafonné seraient marquées comme payées et perdues.
 Aucun appel réseau ni job dans la transaction : un verrou de campagne tenu
 pendant un appel PayPal bloquerait tous les autres crédits.
 
+## Modération
+
+`ClipModerationService` porte les décisions ; il ne touche jamais aux compteurs
+d'argent lui-même, il délègue à `CampaignBudgetService`.
+
+| Action | Effet |
+|---|---|
+| Valider un clip | Le clip devient rémunérable |
+| Refuser un clip | Réservé aux clips qui n'ont rien coûté |
+| **Invalider** | Rend le budget à la campagne, qui peut ressortir de « Épuisée » |
+| **Bannir un clippeur** | Gèle ses retraits en attente, bannit ses participations, invalide ses clips en option |
+
+Toute décision est consignée dans `moderation_logs` avec son auteur, son motif
+et son horodatage : invalider un clip revient à reprendre de l'argent à
+quelqu'un, et un litige ne doit pas se réduire à la parole de l'admin contre
+celle du clippeur.
+
+`SuspiciousViewsDetector` remonte les courbes de vues improbables — bond de
+×5 et +10 000 vues en moins de 6 h, démarrage à plus de 50 000 vues dans
+l'heure, plus de 100 vues par abonné. Les seuils sont dans
+[`config/clipping.php`](config/clipping.php). **Aucun seuil ne sanctionne
+automatiquement** : ils trient la file de modération, la décision reste humaine.
+
+## Paiements
+
+```bash
+php artisan payouts:send --dry-run   # affiche le lot sans rien envoyer
+php artisan payouts:send             # crée le lot PayPal Payouts
+php artisan payouts:sync             # réconcilie les lots en vol
+php artisan accounting:export depenses --from=2026-01-01
+php artisan accounting:export versements
+```
+
+Le solde d'un clippeur est **toujours calculé** (gains − retraits demandés ou
+versés), jamais stocké : un solde dénormalisé finit par diverger du grand
+livre. Il est vérifié sous `lockForUpdate()`, même discipline que le budget de
+campagne — deux demandes simultanées ne doivent pas retirer deux fois.
+
+L'ordre des opérations à l'envoi est ce qui protège l'argent : les retraits
+passent en « en cours » **avant** l'appel réseau. Si l'appel se perd, on sait
+quoi réconcilier ; l'inverse produirait des virements dont on ignore
+l'existence. Un lot introuvable chez PayPal remet les retraits en file.
+
+Les webhooks arrivent sur `POST /webhooks/paypal`, hors CSRF, authentifiés par
+signature (`PAYPAL_WEBHOOK_ID`). Le traitement est idempotent : PayPal envoie
+en double, dans le désordre, ou pas du tout — `payouts:sync` est le filet.
+
+Configuration : `PAYPAL_MODE`, `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`,
+`PAYPAL_WEBHOOK_ID` dans `.env`. Sandbox par défaut.
+
+## Reporting
+
+Tableau de bord `/admin` : budget engagé, consommé, **dû aux clippeurs**
+(consommé − versé, le chiffre à provisionner), vues et CPM réel ; courbe de
+consommation sur 30 jours ; dépenses par artiste ; top clippeurs avec leur taux
+d'invalidation.
+
+Toutes les agrégations lisent le grand livre plutôt que les compteurs
+dénormalisés : les chiffres sont reproductibles et auditables.
+
 ## Tests
 
 ```bash
@@ -138,8 +198,13 @@ Scénarios couverts : 20 crédits simultanés sur un budget qui n'en autorise qu
 parallèle, et un fuzz de 15 crédits aléatoires vérifiant la cohérence du grand
 livre.
 
-## Reste à faire
+Le reste de la suite couvre la machine à états, la modération, les paiements
+(PayPal simulé via `Http::fake`), les exports comptables, le reporting, et un
+test de fumée qui charge chaque page du back-office — les widgets sont des vues
+Blade, sans quoi une erreur de template ne se verrait qu'à l'œil nu.
 
-- Modération des clippeurs et des clips (bannissement, invalidation en masse)
-- Paiements PayPal Payouts + export comptable CSV
-- Reporting : dépenses par artiste, top clippeurs, courbes de consommation
+## Périmètre restant
+
+Ce dépôt couvre l'intégralité du périmètre « Espace Admin + moteur de campagne
+et budget ». Reste le module clippeur (Anas) : OAuth TikTok/YouTube/Instagram,
+synchronisation des vues, espace clippeur.
