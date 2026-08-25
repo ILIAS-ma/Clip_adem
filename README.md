@@ -10,8 +10,8 @@ Le dépôt est partagé entre deux périmètres :
 | Périmètre | Responsable | État |
 |---|---|---|
 | Espace admin + moteur de campagne / budget | Ilias | Livré |
-| Espace clippeur : auth, profil, catalogue, participation | Ilias | Livré |
-| Intégrations réseaux (OAuth), synchro des vues, dashboard complet | Anas | À faire |
+| Espace clippeur complet : auth, catalogue, comptes, clips, revenus | Ilias | Livré |
+| Validation des intégrations sur les API réelles | Anas | En attente des clés |
 
 ## Démarrage
 
@@ -27,13 +27,22 @@ php artisan migrate --seed
 php artisan serve
 ```
 
-Panel admin sur `/admin`. Comptes de démonstration (mot de passe `password`) :
+Espace clippeur sur `/`, panel admin sur `/admin`. Comptes de démonstration
+(mot de passe `password`) :
 
-- `admin@clip-adem.test` — super-administrateur
-- `moderateur@clip-adem.test` — modérateur
+| Compte | Rôle |
+|---|---|
+| `admin@clip-adem.test` | super-administrateur |
+| `moderateur@clip-adem.test` | modérateur |
+| `lina@clippeur.test` | clippeur, avec clips et gains |
+| `karim@clippeur.test` | clippeur, avec un clip aux vues suspectes |
 
-La double authentification TOTP est obligatoire : au premier accès, le panel
-impose de scanner un QR code avant de laisser entrer.
+La double authentification TOTP est obligatoire côté admin : au premier accès,
+le panel impose de scanner un QR code avant de laisser entrer.
+
+> Les e-mails ne partent pas : `MAIL_MAILER=log` les écrit dans
+> `storage/logs/laravel.log`. Pour récupérer un lien de vérification :
+> `grep -o 'http[^"]*verify-email[^"]*' storage/logs/laravel.log | tail -1`
 
 ## La règle la plus importante du projet
 
@@ -154,9 +163,47 @@ coup, quand les gains cessent de monter, fait croire à un bug.
 de suivi, `youtu.be` ou `youtube.com/watch` — produisent le même identifiant,
 sans quoi la contrainte d'unicité ne protégerait pas des doublons.
 
-Un clip soumis naît toujours en `pending_review`. La vérification de conformité
-(phase suivante, nécessite les API) produira un rapport, jamais une validation :
+Un clip soumis naît toujours en `pending_review`, quelle que soit sa conformité :
 un hashtag correct ne dit rien du respect réel du brief.
+
+### Comptes réseaux et synchronisation
+
+Tout ce qui dépend d'une API externe passe par le contrat `SocialProvider`.
+Tant qu'une plateforme n'a pas ses identifiants d'application,
+`SocialProviderManager` bascule sur `FakeSocialProvider` **hors production** :
+la liaison de compte, la conformité, la synchronisation, le crédit du budget et
+les gains fonctionnent de bout en bout sur des données simulées. En production,
+l'absence de clés est une erreur, pas un mode dégradé silencieux.
+
+Les vues simulées suivent une courbe déterministe — même publication, même
+instant, même valeur — sinon les tests seraient instables et les compteurs
+oscilleraient sans raison.
+
+```bash
+php artisan clips:sync                    # relève les vues et fait créditer
+php artisan clips:sync --platform=tiktok  # une seule plateforme
+php artisan social:refresh-tokens         # prolonge les jetons avant expiration
+php artisan schedule:work                 # planificateur en local
+```
+
+**Économiser le quota** — batch par plateforme (50 identifiants pour une unité
+chez YouTube), cadence dégressive (toutes les 3 h la première semaine, une fois
+par jour ensuite, arrêt à J+30), et rien pour les clips qui ne rapportent plus.
+Chaque passage est journalisé dans `social_sync_runs` : sans ça, un dépassement
+de quota se diagnostique à l'aveugle.
+
+Un compte marqué `needs_reconnect` est sauté : l'interroger ne rapporterait que
+des 401 et consommerait le quota des comptes valides. Le clippeur voit un
+bandeau d'alerte tant qu'il n'a pas reconnecté — c'est la panne la plus
+silencieuse du système.
+
+### Conformité au brief
+
+`ClipComplianceChecker` confronte la publication aux exigences de la campagne au
+premier relevé — c'est le moment où la légende et la durée réelles sont enfin
+connues. Il produit **un rapport, jamais une décision** : un clip conforme reste
+en attente de modération, un clip non conforme arrive devant le modérateur avec
+ses motifs.
 
 ## Modération
 
@@ -249,18 +296,20 @@ Blade, sans quoi une erreur de template ne se verrait qu'à l'œil nu.
 
 ## Périmètre restant
 
-Tout le périmètre admin est livré, ainsi que l'espace clippeur jusqu'à la
-soumission de clip. Reste, côté module clippeur :
+Le produit tourne de bout en bout. Ce qui reste tient à des dépendances
+externes, pas à du code manquant :
 
-- **OAuth des trois plateformes** derrière un contrat `SocialProvider`, avec un
-  `FakeSocialProvider` pour développer sans clés. Bloqué par les revues
-  d'application TikTok et Meta, à lancer en amont du code.
-- **Vérification automatique de conformité** — hashtags, durée, son imposé,
-  fenêtre de diffusion. Les colonnes `compliance` et `compliance_status`
-  attendent déjà sur `clips`.
-- **Job de synchronisation des vues** : batch par plateforme, cadence
-  dégressive, quotas journalisés dans `social_sync_runs`. Il appelle
-  `creditViews()` avec `BudgetTransaction::snapshotKey($clipId, $snapshotId)`.
-- **Dashboard clippeur complet** : courbes par plateforme, revenus estimés via
-  `quote()` — jamais un `vues × taux` maison, qui ignorerait le reliquat et les
-  plafonds — et demande de retrait branchée sur `PayoutService::request()`.
+- **Identifiants d'application** TikTok, Google et Meta. Les revues TikTok et
+  Meta prennent plusieurs jours ouvrés : c'est le chemin critique du projet, à
+  lancer indépendamment du développement.
+- **Validation des trois clients d'API sur les vraies plateformes.**
+  `YouTubeProvider`, `TikTokProvider` et `InstagramProvider` sont écrits avec
+  leurs endpoints réels mais n'ont jamais reçu de réponse authentique. Les
+  premiers points à revérifier sont marqués « À VÉRIFIER » dans le code.
+- **Envoi des e-mails.** `MAIL_MAILER=log` écrit les messages dans
+  `storage/logs/laravel.log` au lieu de les envoyer : à brancher sur un
+  attrape-mail local ou un SMTP réel avant toute utilisation par de vrais
+  clippeurs.
+- **Publication depuis la plateforme** (Content Posting API de TikTok). Hors
+  périmètre à ce jour : le modèle est que le clippeur publie lui-même, puis
+  colle le lien.

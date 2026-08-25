@@ -1,8 +1,11 @@
 <?php
 
 use App\Http\Controllers\Clipper\CampaignController;
+use App\Http\Controllers\Clipper\ClipController;
 use App\Http\Controllers\Clipper\DashboardController;
+use App\Http\Controllers\Clipper\EarningsController;
 use App\Http\Controllers\Clipper\ProfileCompletionController;
+use App\Http\Controllers\Clipper\SocialAccountController;
 use App\Http\Controllers\PayPalWebhookController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -44,7 +47,25 @@ Route::middleware(['auth', 'not.banned', 'staff.redirect'])->group(function () {
 
         Route::get('/campagnes', [CampaignController::class, 'index'])->name('campaigns.index');
         Route::get('/campagnes/{campaign:slug}', [CampaignController::class, 'show'])->name('campaigns.show');
+
+        Route::get('/mes-clips', [ClipController::class, 'index'])->name('clips.index');
+        Route::get('/mes-clips/{clip}', [ClipController::class, 'show'])->name('clips.show');
+
+        Route::get('/mes-comptes', [SocialAccountController::class, 'index'])->name('accounts.index');
+        Route::get('/mes-comptes/{platform}/connexion', [SocialAccountController::class, 'redirect'])
+            ->name('social.redirect');
+        Route::delete('/mes-comptes/{account}', [SocialAccountController::class, 'destroy'])
+            ->name('accounts.destroy');
+
+        Route::get('/revenus', [EarningsController::class, 'index'])->name('earnings.index');
     });
 });
+
+// Retour du fournisseur OAuth. Hors du groupe « profil complet » : le
+// fournisseur redirige vers une URL fixe, et une redirection intermédiaire
+// invaliderait le code d'autorisation.
+Route::get('/oauth/{platform}/callback', [SocialAccountController::class, 'callback'])
+    ->middleware(['auth', 'not.banned'])
+    ->name('social.callback');
 
 require __DIR__.'/auth.php';

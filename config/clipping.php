@@ -32,6 +32,48 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Conformité au brief
+    |--------------------------------------------------------------------------
+    |
+    | Les contrôles produisent un rapport, jamais une validation : la décision
+    | reste manuelle.
+    |
+    */
+
+    'compliance' => [
+        'min_duration_seconds' => 10,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Synchronisation des vues
+    |--------------------------------------------------------------------------
+    |
+    | Cadence dégressive : un clip de moins de 48 h bouge vite, un clip d'un
+    | mois ne bouge plus. Sans ça, la consommation de quota serait dix fois
+    | supérieure pour la même information.
+    |
+    */
+
+    'sync' => [
+        // Un clip publié depuis moins de N heures est relevé toutes les
+        // `fresh_interval_hours`.
+        'fresh_window_hours' => 168,   // 7 jours
+        'fresh_interval_hours' => 3,
+
+        // Au-delà, une fois par jour…
+        'mature_interval_hours' => 24,
+
+        // …jusqu'à cet âge, après quoi on arrête de relever.
+        'stop_after_days' => 30,
+
+        // Un clip qui ne rapporte plus rien (budget épuisé, plafond atteint)
+        // n'a pas besoin d'être relevé plus d'une fois par jour.
+        'unpayable_interval_hours' => 24,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Retraits
     |--------------------------------------------------------------------------
     */

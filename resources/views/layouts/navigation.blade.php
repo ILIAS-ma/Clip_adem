@@ -18,6 +18,15 @@
                     <x-nav-link :href="route('campaigns.index')" :active="request()->routeIs('campaigns.*')">
                         Campagnes
                     </x-nav-link>
+                    <x-nav-link :href="route('clips.index')" :active="request()->routeIs('clips.*')">
+                        Mes clips
+                    </x-nav-link>
+                    <x-nav-link :href="route('accounts.index')" :active="request()->routeIs('accounts.*')">
+                        Mes comptes
+                    </x-nav-link>
+                    <x-nav-link :href="route('earnings.index')" :active="request()->routeIs('earnings.*')">
+                        Revenus
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -75,6 +84,15 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('campaigns.index')" :active="request()->routeIs('campaigns.*')">
                 Campagnes
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('clips.index')" :active="request()->routeIs('clips.*')">
+                Mes clips
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('accounts.index')" :active="request()->routeIs('accounts.*')">
+                Mes comptes
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('earnings.index')" :active="request()->routeIs('earnings.*')">
+                Revenus
             </x-responsive-nav-link>
         </div>
 

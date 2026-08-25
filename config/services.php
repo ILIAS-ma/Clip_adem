@@ -36,6 +36,28 @@ return [
     ],
 
     /*
+    | Réseaux sociaux. Tant qu'une plateforme n'a pas ses identifiants, un
+    | fournisseur simulé prend le relais hors production — voir
+    | SocialProviderManager.
+    */
+    'youtube' => [
+        'client_id' => env('YOUTUBE_CLIENT_ID'),
+        'client_secret' => env('YOUTUBE_CLIENT_SECRET'),
+        'daily_quota' => env('YOUTUBE_DAILY_QUOTA', 10_000),
+    ],
+
+    'tiktok' => [
+        'client_key' => env('TIKTOK_CLIENT_KEY'),
+        'client_secret' => env('TIKTOK_CLIENT_SECRET'),
+        'daily_quota' => env('TIKTOK_DAILY_QUOTA'),
+    ],
+
+    'instagram' => [
+        'app_id' => env('INSTAGRAM_APP_ID'),
+        'app_secret' => env('INSTAGRAM_APP_SECRET'),
+    ],
+
+    /*
     | PayPal Payouts. Les identifiants restent en .env : les stocker en base
     | reviendrait à mettre la trésorerie derrière un accès SQL.
     */
