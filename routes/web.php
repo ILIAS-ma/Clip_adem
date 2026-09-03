@@ -13,6 +13,20 @@ use App\Http\Controllers\PayPalWebhookController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
+/**
+ * Passages obligés du parcours, pilotés depuis config/clipping.php.
+ *
+ * Les suspendre laisse parcourir l'interface sans obstacle en développement,
+ * sans commenter ni supprimer le moindre contrôle : le code reste actif, et la
+ * suite de tests les force à `true` pour continuer de les vérifier.
+ *
+ * @return array<int, string>
+ */
+$onboardingGuards = static fn (): array => array_values(array_filter([
+    config('clipping.onboarding.require_email_verification') ? 'verified' : null,
+    config('clipping.onboarding.require_complete_profile') ? 'profile.completed' : null,
+]));
+
 Route::get('/', function () {
     // Chaque rôle est renvoyé chez lui : la page d'accueil n'a d'intérêt que
     // pour un visiteur non connecté.
@@ -48,13 +62,13 @@ Route::middleware(['auth', 'not.banned'])->group(function () {
 | vers leur propre espace au lieu de leur montrer un 403 sans issue.
 |
 */
-Route::middleware(['auth', 'not.banned', 'role:clipper'])->group(function () {
+Route::middleware(['auth', 'not.banned', 'role:clipper'])->group(function () use ($onboardingGuards) {
 
     // Hors du groupe « profil complet », sinon la redirection boucle sur elle-même.
     Route::get('/profil/completer', [ProfileCompletionController::class, 'edit'])->name('profile.complete');
     Route::patch('/profil/completer', [ProfileCompletionController::class, 'update'])->name('profile.complete.update');
 
-    Route::middleware(['verified', 'profile.completed'])->group(function () {
+    Route::middleware($onboardingGuards())->group(function () {
         Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
         Route::get('/campagnes', [CampaignController::class, 'index'])->name('campaigns.index');
@@ -82,7 +96,10 @@ Route::middleware(['auth', 'not.banned', 'role:clipper'])->group(function () {
 | modifie. Le budget et la modération restent le métier de l'administrateur.
 |
 */
-Route::middleware(['auth', 'not.banned', 'role:artist', 'verified'])
+Route::middleware(array_merge(
+    ['auth', 'not.banned', 'role:artist'],
+    config('clipping.onboarding.require_email_verification') ? ['verified'] : [],
+))
     ->prefix('artiste')
     ->name('artist.')
     ->group(function () {

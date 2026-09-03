@@ -12,6 +12,8 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen">
+    <x-onboarding-suspended-notice />
+
     <div class="lg:grid lg:min-h-screen lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
 
         {{-- Panneau de marque : il porte la proposition de valeur pendant que

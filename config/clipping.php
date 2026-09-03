@@ -4,6 +4,27 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Passages obligés du parcours
+    |--------------------------------------------------------------------------
+    |
+    | Les suspendre permet de parcourir l'interface sans obstacle pendant le
+    | développement. Le code des contrôles reste actif et testé — la suite de
+    | tests les force à `true` — mais ils ne bloquent plus la navigation.
+    |
+    | À rétablir impérativement avant toute mise en ligne : sans vérification
+    | d'e-mail, une adresse jetable rend le bannissement inopérant ; sans 2FA,
+    | un compte admin compromis donne accès aux paiements.
+    |
+    */
+
+    'onboarding' => [
+        'require_email_verification' => env('REQUIRE_EMAIL_VERIFICATION', true),
+        'require_complete_profile' => env('REQUIRE_COMPLETE_PROFILE', true),
+        'require_admin_2fa' => env('REQUIRE_ADMIN_2FA', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Détection de vues suspectes
     |--------------------------------------------------------------------------
     |

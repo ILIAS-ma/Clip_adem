@@ -44,7 +44,11 @@ class AdminPanelProvider extends PanelProvider
                 AppAuthentication::make()
                     ->recoverable()
                     ->brandName('Clip Adem'),
-                isRequired: true,
+                // Suspendable depuis config/clipping.php pour parcourir le
+                // back-office sans application TOTP sous la main. Le dispositif
+                // reste installé et utilisable — un administrateur peut
+                // l'activer depuis son profil.
+                isRequired: (bool) config('clipping.onboarding.require_admin_2fa'),
             )
             ->colors([
                 'primary' => Color::Emerald,

@@ -13,6 +13,8 @@
 </head>
 <body class="min-h-screen">
     <div class="min-h-screen">
+        <x-onboarding-suspended-notice />
+
         @include('layouts.navigation')
 
         @php

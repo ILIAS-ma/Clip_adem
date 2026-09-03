@@ -39,8 +39,25 @@ Espace clippeur sur `/`, panel admin sur `/admin`. Comptes de démonstration
 | `karim@clippeur.test` | clippeur, avec un clip aux vues suspectes |
 | `nayra@artiste.test` | artiste, avec une campagne en cours |
 
-La double authentification TOTP est obligatoire côté admin : au premier accès,
-le panel impose de scanner un QR code avant de laisser entrer.
+### Passages obligés, suspendables
+
+Trois contrôles peuvent être suspendus pour parcourir l'interface sans obstacle
+pendant le développement :
+
+| Variable `.env` | Effet quand `false` |
+|---|---|
+| `REQUIRE_EMAIL_VERIFICATION` | L'e-mail n'a plus besoin d'être confirmé |
+| `REQUIRE_COMPLETE_PROFILE` | Pseudo, pays et PayPal ne bloquent plus |
+| `REQUIRE_ADMIN_2FA` | Le panel n'impose plus de scanner un QR code |
+
+Aucun code n'est commenté ni supprimé : les contrôles restent en place, et la
+suite de tests **les force à `true`** pour continuer de les vérifier. Un bandeau
+orange s'affiche sur toutes les pages tant qu'un contrôle est suspendu — sans
+lui, un contrôle désactivé « le temps de voir l'interface » finit en production.
+
+À rétablir avant toute mise en ligne : sans vérification d'e-mail, une adresse
+jetable rend le bannissement inopérant ; sans 2FA, un compte admin compromis
+donne accès aux paiements.
 
 ### E-mails en développement
 

@@ -32,6 +32,15 @@
         <env name="DB_CONNECTION" value="mysql"/>
         <env name="DB_DATABASE" value="clip_testing"/>
         <env name="DB_URL" value=""/>
+        <!--
+            Les passages obligés du parcours restent actifs pendant les tests,
+            même quand ils sont suspendus en développement : c'est ce qui évite
+            qu'un contrôle désactivé « le temps de voir l'interface » parte en
+            production sans que personne ne s'en aperçoive.
+        -->
+        <env name="REQUIRE_EMAIL_VERIFICATION" value="true"/>
+        <env name="REQUIRE_COMPLETE_PROFILE" value="true"/>
+        <env name="REQUIRE_ADMIN_2FA" value="true"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
