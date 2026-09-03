@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Clippers\Tables;
 
 use App\Models\User;
+use App\Services\Clippers\ClipperProgressionService;
 use App\Services\Moderation\ClipModerationService;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
@@ -25,6 +26,21 @@ class ClippersTable
                     ->sortable()
                     ->weight('bold')
                     ->description(fn (User $record) => $record->email),
+
+                TextColumn::make('level')
+                    ->label('Niveau')
+                    ->badge()
+                    ->state(fn (User $record) => app(ClipperProgressionService::class)->for($record)->level->label())
+                    ->color(fn (User $record) => app(ClipperProgressionService::class)->for($record)->level->color())
+                    // Un niveau élevé mais en pause signale un bon clippeur qui
+                    // décroche : c'est exactement le moment de le relancer.
+                    ->description(function (User $record) {
+                        $progression = app(ClipperProgressionService::class)->for($record);
+
+                        return $progression->level->hasPerks() && ! $progression->perksActive
+                            ? 'Avantages en pause'
+                            : null;
+                    }),
 
                 TextColumn::make('social_accounts_count')
                     ->label('Comptes liés')

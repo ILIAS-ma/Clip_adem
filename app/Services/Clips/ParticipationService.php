@@ -9,6 +9,8 @@ use App\Models\Campaign;
 use App\Models\CampaignParticipation;
 use App\Models\SocialAccount;
 use App\Models\User;
+use App\Services\Clippers\ClipperProgressionService;
+use Carbon\CarbonInterface;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 
@@ -23,6 +25,7 @@ class ParticipationService
 {
     public function __construct(
         protected CampaignBudgetService $budget,
+        protected ClipperProgressionService $progression,
     ) {}
 
     /**
@@ -42,10 +45,14 @@ class ParticipationService
             throw ParticipationRefused::accountNeedsReconnect();
         }
 
-        if (! $this->budget->acceptsNewClips($campaign)) {
-            throw $campaign->remainingCents() <= 0
-                ? ParticipationRefused::budgetExhausted()
-                : ParticipationRefused::campaignClosed();
+        if (! $this->canJoinNow($campaign, $clipper)) {
+            throw match (true) {
+                $campaign->remainingCents() <= 0 => ParticipationRefused::budgetExhausted(),
+                $this->isPending($campaign) => ParticipationRefused::notOpenYet(
+                    $this->opensAtFor($campaign, $clipper),
+                ),
+                default => ParticipationRefused::campaignClosed(),
+            };
         }
 
         if ($campaign->rateFor($account->platform) === null) {
@@ -77,6 +84,42 @@ class ParticipationService
 
             throw $exception;
         }
+    }
+
+    /**
+     * Ce clippeur peut-il rejoindre maintenant ?
+     *
+     * Une campagne programmée s'ouvre plus tôt aux niveaux élevés. C'est
+     * l'avantage le plus fort de la plateforme : le budget partant au premier
+     * arrivé, l'antériorité est la vraie monnaie — et elle ne coûte rien au
+     * budget lui-même.
+     */
+    public function canJoinNow(Campaign $campaign, User $clipper): bool
+    {
+        if ($this->budget->acceptsNewClips($campaign)) {
+            return true;
+        }
+
+        return $this->isPending($campaign)
+            && now()->gte($this->opensAtFor($campaign, $clipper));
+    }
+
+    /** Moment à partir duquel ce clippeur peut rejoindre. */
+    public function opensAtFor(Campaign $campaign, User $clipper): CarbonInterface
+    {
+        $opensAt = $campaign->starts_at ?? now();
+        $hours = $this->progression->for($clipper)->earlyAccessHours();
+
+        return $hours > 0 ? $opensAt->copy()->subHours($hours) : $opensAt;
+    }
+
+    /** Campagne active, budgétée, mais dont la diffusion n'a pas commencé. */
+    protected function isPending(Campaign $campaign): bool
+    {
+        return $campaign->status->acceptsNewClips()
+            && $campaign->remainingCents() > 0
+            && ! $campaign->hasStarted()
+            && (! $campaign->ends_at || now()->lte($campaign->ends_at));
     }
 
     public function existing(Campaign $campaign, SocialAccount $account): ?CampaignParticipation

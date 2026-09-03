@@ -40,6 +40,45 @@
                     :hint="$accountsCount === 0 ? 'Nécessaire pour participer' : null" />
         </div>
 
+        <div class="grid gap-6 lg:grid-cols-3">
+            <x-level-card class="lg:col-span-2" :progression="$progression" />
+
+            <div class="card p-6">
+                <p class="text-sm font-medium text-ink-400">Comment gagner de l'XP</p>
+                <ul class="mt-4 space-y-3 text-sm">
+                    <li class="flex items-baseline justify-between gap-3">
+                        <span class="text-ink-500">Chaque vue rémunérée</span>
+                        <span class="font-semibold tabular text-ink-900">1 XP</span>
+                    </li>
+                    <li class="flex items-baseline justify-between gap-3">
+                        <span class="text-ink-500">Clip validé</span>
+                        <span class="font-semibold tabular text-money-600">
+                            +{{ number_format(config('clipping.progression.xp_per_approved_clip'), 0, ',', ' ') }}
+                        </span>
+                    </li>
+                    <li class="flex items-baseline justify-between gap-3">
+                        <span class="text-ink-500">Nouvelle campagne rejointe</span>
+                        <span class="font-semibold tabular text-money-600">
+                            +{{ number_format(config('clipping.progression.xp_per_campaign'), 0, ',', ' ') }}
+                        </span>
+                    </li>
+                    <li class="flex items-baseline justify-between gap-3 border-t border-ink-100 pt-3">
+                        <span class="text-ink-500">Clip invalidé</span>
+                        <span class="font-semibold tabular text-red-600">
+                            −{{ number_format(config('clipping.progression.xp_penalty_per_invalidated_clip'), 0, ',', ' ') }}
+                        </span>
+                    </li>
+                </ul>
+
+                {{-- Seules les vues réellement payées comptent : dit d'emblée,
+                     ça enlève tout intérêt à gonfler ses compteurs. --}}
+                <p class="hint mt-4 border-t border-ink-100 pt-4">
+                    Seules les vues effectivement rémunérées comptent. Un clip invalidé perd les
+                    siennes.
+                </p>
+            </div>
+        </div>
+
         @if ($accountsCount === 0)
             {{-- Sans compte lié, rien n'est possible : c'est la première action
                  à proposer, pas une information noyée dans une liste. --}}

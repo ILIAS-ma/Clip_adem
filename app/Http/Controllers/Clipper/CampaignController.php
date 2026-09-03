@@ -34,7 +34,12 @@ class CampaignController extends Controller
             // Le reliquat est demandé au service, jamais lu directement sur la
             // colonne : c'est la même valeur que celle vue par le back-office.
             'remainingCents' => $budget->remaining($campaign),
-            'isOpen' => $budget->acceptsNewClips($campaign),
+
+            // Une campagne programmée peut être rejoignable en avance selon le
+            // niveau : l'ouverture n'est donc pas la même pour tout le monde.
+            'isOpen' => $participations->canJoinNow($campaign, $clipper),
+            'canSubmit' => $budget->acceptsNewClips($campaign),
+            'opensAt' => $campaign->hasStarted() ? null : $participations->opensAtFor($campaign, $clipper),
             'participations' => $campaign->participations()
                 ->where('user_id', $clipper->getKey())
                 ->with('socialAccount')

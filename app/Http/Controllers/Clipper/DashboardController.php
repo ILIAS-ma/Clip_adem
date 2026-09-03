@@ -7,6 +7,7 @@ use App\Enums\CampaignStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Campaign;
 use App\Models\Clip;
+use App\Services\Clippers\ClipperProgressionService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -23,6 +24,7 @@ class DashboardController extends Controller
 
         return view('clipper.dashboard', [
             'clipper' => $clipper,
+            'progression' => app(ClipperProgressionService::class)->for($clipper),
             'clips' => $clips,
             'views' => (int) $clips->sum('views_total'),
             'earnedCents' => (int) $clips->sum('earned_cents'),

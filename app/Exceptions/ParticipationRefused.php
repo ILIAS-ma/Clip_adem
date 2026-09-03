@@ -3,6 +3,7 @@
 namespace App\Exceptions;
 
 use App\Enums\Platform;
+use Carbon\CarbonInterface;
 use RuntimeException;
 
 class ParticipationRefused extends RuntimeException
@@ -10,6 +11,15 @@ class ParticipationRefused extends RuntimeException
     public static function campaignClosed(): self
     {
         return new self("Cette campagne n'accepte plus de nouveaux participants.");
+    }
+
+    public static function notOpenYet(CarbonInterface $opensAt): self
+    {
+        return new self(sprintf(
+            'Cette campagne ouvre le %s à %s. Les niveaux élevés y accèdent en avance.',
+            $opensAt->format('d/m/Y'),
+            $opensAt->format('H\hi'),
+        ));
     }
 
     public static function budgetExhausted(): self

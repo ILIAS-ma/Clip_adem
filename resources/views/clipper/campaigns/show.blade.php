@@ -20,6 +20,30 @@
             <div class="alert-ok">{{ session('status') }}</div>
         @endif
 
+        @if ($opensAt)
+            {{-- Le budget partant au premier arrivé, savoir qu'on peut se
+                 positionner avant l'ouverture est l'information la plus utile
+                 de la page. --}}
+            <div class="{{ $isOpen ? 'alert-ok' : 'alert-warn' }}">
+                @if ($isOpen)
+                    <p class="font-semibold">Accès anticipé — vous pouvez rejoindre dès maintenant</p>
+                    <p class="mt-1 leading-relaxed">
+                        La campagne n'ouvre officiellement que le
+                        {{ $campaign->starts_at->format('d/m/Y à H\hi') }}. Votre niveau vous permet de
+                        prendre position avant les autres.
+                    </p>
+                @else
+                    <p class="font-semibold">
+                        Ouvre le {{ $opensAt->format('d/m/Y à H\hi') }} pour vous
+                    </p>
+                    <p class="mt-1 leading-relaxed">
+                        Les niveaux élevés y accèdent en avance. Le budget partant au premier arrivé,
+                        cette avance compte.
+                    </p>
+                @endif
+            </div>
+        @endif
+
         <div class="grid gap-6 lg:grid-cols-3">
 
             <div class="space-y-6 lg:col-span-2">
@@ -61,11 +85,16 @@
                     <div class="card p-6 sm:p-8">
                         <h2 class="font-display text-lg font-bold text-ink-900">Soumettre un clip</h2>
 
-                        @if ($isOpen)
+                        @if ($canSubmit)
                             <p class="mt-2 text-sm text-ink-500">
                                 Publiez depuis votre compte, puis collez ici l'adresse de la publication.
                             </p>
                             @livewire('submit-clip', ['campaign' => $campaign])
+                        @elseif ($opensAt)
+                            <p class="mt-3 text-sm text-ink-500">
+                                La campagne ouvre le {{ $campaign->starts_at->format('d/m/Y à H\hi') }}.
+                                Préparez votre clip : vous pourrez le soumettre dès l'ouverture.
+                            </p>
                         @else
                             <p class="mt-3 text-sm text-ink-500">
                                 Cette campagne n'accepte plus de nouveaux clips. Ceux déjà soumis

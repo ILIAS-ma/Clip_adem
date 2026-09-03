@@ -124,6 +124,12 @@ class Campaign extends Model
         return $this->spent_cents >= $this->budget_total_cents;
     }
 
+    /** La fenêtre de diffusion a-t-elle commencé ? */
+    public function hasStarted(): bool
+    {
+        return $this->starts_at === null || now()->gte($this->starts_at);
+    }
+
     /**
      * Visible dans l'espace clippeur.
      *

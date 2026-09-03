@@ -10,6 +10,7 @@ use App\Models\BudgetTransaction;
 use App\Models\Campaign;
 use App\Models\Clip;
 use App\Models\User;
+use App\Services\Clippers\ClipperProgressionService;
 use App\Support\Budget\BudgetQuote;
 use App\Support\Budget\CreditOutcome;
 use App\Support\Budget\CreditResult;
@@ -37,6 +38,10 @@ class DatabaseCampaignBudgetService implements CampaignBudgetService
 {
     /** Nombre de reprises sur deadlock InnoDB (erreur 1213). */
     protected const TRANSACTION_ATTEMPTS = 3;
+
+    public function __construct(
+        protected ClipperProgressionService $progression,
+    ) {}
 
     public function remaining(Campaign|int $campaign): int
     {
@@ -258,10 +263,20 @@ class DatabaseCampaignBudgetService implements CampaignBudgetService
         // les crédits de cette campagne sont sérialisés par le verrou posé sur
         // sa ligne, donc aucun autre processus ne peut modifier ces totaux
         // entre ce calcul et l'écriture.
+        // `$remaining` figure en premier et n'est jamais relevé : quoi qu'ouvre
+        // le niveau d'un clippeur, le budget total de la campagne reste le
+        // plafond absolu.
         $caps = [$gross, $remaining];
 
         if ($campaign->max_payout_per_clip_cents !== null) {
-            $caps[] = max(0, $campaign->max_payout_per_clip_cents - $clip->earned_cents);
+            // Le niveau ne déplace que la répartition : il laisse un bon
+            // clippeur capter une plus grosse part du même budget.
+            $clipCap = (int) floor(
+                $campaign->max_payout_per_clip_cents
+                * $this->progression->for($clip->user)->clipCapMultiplier(),
+            );
+
+            $caps[] = max(0, $clipCap - $clip->earned_cents);
         }
 
         if ($campaign->max_payout_per_clipper_cents !== null) {

@@ -286,6 +286,53 @@ paiements par simple oubli.
 L'inscription publique ne peut créer qu'un clippeur ou un artiste — les rôles du
 back-office ne se donnent pas par formulaire, même en trafiquant la requête.
 
+## Progression des clippeurs
+
+Cinq niveaux — Débutant, Confirmé, Expert, Élite, Légende — calculés depuis
+`clips.paid_views`, **jamais depuis `views_total`**. C'est la décision qui tient
+tout le reste : seul `paid_views` compte ce que le moteur de budget a réellement
+crédité, et `reverseClip()` le remet à zéro. Un niveau ne peut donc pas
+récompenser les vues que le détecteur de fraude essaie d'attraper, ni servir à
+les blanchir.
+
+```
+XP = vues rémunérées
+   + 2 000 par clip validé
+   + 5 000 par campagne distincte
+   − 20 000 par clip invalidé
+```
+
+**Le niveau est acquis, les avantages se maintiennent.** Le niveau ne redescend
+jamais : c'est une reconnaissance. Les avantages exigent un volume de vues
+rémunérées sur 90 jours glissants — sinon un clippeur inactif depuis un an
+garderait un accès prioritaire au détriment de ceux qui travaillent.
+
+| Niveau | XP | Accès anticipé | Plafond par clip |
+|---|---|---|---|
+| Débutant | 0 | — | ×1 |
+| Confirmé | 50 000 | — | ×1,5 |
+| Expert | 250 000 | 12 h | ×1,75 |
+| Élite | 1 000 000 | 24 h | ×2 |
+| Légende | 5 000 000 | 24 h | ×2 |
+
+**Accès anticipé** : une campagne programmée s'ouvre plus tôt aux niveaux
+élevés. C'est l'avantage le plus fort de la plateforme — le budget partant au
+premier arrivé, l'antériorité est la vraie monnaie — et il ne coûte rien au
+budget.
+
+**Plafond par clip relevé** : le niveau ne déplace que la répartition. Le budget
+total de la campagne reste le plafond absolu, et un test le prouve. Le CPM, lui,
+n'est jamais majoré : un admin qui fixe 0,50 € / 1000 sur 1 500 € doit savoir
+combien de vues il achète.
+
+Rien n'est stocké : tout se recalcule depuis les clips et le grand livre. Un
+compteur dénormalisé finirait par diverger, et il donnerait alors des avantages
+à quelqu'un qui ne les a pas gagnés. Un compte banni repart de zéro, sans quoi
+le niveau deviendrait un actif qu'on revend avec le compte.
+
+Seuils ajustables dans `config/clipping.php` — ils sont provisoires, à recaler
+sur les données réelles.
+
 ## Modération
 
 `ClipModerationService` porte les décisions ; il ne touche jamais aux compteurs

@@ -25,6 +25,33 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Progression des clippeurs
+    |--------------------------------------------------------------------------
+    |
+    | L'expérience se calcule sur les vues RÉMUNÉRÉES, jamais sur les vues
+    | brutes : `clips.paid_views` ne compte que ce que le moteur de budget a
+    | réellement crédité, et une invalidation le remet à zéro. Un niveau ne peut
+    | donc pas servir à blanchir des vues achetées.
+    |
+    | Les seuils sont provisoires : à recaler sur les données réelles dès qu'il
+    | y aura du volume.
+    |
+    */
+
+    'progression' => [
+        // Formule : vues payées, plus des bonus de régularité, moins un malus
+        // qui rend une invalidation réellement coûteuse.
+        'xp_per_approved_clip' => 2_000,
+        'xp_per_campaign' => 5_000,
+        'xp_penalty_per_invalidated_clip' => 20_000,
+
+        // Fenêtre d'activité qui conditionne les avantages. Le niveau, lui,
+        // reste acquis : c'est un trophée, pas un privilège.
+        'activity_window_days' => 90,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Détection de vues suspectes
     |--------------------------------------------------------------------------
     |
