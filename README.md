@@ -53,6 +53,7 @@ pendant le développement :
 | `REQUIRE_EMAIL_VERIFICATION` | L'e-mail n'a plus besoin d'être confirmé |
 | `REQUIRE_COMPLETE_PROFILE` | Pseudo, pays et PayPal ne bloquent plus |
 | `REQUIRE_ADMIN_2FA` | Le panel n'impose plus de scanner un QR code |
+| `REQUIRE_ARTIST_VALIDATION` | Une fiche artiste est active dès sa création |
 
 Aucun code n'est commenté ni supprimé : les contrôles restent en place, et la
 suite de tests **les force à `true`** pour continuer de les vérifier. Un bandeau
@@ -61,7 +62,13 @@ lui, un contrôle désactivé « le temps de voir l'interface » finit en produc
 
 À rétablir avant toute mise en ligne : sans vérification d'e-mail, une adresse
 jetable rend le bannissement inopérant ; sans 2FA, un compte admin compromis
-donne accès aux paiements.
+donne accès aux paiements ; sans validation des fiches, n'importe qui apparaît
+au catalogue sous le nom de scène qu'il veut.
+
+Quand la vérification d'e-mail est suspendue, l'inscription **n'envoie plus** le
+message de confirmation : il ne servirait à rien, et son envoi ferait échouer
+toute l'inscription si le serveur de mail est absent. Le compte reste non
+vérifié — rétablir le contrôle lui redemandera de confirmer.
 
 ### E-mails en développement
 
@@ -285,7 +292,8 @@ Une fiche créée depuis l'inscription publique naît **inactive** : sans
 validation d'un administrateur, n'importe qui apparaîtrait au catalogue sous le
 nom qu'il veut. Le badge de navigation du back-office compte les fiches en
 attente, sinon l'artiste attendrait une validation que personne ne sait devoir
-faire.
+faire. Ce contrôle fait partie des passages obligés suspendables
+(`REQUIRE_ARTIST_VALIDATION`).
 
 ### Aiguillage par rôle
 

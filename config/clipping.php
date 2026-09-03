@@ -21,6 +21,13 @@ return [
         'require_email_verification' => env('REQUIRE_EMAIL_VERIFICATION', true),
         'require_complete_profile' => env('REQUIRE_COMPLETE_PROFILE', true),
         'require_admin_2fa' => env('REQUIRE_ADMIN_2FA', true),
+
+        // Une fiche artiste créée depuis l'inscription publique naît inactive
+        // et attend un administrateur. Suspendre ce contrôle la rend active
+        // immédiatement — pratique pour parcourir l'espace artiste, mais à
+        // rétablir avant l'ouverture : sans lui, n'importe qui apparaît au
+        // catalogue sous le nom de scène qu'il veut.
+        'require_artist_validation' => env('REQUIRE_ARTIST_VALIDATION', true),
     ],
 
     /*

@@ -56,7 +56,13 @@ class RegisteredUserController extends Controller
             'role' => UserRole::from($validated['role']),
         ]);
 
-        event(new Registered($user));
+        // Quand la vérification est suspendue, l'e-mail ne sert à rien — et son
+        // envoi ferait échouer l'inscription entière si le serveur de mail est
+        // absent. Le compte reste non vérifié : rétablir le contrôle plus tard
+        // lui redemandera de confirmer, ce qui est le comportement correct.
+        if (config('clipping.onboarding.require_email_verification')) {
+            event(new Registered($user));
+        }
 
         Auth::login($user);
 

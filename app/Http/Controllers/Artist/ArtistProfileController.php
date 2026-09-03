@@ -34,19 +34,24 @@ class ArtistProfileController extends Controller
 
         $validated = $this->validated($request);
 
+        // Une fiche créée depuis l'inscription publique n'est normalement pas
+        // validée : l'administrateur l'active avant de lui associer des
+        // campagnes, sinon n'importe qui apparaîtrait au catalogue sous le nom
+        // de scène qu'il veut. Le contrôle est suspendable en développement.
+        $needsValidation = (bool) config('clipping.onboarding.require_artist_validation');
+
         Artist::create([
             ...$validated,
             'user_id' => $request->user()->getKey(),
             'slug' => $this->uniqueSlug($validated['name']),
-            // Une fiche créée depuis l'inscription publique n'est pas encore
-            // validée : l'administrateur l'active avant de lui associer des
-            // campagnes, sinon n'importe qui apparaîtrait au catalogue.
-            'is_active' => false,
+            'is_active' => ! $needsValidation,
         ]);
 
         return redirect()
             ->route('artist.dashboard')
-            ->with('status', 'Profil créé. Un administrateur va le valider avant de lancer vos campagnes.');
+            ->with('status', $needsValidation
+                ? 'Profil créé. Un administrateur va le valider avant de lancer vos campagnes.'
+                : 'Profil créé. Vous pouvez suivre vos campagnes dès maintenant.');
     }
 
     public function update(Request $request): RedirectResponse

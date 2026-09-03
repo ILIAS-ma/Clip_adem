@@ -41,6 +41,7 @@
         <env name="REQUIRE_EMAIL_VERIFICATION" value="true"/>
         <env name="REQUIRE_COMPLETE_PROFILE" value="true"/>
         <env name="REQUIRE_ADMIN_2FA" value="true"/>
+        <env name="REQUIRE_ARTIST_VALIDATION" value="true"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
