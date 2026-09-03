@@ -2,8 +2,8 @@
 
 <div>
     @if ($available < $minimum)
-        <div class="rounded-xl bg-ink-50 p-4 text-sm text-ink-600">
-            Il vous faut au moins <strong class="text-ink-900">{{ Money::euros($minimum) }}</strong>
+        <div class="rounded-xl bg-ink-800 p-4 text-sm text-ink-200">
+            Il vous faut au moins <strong class="text-ink-50">{{ Money::euros($minimum) }}</strong>
             de solde pour demander un retrait. Vous en avez {{ Money::euros($available) }}.
         </div>
     @else
@@ -15,7 +15,7 @@
                 <div class="relative mt-1.5">
                     <input id="payout-amount" type="number" step="0.01" min="0" wire:model="amount"
                            class="field pe-8 text-sm tabular">
-                    <span class="pointer-events-none absolute inset-y-0 end-0 flex items-center pe-3 text-sm text-ink-300">€</span>
+                    <span class="pointer-events-none absolute inset-y-0 end-0 flex items-center pe-3 text-sm text-ink-500">€</span>
                 </div>
                 <x-input-error class="mt-2" :messages="$errors->get('amount')" />
             </div>

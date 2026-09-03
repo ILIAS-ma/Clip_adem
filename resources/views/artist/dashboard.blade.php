@@ -5,8 +5,8 @@
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
                 <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">Espace artiste</p>
-                <h1 class="mt-1 font-display text-2xl font-bold text-ink-900">{{ $artist->name }}</h1>
-                <p class="mt-1 text-ink-500">
+                <h1 class="mt-1 font-display text-2xl font-bold text-ink-50">{{ $artist->name }}</h1>
+                <p class="mt-1 text-ink-300">
                     {{ $activeCampaigns > 0
                         ? $activeCampaigns.' campagne'.($activeCampaigns > 1 ? 's' : '').' en cours'
                         : 'Aucune campagne en cours' }}
@@ -54,8 +54,8 @@
         </div>
 
         <div class="card">
-            <div class="border-b border-ink-100 px-6 py-4">
-                <h2 class="font-display text-lg font-bold text-ink-900">Mes campagnes</h2>
+            <div class="border-b border-ink-700 px-6 py-4">
+                <h2 class="font-display text-lg font-bold text-ink-50">Mes campagnes</h2>
                 <p class="mt-0.5 text-sm text-ink-400">
                     Les campagnes sont créées et pilotées par l'équipe. Vous en suivez les résultats.
                 </p>
@@ -63,21 +63,21 @@
 
             @if ($campaigns->isEmpty())
                 <div class="px-6 py-14 text-center">
-                    <p class="font-display text-base font-bold text-ink-900">Aucune campagne pour l'instant</p>
-                    <p class="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-500">
+                    <p class="font-display text-base font-bold text-ink-50">Aucune campagne pour l'instant</p>
+                    <p class="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-300">
                         Dès qu'une campagne sera lancée à votre nom, vous verrez ici les vues générées
                         et le budget consommé, en temps réel.
                     </p>
                 </div>
             @else
-                <ul class="divide-y divide-ink-100">
+                <ul class="divide-y divide-ink-700">
                     @foreach ($campaigns as $campaign)
                         <li>
                             <a href="{{ route('artist.campaigns.show', $campaign) }}"
-                               class="block px-6 py-5 transition hover:bg-ink-50">
+                               class="block px-6 py-5 transition hover:bg-ink-800">
                                 <div class="flex flex-wrap items-start justify-between gap-4">
                                     <div class="min-w-0">
-                                        <p class="font-display text-base font-bold text-ink-900">
+                                        <p class="font-display text-base font-bold text-ink-50">
                                             {{ $campaign->title }}
                                         </p>
                                         <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink-400">

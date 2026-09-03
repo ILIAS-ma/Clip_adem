@@ -4,8 +4,8 @@
     <x-slot name="header">
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
-                <h1 class="font-display text-2xl font-bold text-ink-900">Mes clips</h1>
-                <p class="mt-1 text-ink-500">
+                <h1 class="font-display text-2xl font-bold text-ink-50">Mes clips</h1>
+                <p class="mt-1 text-ink-300">
                     {{ $clips->count() }} clip{{ $clips->count() > 1 ? 's' : '' }} ·
                     {{ Money::euros($clips->sum('earned_cents')) }} gagnés
                 </p>
@@ -18,8 +18,8 @@
 
         @if ($clips->isEmpty())
             <div class="card px-6 py-16 text-center">
-                <p class="font-display text-lg font-bold text-ink-900">Aucun clip soumis</p>
-                <p class="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-500">
+                <p class="font-display text-lg font-bold text-ink-50">Aucun clip soumis</p>
+                <p class="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-300">
                     Rejoignez une campagne, publiez votre clip sur votre compte, puis collez le lien
                     de la publication.
                 </p>
@@ -34,7 +34,7 @@
                             <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">
                                 {{ $clip->campaign?->artist?->name }}
                             </p>
-                            <p class="mt-0.5 font-display text-base font-bold text-ink-900">
+                            <p class="mt-0.5 font-display text-base font-bold text-ink-50">
                                 {{ $clip->campaign?->title }}
                             </p>
 
@@ -57,18 +57,18 @@
                         </div>
 
                         <div class="text-right">
-                            <p class="font-display text-xl font-bold tabular text-ink-900">
+                            <p class="font-display text-xl font-bold tabular text-ink-50">
                                 {{ Money::euros($clip->earned_cents) }}
                             </p>
                             <p class="text-xs tabular text-ink-400">{{ Money::views($clip->views_total) }} vues</p>
 
                             @if (($pending[$clip->id] ?? 0) > 0)
                                 {{-- Estimation issue du moteur : plafonds et reliquat déjà appliqués. --}}
-                                <p class="mt-1 text-xs font-semibold tabular text-money-600">
+                                <p class="mt-1 text-xs font-semibold tabular text-brand-400">
                                     + {{ Money::euros($pending[$clip->id]) }} en attente
                                 </p>
                             @elseif ($clip->unpaidViews() > 0)
-                                <p class="mt-1 text-xs tabular text-brand-700">
+                                <p class="mt-1 text-xs tabular text-brand-300">
                                     {{ Money::views($clip->unpaidViews()) }} vues non payées
                                 </p>
                             @endif

@@ -1,13 +1,13 @@
 <div>
     @if ($this->accounts->isEmpty())
-        <div class="rounded-xl bg-ink-50 p-4 text-sm text-ink-600">
+        <div class="rounded-xl bg-ink-800 p-4 text-sm text-ink-200">
             {{-- Distinguer « aucun compte » de « aucun compte compatible » évite
                  de laisser le clippeur chercher ce qu'il a mal fait. --}}
             @if (auth()->user()->socialAccounts()->exists())
                 <p>Aucun de vos comptes n'est compatible avec les plateformes de cette campagne,
                    ou vous les avez déjà tous engagés.</p>
             @else
-                <p class="font-semibold text-ink-900">Liez d'abord un compte</p>
+                <p class="font-semibold text-ink-50">Liez d'abord un compte</p>
                 <p class="mt-1">Vos vues doivent pouvoir être relevées pour être payées.</p>
                 <a href="{{ route('accounts.index') }}" class="btn-brand mt-3 w-full">Lier un compte</a>
             @endif

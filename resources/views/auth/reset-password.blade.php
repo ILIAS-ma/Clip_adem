@@ -1,7 +1,7 @@
 <x-guest-layout>
     <div class="mb-8">
-        <h2 class="font-display text-3xl font-bold text-ink-900">Nouveau mot de passe</h2>
-        <p class="mt-2 text-ink-500">Choisissez un mot de passe que vous n'utilisez nulle part ailleurs.</p>
+        <h2 class="font-display text-3xl font-bold text-ink-50">Nouveau mot de passe</h2>
+        <p class="mt-2 text-ink-300">Choisissez un mot de passe que vous n'utilisez nulle part ailleurs.</p>
     </div>
 
     <form method="POST" action="{{ route('password.store') }}" class="space-y-5">

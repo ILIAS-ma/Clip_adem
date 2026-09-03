@@ -2,8 +2,8 @@
 
 <x-guest-layout>
     <div class="mb-8">
-        <h2 class="font-display text-3xl font-bold text-ink-900">Créer un compte</h2>
-        <p class="mt-2 text-ink-500">Gratuit. Vous choisissez ce que vous faites sur la plateforme.</p>
+        <h2 class="font-display text-3xl font-bold text-ink-50">Créer un compte</h2>
+        <p class="mt-2 text-ink-300">Gratuit. Vous choisissez ce que vous faites sur la plateforme.</p>
     </div>
 
     <form method="POST" action="{{ route('register') }}" class="space-y-5" x-data="{ role: '{{ old('role', $role->value) }}' }">
@@ -20,11 +20,11 @@
                     <label class="cursor-pointer">
                         <input type="radio" name="role" value="{{ $option->value }}"
                                x-model="role" class="peer sr-only">
-                        <span class="block h-full rounded-2xl border-2 border-ink-200 p-4 transition
-                                     peer-checked:border-ink-900 peer-checked:bg-ink-50
-                                     peer-focus-visible:ring-2 peer-focus-visible:ring-ink-800 peer-focus-visible:ring-offset-2">
-                            <span class="block font-display text-base font-bold text-ink-900">{{ $title }}</span>
-                            <span class="mt-1 block text-xs leading-relaxed text-ink-500">{{ $description }}</span>
+                        <span class="block h-full rounded-2xl border-2 border-ink-700 p-4 transition
+                                     peer-checked:border-ink-700 peer-checked:bg-ink-800
+                                     peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500 peer-focus-visible:ring-offset-2">
+                            <span class="block font-display text-base font-bold text-ink-50">{{ $title }}</span>
+                            <span class="mt-1 block text-xs leading-relaxed text-ink-300">{{ $description }}</span>
                         </span>
                     </label>
                 @endforeach
@@ -74,9 +74,9 @@
         <x-primary-button class="w-full">Créer mon compte</x-primary-button>
     </form>
 
-    <p class="mt-8 text-center text-sm text-ink-500">
+    <p class="mt-8 text-center text-sm text-ink-300">
         Déjà inscrit ?
-        <a href="{{ route('login') }}" class="font-semibold text-ink-900 underline underline-offset-2">
+        <a href="{{ route('login') }}" class="font-semibold text-ink-50 underline underline-offset-2">
             Se connecter
         </a>
     </p>

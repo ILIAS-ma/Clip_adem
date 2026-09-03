@@ -1,7 +1,7 @@
 <x-guest-layout>
     <div class="mb-8">
-        <h2 class="font-display text-3xl font-bold text-ink-900">Confirmez votre identité</h2>
-        <p class="mt-2 text-ink-500">Cette action est sensible : ressaisissez votre mot de passe.</p>
+        <h2 class="font-display text-3xl font-bold text-ink-50">Confirmez votre identité</h2>
+        <p class="mt-2 text-ink-300">Cette action est sensible : ressaisissez votre mot de passe.</p>
     </div>
 
     <form method="POST" action="{{ route('password.confirm') }}" class="space-y-5">

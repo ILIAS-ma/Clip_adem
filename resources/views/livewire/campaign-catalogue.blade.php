@@ -35,19 +35,19 @@
                 <div class="relative mt-1.5">
                     <input id="minRate" type="number" step="0.10" min="0" wire:model.live.debounce.500ms="minRate"
                            placeholder="0,50" class="field pe-16 text-sm">
-                    <span class="pointer-events-none absolute inset-y-0 end-0 flex items-center pe-3 text-xs text-ink-300">€/1000</span>
+                    <span class="pointer-events-none absolute inset-y-0 end-0 flex items-center pe-3 text-xs text-ink-500">€/1000</span>
                 </div>
             </div>
         </div>
 
-        <div class="mt-4 flex flex-wrap items-center gap-4 border-t border-ink-100 pt-4">
-            <label class="flex items-center gap-2.5 text-sm text-ink-600">
-                <input type="checkbox" wire:model.live="onlyOpen" class="rounded border-ink-200 text-ink-800 focus:ring-ink-800">
+        <div class="mt-4 flex flex-wrap items-center gap-4 border-t border-ink-700 pt-4">
+            <label class="flex items-center gap-2.5 text-sm text-ink-200">
+                <input type="checkbox" wire:model.live="onlyOpen" class="rounded border-ink-700 text-ink-100 focus:ring-brand-500">
                 Uniquement les campagnes ouvertes
             </label>
 
             <button type="button" wire:click="resetFilters"
-                    class="text-sm font-medium text-ink-400 underline-offset-2 hover:text-ink-800 hover:underline">
+                    class="text-sm font-medium text-ink-400 underline-offset-2 hover:text-ink-50 hover:underline">
                 Réinitialiser
             </button>
 
@@ -59,8 +59,8 @@
 
     @if ($campaigns->isEmpty())
         <div class="card px-6 py-16 text-center">
-            <p class="font-display text-lg font-bold text-ink-900">Aucune campagne ne correspond</p>
-            <p class="mx-auto mt-2 max-w-sm text-sm text-ink-500">
+            <p class="font-display text-lg font-bold text-ink-50">Aucune campagne ne correspond</p>
+            <p class="mx-auto mt-2 max-w-sm text-sm text-ink-300">
                 Élargissez vos filtres, ou décochez « uniquement les campagnes ouvertes ».
             </p>
         </div>
@@ -83,7 +83,7 @@
                             <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">
                                 {{ $campaign->artist?->name }}
                             </p>
-                            <h2 class="mt-1 font-display text-lg font-bold leading-snug text-ink-900">
+                            <h2 class="mt-1 font-display text-lg font-bold leading-snug text-ink-50">
                                 {{ $campaign->title }}
                             </h2>
                         </div>
@@ -99,7 +99,7 @@
                     {{-- Le cachet est le premier critère de choix : il mérite
                          d'être lisible sans lire la carte entière. --}}
                     @if ($best)
-                        <p class="mt-4 font-display text-2xl font-bold tabular text-ink-900">
+                        <p class="mt-4 font-display text-2xl font-bold tabular text-ink-50">
                             {{ Money::rate($best) }}
                             <span class="text-sm font-semibold text-ink-400">/ 1000 vues</span>
                         </p>

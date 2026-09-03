@@ -17,7 +17,7 @@
     $home = auth()->user()->isArtist() ? route('artist.dashboard') : route('dashboard');
 @endphp
 
-<nav x-data="{ open: false }" class="sticky top-0 z-30 border-b border-ink-100 bg-white/90 backdrop-blur">
+<nav x-data="{ open: false }" class="sticky top-0 z-30 border-b border-ink-700 bg-ink-900/85 backdrop-blur">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 justify-between">
             <div class="flex">
@@ -39,7 +39,7 @@
                     {{-- Le solde est l'information que le clippeur vient
                          chercher : elle reste visible sur toutes les pages. --}}
                     <a href="{{ route('earnings.index') }}"
-                       class="rounded-xl bg-money-50 px-3 py-1.5 text-sm font-semibold tabular text-money-700 transition hover:bg-money-100">
+                       class="rounded-xl bg-brand-500/15 px-3 py-1.5 text-sm font-semibold tabular text-brand-300 transition hover:bg-brand-500/25">
                         {{ \App\Support\Money::euros(auth()->user()->availableBalanceCents()) }}
                     </a>
                 @elseif (auth()->user()->isArtist())
@@ -48,8 +48,8 @@
 
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
-                        <button class="flex items-center gap-2 rounded-xl px-2 py-1.5 text-sm font-medium text-ink-500 transition hover:bg-ink-50 hover:text-ink-800">
-                            <span class="flex h-7 w-7 items-center justify-center rounded-full bg-ink-800 text-xs font-bold text-white">
+                        <button class="flex items-center gap-2 rounded-xl px-2 py-1.5 text-sm font-medium text-ink-300 transition hover:bg-ink-800 hover:text-ink-50">
+                            <span class="flex h-7 w-7 items-center justify-center rounded-full bg-brand-500 text-xs font-bold text-ink-950">
                                 {{ mb_strtoupper(mb_substr(auth()->user()->displayName(), 0, 1)) }}
                             </span>
                             {{ auth()->user()->displayName() }}
@@ -74,7 +74,7 @@
             </div>
 
             <div class="-me-2 flex items-center sm:hidden">
-                <button @click="open = ! open" class="rounded-lg p-2 text-ink-400 transition hover:bg-ink-50 hover:text-ink-700"
+                <button @click="open = ! open" class="rounded-lg p-2 text-ink-400 transition hover:bg-ink-800 hover:text-ink-100"
                         :aria-expanded="open" aria-label="Menu">
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                         <path x-show="! open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -85,7 +85,7 @@
         </div>
     </div>
 
-    <div x-show="open" x-cloak class="border-t border-ink-100 sm:hidden">
+    <div x-show="open" x-cloak class="border-t border-ink-700 sm:hidden">
         <div class="py-2">
             @foreach ($links as $link)
                 <x-responsive-nav-link :href="route($link['route'])" :active="request()->routeIs($link['pattern'])">
@@ -94,10 +94,10 @@
             @endforeach
         </div>
 
-        <div class="border-t border-ink-100 py-4">
+        <div class="border-t border-ink-700 py-4">
             <div class="flex items-center justify-between px-4">
                 <div>
-                    <div class="font-semibold text-ink-800">{{ auth()->user()->displayName() }}</div>
+                    <div class="font-semibold text-ink-100">{{ auth()->user()->displayName() }}</div>
                     <div class="text-sm text-ink-400">{{ auth()->user()->email }}</div>
                 </div>
 

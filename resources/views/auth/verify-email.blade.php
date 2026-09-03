@@ -1,9 +1,9 @@
 <x-guest-layout>
     <div class="mb-8">
         <span class="chip-wait">Étape 1 sur 2</span>
-        <h2 class="mt-4 font-display text-3xl font-bold text-ink-900">Confirmez votre e-mail</h2>
-        <p class="mt-3 text-ink-500">
-            Un lien vient d'être envoyé à <strong class="text-ink-800">{{ auth()->user()->email }}</strong>.
+        <h2 class="mt-4 font-display text-3xl font-bold text-ink-50">Confirmez votre e-mail</h2>
+        <p class="mt-3 text-ink-300">
+            Un lien vient d'être envoyé à <strong class="text-ink-100">{{ auth()->user()->email }}</strong>.
             Ouvrez-le pour activer votre compte.
         </p>
     </div>
@@ -15,11 +15,11 @@
     @endif
 
     <div class="card p-6">
-        <h3 class="text-sm font-semibold text-ink-800">Vous ne trouvez pas l'e-mail ?</h3>
-        <ul class="mt-3 space-y-2 text-sm text-ink-500">
-            <li class="flex gap-2"><span class="text-ink-300">1.</span> Regardez dans vos spams ou vos promotions.</li>
-            <li class="flex gap-2"><span class="text-ink-300">2.</span> Vérifiez l'adresse saisie à l'inscription.</li>
-            <li class="flex gap-2"><span class="text-ink-300">3.</span> Redemandez un lien ci-dessous.</li>
+        <h3 class="text-sm font-semibold text-ink-100">Vous ne trouvez pas l'e-mail ?</h3>
+        <ul class="mt-3 space-y-2 text-sm text-ink-300">
+            <li class="flex gap-2"><span class="text-ink-500">1.</span> Regardez dans vos spams ou vos promotions.</li>
+            <li class="flex gap-2"><span class="text-ink-500">2.</span> Vérifiez l'adresse saisie à l'inscription.</li>
+            <li class="flex gap-2"><span class="text-ink-500">3.</span> Redemandez un lien ci-dessous.</li>
         </ul>
     </div>
 

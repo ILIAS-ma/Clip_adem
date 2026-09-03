@@ -2,8 +2,8 @@
 
 <x-app-layout>
     <x-slot name="header">
-        <h1 class="font-display text-2xl font-bold text-ink-900">Mes comptes réseaux</h1>
-        <p class="mt-1 text-ink-500">C'est par eux que vos vues sont relevées et vos gains calculés.</p>
+        <h1 class="font-display text-2xl font-bold text-ink-50">Mes comptes réseaux</h1>
+        <p class="mt-1 text-ink-300">C'est par eux que vos vues sont relevées et vos gains calculés.</p>
     </x-slot>
 
     <div class="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
@@ -18,15 +18,15 @@
 
         @if ($accounts->isNotEmpty())
             <div class="card">
-                <div class="border-b border-ink-100 px-6 py-4">
-                    <h2 class="font-display text-lg font-bold text-ink-900">Comptes liés</h2>
+                <div class="border-b border-ink-700 px-6 py-4">
+                    <h2 class="font-display text-lg font-bold text-ink-50">Comptes liés</h2>
                 </div>
 
-                <ul class="divide-y divide-ink-100">
+                <ul class="divide-y divide-ink-700">
                     @foreach ($accounts as $account)
                         <li class="flex flex-wrap items-center justify-between gap-4 px-6 py-5">
                             <div class="min-w-0">
-                                <p class="font-semibold text-ink-900">
+                                <p class="font-semibold text-ink-50">
                                     {{ $account->platform->label() }}
                                     @if ($account->handle)
                                         <span class="text-ink-400">· &#64;{{ $account->handle }}</span>
@@ -46,7 +46,7 @@
                                 </p>
 
                                 @if ($account->needs_reconnect)
-                                    <p class="mt-2 text-sm font-semibold text-red-600">
+                                    <p class="mt-2 text-sm font-semibold text-red-400">
                                         À reconnecter — vos vues ne sont plus comptées sur ce compte.
                                     </p>
                                 @endif
@@ -69,7 +69,7 @@
                                           onsubmit="return confirm('Délier ce compte ? Vos clips restent visibles, mais leurs vues cesseront d\'être relevées.');">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="text-sm font-medium text-ink-400 underline-offset-2 hover:text-red-600 hover:underline">
+                                        <button type="submit" class="text-sm font-medium text-ink-400 underline-offset-2 hover:text-red-400 hover:underline">
                                             Délier
                                         </button>
                                     </form>
@@ -82,18 +82,18 @@
         @endif
 
         <div class="card p-6 sm:p-8">
-            <h2 class="font-display text-lg font-bold text-ink-900">
+            <h2 class="font-display text-lg font-bold text-ink-50">
                 {{ $accounts->isEmpty() ? 'Liez votre premier compte' : 'Lier un autre compte' }}
             </h2>
-            <p class="mt-1.5 text-sm text-ink-500">
+            <p class="mt-1.5 text-sm text-ink-300">
                 Vous ne pouvez rejoindre une campagne qu'avec un compte lié.
             </p>
 
             <div class="mt-5 grid gap-3 sm:grid-cols-3">
                 @foreach ($platforms as $platform)
                     <a href="{{ route('social.redirect', $platform->value) }}"
-                       class="group rounded-2xl border border-ink-200 p-5 transition hover:-translate-y-0.5 hover:border-ink-800 hover:shadow-card">
-                        <span class="font-display text-base font-bold text-ink-900">{{ $platform->label() }}</span>
+                       class="group rounded-2xl border border-ink-700 p-5 transition hover:-translate-y-0.5 hover:border-brand-500 hover:shadow-card">
+                        <span class="font-display text-base font-bold text-ink-50">{{ $platform->label() }}</span>
 
                         @if ($simulated[$platform->value])
                             {{-- Laisser croire à une vraie liaison ferait perdre du

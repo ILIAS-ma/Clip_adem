@@ -6,6 +6,10 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? config('app.name') }}</title>
 
+    <meta name="theme-color" content="#080908">
+
+    <x-favicon />
+
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700|bricolage-grotesque:600,700&display=swap" rel="stylesheet" />
 
@@ -42,7 +46,7 @@
         @endif
 
         @isset($header)
-            <header class="border-b border-ink-100 bg-white">
+            <header class="border-b border-ink-700 bg-ink-900">
                 <div class="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
                     {{ $header }}
                 </div>

@@ -5,13 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ config('app.name') }} — Gagnez de l'argent avec vos clips</title>
 
+    <meta name="theme-color" content="#080908">
+
+    <x-favicon />
+
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700|bricolage-grotesque:600,700&display=swap" rel="stylesheet" />
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>
-    <header class="border-b border-ink-100 bg-white">
+    <header class="border-b border-ink-800 bg-ink-950">
         <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
             <x-brand-mark />
 
@@ -22,17 +26,17 @@
     </header>
 
     <main>
-        <section class="relative overflow-hidden bg-ink-900">
-            <div aria-hidden="true" class="pointer-events-none absolute -right-40 -top-40 h-[32rem] w-[32rem] rounded-full bg-brand-500/10 blur-3xl"></div>
-            <div aria-hidden="true" class="pointer-events-none absolute -bottom-48 -left-40 h-[32rem] w-[32rem] rounded-full bg-money-500/10 blur-3xl"></div>
+        <section class="relative overflow-hidden border-b border-ink-800 bg-ink-900">
+            <div aria-hidden="true" class="pointer-events-none absolute -right-40 -top-40 h-[32rem] w-[32rem] rounded-full bg-brand-500/12 blur-3xl"></div>
+            <div aria-hidden="true" class="pointer-events-none absolute -bottom-48 -left-40 h-[32rem] w-[32rem] rounded-full bg-brand-500/8 blur-3xl"></div>
 
             <div class="relative mx-auto max-w-6xl px-6 py-24 sm:py-32">
                 <div class="max-w-3xl">
-                    <span class="chip bg-white/10 text-brand-300">Rémunéré aux 1000 vues</span>
+                    <span class="chip bg-brand-500/15 text-brand-300">Rémunéré aux 1000 vues</span>
 
-                    <h1 class="mt-6 font-display text-5xl font-bold leading-[1.05] text-white sm:text-6xl">
+                    <h1 class="mt-6 font-display text-5xl font-bold leading-[1.05] text-ink-50 sm:text-6xl">
                         Vos clips font la promo,<br>
-                        <span class="text-brand-400">vos vues font le reste.</span>
+                        <span class="text-brand-500">vos vues font le reste.</span>
                     </h1>
 
                     <p class="mt-6 max-w-xl text-lg leading-relaxed text-ink-300">
@@ -48,10 +52,10 @@
                             Je suis clippeur
                         </a>
                         <a href="{{ route('register', ['profil' => 'artist']) }}"
-                           class="btn border border-white/25 px-6 py-3 text-base text-white hover:bg-white/10">
+                           class="btn border border-ink-600 px-6 py-3 text-base text-ink-100 hover:bg-ink-800">
                             Je suis artiste
                         </a>
-                        <a href="{{ route('home') }}" class="btn px-6 py-3 text-base text-white/70 hover:text-white">
+                        <a href="{{ route('home') }}" class="btn px-6 py-3 text-base text-ink-400 hover:text-ink-50">
                             J'ai déjà un compte
                         </a>
                     </div>
@@ -60,7 +64,7 @@
         </section>
 
         <section class="mx-auto max-w-6xl px-6 py-20">
-            <h2 class="font-display text-3xl font-bold text-ink-900">Comment ça marche</h2>
+            <h2 class="font-display text-3xl font-bold text-ink-50">Comment ça marche</h2>
 
             <ol class="mt-10 grid gap-6 md:grid-cols-3">
                 @foreach ([
@@ -69,11 +73,11 @@
                     ['Suivez vos gains', 'Vos vues sont relevées automatiquement et créditées au fil du temps. Retrait sur PayPal dès 10 €.'],
                 ] as $index => [$title, $text])
                     <li class="card p-6">
-                        <span class="flex h-9 w-9 items-center justify-center rounded-full bg-ink-900 font-display text-sm font-bold text-brand-400">
+                        <span class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-500 font-display text-sm font-bold text-ink-950">
                             {{ $index + 1 }}
                         </span>
-                        <h3 class="mt-5 font-display text-lg font-bold text-ink-900">{{ $title }}</h3>
-                        <p class="mt-2 text-sm leading-relaxed text-ink-500">{{ $text }}</p>
+                        <h3 class="mt-5 font-display text-lg font-bold text-ink-50">{{ $title }}</h3>
+                        <p class="mt-2 text-sm leading-relaxed text-ink-300">{{ $text }}</p>
                     </li>
                 @endforeach
             </ol>
@@ -90,7 +94,7 @@
             </div>
         </section>
 
-        <section class="border-t border-ink-100 bg-white">
+        <section class="border-t border-ink-800 bg-ink-900">
             <div class="mx-auto grid max-w-6xl gap-8 px-6 py-16 sm:grid-cols-3">
                 @foreach ([
                     ['TikTok · YouTube · Instagram', 'Liez vos comptes en un clic'],
@@ -98,15 +102,15 @@
                     ['PayPal', 'Retrait à partir de 10 €'],
                 ] as [$value, $label])
                     <div>
-                        <p class="font-display text-2xl font-bold text-ink-900">{{ $value }}</p>
-                        <p class="mt-1 text-sm text-ink-500">{{ $label }}</p>
+                        <p class="font-display text-2xl font-bold text-ink-50">{{ $value }}</p>
+                        <p class="mt-1 text-sm text-ink-300">{{ $label }}</p>
                     </div>
                 @endforeach
             </div>
         </section>
     </main>
 
-    <footer class="border-t border-ink-100 bg-white">
+    <footer class="border-t border-ink-800 bg-ink-950">
         <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-8 text-sm text-ink-400">
             <x-brand-mark />
             <p>{{ date('Y') }} — Plateforme de clipping</p>

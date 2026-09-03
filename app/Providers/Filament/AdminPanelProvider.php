@@ -7,6 +7,7 @@ use App\Filament\Widgets\PlatformOverview;
 use App\Filament\Widgets\SpendPerArtist;
 use App\Filament\Widgets\TopClippers;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
+use Filament\Enums\ThemeMode;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -50,9 +51,17 @@ class AdminPanelProvider extends PanelProvider
                 // l'activer depuis son profil.
                 isRequired: (bool) config('clipping.onboarding.require_admin_2fa'),
             )
+            // Même identité que le front : lime sur noir. Le back-office force
+            // le mode sombre plutôt que de suivre le réglage du système, sinon
+            // l'admin et le site public n'auraient pas l'air du même produit.
             ->colors([
-                'primary' => Color::Emerald,
+                'primary' => Color::hex('#93CE2E'),
             ])
+            ->defaultThemeMode(ThemeMode::Dark)
+            ->brandLogo(fn () => is_file(public_path('images/logo.png'))
+                ? view('filament.brand-logo')
+                : null)
+            ->brandLogoHeight('2rem')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([

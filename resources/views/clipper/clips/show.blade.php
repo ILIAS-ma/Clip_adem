@@ -7,7 +7,7 @@
                 <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">
                     {{ $clip->campaign?->artist?->name }}
                 </p>
-                <h1 class="mt-1 font-display text-2xl font-bold text-ink-900">{{ $clip->campaign?->title }}</h1>
+                <h1 class="mt-1 font-display text-2xl font-bold text-ink-50">{{ $clip->campaign?->title }}</h1>
                 <p class="mt-1 text-sm text-ink-400">{{ $clip->platform->label() }} · {{ $clip->external_post_id }}</p>
             </div>
 
@@ -54,10 +54,10 @@
         <div class="grid gap-6 lg:grid-cols-2">
 
             <div class="card p-6">
-                <h2 class="font-display text-lg font-bold text-ink-900">Conformité au brief</h2>
+                <h2 class="font-display text-lg font-bold text-ink-50">Conformité au brief</h2>
 
                 @if (! $clip->compliance || ! ($clip->compliance['checks'] ?? []))
-                    <p class="mt-3 text-sm text-ink-500">
+                    <p class="mt-3 text-sm text-ink-300">
                         La vérification aura lieu au premier relevé des vues.
                     </p>
                 @else
@@ -66,20 +66,20 @@
                             <li class="flex gap-3">
                                 <span @class([
                                     'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold',
-                                    'bg-money-100 text-money-700' => $check['passed'],
-                                    'bg-red-100 text-red-700' => ! $check['passed'],
+                                    'bg-brand-500/20 text-brand-300' => $check['passed'],
+                                    'bg-red-500/20 text-red-300' => ! $check['passed'],
                                 ])>{{ $check['passed'] ? '✓' : '✕' }}</span>
                                 <div>
-                                    <p class="text-sm font-medium text-ink-800">{{ $check['label'] }}</p>
+                                    <p class="text-sm font-medium text-ink-100">{{ $check['label'] }}</p>
                                     @if ($check['detail'])
-                                        <p class="mt-0.5 text-sm text-red-600">{{ $check['detail'] }}</p>
+                                        <p class="mt-0.5 text-sm text-red-400">{{ $check['detail'] }}</p>
                                     @endif
                                 </div>
                             </li>
                         @endforeach
                     </ul>
 
-                    <p class="hint mt-5 border-t border-ink-100 pt-4">
+                    <p class="hint mt-5 border-t border-ink-700 pt-4">
                         Ces contrôles sont automatiques. La validation finale reste faite par un modérateur.
                     </p>
                 @endif
@@ -93,38 +93,38 @@
             </div>
 
             <div class="card p-6">
-                <h2 class="font-display text-lg font-bold text-ink-900">Historique des relevés</h2>
+                <h2 class="font-display text-lg font-bold text-ink-50">Historique des relevés</h2>
 
                 @if ($snapshots->isEmpty())
-                    <p class="mt-3 text-sm text-ink-500">Aucun relevé pour l'instant.</p>
+                    <p class="mt-3 text-sm text-ink-300">Aucun relevé pour l'instant.</p>
                 @else
-                    <ul class="mt-4 divide-y divide-ink-100 text-sm">
+                    <ul class="mt-4 divide-y divide-ink-700 text-sm">
                         @foreach ($snapshots as $snapshot)
                             <li class="flex items-baseline justify-between py-2.5">
                                 <span class="text-ink-400">{{ $snapshot->captured_at->format('d/m/Y H:i') }}</span>
-                                <span class="font-semibold tabular text-ink-900">{{ Money::views($snapshot->views) }}</span>
+                                <span class="font-semibold tabular text-ink-50">{{ Money::views($snapshot->views) }}</span>
                             </li>
                         @endforeach
                     </ul>
                 @endif
 
-                <dl class="mt-5 space-y-2.5 border-t border-ink-100 pt-4 text-sm">
+                <dl class="mt-5 space-y-2.5 border-t border-ink-700 pt-4 text-sm">
                     @if ($clip->posted_at)
                         <div class="flex justify-between">
                             <dt class="text-ink-400">Publié le</dt>
-                            <dd class="text-ink-800">{{ $clip->posted_at->format('d/m/Y') }}</dd>
+                            <dd class="text-ink-100">{{ $clip->posted_at->format('d/m/Y') }}</dd>
                         </div>
                     @endif
                     @if ($clip->duration_seconds)
                         <div class="flex justify-between">
                             <dt class="text-ink-400">Durée</dt>
-                            <dd class="tabular text-ink-800">{{ $clip->duration_seconds }} s</dd>
+                            <dd class="tabular text-ink-100">{{ $clip->duration_seconds }} s</dd>
                         </div>
                     @endif
                     @if ($clip->last_synced_at)
                         <div class="flex justify-between">
                             <dt class="text-ink-400">Dernier relevé</dt>
-                            <dd class="text-ink-800">{{ $clip->last_synced_at->diffForHumans() }}</dd>
+                            <dd class="text-ink-100">{{ $clip->last_synced_at->diffForHumans() }}</dd>
                         </div>
                     @endif
                 </dl>

@@ -2,12 +2,16 @@ import defaultTheme from 'tailwindcss/defaultTheme';
 import forms from '@tailwindcss/forms';
 
 /**
- * Identité visuelle de l'espace clippeur.
+ * Identité visuelle, reprise du logo : noir profond et vert lime.
  *
- * Bleu nuit pour le socle et les actions : on manipule de l'argent, l'interface
- * doit inspirer la fiabilité avant l'énergie. L'ambre ne sert qu'aux montants et
- * aux points d'attention, le vert exclusivement aux gains acquis — un code
- * couleur constant vaut mieux qu'une palette décorative.
+ * Une seule couleur d'accent, et elle porte deux choses à la fois — la marque
+ * et l'argent acquis. Sur cette palette, un montant en lime veut donc toujours
+ * dire « ce gain vous appartient ». L'ambre signale l'attente, le rouge la
+ * perte : trois signaux, jamais de couleur décorative.
+ *
+ * L'échelle `ink` garde sa convention habituelle — 50 le plus clair, 950 le
+ * plus sombre — même si l'interface est sombre : c'est ce qu'un développeur
+ * attend en lisant `text-ink-50`.
  */
 export default {
     content: [
@@ -24,47 +28,51 @@ export default {
             },
 
             colors: {
-                bone: '#F6F5F2',
+                // Neutres très légèrement tirés vers le vert : posés à côté du
+                // lime, des gris parfaitement neutres paraissent sales.
                 ink: {
-                    50: '#F2F4F8',
-                    100: '#E6E9F0',
-                    200: '#C9CEDD',
-                    300: '#9BA3BC',
-                    400: '#6E7899',
-                    500: '#4A5680',
-                    600: '#2C3A63',
-                    700: '#1E2947',
-                    800: '#131A2E',
-                    900: '#0E1424',
+                    50: '#F4F6F1',
+                    100: '#E3E7DE',
+                    200: '#C6CCC0',
+                    300: '#9AA294',
+                    400: '#6E766A',
+                    500: '#4B5247',
+                    600: '#33382F',
+                    700: '#232722',   // bordures et surfaces surélevées
+                    800: '#181A17',   // cartes
+                    900: '#101210',   // fond des sections
+                    950: '#080908',   // fond de page
                 },
+
                 brand: {
-                    50: '#FFF8EB',
-                    100: '#FEEFC7',
-                    200: '#FDE08A',
-                    300: '#FBCB4D',
-                    400: '#F9B723',
-                    500: '#F2A007',
-                    600: '#D68203',
-                    700: '#B15E06',
-                    800: '#90490C',
-                    900: '#763C0D',
+                    50: '#F5FCE8',
+                    100: '#E8F8C9',
+                    200: '#D3F09B',
+                    300: '#BAE566',
+                    400: '#A6DC42',
+                    500: '#93CE2E',   // le lime du logo
+                    600: '#79AC21',
+                    700: '#5C831C',
+                    800: '#45631A',
+                    900: '#2F4413',
                 },
+
+                // Les gains partagent la couleur de la marque : sur cette
+                // palette, identité et argent acquis sont la même idée.
                 money: {
-                    50: '#ECFDF5',
-                    100: '#D1FAE5',
-                    500: '#0E9F6E',
-                    600: '#057A55',
-                    700: '#046C4E',
+                    50: '#F5FCE8',
+                    100: '#E8F8C9',
+                    300: '#BAE566',
+                    500: '#93CE2E',
+                    600: '#79AC21',
+                    700: '#5C831C',
                 },
             },
 
             boxShadow: {
-                card: '0 1px 2px rgba(19,26,46,.06), 0 8px 24px -16px rgba(19,26,46,.28)',
-                lifted: '0 2px 4px rgba(19,26,46,.06), 0 16px 40px -20px rgba(19,26,46,.35)',
-            },
-
-            borderRadius: {
-                xl2: '1rem',
+                card: '0 1px 2px rgba(0,0,0,.5), 0 12px 32px -20px rgba(0,0,0,.9)',
+                lifted: '0 2px 6px rgba(0,0,0,.55), 0 24px 48px -24px rgba(0,0,0,1)',
+                glow: '0 0 0 1px rgba(147,206,46,.35), 0 0 32px -8px rgba(147,206,46,.45)',
             },
         },
     },

@@ -1,7 +1,7 @@
 <section>
     <header>
-        <h2 class="font-display text-lg font-bold text-ink-900">Informations du compte</h2>
-        <p class="mt-1 text-sm text-ink-500">
+        <h2 class="font-display text-lg font-bold text-ink-50">Informations du compte</h2>
+        <p class="mt-1 text-sm text-ink-300">
             Votre nom réel sert aux versements ; votre pseudo est ce que voient les autres.
         </p>
     </header>
@@ -51,20 +51,20 @@
                 </div>
 
                 @if (session('status') === 'verification-link-sent')
-                    <p class="mt-2 text-sm font-medium text-money-600">
+                    <p class="mt-2 text-sm font-medium text-brand-400">
                         Un nouveau lien vient d'être envoyé.
                     </p>
                 @endif
             @endif
         </div>
 
-        <div class="flex items-center gap-4 border-t border-ink-100 pt-5">
+        <div class="flex items-center gap-4 border-t border-ink-700 pt-5">
             <x-primary-button>Enregistrer</x-primary-button>
 
             @if (session('status') === 'profile-updated')
                 <p x-data="{ show: true }" x-show="show" x-transition
                    x-init="setTimeout(() => show = false, 2500)"
-                   class="text-sm font-medium text-money-600">Enregistré.</p>
+                   class="text-sm font-medium text-brand-400">Enregistré.</p>
             @endif
         </div>
     </form>

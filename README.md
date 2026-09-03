@@ -163,17 +163,29 @@ pendant un appel PayPal bloquerait tous les autres crédits.
 
 ### Identité visuelle
 
-Bleu nuit pour le socle et les actions : on manipule de l'argent, l'interface
-doit inspirer la fiabilité avant l'énergie. **La couleur porte le sens métier,
-jamais la décoration** — vert pour les gains acquis, ambre pour ce qui est en
-attente ou demande attention, rouge pour ce qui est perdu. Ce code est constant
-d'un écran à l'autre : un montant vert est toujours de l'argent qui vous
-appartient.
+Reprise du logo : **noir profond et vert lime** (`#93CE2E`), interface sombre de
+bout en bout, back-office compris.
+
+**Une seule couleur d'accent, et elle porte deux choses à la fois** — la marque
+et l'argent acquis. Sur cette palette, un montant en lime veut donc toujours
+dire « ce gain vous appartient ». L'ambre signale l'attente, le rouge la perte :
+trois signaux, jamais de couleur décorative. Ce code est constant d'un écran à
+l'autre.
+
+Les neutres sont très légèrement tirés vers le vert : posés à côté du lime, des
+gris parfaitement neutres paraissent sales. L'échelle `ink` garde sa convention
+habituelle — 50 le plus clair, 950 le plus sombre — même si l'interface est
+sombre : c'est ce qu'un développeur attend en lisant `text-ink-50`.
 
 Tokens dans `tailwind.config.js`, classes composées dans `resources/css/app.css`
 (`card`, `btn-primary`, `chip-ok`, `alert-warn`…). Bricolage Grotesque pour les
 titres et les montants, Figtree pour le texte courant, chiffres en `tabular`
 partout où ils s'alignent en colonne.
+
+**Le logo** se dépose dans `public/images/logo.png`. Il est alors repris
+automatiquement par la marque du site, le favicon et le back-office ; en son
+absence, une onde sonore lime sert de repli, pour qu'aucun écran ne dépende d'un
+fichier manquant.
 
 Connexion sur `/`, espace connecté sur `/dashboard` et `/campagnes`.
 Authentification par **Laravel Breeze préset Blade** — le préset Livewire épingle

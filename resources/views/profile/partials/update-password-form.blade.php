@@ -1,7 +1,7 @@
 <section>
     <header>
-        <h2 class="font-display text-lg font-bold text-ink-900">Mot de passe</h2>
-        <p class="mt-1 text-sm text-ink-500">
+        <h2 class="font-display text-lg font-bold text-ink-50">Mot de passe</h2>
+        <p class="mt-1 text-sm text-ink-300">
             Choisissez un mot de passe long, que vous n'utilisez nulle part ailleurs.
         </p>
     </header>
@@ -31,13 +31,13 @@
             <x-input-error :messages="$errors->updatePassword->get('password_confirmation')" class="mt-2" />
         </div>
 
-        <div class="flex items-center gap-4 border-t border-ink-100 pt-5">
+        <div class="flex items-center gap-4 border-t border-ink-700 pt-5">
             <x-primary-button>Changer le mot de passe</x-primary-button>
 
             @if (session('status') === 'password-updated')
                 <p x-data="{ show: true }" x-show="show" x-transition
                    x-init="setTimeout(() => show = false, 2500)"
-                   class="text-sm font-medium text-money-600">Modifié.</p>
+                   class="text-sm font-medium text-brand-400">Modifié.</p>
             @endif
         </div>
     </form>

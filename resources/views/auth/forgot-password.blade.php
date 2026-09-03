@@ -1,7 +1,7 @@
 <x-guest-layout>
     <div class="mb-8">
-        <h2 class="font-display text-3xl font-bold text-ink-900">Mot de passe oublié</h2>
-        <p class="mt-2 text-ink-500">
+        <h2 class="font-display text-3xl font-bold text-ink-50">Mot de passe oublié</h2>
+        <p class="mt-2 text-ink-300">
             Indiquez votre adresse : nous vous enverrons un lien pour en choisir un nouveau.
         </p>
     </div>
@@ -21,8 +21,8 @@
         <x-primary-button class="w-full">Envoyer le lien</x-primary-button>
     </form>
 
-    <p class="mt-8 text-center text-sm text-ink-500">
-        <a href="{{ route('login') }}" class="font-semibold text-ink-900 underline underline-offset-2">
+    <p class="mt-8 text-center text-sm text-ink-300">
+        <a href="{{ route('login') }}" class="font-semibold text-ink-50 underline underline-offset-2">
             Retour à la connexion
         </a>
     </p>

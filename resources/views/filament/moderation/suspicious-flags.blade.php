@@ -22,7 +22,7 @@
         </p>
     @endif
 
-    <div class="border-t border-gray-200 pt-3 text-sm dark:border-white/10">
+    <div class="border-t border-gray-200 pt-3 text-sm dark:border-ink-700">
         <div class="flex justify-between py-1">
             <span class="text-gray-500 dark:text-gray-400">Relevés de vues</span>
             <span class="font-medium tabular-nums">{{ $clip->snapshots()->count() }}</span>

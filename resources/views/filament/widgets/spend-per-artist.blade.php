@@ -18,7 +18,7 @@
                             <th class="py-2 text-right font-medium">CPM réel</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-white/10">
+                    <tbody class="divide-y divide-gray-100 dark:divide-ink-700">
                         @foreach ($artists as $artist)
                             <tr>
                                 <td class="py-2">

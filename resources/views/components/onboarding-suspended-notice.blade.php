@@ -10,10 +10,10 @@
 
 @if ($suspended->isNotEmpty() && ! app()->environment('production'))
     <div class="bg-brand-500">
-        <div class="mx-auto flex max-w-7xl flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 text-sm text-ink-900 sm:px-6 lg:px-8">
+        <div class="mx-auto flex max-w-7xl flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 text-sm text-ink-950 sm:px-6 lg:px-8">
             <span class="font-semibold">Contrôles suspendus</span>
-            <span class="text-ink-800">{{ $suspended->values()->join(', ', ' et ') }}</span>
-            <span class="ms-auto text-xs text-ink-700">
+            <span class="text-ink-900">{{ $suspended->values()->join(', ', ' et ') }}</span>
+            <span class="ms-auto text-xs text-ink-800">
                 Réactivez-les dans <code class="font-mono">.env</code> avant toute mise en ligne.
             </span>
         </div>

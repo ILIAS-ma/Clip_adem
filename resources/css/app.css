@@ -5,14 +5,15 @@
 @layer base {
     html {
         -webkit-tap-highlight-color: transparent;
+        color-scheme: dark;
     }
 
     body {
-        @apply bg-bone text-ink-800 antialiased;
+        @apply bg-ink-950 text-ink-100 antialiased;
     }
 
     h1, h2, h3 {
-        @apply font-display;
+        @apply font-display text-ink-50;
         text-wrap: balance;
     }
 
@@ -21,19 +22,23 @@
         font-variant-numeric: tabular-nums;
     }
 
-    /* Un focus visible partout, y compris au clavier. */
+    /* Le lime sert aussi de couleur de focus : un seul accent, partout. */
     :focus-visible {
-        @apply outline-none ring-2 ring-ink-800 ring-offset-2 ring-offset-bone;
+        @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-ink-950;
+    }
+
+    ::selection {
+        @apply bg-brand-500 text-ink-950;
     }
 }
 
 @layer components {
     .card {
-        @apply rounded-2xl border border-ink-100 bg-white shadow-card;
+        @apply rounded-2xl border border-ink-700 bg-ink-900 shadow-card;
     }
 
     .label {
-        @apply block text-sm font-medium text-ink-700;
+        @apply block text-sm font-medium text-ink-200;
     }
 
     .hint {
@@ -41,8 +46,8 @@
     }
 
     .field {
-        @apply block w-full rounded-xl border-ink-200 bg-white text-ink-800 shadow-sm
-               placeholder:text-ink-300 focus:border-ink-800 focus:ring-ink-800;
+        @apply block w-full rounded-xl border-ink-700 bg-ink-950 text-ink-50 shadow-sm
+               placeholder:text-ink-500 focus:border-brand-500 focus:ring-brand-500;
     }
 
     .btn {
@@ -50,33 +55,35 @@
                transition disabled:cursor-not-allowed disabled:opacity-50;
     }
 
+    /* L'action principale est toujours lime sur noir : sur fond sombre, c'est
+       le seul contraste qui se voit du premier coup d'œil. */
     .btn-primary {
-        @apply btn bg-ink-800 text-white hover:bg-ink-700 active:bg-ink-900;
+        @apply btn bg-brand-500 text-ink-950 hover:bg-brand-400 active:bg-brand-600;
     }
 
     .btn-brand {
-        @apply btn bg-brand-500 text-ink-900 hover:bg-brand-400 active:bg-brand-600;
+        @apply btn-primary;
     }
 
     .btn-ghost {
-        @apply btn border border-ink-200 bg-white text-ink-700 hover:border-ink-300 hover:bg-ink-50;
+        @apply btn border border-ink-700 bg-ink-900 text-ink-200 hover:border-ink-600 hover:bg-ink-800 hover:text-ink-50;
     }
 
     .chip {
         @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
     }
 
-    /* États métier. La couleur porte le sens : vert = acquis, ambre = en
+    /* États métier. La couleur porte le sens : lime = acquis, ambre = en
        attente, rouge = perdu. Jamais l'inverse, nulle part. */
-    .chip-ok      { @apply chip bg-money-50 text-money-700; }
-    .chip-wait    { @apply chip bg-brand-50 text-brand-800; }
-    .chip-danger  { @apply chip bg-red-50 text-red-700; }
-    .chip-neutral { @apply chip bg-ink-100 text-ink-600; }
+    .chip-ok      { @apply chip bg-brand-500/15 text-brand-300; }
+    .chip-wait    { @apply chip bg-amber-500/15 text-amber-300; }
+    .chip-danger  { @apply chip bg-red-500/15 text-red-300; }
+    .chip-neutral { @apply chip bg-ink-700 text-ink-300; }
 
     .alert {
         @apply rounded-xl border-l-4 p-4 text-sm;
     }
-    .alert-ok     { @apply alert border-money-500 bg-money-50 text-money-700; }
-    .alert-warn   { @apply alert border-brand-500 bg-brand-50 text-brand-900; }
-    .alert-danger { @apply alert border-red-500 bg-red-50 text-red-800; }
+    .alert-ok     { @apply alert border-brand-500 bg-brand-500/10 text-brand-200; }
+    .alert-warn   { @apply alert border-amber-500 bg-amber-500/10 text-amber-200; }
+    .alert-danger { @apply alert border-red-500 bg-red-500/10 text-red-200; }
 }
