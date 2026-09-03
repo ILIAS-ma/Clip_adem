@@ -1,31 +1,51 @@
 <x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600">
-        {{ __('Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn\'t receive the email, we will gladly send you another.') }}
+    <div class="mb-8">
+        <span class="chip-wait">Étape 1 sur 2</span>
+        <h2 class="mt-4 font-display text-3xl font-bold text-ink-900">Confirmez votre e-mail</h2>
+        <p class="mt-3 text-ink-500">
+            Un lien vient d'être envoyé à <strong class="text-ink-800">{{ auth()->user()->email }}</strong>.
+            Ouvrez-le pour activer votre compte.
+        </p>
     </div>
 
-    @if (session('status') == 'verification-link-sent')
-        <div class="mb-4 font-medium text-sm text-green-600">
-            {{ __('A new verification link has been sent to the email address you provided during registration.') }}
+    @if (session('status') === 'verification-link-sent')
+        <div class="alert-ok mb-6">
+            Nouveau lien envoyé. Vérifiez votre boîte de réception.
         </div>
     @endif
 
-    <div class="mt-4 flex items-center justify-between">
+    <div class="card p-6">
+        <h3 class="text-sm font-semibold text-ink-800">Vous ne trouvez pas l'e-mail ?</h3>
+        <ul class="mt-3 space-y-2 text-sm text-ink-500">
+            <li class="flex gap-2"><span class="text-ink-300">1.</span> Regardez dans vos spams ou vos promotions.</li>
+            <li class="flex gap-2"><span class="text-ink-300">2.</span> Vérifiez l'adresse saisie à l'inscription.</li>
+            <li class="flex gap-2"><span class="text-ink-300">3.</span> Redemandez un lien ci-dessous.</li>
+        </ul>
+    </div>
+
+    <div class="mt-6 flex flex-wrap items-center gap-3">
         <form method="POST" action="{{ route('verification.send') }}">
             @csrf
-
-            <div>
-                <x-primary-button>
-                    {{ __('Resend Verification Email') }}
-                </x-primary-button>
-            </div>
+            <x-primary-button>Renvoyer le lien</x-primary-button>
         </form>
 
         <form method="POST" action="{{ route('logout') }}">
             @csrf
-
-            <button type="submit" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                {{ __('Log Out') }}
-            </button>
+            <button type="submit" class="btn-ghost">Se déconnecter</button>
         </form>
     </div>
+
+    @if (app()->environment('local'))
+        {{-- En développement, les e-mails partent vers Mailpit et non vers une
+             vraie boîte : sans ce rappel, l'écran est un cul-de-sac. --}}
+        <div class="alert-warn mt-8">
+            <p class="font-semibold">Environnement de développement</p>
+            <p class="mt-1">
+                Les e-mails n'arrivent pas dans une vraie boîte : ils sont capturés par Mailpit.
+                Ouvrez <a href="http://127.0.0.1:8025" target="_blank" rel="noopener"
+                          class="font-semibold underline underline-offset-2">127.0.0.1:8025</a>
+                pour lire le message et cliquer sur le lien.
+            </p>
+        </div>
+    @endif
 </x-guest-layout>

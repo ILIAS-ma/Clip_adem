@@ -1,3 +1,82 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    html {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        @apply bg-bone text-ink-800 antialiased;
+    }
+
+    h1, h2, h3 {
+        @apply font-display;
+        text-wrap: balance;
+    }
+
+    /* Les colonnes de chiffres doivent s'aligner : c'est de l'argent. */
+    .tabular {
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Un focus visible partout, y compris au clavier. */
+    :focus-visible {
+        @apply outline-none ring-2 ring-ink-800 ring-offset-2 ring-offset-bone;
+    }
+}
+
+@layer components {
+    .card {
+        @apply rounded-2xl border border-ink-100 bg-white shadow-card;
+    }
+
+    .label {
+        @apply block text-sm font-medium text-ink-700;
+    }
+
+    .hint {
+        @apply mt-1.5 text-xs leading-relaxed text-ink-400;
+    }
+
+    .field {
+        @apply block w-full rounded-xl border-ink-200 bg-white text-ink-800 shadow-sm
+               placeholder:text-ink-300 focus:border-ink-800 focus:ring-ink-800;
+    }
+
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold
+               transition disabled:cursor-not-allowed disabled:opacity-50;
+    }
+
+    .btn-primary {
+        @apply btn bg-ink-800 text-white hover:bg-ink-700 active:bg-ink-900;
+    }
+
+    .btn-brand {
+        @apply btn bg-brand-500 text-ink-900 hover:bg-brand-400 active:bg-brand-600;
+    }
+
+    .btn-ghost {
+        @apply btn border border-ink-200 bg-white text-ink-700 hover:border-ink-300 hover:bg-ink-50;
+    }
+
+    .chip {
+        @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
+    }
+
+    /* États métier. La couleur porte le sens : vert = acquis, ambre = en
+       attente, rouge = perdu. Jamais l'inverse, nulle part. */
+    .chip-ok      { @apply chip bg-money-50 text-money-700; }
+    .chip-wait    { @apply chip bg-brand-50 text-brand-800; }
+    .chip-danger  { @apply chip bg-red-50 text-red-700; }
+    .chip-neutral { @apply chip bg-ink-100 text-ink-600; }
+
+    .alert {
+        @apply rounded-xl border-l-4 p-4 text-sm;
+    }
+    .alert-ok     { @apply alert border-money-500 bg-money-50 text-money-700; }
+    .alert-warn   { @apply alert border-brand-500 bg-brand-50 text-brand-900; }
+    .alert-danger { @apply alert border-red-500 bg-red-50 text-red-800; }
+}

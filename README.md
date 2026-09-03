@@ -40,9 +40,21 @@ Espace clippeur sur `/`, panel admin sur `/admin`. Comptes de démonstration
 La double authentification TOTP est obligatoire côté admin : au premier accès,
 le panel impose de scanner un QR code avant de laisser entrer.
 
-> Les e-mails ne partent pas : `MAIL_MAILER=log` les écrit dans
-> `storage/logs/laravel.log`. Pour récupérer un lien de vérification :
-> `grep -o 'http[^"]*verify-email[^"]*' storage/logs/laravel.log | tail -1`
+### E-mails en développement
+
+Les e-mails partent vers **Mailpit**, qui les capture au lieu de les envoyer à
+de vraies boîtes :
+
+```bash
+C:/laragon/bin/mailpit/mailpit.exe --smtp 127.0.0.1:1025 --listen 127.0.0.1:8025
+```
+
+Boîte de réception sur <http://127.0.0.1:8025>. L'écran « confirmez votre
+e-mail » rappelle cette adresse en local, sinon il serait un cul-de-sac.
+
+Les e-mails d'authentification sont traduits dans `AppServiceProvider` : un
+clippeur francophone qui reçoit « Verify Email Address » le prend pour du spam,
+et c'est la première cause de comptes jamais activés.
 
 ## La règle la plus importante du projet
 
@@ -125,6 +137,20 @@ Aucun appel réseau ni job dans la transaction : un verrou de campagne tenu
 pendant un appel PayPal bloquerait tous les autres crédits.
 
 ## Espace clippeur
+
+### Identité visuelle
+
+Bleu nuit pour le socle et les actions : on manipule de l'argent, l'interface
+doit inspirer la fiabilité avant l'énergie. **La couleur porte le sens métier,
+jamais la décoration** — vert pour les gains acquis, ambre pour ce qui est en
+attente ou demande attention, rouge pour ce qui est perdu. Ce code est constant
+d'un écran à l'autre : un montant vert est toujours de l'argent qui vous
+appartient.
+
+Tokens dans `tailwind.config.js`, classes composées dans `resources/css/app.css`
+(`card`, `btn-primary`, `chip-ok`, `alert-warn`…). Bricolage Grotesque pour les
+titres et les montants, Figtree pour le texte courant, chiffres en `tabular`
+partout où ils s'alignent en colonne.
 
 Front public sur `/`, espace connecté sur `/dashboard` et `/campagnes`.
 Authentification par **Laravel Breeze préset Blade** — le préset Livewire épingle
@@ -306,10 +332,8 @@ externes, pas à du code manquant :
   `YouTubeProvider`, `TikTokProvider` et `InstagramProvider` sont écrits avec
   leurs endpoints réels mais n'ont jamais reçu de réponse authentique. Les
   premiers points à revérifier sont marqués « À VÉRIFIER » dans le code.
-- **Envoi des e-mails.** `MAIL_MAILER=log` écrit les messages dans
-  `storage/logs/laravel.log` au lieu de les envoyer : à brancher sur un
-  attrape-mail local ou un SMTP réel avant toute utilisation par de vrais
-  clippeurs.
+- **SMTP de production.** Mailpit capture les e-mails en développement ; il
+  faudra un vrai fournisseur d'envoi avant que de vrais clippeurs s'inscrivent.
 - **Publication depuis la plateforme** (Content Posting API de TikTok). Hors
   périmètre à ce jour : le modèle est que le clippeur publie lui-même, puis
   colle le lien.

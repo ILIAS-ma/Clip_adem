@@ -18,6 +18,17 @@ class ProfileUpdateRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+
+            'pseudo' => [
+                'nullable', 'string', 'min:3', 'max:48',
+                'regex:/^[\pL\pN._\- ]+$/u',
+                Rule::unique(User::class, 'pseudo')->ignore($this->user()->id),
+            ],
+
+            // L'adresse PayPal peut différer de l'adresse de connexion : c'est
+            // fréquent, et l'imposer identique bloquerait des retraits.
+            'paypal_email' => ['nullable', 'email', 'max:255'],
+
             'email' => [
                 'required',
                 'string',

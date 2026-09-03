@@ -171,9 +171,9 @@ class ClipperEarningsTest extends TestCase
         $this->actingAs($this->clipper())
             ->get(route('accounts.index'))
             ->assertSuccessful()
-            ->assertSee('Lier un compte')
+            ->assertSee('TikTok')
             // Laisser croire à une vraie liaison ferait perdre du temps au
             // premier comportement inattendu.
-            ->assertSee('démonstration');
+            ->assertSee('Mode démonstration');
     }
 }

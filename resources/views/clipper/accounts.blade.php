@@ -2,128 +2,120 @@
 
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-semibold leading-tight text-gray-800">Mes comptes réseaux</h2>
+        <h1 class="font-display text-2xl font-bold text-ink-900">Mes comptes réseaux</h1>
+        <p class="mt-1 text-ink-500">C'est par eux que vos vues sont relevées et vos gains calculés.</p>
     </x-slot>
 
-    <div class="py-10">
-        <div class="mx-auto max-w-4xl space-y-6 px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
 
-            @if (session('status'))
-                <div class="rounded-md border-l-4 border-emerald-400 bg-emerald-50 p-4 text-sm text-emerald-800">
-                    {{ session('status') }}
+        @if (session('status'))
+            <div class="alert-ok">{{ session('status') }}</div>
+        @endif
+
+        @error('social')
+            <div class="alert-danger">{{ $message }}</div>
+        @enderror
+
+        @if ($accounts->isNotEmpty())
+            <div class="card">
+                <div class="border-b border-ink-100 px-6 py-4">
+                    <h2 class="font-display text-lg font-bold text-ink-900">Comptes liés</h2>
+                </div>
+
+                <ul class="divide-y divide-ink-100">
+                    @foreach ($accounts as $account)
+                        <li class="flex flex-wrap items-center justify-between gap-4 px-6 py-5">
+                            <div class="min-w-0">
+                                <p class="font-semibold text-ink-900">
+                                    {{ $account->platform->label() }}
+                                    @if ($account->handle)
+                                        <span class="text-ink-400">· &#64;{{ $account->handle }}</span>
+                                    @endif
+                                </p>
+
+                                <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-400">
+                                    <span class="tabular">{{ $account->clips_count }} clip{{ $account->clips_count > 1 ? 's' : '' }}</span>
+                                    @if ($account->followers_count !== null)
+                                        <span aria-hidden="true">·</span>
+                                        <span class="tabular">{{ Money::views($account->followers_count) }} abonnés</span>
+                                    @endif
+                                    @if ($account->token_expires_at && $account->is_active && ! $account->needs_reconnect)
+                                        <span aria-hidden="true">·</span>
+                                        <span>jeton valide jusqu'au {{ $account->token_expires_at->format('d/m/Y') }}</span>
+                                    @endif
+                                </p>
+
+                                @if ($account->needs_reconnect)
+                                    <p class="mt-2 text-sm font-semibold text-red-600">
+                                        À reconnecter — vos vues ne sont plus comptées sur ce compte.
+                                    </p>
+                                @endif
+                            </div>
+
+                            <div class="flex shrink-0 items-center gap-3">
+                                @if ($account->needs_reconnect)
+                                    <span class="chip-danger">Déconnecté</span>
+                                    <a href="{{ route('social.redirect', $account->platform->value) }}" class="btn-brand">
+                                        Reconnecter
+                                    </a>
+                                @elseif (! $account->is_active)
+                                    <span class="chip-neutral">Délié</span>
+                                    <a href="{{ route('social.redirect', $account->platform->value) }}" class="btn-ghost">
+                                        Relier
+                                    </a>
+                                @else
+                                    <span class="chip-ok">Actif</span>
+                                    <form method="POST" action="{{ route('accounts.destroy', $account) }}"
+                                          onsubmit="return confirm('Délier ce compte ? Vos clips restent visibles, mais leurs vues cesseront d\'être relevées.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-sm font-medium text-ink-400 underline-offset-2 hover:text-red-600 hover:underline">
+                                            Délier
+                                        </button>
+                                    </form>
+                                @endif
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <div class="card p-6 sm:p-8">
+            <h2 class="font-display text-lg font-bold text-ink-900">
+                {{ $accounts->isEmpty() ? 'Liez votre premier compte' : 'Lier un autre compte' }}
+            </h2>
+            <p class="mt-1.5 text-sm text-ink-500">
+                Vous ne pouvez rejoindre une campagne qu'avec un compte lié.
+            </p>
+
+            <div class="mt-5 grid gap-3 sm:grid-cols-3">
+                @foreach ($platforms as $platform)
+                    <a href="{{ route('social.redirect', $platform->value) }}"
+                       class="group rounded-2xl border border-ink-200 p-5 transition hover:-translate-y-0.5 hover:border-ink-800 hover:shadow-card">
+                        <span class="font-display text-base font-bold text-ink-900">{{ $platform->label() }}</span>
+
+                        @if ($simulated[$platform->value])
+                            {{-- Laisser croire à une vraie liaison ferait perdre du
+                                 temps au premier comportement inattendu. --}}
+                            <span class="chip-wait mt-2 block w-fit">Démonstration</span>
+                        @else
+                            <span class="chip-ok mt-2 block w-fit">Connexion officielle</span>
+                        @endif
+                    </a>
+                @endforeach
+            </div>
+
+            @if (collect($simulated)->contains(true))
+                <div class="alert-warn mt-6">
+                    <p class="font-semibold">Mode démonstration</p>
+                    <p class="mt-1 leading-relaxed">
+                        Les plateformes marquées ainsi n'ont pas encore leurs identifiants d'application.
+                        La liaison, le relevé des vues et le calcul des gains fonctionnent de bout en bout,
+                        mais sur des données simulées.
+                    </p>
                 </div>
             @endif
-
-            @error('social')
-                <div class="rounded-md border-l-4 border-red-400 bg-red-50 p-4 text-sm text-red-800">
-                    {{ $message }}
-                </div>
-            @enderror
-
-            <div class="rounded-lg bg-white shadow">
-                <div class="border-b border-gray-100 px-6 py-4">
-                    <h3 class="text-base font-semibold text-gray-900">Comptes liés</h3>
-                    <p class="mt-1 text-sm text-gray-500">
-                        C'est par ces comptes que vos vues sont relevées. Un compte déconnecté cesse d'être compté.
-                    </p>
-                </div>
-
-                @if ($accounts->isEmpty())
-                    <p class="px-6 py-8 text-center text-sm text-gray-500">
-                        Aucun compte lié pour le moment.
-                    </p>
-                @else
-                    <ul class="divide-y divide-gray-100">
-                        @foreach ($accounts as $account)
-                            <li class="flex flex-wrap items-center justify-between gap-4 px-6 py-4">
-                                <div class="min-w-0">
-                                    <p class="font-medium text-gray-900">
-                                        {{ $account->platform->label() }}
-                                        @if ($account->handle)
-                                            · &#64;{{ $account->handle }}
-                                        @endif
-                                    </p>
-                                    <p class="mt-0.5 text-xs text-gray-500">
-                                        {{ $account->clips_count }} clip{{ $account->clips_count > 1 ? 's' : '' }}
-                                        @if ($account->followers_count !== null)
-                                            · {{ Money::views($account->followers_count) }} abonnés
-                                        @endif
-                                        @if ($account->token_expires_at)
-                                            · jeton valide jusqu'au {{ $account->token_expires_at->format('d/m/Y') }}
-                                        @endif
-                                    </p>
-
-                                    @if ($account->needs_reconnect)
-                                        {{-- La panne la plus silencieuse du système : sans ce
-                                             message, le clippeur croit que ses vues montent. --}}
-                                        <p class="mt-1 text-xs font-medium text-red-600">
-                                            À reconnecter — vos vues ne sont plus comptées sur ce compte.
-                                        </p>
-                                    @elseif (! $account->is_active)
-                                        <p class="mt-1 text-xs text-gray-500">Compte délié.</p>
-                                    @endif
-                                </div>
-
-                                <div class="flex shrink-0 items-center gap-3">
-                                    @if ($account->needs_reconnect || ! $account->is_active)
-                                        <a href="{{ route('social.redirect', $account->platform->value) }}"
-                                           class="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700">
-                                            Reconnecter
-                                        </a>
-                                    @else
-                                        <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
-                                            Actif
-                                        </span>
-
-                                        <form method="POST" action="{{ route('accounts.destroy', $account) }}"
-                                              onsubmit="return confirm('Délier ce compte ? Vos clips déjà soumis restent visibles, mais leurs vues cesseront d\'être relevées.');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-sm text-gray-500 underline hover:text-gray-700">
-                                                Délier
-                                            </button>
-                                        </form>
-                                    @endif
-                                </div>
-                            </li>
-                        @endforeach
-                    </ul>
-                @endif
-            </div>
-
-            <div class="rounded-lg bg-white p-6 shadow">
-                <h3 class="text-base font-semibold text-gray-900">Lier un compte</h3>
-                <p class="mt-1 text-sm text-gray-500">
-                    Vous ne pouvez rejoindre une campagne qu'avec un compte lié.
-                </p>
-
-                <div class="mt-4 grid gap-3 sm:grid-cols-3">
-                    @foreach ($platforms as $platform)
-                        <a href="{{ route('social.redirect', $platform->value) }}"
-                           class="flex flex-col rounded-lg border border-gray-200 p-4 transition hover:border-emerald-400 hover:bg-emerald-50">
-                            <span class="font-medium text-gray-900">{{ $platform->label() }}</span>
-
-                            @if ($simulated[$platform->value])
-                                {{-- Dit franchement que la connexion est simulée : laisser croire
-                                     à une vraie liaison ferait perdre du temps au premier bug. --}}
-                                <span class="mt-1 text-xs text-amber-600">
-                                    Mode démonstration — connexion simulée, vues générées
-                                </span>
-                            @else
-                                <span class="mt-1 text-xs text-gray-500">Connexion officielle</span>
-                            @endif
-                        </a>
-                    @endforeach
-                </div>
-
-                @if (collect($simulated)->contains(true))
-                    <p class="mt-4 rounded-md bg-amber-50 p-3 text-xs leading-relaxed text-amber-800">
-                        Les plateformes marquées « démonstration » n'ont pas encore leurs identifiants
-                        d'application. La liaison, la synchronisation des vues et le calcul des gains
-                        fonctionnent de bout en bout, mais sur des données simulées.
-                    </p>
-                @endif
-            </div>
         </div>
     </div>
 </x-app-layout>

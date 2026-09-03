@@ -4,72 +4,107 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ config('app.name') }} — Gagnez de l'argent avec vos clips</title>
+
     <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700|bricolage-grotesque:600,700&display=swap" rel="stylesheet" />
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-gray-50 font-sans antialiased">
-    <div class="flex min-h-screen flex-col">
+<body>
+    <header class="border-b border-ink-100 bg-white">
+        <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+            <x-brand-mark />
 
-        <header class="border-b border-gray-200 bg-white">
-            <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-                <span class="text-lg font-bold tracking-tight text-gray-900">{{ config('app.name') }}</span>
-
-                <nav class="flex items-center gap-4 text-sm">
-                    <a href="{{ route('login') }}" class="font-medium text-gray-600 hover:text-gray-900">Connexion</a>
-                    <a href="{{ route('register') }}"
-                       class="rounded-md bg-emerald-600 px-4 py-2 font-medium text-white transition hover:bg-emerald-700">
-                        Devenir clippeur
-                    </a>
-                </nav>
-            </div>
-        </header>
-
-        <main class="mx-auto w-full max-w-5xl flex-1 px-6 py-16">
-            <div class="max-w-2xl">
-                <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-                    Vos clips font la promo,<br>vos vues font le reste.
-                </h1>
-                <p class="mt-6 text-lg leading-relaxed text-gray-600">
-                    Rejoignez une campagne, publiez votre clip sur TikTok, YouTube ou Instagram, et soyez rémunéré
-                    selon les vues générées — jusqu'à épuisement du budget de la campagne.
-                </p>
-                <a href="{{ route('register') }}"
-                   class="mt-8 inline-flex items-center rounded-md bg-emerald-600 px-6 py-3 font-medium text-white transition hover:bg-emerald-700">
-                    Créer un compte
+            <nav class="flex items-center gap-3">
+                <a href="{{ route('login') }}" class="px-3 py-2 text-sm font-semibold text-ink-500 transition hover:text-ink-900">
+                    Connexion
                 </a>
-            </div>
+                <a href="{{ route('register') }}" class="btn-primary">Devenir clippeur</a>
+            </nav>
+        </div>
+    </header>
 
-            <div class="mt-16 grid gap-6 sm:grid-cols-3">
+    <main>
+        <section class="relative overflow-hidden bg-ink-900">
+            <div aria-hidden="true" class="pointer-events-none absolute -right-40 -top-40 h-[32rem] w-[32rem] rounded-full bg-brand-500/10 blur-3xl"></div>
+            <div aria-hidden="true" class="pointer-events-none absolute -bottom-48 -left-40 h-[32rem] w-[32rem] rounded-full bg-money-500/10 blur-3xl"></div>
+
+            <div class="relative mx-auto max-w-6xl px-6 py-24 sm:py-32">
+                <div class="max-w-3xl">
+                    <span class="chip bg-white/10 text-brand-300">Rémunéré aux 1000 vues</span>
+
+                    <h1 class="mt-6 font-display text-5xl font-bold leading-[1.05] text-white sm:text-6xl">
+                        Vos clips font la promo,<br>
+                        <span class="text-brand-400">vos vues font le reste.</span>
+                    </h1>
+
+                    <p class="mt-6 max-w-xl text-lg leading-relaxed text-ink-300">
+                        Rejoignez une campagne d'artiste, publiez votre clip sur TikTok, YouTube ou
+                        Instagram, et soyez payé selon les vues générées — jusqu'à épuisement du budget.
+                    </p>
+
+                    <div class="mt-10 flex flex-wrap items-center gap-4">
+                        <a href="{{ route('register') }}" class="btn-brand px-6 py-3 text-base">Créer un compte</a>
+                        <a href="{{ route('login') }}" class="btn px-6 py-3 text-base text-white/80 hover:text-white">
+                            J'ai déjà un compte
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mx-auto max-w-6xl px-6 py-20">
+            <h2 class="font-display text-3xl font-bold text-ink-900">Comment ça marche</h2>
+
+            <ol class="mt-10 grid gap-6 md:grid-cols-3">
                 @foreach ([
-                    ['1', 'Choisissez une campagne', 'Chaque campagne affiche son cachet pour 1000 vues et le budget qu\'il lui reste.'],
-                    ['2', 'Publiez et soumettez', 'Suivez le brief, publiez sur votre compte, puis collez le lien de la publication.'],
-                    ['3', 'Suivez vos gains', 'Vos vues sont relevées automatiquement et créditées jusqu\'à épuisement du budget.'],
-                ] as [$step, $title, $text])
-                    <div class="rounded-lg bg-white p-6 shadow-sm">
-                        <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700">
-                            {{ $step }}
+                    ['Choisissez une campagne', "Chaque campagne affiche son cachet pour 1000 vues, son brief, et le budget qu'il lui reste en temps réel."],
+                    ['Publiez et soumettez', "Vous publiez depuis votre propre compte, comme d'habitude. Il suffit ensuite de coller le lien de la publication."],
+                    ['Suivez vos gains', 'Vos vues sont relevées automatiquement et créditées au fil du temps. Retrait sur PayPal dès 10 €.'],
+                ] as $index => [$title, $text])
+                    <li class="card p-6">
+                        <span class="flex h-9 w-9 items-center justify-center rounded-full bg-ink-900 font-display text-sm font-bold text-brand-400">
+                            {{ $index + 1 }}
                         </span>
-                        <h2 class="mt-4 font-semibold text-gray-900">{{ $title }}</h2>
-                        <p class="mt-2 text-sm leading-relaxed text-gray-600">{{ $text }}</p>
+                        <h3 class="mt-5 font-display text-lg font-bold text-ink-900">{{ $title }}</h3>
+                        <p class="mt-2 text-sm leading-relaxed text-ink-500">{{ $text }}</p>
+                    </li>
+                @endforeach
+            </ol>
+
+            {{-- Le point qui surprend le plus les nouveaux clippeurs, dit
+                 franchement plutôt que découvert quand les gains s'arrêtent. --}}
+            <div class="alert-warn mt-12 max-w-3xl">
+                <p class="font-semibold">Le budget est fini, et il part au premier arrivé</p>
+                <p class="mt-1 leading-relaxed">
+                    Chaque campagne dispose d'un budget limité qui se consomme au fil des vues.
+                    Quand il atteint zéro, la campagne se ferme : vos vues continuent d'être comptées
+                    mais ne sont plus rémunérées. Publier tôt compte.
+                </p>
+            </div>
+        </section>
+
+        <section class="border-t border-ink-100 bg-white">
+            <div class="mx-auto grid max-w-6xl gap-8 px-6 py-16 sm:grid-cols-3">
+                @foreach ([
+                    ['TikTok · YouTube · Instagram', 'Liez vos comptes en un clic'],
+                    ['Aux 1000 vues', 'Cachet annoncé avant de publier'],
+                    ['PayPal', 'Retrait à partir de 10 €'],
+                ] as [$value, $label])
+                    <div>
+                        <p class="font-display text-2xl font-bold text-ink-900">{{ $value }}</p>
+                        <p class="mt-1 text-sm text-ink-500">{{ $label }}</p>
                     </div>
                 @endforeach
             </div>
+        </section>
+    </main>
 
-            {{-- Dit d'emblée ce qui surprend le plus les nouveaux clippeurs :
-                 le budget est fini, et il part au premier arrivé. --}}
-            <p class="mt-10 max-w-2xl rounded-lg border-l-4 border-amber-400 bg-amber-50 p-4 text-sm text-amber-800">
-                Le budget d'une campagne est limité et se consomme au fil des vues, premier arrivé premier servi.
-                Quand il atteint zéro, la campagne se ferme : les vues continuent d'être comptées mais ne sont plus
-                rémunérées.
-            </p>
-        </main>
-
-        <footer class="border-t border-gray-200 bg-white">
-            <div class="mx-auto max-w-5xl px-6 py-6 text-sm text-gray-500">
-                {{ config('app.name') }}
-            </div>
-        </footer>
-    </div>
+    <footer class="border-t border-ink-100 bg-white">
+        <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-8 text-sm text-ink-400">
+            <x-brand-mark />
+            <p>{{ date('Y') }} — Plateforme de clipping</p>
+        </div>
+    </footer>
 </body>
 </html>
