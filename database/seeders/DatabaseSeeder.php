@@ -43,9 +43,22 @@ class DatabaseSeeder extends Seeder
             ],
         );
 
+        // L'artiste a son propre compte de connexion : il suit ses statistiques
+        // sans pouvoir toucher au budget ni à la modération.
+        $artistUser = User::updateOrCreate(
+            ['email' => 'nayra@artiste.test'],
+            [
+                'name' => 'Nayra Diallo',
+                'password' => Hash::make('password'),
+                'role' => UserRole::Artist,
+                'email_verified_at' => now(),
+            ],
+        );
+
         $artist = Artist::updateOrCreate(
             ['slug' => 'nayra'],
             [
+                'user_id' => $artistUser->getKey(),
                 'name' => 'NAYRA',
                 'bio' => 'Artiste rap/afro en développement, sortie de single prévue ce trimestre.',
                 'tiktok_handle' => 'nayra.officiel',

@@ -11,6 +11,7 @@ Le dépôt est partagé entre deux périmètres :
 |---|---|---|
 | Espace admin + moteur de campagne / budget | Ilias | Livré |
 | Espace clippeur complet : auth, catalogue, comptes, clips, revenus | Ilias | Livré |
+| Espace artiste : suivi des campagnes et du rendement | Ilias | Livré |
 | Validation des intégrations sur les API réelles | Anas | En attente des clés |
 
 ## Démarrage
@@ -36,6 +37,7 @@ Espace clippeur sur `/`, panel admin sur `/admin`. Comptes de démonstration
 | `moderateur@clip-adem.test` | modérateur |
 | `lina@clippeur.test` | clippeur, avec clips et gains |
 | `karim@clippeur.test` | clippeur, avec un clip aux vues suspectes |
+| `nayra@artiste.test` | artiste, avec une campagne en cours |
 
 La double authentification TOTP est obligatoire côté admin : au premier accès,
 le panel impose de scanner un QR code avant de laisser entrer.
@@ -158,16 +160,14 @@ Livewire 3 alors que Filament 5 exige Livewire 4 ; les parties interactives
 (catalogue, adhésion, soumission) sont donc des composants Livewire 4 écrits à
 la main, dans `app/Livewire/`.
 
-**Une seule table `users`, un seul guard.** Le rôle décide de la destination :
-un `clipper` atterrit sur `/dashboard`, un membre du staff est renvoyé vers
-`/admin` par le middleware `staff.redirect`.
+**Une seule table `users`, un seul guard.** Le rôle décide de la destination.
 
 Trois middlewares gardent l'espace :
 
 | Middleware | Rôle |
 |---|---|
 | `not.banned` | Déconnecte un compte suspendu à sa requête suivante, sans attendre l'expiration de sa session |
-| `staff.redirect` | Renvoie administrateurs et modérateurs vers le panel |
+| `role:clipper` | Renvoie tout autre profil vers son propre espace |
 | `profile.completed` | Impose pseudo, pays et adresse PayPal avant de participer |
 
 Le profil est vérifié à chaque requête, pas au seul moment du retrait :
@@ -230,6 +230,40 @@ premier relevé — c'est le moment où la légende et la durée réelles sont e
 connues. Il produit **un rapport, jamais une décision** : un clip conforme reste
 en attente de modération, un clip non conforme arrive devant le modérateur avec
 ses motifs.
+
+## Espace artiste
+
+Un artiste peut avoir son propre compte : `artists.user_id`, nullable et unique.
+Nullable parce qu'une fiche créée par l'admin n'a pas forcément de compte,
+unique parce que « de quel artiste voit-il les statistiques ? » doit avoir une
+réponse unique.
+
+**Consultation seule.** L'artiste suit ses campagnes ; il ne les crée pas, ne
+touche ni au budget ni à la modération. Il voit : budget engagé, dépensé,
+restant, vues générées, **coût réel pour 1000 vues** — le seul indicateur de
+rendement qui ait du sens, à comparer au CPM annoncé — le détail par campagne,
+les clips classés par vues et la répartition par plateforme.
+
+**Ce qu'il ne voit jamais** : les campagnes des autres artistes (404), ni
+l'identité civile, l'e-mail ou l'adresse PayPal des clippeurs. Seul leur pseudo
+apparaît. Deux tests verrouillent ces deux points.
+
+Une fiche créée depuis l'inscription publique naît **inactive** : sans
+validation d'un administrateur, n'importe qui apparaîtrait au catalogue sous le
+nom qu'il veut. Le badge de navigation du back-office compte les fiches en
+attente, sinon l'artiste attendrait une validation que personne ne sait devoir
+faire.
+
+### Aiguillage par rôle
+
+`UserRole::homeRoute()` décide où atterrit chacun ; le middleware `role:` renvoie
+un profil égaré vers son propre espace plutôt que de lui opposer un 403 sans
+issue. `isStaff()` est une **liste blanche explicite** et non « tout sauf
+clippeur » : ajouter un rôle ne doit pas lui ouvrir le back-office et les
+paiements par simple oubli.
+
+L'inscription publique ne peut créer qu'un clippeur ou un artiste — les rôles du
+back-office ne se donnent pas par formulaire, même en trafiquant la requête.
 
 ## Modération
 

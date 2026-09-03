@@ -26,6 +26,9 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+
+        // Sans rôle transmis, l'inscription retombe sur le profil le moins
+        // privilégié et atterrit dans l'espace clippeur.
+        $response->assertRedirect('/dashboard');
     }
 }

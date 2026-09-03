@@ -18,8 +18,9 @@
         @php
             // Une seule requête pour le bandeau, sur toutes les pages : un jeton
             // mort est la panne la plus silencieuse du système, elle ne doit pas
-            // dépendre de la page où l'on se trouve.
-            $needsReconnect = auth()->check()
+            // dépendre de la page où l'on se trouve. Un artiste n'a pas de
+            // comptes réseaux : la requête ne le concerne pas.
+            $needsReconnect = auth()->check() && auth()->user()->isClipper()
                 ? auth()->user()->socialAccounts()->where('needs_reconnect', true)->count()
                 : 0;
         @endphp

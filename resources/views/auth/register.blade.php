@@ -1,19 +1,51 @@
+@php use App\Enums\UserRole; @endphp
+
 <x-guest-layout>
     <div class="mb-8">
         <h2 class="font-display text-3xl font-bold text-ink-900">Créer un compte</h2>
-        <p class="mt-2 text-ink-500">Gratuit. Vous choisissez vos campagnes, vous gardez vos comptes.</p>
+        <p class="mt-2 text-ink-500">Gratuit. Vous choisissez ce que vous faites sur la plateforme.</p>
     </div>
 
-    <form method="POST" action="{{ route('register') }}" class="space-y-5">
+    <form method="POST" action="{{ route('register') }}" class="space-y-5" x-data="{ role: '{{ old('role', $role->value) }}' }">
         @csrf
+
+        <fieldset>
+            <legend class="label mb-2">Je suis…</legend>
+
+            <div class="grid grid-cols-2 gap-3">
+                @foreach ([
+                    [UserRole::Clipper, 'Clippeur', 'Je publie des clips et je suis payé aux vues'],
+                    [UserRole::Artist, 'Artiste', 'Je suis promu et je suis les statistiques'],
+                ] as [$option, $title, $description])
+                    <label class="cursor-pointer">
+                        <input type="radio" name="role" value="{{ $option->value }}"
+                               x-model="role" class="peer sr-only">
+                        <span class="block h-full rounded-2xl border-2 border-ink-200 p-4 transition
+                                     peer-checked:border-ink-900 peer-checked:bg-ink-50
+                                     peer-focus-visible:ring-2 peer-focus-visible:ring-ink-800 peer-focus-visible:ring-offset-2">
+                            <span class="block font-display text-base font-bold text-ink-900">{{ $title }}</span>
+                            <span class="mt-1 block text-xs leading-relaxed text-ink-500">{{ $description }}</span>
+                        </span>
+                    </label>
+                @endforeach
+            </div>
+
+            <x-input-error :messages="$errors->get('role')" class="mt-2" />
+        </fieldset>
 
         <div>
             <x-input-label for="name" value="Nom et prénom" />
             <x-text-input id="name" class="mt-1.5" type="text" name="name"
                           :value="old('name')" required autofocus autocomplete="name" />
-            {{-- Le nom réel sert aux versements ; le pseudo public est demandé
-                 juste après, pour éviter d'avoir à s'exposer pour être payé. --}}
-            <p class="hint">Utilisé pour vos versements. Votre pseudo public sera choisi à l'étape suivante.</p>
+            {{-- Le nom réel sert aux versements ; le pseudo ou le nom de scène
+                 est demandé à l'étape suivante, pour ne pas avoir à s'exposer
+                 publiquement afin d'être payé. --}}
+            <p class="hint" x-show="role === 'clipper'">
+                Utilisé pour vos versements. Votre pseudo public sera choisi à l'étape suivante.
+            </p>
+            <p class="hint" x-show="role === 'artist'" x-cloak>
+                Votre nom réel. Votre nom de scène sera choisi à l'étape suivante.
+            </p>
             <x-input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
 

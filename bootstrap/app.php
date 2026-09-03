@@ -1,8 +1,9 @@
 <?php
 
 use App\Http\Middleware\EnsureAccountIsNotBanned;
+use App\Http\Middleware\EnsureArtistProfileExists;
 use App\Http\Middleware\EnsureProfileIsComplete;
-use App\Http\Middleware\RedirectStaffToPanel;
+use App\Http\Middleware\EnsureRole;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -22,8 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
-            'staff.redirect' => RedirectStaffToPanel::class,
+            'role' => EnsureRole::class,
             'profile.completed' => EnsureProfileIsComplete::class,
+            'artist.profile' => EnsureArtistProfileExists::class,
             'not.banned' => EnsureAccountIsNotBanned::class,
         ]);
     })

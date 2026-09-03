@@ -45,6 +45,23 @@ class ArtistResource extends Resource
         return ArtistsTable::configure($table);
     }
 
+    /**
+     * Les fiches créées par un artiste depuis l'inscription publique arrivent
+     * inactives. Sans ce badge, elles resteraient invisibles et l'artiste
+     * attendrait une validation que personne ne sait devoir faire.
+     */
+    public static function getNavigationBadge(): ?string
+    {
+        $pending = static::getModel()::whereNotNull('user_id')->where('is_active', false)->count();
+
+        return $pending > 0 ? (string) $pending : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'warning';
+    }
+
     public static function getRelations(): array
     {
         return [

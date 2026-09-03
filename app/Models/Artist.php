@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
-    'name', 'slug', 'bio', 'avatar_path', 'spotify_url',
+    'user_id', 'name', 'slug', 'bio', 'avatar_path', 'spotify_url',
     'instagram_handle', 'tiktok_handle', 'youtube_handle',
     'internal_notes', 'is_active', 'created_by',
 ])]
@@ -33,6 +33,18 @@ class Artist extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /** Compte de connexion de l'artiste, s'il en a un. */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /** Vues cumulées sur toutes ses campagnes. */
+    public function totalViews(): int
+    {
+        return (int) Clip::whereIn('campaign_id', $this->campaigns()->select('id'))->sum('views_total');
     }
 
     /** Budget total engagé sur l'artiste, toutes campagnes confondues. */

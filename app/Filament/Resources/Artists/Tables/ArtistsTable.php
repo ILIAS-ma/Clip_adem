@@ -59,8 +59,19 @@ class ArtistsTable
                 TextColumn::make('is_active')
                     ->label('Statut')
                     ->badge()
-                    ->state(fn (Artist $record) => $record->is_active ? 'Actif' : 'Inactif')
-                    ->color(fn (Artist $record) => $record->is_active ? 'success' : 'gray'),
+                    // Distinguer « désactivé par un admin » de « inscrit et en
+                    // attente » : ce sont deux situations sans rapport.
+                    ->state(fn (Artist $record) => match (true) {
+                        $record->is_active => 'Actif',
+                        $record->user_id !== null => 'À valider',
+                        default => 'Inactif',
+                    })
+                    ->color(fn (Artist $record) => match (true) {
+                        $record->is_active => 'success',
+                        $record->user_id !== null => 'warning',
+                        default => 'gray',
+                    })
+                    ->description(fn (Artist $record) => $record->user_id ? 'Compte artiste lié' : null),
 
                 TextColumn::make('created_at')
                     ->label('Créé le')

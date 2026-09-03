@@ -10,47 +10,56 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
 {
-    /**
-     * Display the registration view.
-     */
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('auth.register');
+        return view('auth.register', [
+            // Le choix arrive en paramètre depuis la page d'accueil, sinon
+            // clippeur par défaut : c'est le parcours le plus fréquent.
+            'role' => $request->query('profil') === UserRole::Artist->value
+                ? UserRole::Artist
+                : UserRole::Clipper,
+        ]);
     }
 
     /**
-     * Handle an incoming registration request.
-     *
      * @throws ValidationException
      */
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
+        // Rôle absent : on retombe sur le profil le moins privilégié plutôt que
+        // de rejeter la requête. La liste blanche ci-dessous reste la vraie
+        // protection.
+        $request->merge(['role' => $request->input('role', UserRole::Clipper->value)]);
+
+        $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+
+            // L'inscription publique ne peut créer qu'un clippeur ou un
+            // artiste : les rôles du back-office ne se donnent pas par
+            // formulaire, même en trafiquant la requête.
+            'role' => ['required', Rule::in([UserRole::Clipper->value, UserRole::Artist->value])],
         ]);
 
-        // Rôle posé explicitement : la valeur par défaut de la colonne suffirait,
-        // mais un compte créé par inscription publique ne doit jamais dépendre
-        // d'un défaut de schéma pour ne pas être administrateur.
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => UserRole::Clipper,
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => UserRole::from($validated['role']),
         ]);
 
         event(new Registered($user));
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect($user->role->homeRoute());
     }
 }

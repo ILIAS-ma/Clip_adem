@@ -19,7 +19,7 @@
                 <a href="{{ route('login') }}" class="px-3 py-2 text-sm font-semibold text-ink-500 transition hover:text-ink-900">
                     Connexion
                 </a>
-                <a href="{{ route('register') }}" class="btn-primary">Devenir clippeur</a>
+                <a href="{{ route('register') }}" class="btn-primary">Créer un compte</a>
             </nav>
         </div>
     </header>
@@ -43,9 +43,18 @@
                         Instagram, et soyez payé selon les vues générées — jusqu'à épuisement du budget.
                     </p>
 
+                    {{-- Deux publics, deux portes d'entrée : un artiste qui
+                         cherche à faire promouvoir sa musique n'a rien à faire
+                         dans un parcours d'inscription de clippeur. --}}
                     <div class="mt-10 flex flex-wrap items-center gap-4">
-                        <a href="{{ route('register') }}" class="btn-brand px-6 py-3 text-base">Créer un compte</a>
-                        <a href="{{ route('login') }}" class="btn px-6 py-3 text-base text-white/80 hover:text-white">
+                        <a href="{{ route('register') }}" class="btn-brand px-6 py-3 text-base">
+                            Je suis clippeur
+                        </a>
+                        <a href="{{ route('register', ['profil' => 'artist']) }}"
+                           class="btn border border-white/25 px-6 py-3 text-base text-white hover:bg-white/10">
+                            Je suis artiste
+                        </a>
+                        <a href="{{ route('login') }}" class="btn px-6 py-3 text-base text-white/70 hover:text-white">
                             J'ai déjà un compte
                         </a>
                     </div>

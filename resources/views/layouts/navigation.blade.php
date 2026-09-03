@@ -1,18 +1,27 @@
 @php
-    $links = [
-        ['route' => 'dashboard',       'pattern' => 'dashboard',   'label' => 'Tableau de bord'],
-        ['route' => 'campaigns.index', 'pattern' => 'campaigns.*', 'label' => 'Campagnes'],
-        ['route' => 'clips.index',     'pattern' => 'clips.*',     'label' => 'Mes clips'],
-        ['route' => 'accounts.index',  'pattern' => 'accounts.*',  'label' => 'Mes comptes'],
-        ['route' => 'earnings.index',  'pattern' => 'earnings.*',  'label' => 'Revenus'],
-    ];
+    // La barre s'adapte au rôle : un artiste n'a ni clips ni solde, lui montrer
+    // des liens morts vaudrait moins que rien.
+    $links = auth()->user()->isArtist()
+        ? [
+            ['route' => 'artist.dashboard',    'pattern' => 'artist.dashboard', 'label' => 'Mes campagnes'],
+            ['route' => 'artist.profile.edit', 'pattern' => 'artist.profile.*', 'label' => 'Ma fiche'],
+        ]
+        : [
+            ['route' => 'dashboard',       'pattern' => 'dashboard',   'label' => 'Tableau de bord'],
+            ['route' => 'campaigns.index', 'pattern' => 'campaigns.*', 'label' => 'Campagnes'],
+            ['route' => 'clips.index',     'pattern' => 'clips.*',     'label' => 'Mes clips'],
+            ['route' => 'accounts.index',  'pattern' => 'accounts.*',  'label' => 'Mes comptes'],
+            ['route' => 'earnings.index',  'pattern' => 'earnings.*',  'label' => 'Revenus'],
+        ];
+
+    $home = auth()->user()->isArtist() ? route('artist.dashboard') : route('dashboard');
 @endphp
 
 <nav x-data="{ open: false }" class="sticky top-0 z-30 border-b border-ink-100 bg-white/90 backdrop-blur">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 justify-between">
             <div class="flex">
-                <a href="{{ route('dashboard') }}" class="flex shrink-0 items-center">
+                <a href="{{ $home }}" class="flex shrink-0 items-center">
                     <x-brand-mark />
                 </a>
 
@@ -26,12 +35,16 @@
             </div>
 
             <div class="hidden sm:flex sm:items-center sm:gap-4">
-                {{-- Le solde est l'information que le clippeur vient chercher :
-                     elle reste visible sur toutes les pages. --}}
-                <a href="{{ route('earnings.index') }}"
-                   class="rounded-xl bg-money-50 px-3 py-1.5 text-sm font-semibold tabular text-money-700 transition hover:bg-money-100">
-                    {{ \App\Support\Money::euros(auth()->user()->availableBalanceCents()) }}
-                </a>
+                @if (auth()->user()->isClipper())
+                    {{-- Le solde est l'information que le clippeur vient
+                         chercher : elle reste visible sur toutes les pages. --}}
+                    <a href="{{ route('earnings.index') }}"
+                       class="rounded-xl bg-money-50 px-3 py-1.5 text-sm font-semibold tabular text-money-700 transition hover:bg-money-100">
+                        {{ \App\Support\Money::euros(auth()->user()->availableBalanceCents()) }}
+                    </a>
+                @elseif (auth()->user()->isArtist())
+                    <span class="chip-neutral">Espace artiste</span>
+                @endif
 
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
@@ -47,7 +60,7 @@
                     </x-slot>
 
                     <x-slot name="content">
-                        <x-dropdown-link :href="route('profile.edit')">Mon profil</x-dropdown-link>
+                        <x-dropdown-link :href="route('profile.edit')">Mon compte</x-dropdown-link>
 
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
@@ -87,13 +100,16 @@
                     <div class="font-semibold text-ink-800">{{ auth()->user()->displayName() }}</div>
                     <div class="text-sm text-ink-400">{{ auth()->user()->email }}</div>
                 </div>
-                <span class="chip-ok tabular">
-                    {{ \App\Support\Money::euros(auth()->user()->availableBalanceCents()) }}
-                </span>
+
+                @if (auth()->user()->isClipper())
+                    <span class="chip-ok tabular">
+                        {{ \App\Support\Money::euros(auth()->user()->availableBalanceCents()) }}
+                    </span>
+                @endif
             </div>
 
             <div class="mt-3">
-                <x-responsive-nav-link :href="route('profile.edit')">Mon profil</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('profile.edit')">Mon compte</x-responsive-nav-link>
 
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf

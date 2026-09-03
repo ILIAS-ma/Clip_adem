@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -54,6 +55,17 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     public function isClipper(): bool
     {
         return $this->role === UserRole::Clipper;
+    }
+
+    public function isArtist(): bool
+    {
+        return $this->role === UserRole::Artist;
+    }
+
+    /** Fiche artiste pilotée par ce compte. */
+    public function artist(): HasOne
+    {
+        return $this->hasOne(Artist::class);
     }
 
     /** Nom affiché publiquement : le pseudo s'il existe, le prénom sinon. */
