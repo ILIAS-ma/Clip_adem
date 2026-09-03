@@ -27,13 +27,25 @@ $onboardingGuards = static fn (): array => array_values(array_filter([
     config('clipping.onboarding.require_complete_profile') ? 'profile.completed' : null,
 ]));
 
+/*
+ * La racine est l'écran de connexion.
+ *
+ * Le formulaire est rendu directement plutôt que redirigé vers /login : une
+ * redirection ajouterait un aller-retour à chaque arrivée sur le site, y
+ * compris après déconnexion.
+ *
+ * Un utilisateur déjà connecté repart vers son propre espace.
+ */
 Route::get('/', function () {
-    // Chaque rôle est renvoyé chez lui : la page d'accueil n'a d'intérêt que
-    // pour un visiteur non connecté.
     return auth()->check()
         ? redirect(auth()->user()->role->homeRoute())
-        : view('welcome');
+        : view('auth.login');
 })->name('home');
+
+// La page de présentation garde son contenu — brief du fonctionnement,
+// avertissement sur le budget qui part au premier arrivé — accessible depuis
+// l'écran de connexion.
+Route::get('/presentation', fn () => view('welcome'))->name('presentation');
 
 // Retours asynchrones de PayPal sur les versements. Hors session et hors CSRF :
 // l'authenticité est établie par la signature de la requête (voir le contrôleur).

@@ -40,10 +40,21 @@
         <x-primary-button class="w-full">Se connecter</x-primary-button>
     </form>
 
-    <p class="mt-8 text-center text-sm text-ink-500">
-        Pas encore de compte ?
-        <a href="{{ route('register') }}" class="font-semibold text-ink-900 underline underline-offset-2">
-            Devenir clippeur
-        </a>
-    </p>
+    {{-- La racine étant l'écran de connexion, c'est ici que se trouvent les
+         deux portes d'entrée : sans elles, un artiste n'aurait aucun moyen de
+         s'inscrire dans son propre parcours. --}}
+    <div class="mt-8 border-t border-ink-100 pt-6">
+        <p class="text-center text-sm font-medium text-ink-500">Pas encore de compte ?</p>
+
+        <div class="mt-3 grid grid-cols-2 gap-3">
+            <a href="{{ route('register') }}" class="btn-ghost">Je suis clippeur</a>
+            <a href="{{ route('register', ['profil' => 'artist']) }}" class="btn-ghost">Je suis artiste</a>
+        </div>
+
+        <p class="mt-4 text-center text-sm">
+            <a href="{{ route('presentation') }}" class="text-ink-400 underline-offset-2 hover:text-ink-800 hover:underline">
+                Comment ça marche ?
+            </a>
+        </p>
+    </div>
 </x-guest-layout>

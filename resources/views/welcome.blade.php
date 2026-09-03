@@ -16,10 +16,7 @@
             <x-brand-mark />
 
             <nav class="flex items-center gap-3">
-                <a href="{{ route('login') }}" class="px-3 py-2 text-sm font-semibold text-ink-500 transition hover:text-ink-900">
-                    Connexion
-                </a>
-                <a href="{{ route('register') }}" class="btn-primary">Créer un compte</a>
+                <a href="{{ route('home') }}" class="btn-primary">Se connecter</a>
             </nav>
         </div>
     </header>
@@ -54,7 +51,7 @@
                            class="btn border border-white/25 px-6 py-3 text-base text-white hover:bg-white/10">
                             Je suis artiste
                         </a>
-                        <a href="{{ route('login') }}" class="btn px-6 py-3 text-base text-white/70 hover:text-white">
+                        <a href="{{ route('home') }}" class="btn px-6 py-3 text-base text-white/70 hover:text-white">
                             J'ai déjà un compte
                         </a>
                     </div>

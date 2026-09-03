@@ -28,8 +28,12 @@ php artisan migrate --seed
 php artisan serve
 ```
 
-Espace clippeur sur `/`, panel admin sur `/admin`. Comptes de démonstration
-(mot de passe `password`) :
+La connexion est à la racine `/`, le panel admin sur `/admin`. Chaque rôle est
+ensuite renvoyé vers son propre espace — `/dashboard` pour un clippeur,
+`/artiste` pour un artiste, `/admin` pour le staff. La page de présentation du
+fonctionnement reste sur `/presentation`.
+
+Comptes de démonstration (mot de passe `password`) :
 
 | Compte | Rôle |
 |---|---|
@@ -171,7 +175,7 @@ Tokens dans `tailwind.config.js`, classes composées dans `resources/css/app.css
 titres et les montants, Figtree pour le texte courant, chiffres en `tabular`
 partout où ils s'alignent en colonne.
 
-Front public sur `/`, espace connecté sur `/dashboard` et `/campagnes`.
+Connexion sur `/`, espace connecté sur `/dashboard` et `/campagnes`.
 Authentification par **Laravel Breeze préset Blade** — le préset Livewire épingle
 Livewire 3 alors que Filament 5 exige Livewire 4 ; les parties interactives
 (catalogue, adhésion, soumission) sont donc des composants Livewire 4 écrits à

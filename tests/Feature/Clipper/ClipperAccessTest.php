@@ -126,7 +126,10 @@ class ClipperAccessTest extends TestCase
     #[Test]
     public function guests_are_sent_to_the_login_page(): void
     {
-        $this->get('/dashboard')->assertRedirect(route('login'));
-        $this->get('/campagnes')->assertRedirect(route('login'));
+        // La connexion vit à la racine : c'est là qu'atterrit un visiteur.
+        $this->get('/dashboard')->assertRedirect('/');
+        $this->get('/campagnes')->assertRedirect('/');
+
+        $this->get('/')->assertSuccessful()->assertSee('Se connecter');
     }
 }

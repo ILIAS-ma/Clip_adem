@@ -22,6 +22,14 @@ return Application::configure(basePath: dirname(__DIR__))
             'webhooks/paypal',
         ]);
 
+        // La connexion vit à la racine : un visiteur non authentifié y est
+        // renvoyé, et un utilisateur déjà connecté repart vers son espace
+        // plutôt que vers un `/dashboard` qui ne concerne que les clippeurs.
+        $middleware->redirectTo(
+            guests: '/',
+            users: fn ($request) => $request->user()->role->homeRoute(),
+        );
+
         $middleware->alias([
             'role' => EnsureRole::class,
             'profile.completed' => EnsureProfileIsComplete::class,
