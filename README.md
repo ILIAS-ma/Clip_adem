@@ -204,10 +204,14 @@ Tokens dans `tailwind.config.js`, classes composées dans `resources/css/app.css
 titres et les montants, Figtree pour le texte courant, chiffres en `tabular`
 partout où ils s'alignent en colonne.
 
-**Le logo** se dépose dans `public/images/logo.png`. Il est alors repris
-automatiquement par la marque du site, le favicon et le back-office ; en son
-absence, une onde sonore lime sert de repli, pour qu'aucun écran ne dépende d'un
-fichier manquant.
+**Le logo** vit dans `public/images/logo.png` — repris par la marque du site, le
+favicon et le back-office. La source pleine résolution est conservée à côté sous
+`logo-source.png` ; celle qui est servie est réduite à 256 px, le logo ne
+dépassant jamais 40 px à l'écran (1,3 Mo → 52 Ko).
+
+Le logo portant déjà son mot-symbole, le nom de l'application ne s'affiche pas à
+côté : il ne réapparaît qu'en l'absence de fichier, où une onde sonore lime sert
+de repli — aucun écran ne dépend d'un fichier manquant.
 
 Connexion sur `/`, espace connecté sur `/dashboard` et `/campagnes`.
 Authentification par **Laravel Breeze préset Blade** — le préset Livewire épingle
