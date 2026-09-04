@@ -46,7 +46,7 @@ class ClipperPagesRenderTest extends TestCase
                 'status' => CampaignStatus::Active,
                 'budget_total_cents' => 120_000,
                 'requires_approval' => false,
-                'brief' => 'Utiliser le refrain, mentionner @artiste.',
+                'brief' => 'Utiliser le refrain, mentionner @créateur.',
                 'required_hashtags' => ['#nayra', '#clip'],
                 'max_payout_per_clip_cents' => 20_000,
             ], $attributes));
@@ -60,6 +60,34 @@ class ClipperPagesRenderTest extends TestCase
 
         $this->actingAs($clipper)->get('/dashboard')->assertSuccessful();
         $this->actingAs($clipper)->get('/campagnes')->assertSuccessful();
+        $this->actingAs($clipper)->get(route('earnings.index'))->assertSuccessful();
+    }
+
+    #[Test]
+    public function the_payout_method_page_renders_both_choices(): void
+    {
+        $this->actingAs($this->clipper())
+            ->get(route('payout-method.edit'))
+            ->assertSuccessful()
+            ->assertSee('Moyen de paiement')
+            ->assertSee('PayPal')
+            ->assertSee('Virement bancaire');
+    }
+
+    #[Test]
+    public function a_clipper_without_a_destination_never_reaches_the_earnings_page(): void
+    {
+        // Le garde-fou attrape le manque bien avant la page Revenus : découvrir
+        // qu'on ne peut pas être payé après 200 000 vues fait perdre un clippeur.
+        $clipper = $this->clipper();
+        $clipper->forceFill(['paypal_email' => null])->save();
+
+        $this->assertNull($clipper->payoutDestination());
+        $this->assertContains('payout', $clipper->missingProfileFields());
+
+        $this->actingAs($clipper)
+            ->get(route('earnings.index'))
+            ->assertRedirect(route('profile.complete'));
     }
 
     #[Test]

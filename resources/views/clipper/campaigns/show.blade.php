@@ -5,7 +5,7 @@
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
                 <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">
-                    {{ $campaign->artist?->name }}
+                    {{ $campaign->creator?->name }}
                 </p>
                 <h1 class="mt-1 font-display text-2xl font-bold text-ink-50">{{ $campaign->title }}</h1>
             </div>
@@ -65,21 +65,24 @@
                         </div>
                     @endif
 
-                    @if ($campaign->audio_url || $campaign->assets_url)
-                        <div class="mt-6 flex flex-wrap gap-3 border-t border-ink-700 pt-5">
-                            @if ($campaign->audio_url)
-                                <a href="{{ $campaign->audio_url }}" target="_blank" rel="noopener" class="btn-ghost">
-                                    Son à utiliser
-                                </a>
-                            @endif
-                            @if ($campaign->assets_url)
-                                <a href="{{ $campaign->assets_url }}" target="_blank" rel="noopener" class="btn-ghost">
-                                    Pack visuel
-                                </a>
-                            @endif
-                        </div>
-                    @endif
                 </div>
+
+                @if ($campaign->assets->isNotEmpty())
+                    <div class="card p-6 sm:p-8">
+                        <h2 class="font-display text-lg font-bold text-ink-50">Matière première</h2>
+                        <p class="mt-1 text-sm text-ink-400">
+                            Le son, les rushes et les visuels fournis par le créateur. Écoutez et
+                            regardez avant de tourner : ce qui est marqué « imposé » est vérifié
+                            en modération.
+                        </p>
+
+                        <div class="mt-5 space-y-4">
+                            @foreach ($campaign->assets as $asset)
+                                <x-campaign-asset :asset="$asset" />
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
 
                 @if ($participations->isNotEmpty())
                     <div class="card p-6 sm:p-8">

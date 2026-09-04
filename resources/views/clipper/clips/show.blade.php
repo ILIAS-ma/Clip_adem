@@ -5,7 +5,7 @@
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
                 <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">
-                    {{ $clip->campaign?->artist?->name }}
+                    {{ $clip->campaign?->creator?->name }}
                 </p>
                 <h1 class="mt-1 font-display text-2xl font-bold text-ink-50">{{ $clip->campaign?->title }}</h1>
                 <p class="mt-1 text-sm text-ink-400">{{ $clip->platform->label() }} · {{ $clip->external_post_id }}</p>

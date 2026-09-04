@@ -32,7 +32,7 @@
                        class="flex flex-wrap items-center justify-between gap-4 card p-5 transition hover:-translate-y-0.5 hover:shadow-lifted">
                         <div class="min-w-0">
                             <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">
-                                {{ $clip->campaign?->artist?->name }}
+                                {{ $clip->campaign?->creator?->name }}
                             </p>
                             <p class="mt-0.5 font-display text-base font-bold text-ink-50">
                                 {{ $clip->campaign?->title }}

@@ -5,7 +5,7 @@
         'require_email_verification' => "vérification d'e-mail",
         'require_complete_profile' => 'profil complet obligatoire',
         'require_admin_2fa' => '2FA administrateur',
-        'require_artist_validation' => 'validation des fiches artiste',
+        'require_creator_validation' => 'validation des fiches créateur',
     ])->reject(fn ($label, $key) => config("clipping.onboarding.{$key}"));
 @endphp
 

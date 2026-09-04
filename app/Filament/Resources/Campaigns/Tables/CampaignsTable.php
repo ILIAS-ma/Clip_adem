@@ -23,7 +23,7 @@ class CampaignsTable
                     ->searchable()
                     ->sortable()
                     ->weight('bold')
-                    ->description(fn (Campaign $record) => $record->artist?->name),
+                    ->description(fn (Campaign $record) => $record->creator?->name),
 
                 TextColumn::make('status')
                     ->label('Statut')
@@ -81,9 +81,9 @@ class CampaignsTable
                         ->mapWithKeys(fn (CampaignStatus $status) => [$status->value => $status->label()])
                         ->all()),
 
-                SelectFilter::make('artist')
-                    ->label('Artiste')
-                    ->relationship('artist', 'name')
+                SelectFilter::make('creator')
+                    ->label('Créateur')
+                    ->relationship('creator', 'name')
                     ->searchable()
                     ->preload(),
 

@@ -4,7 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Widgets\BudgetConsumptionChart;
 use App\Filament\Widgets\PlatformOverview;
-use App\Filament\Widgets\SpendPerArtist;
+use App\Filament\Widgets\SpendPerCreator;
 use App\Filament\Widgets\TopClippers;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Enums\ThemeMode;
@@ -75,7 +75,7 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 PlatformOverview::class,
                 BudgetConsumptionChart::class,
-                SpendPerArtist::class,
+                SpendPerCreator::class,
                 TopClippers::class,
                 AccountWidget::class,
             ])

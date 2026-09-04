@@ -41,14 +41,14 @@
     </form>
 
     {{-- La racine étant l'écran de connexion, c'est ici que se trouvent les
-         deux portes d'entrée : sans elles, un artiste n'aurait aucun moyen de
+         deux portes d'entrée : sans elles, un créateur n'aurait aucun moyen de
          s'inscrire dans son propre parcours. --}}
     <div class="mt-8 border-t border-ink-700 pt-6">
         <p class="text-center text-sm font-medium text-ink-300">Pas encore de compte ?</p>
 
         <div class="mt-3 grid grid-cols-2 gap-3">
             <a href="{{ route('register') }}" class="btn-ghost">Je suis clippeur</a>
-            <a href="{{ route('register', ['profil' => 'artist']) }}" class="btn-ghost">Je suis artiste</a>
+            <a href="{{ route('register', ['profil' => 'creator']) }}" class="btn-ghost">Je suis créateur</a>
         </div>
 
         <p class="mt-4 text-center text-sm">

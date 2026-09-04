@@ -3,7 +3,17 @@
 <x-app-layout>
     <x-slot name="header">
         <h1 class="font-display text-2xl font-bold text-ink-50">Mes revenus</h1>
-        <p class="mt-1 text-ink-300">Versements sur {{ $clipper->paypal_email }}</p>
+        <p class="mt-1 text-ink-300">
+            @if ($clipper->hasPayoutDestination())
+                Versements par {{ $clipper->payoutMethod()->label() }}
+                sur <span class="tabular text-ink-100">{{ $clipper->payoutDestinationLabel() }}</span>
+            @else
+                Aucune destination de paiement enregistrée
+            @endif
+            ·
+            <a href="{{ route('payout-method.edit') }}" wire:navigate
+               class="font-semibold text-brand-400 underline underline-offset-2">Modifier</a>
+        </p>
     </x-slot>
 
     <div class="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
@@ -32,9 +42,24 @@
 
             <div class="card p-6">
                 <h2 class="font-display text-lg font-bold text-ink-50">Demander un retrait</h2>
-                <div class="mt-4">
-                    @livewire('request-payout')
-                </div>
+
+                @if ($clipper->hasPayoutDestination())
+                    <div class="mt-4">
+                        @livewire('request-payout')
+                    </div>
+                @else
+                    {{-- Bloquer sans dire quoi faire, c'est un ticket au support. --}}
+                    <div class="alert-warn mt-4">
+                        <p class="font-semibold">Destination manquante</p>
+                        <p class="mt-1 leading-relaxed">
+                            Choisissez PayPal ou un virement bancaire avant de demander un retrait.
+                        </p>
+                        <a href="{{ route('payout-method.edit') }}" wire:navigate
+                           class="mt-2 inline-block font-semibold underline underline-offset-2">
+                            Renseigner mon moyen de paiement
+                        </a>
+                    </div>
+                @endif
             </div>
 
             <div class="card lg:col-span-2">

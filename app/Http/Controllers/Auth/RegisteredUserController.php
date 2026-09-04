@@ -22,8 +22,8 @@ class RegisteredUserController extends Controller
         return view('auth.register', [
             // Le choix arrive en paramètre depuis la page d'accueil, sinon
             // clippeur par défaut : c'est le parcours le plus fréquent.
-            'role' => $request->query('profil') === UserRole::Artist->value
-                ? UserRole::Artist
+            'role' => $request->query('profil') === UserRole::Creator->value
+                ? UserRole::Creator
                 : UserRole::Clipper,
         ]);
     }
@@ -44,9 +44,9 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
 
             // L'inscription publique ne peut créer qu'un clippeur ou un
-            // artiste : les rôles du back-office ne se donnent pas par
+            // créateur : les rôles du back-office ne se donnent pas par
             // formulaire, même en trafiquant la requête.
-            'role' => ['required', Rule::in([UserRole::Clipper->value, UserRole::Artist->value])],
+            'role' => ['required', Rule::in([UserRole::Clipper->value, UserRole::Creator->value])],
         ]);
 
         $user = User::create([

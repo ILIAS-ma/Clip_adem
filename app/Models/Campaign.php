@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
-    'artist_id', 'title', 'slug', 'brief', 'required_hashtags', 'audio_url', 'assets_url',
+    'creator_id', 'title', 'slug', 'brief', 'required_hashtags',
     'status', 'currency', 'budget_total_cents', 'target_views', 'min_views_per_clip',
     'max_payout_per_clip_cents', 'max_payout_per_clipper_cents',
     'starts_at', 'ends_at', 'requires_approval', 'created_by',
@@ -42,14 +42,20 @@ class Campaign extends Model
         ];
     }
 
-    public function artist(): BelongsTo
+    public function creator(): BelongsTo
     {
-        return $this->belongsTo(Artist::class);
+        return $this->belongsTo(Creator::class);
     }
 
     public function rates(): HasMany
     {
         return $this->hasMany(CampaignRate::class);
+    }
+
+    /** Pièces du brief : sons, vidéos, images, documents. */
+    public function assets(): HasMany
+    {
+        return $this->hasMany(CampaignAsset::class)->orderBy('position')->orderBy('id');
     }
 
     public function clips(): HasMany

@@ -12,7 +12,7 @@ return new class extends Migration
     {
         Schema::create('campaigns', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('artist_id')->constrained()->restrictOnDelete();
+            $table->foreignId('creator_id')->constrained()->restrictOnDelete();
 
             $table->string('title');
             $table->string('slug')->unique();
@@ -20,8 +20,6 @@ return new class extends Migration
 
             // Hashtags obligatoires, contrôlés à la modération.
             $table->json('required_hashtags')->nullable();
-            $table->string('audio_url')->nullable();
-            $table->string('assets_url')->nullable();
 
             $table->string('status', 32)->default(CampaignStatus::Draft->value);
             $table->char('currency', 3)->default('EUR');
@@ -59,7 +57,7 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->index(['status', 'starts_at', 'ends_at']);
-            $table->index('artist_id');
+            $table->index('creator_id');
         });
 
         // Dernier rempart au niveau du moteur de base : même si un jour du code

@@ -9,11 +9,11 @@ use App\Enums\ParticipationStatus;
 use App\Enums\PayoutStatus;
 use App\Enums\Platform;
 use App\Enums\UserRole;
-use App\Models\Artist;
 use App\Models\BudgetTransaction;
 use App\Models\Campaign;
 use App\Models\Clip;
 use App\Models\ClipViewSnapshot;
+use App\Models\Creator;
 use App\Models\Payout;
 use App\Models\SocialAccount;
 use App\Models\User;
@@ -45,8 +45,8 @@ class CreateDemoAccountsCommand extends Command
         $admin = $this->staff('admin@clip.test', 'Admin Démo', UserRole::SuperAdmin);
         $this->staff('moderateur@clip.test', 'Modérateur Démo', UserRole::Moderator);
 
-        $artist = $this->artist($admin);
-        $campaign = $this->campaign($artist, $admin);
+        $creator = $this->creator($admin);
+        $campaign = $this->campaign($creator, $admin);
 
         $this->clipper($campaign, $budget, $progression);
 
@@ -58,7 +58,7 @@ class CreateDemoAccountsCommand extends Command
                 ['Administrateur', 'admin@clip.test', '/admin'],
                 ['Modérateur', 'moderateur@clip.test', '/admin'],
                 ['Clippeur', 'clippeur@clip.test', '/dashboard'],
-                ['Artiste', 'artiste@clip.test', '/artiste'],
+                ['Créateur', 'createur@clip.test', '/createur'],
             ],
         );
 
@@ -79,27 +79,27 @@ class CreateDemoAccountsCommand extends Command
         });
     }
 
-    protected function artist(User $admin): Artist
+    protected function creator(User $admin): Creator
     {
-        $user = tap(User::withTrashed()->firstOrNew(['email' => 'artiste@clip.test']), function (User $user) {
+        $user = tap(User::withTrashed()->firstOrNew(['email' => 'createur@clip.test']), function (User $user) {
             $user->forceFill([
                 'name' => 'Sami Toure',
                 'password' => Hash::make($this->password),
-                'role' => UserRole::Artist,
+                'role' => UserRole::Creator,
                 'email_verified_at' => now(),
                 'is_banned' => false,
                 'deleted_at' => null,
             ])->save();
         });
 
-        return tap(Artist::withTrashed()->firstOrNew(['slug' => 'saya']), function (Artist $artist) use ($user, $admin) {
-            $artist->forceFill([
+        return tap(Creator::withTrashed()->firstOrNew(['slug' => 'saya']), function (Creator $creator) use ($user, $admin) {
+            $creator->forceFill([
                 'user_id' => $user->getKey(),
                 'name' => 'SAYA',
                 'bio' => 'Nouvel EP en préparation, sortie prévue au printemps.',
                 'tiktok_handle' => 'saya.music',
                 'instagram_handle' => 'saya.music',
-                // Active : l'artiste doit voir ses statistiques dès sa connexion.
+                // Active : le créateur doit voir ses statistiques dès sa connexion.
                 'is_active' => true,
                 'created_by' => $admin->getKey(),
                 'deleted_at' => null,
@@ -107,14 +107,14 @@ class CreateDemoAccountsCommand extends Command
         });
     }
 
-    protected function campaign(Artist $artist, User $admin): Campaign
+    protected function campaign(Creator $creator, User $admin): Campaign
     {
-        $campaign = tap(Campaign::withTrashed()->firstOrNew(['slug' => 'saya-ep-printemps']), function (Campaign $campaign) use ($artist, $admin) {
+        $campaign = tap(Campaign::withTrashed()->firstOrNew(['slug' => 'saya-ep-printemps']), function (Campaign $campaign) use ($creator, $admin) {
             $campaign->forceFill([
-                'artist_id' => $artist->getKey(),
+                'creator_id' => $creator->getKey(),
                 'title' => 'SAYA — EP printemps',
                 'brief' => "Utiliser les 20 premières secondes du morceau. Mentionner @saya.music en légende.\n"
-                    .'Interdit : contenu politique, alcool, montage avec un autre artiste.',
+                    .'Interdit : contenu politique, alcool, montage avec un autre créateur.',
                 'required_hashtags' => ['#saya', '#epprintemps'],
                 'status' => CampaignStatus::Active,
                 'budget_total_cents' => 500_000,   // 5 000 €
@@ -139,6 +139,27 @@ class CreateDemoAccountsCommand extends Command
             ['platform' => Platform::Instagram],
             ['rate_per_1k_cents' => 80, 'is_enabled' => true],
         );
+
+        // Matière première du brief. Des liens externes plutôt que des fichiers :
+        // une commande de démonstration n'a pas à déposer 200 Mo sur le disque
+        // de qui la lance.
+        foreach ([
+            ['audio', 'Son officiel — refrain', 'Caler le drop à 0:12. Ne pas couper avant la fin du refrain.', true],
+            ['video', 'Rushes du clip', 'Trois plans libres de droits, à mélanger avec vos propres images.', false],
+            ['image', 'Pochette de l’EP', 'À faire apparaître au moins une seconde, sans la recadrer.', false],
+            ['document', 'Charte de la campagne', 'Ce qui est interdit, en une page. À lire avant de tourner.', false],
+        ] as $position => [$kind, $label, $description, $required]) {
+            $campaign->assets()->updateOrCreate(
+                ['label' => $label],
+                [
+                    'kind' => $kind,
+                    'description' => $description,
+                    'external_url' => 'https://example.com/saya/'.$kind,
+                    'is_required' => $required,
+                    'position' => $position,
+                ],
+            );
+        }
 
         return $campaign->fresh();
     }
@@ -233,6 +254,8 @@ class CreateDemoAccountsCommand extends Command
                 'amount_cents' => 5_000,
                 'currency' => 'EUR',
                 'status' => PayoutStatus::Requested,
+                'method' => $clipper->payoutMethod(),
+                'destination' => $clipper->payoutDestinationLabel(),
                 'paypal_email' => $clipper->paypal_email,
                 'requested_at' => now()->subDay(),
             ]);

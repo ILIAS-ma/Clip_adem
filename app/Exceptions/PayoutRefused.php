@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use App\Enums\PayoutMethod;
 use App\Enums\PayoutStatus;
 use RuntimeException;
 
@@ -15,6 +16,29 @@ class PayoutRefused extends RuntimeException
     public static function missingPaypalEmail(): self
     {
         return new self('Renseignez une adresse PayPal avant de demander un retrait.');
+    }
+
+    public static function missingPayoutDestination(PayoutMethod $method): self
+    {
+        return new self(match ($method) {
+            PayoutMethod::PayPal => 'Renseignez votre adresse PayPal avant de demander un retrait.',
+            PayoutMethod::BankTransfer => 'Renseignez votre IBAN avant de demander un retrait.',
+        });
+    }
+
+    public static function notAManualPayout(PayoutMethod $method): self
+    {
+        return new self(
+            'Seul un virement bancaire se pointe à la main : celui-ci part par '
+            .$method->label().', laissez le lot faire son travail.'
+        );
+    }
+
+    public static function notApproved(PayoutStatus $status): self
+    {
+        return new self(
+            'Un virement se pointe une fois validé (statut actuel : '.$status->label().').'
+        );
     }
 
     public static function belowMinimum(int $amount, int $minimum): self

@@ -28,13 +28,20 @@
             <x-input-error class="mt-2" :messages="$errors->get('pseudo')" />
         </div>
 
-        <div>
-            <x-input-label for="paypal_email" value="Adresse PayPal" />
-            <x-text-input id="paypal_email" name="paypal_email" type="email" class="mt-1.5"
-                          :value="old('paypal_email', $user->paypal_email)" />
-            <p class="hint">Destination de vos retraits.</p>
-            <x-input-error class="mt-2" :messages="$errors->get('paypal_email')" />
-        </div>
+        @if ($user->isClipper())
+            {{-- Le moyen de paiement a sa propre page : il se change plus
+                 souvent que le reste, et une erreur y coûte un virement. --}}
+            <div class="rounded-xl border border-ink-700 p-4">
+                <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">Moyen de paiement</p>
+                <p class="mt-1 font-display font-bold tabular text-ink-50">
+                    {{ $user->payoutDestinationLabel() ?? 'Aucune destination enregistrée' }}
+                </p>
+                <a href="{{ route('payout-method.edit') }}" wire:navigate
+                   class="mt-2 inline-block text-sm font-semibold text-brand-400 underline underline-offset-2">
+                    Modifier
+                </a>
+            </div>
+        @endif
 
         <div>
             <x-input-label for="email" value="Adresse e-mail" />

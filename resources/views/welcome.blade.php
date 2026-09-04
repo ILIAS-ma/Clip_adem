@@ -40,20 +40,20 @@
                     </h1>
 
                     <p class="mt-6 max-w-xl text-lg leading-relaxed text-ink-300">
-                        Rejoignez une campagne d'artiste, publiez votre clip sur TikTok, YouTube ou
+                        Rejoignez une campagne de créateur, publiez votre clip sur TikTok, YouTube ou
                         Instagram, et soyez payé selon les vues générées — jusqu'à épuisement du budget.
                     </p>
 
-                    {{-- Deux publics, deux portes d'entrée : un artiste qui
+                    {{-- Deux publics, deux portes d'entrée : un créateur qui
                          cherche à faire promouvoir sa musique n'a rien à faire
                          dans un parcours d'inscription de clippeur. --}}
                     <div class="mt-10 flex flex-wrap items-center gap-4">
                         <a href="{{ route('register') }}" class="btn-brand px-6 py-3 text-base">
                             Je suis clippeur
                         </a>
-                        <a href="{{ route('register', ['profil' => 'artist']) }}"
+                        <a href="{{ route('register', ['profil' => 'creator']) }}"
                            class="btn border border-ink-600 px-6 py-3 text-base text-ink-100 hover:bg-ink-800">
-                            Je suis artiste
+                            Je suis créateur
                         </a>
                         <a href="{{ route('home') }}" class="btn px-6 py-3 text-base text-ink-400 hover:text-ink-50">
                             J'ai déjà un compte

@@ -8,9 +8,9 @@ use App\Enums\ClipStatus;
 use App\Enums\PayoutStatus;
 use App\Enums\Platform;
 use App\Enums\UserRole;
-use App\Models\Artist;
 use App\Models\Campaign;
 use App\Models\Clip;
+use App\Models\Creator;
 use App\Models\Payout;
 use App\Models\User;
 use App\Services\Moderation\ClipModerationService;
@@ -35,12 +35,12 @@ class ReportingServiceTest extends TestCase
         $this->budget = app(CampaignBudgetService::class);
     }
 
-    protected function campaign(?Artist $artist = null, int $budgetCents = 100_000): Campaign
+    protected function campaign(?Creator $creator = null, int $budgetCents = 100_000): Campaign
     {
         return Campaign::factory()
             ->withRate(Platform::TikTok, ratePer1kCents: 100)
             ->create([
-                'artist_id' => $artist?->getKey() ?? Artist::factory(),
+                'creator_id' => $creator?->getKey() ?? Creator::factory(),
                 'status' => CampaignStatus::Active,
                 'budget_total_cents' => $budgetCents,
             ]);
@@ -118,13 +118,13 @@ class ReportingServiceTest extends TestCase
     }
 
     #[Test]
-    public function spend_per_artist_computes_the_real_cpm(): void
+    public function spend_per_creator_computes_the_real_cpm(): void
     {
-        $artist = Artist::factory()->create(['name' => 'NAYRA']);
-        $campaign = $this->campaign($artist);
+        $creator = Creator::factory()->create(['name' => 'NAYRA']);
+        $campaign = $this->campaign($creator);
         $this->credit($campaign, 200_000); // 200 €
 
-        $rows = $this->reporting->spendPerArtist();
+        $rows = $this->reporting->spendPerCreator();
 
         $this->assertCount(1, $rows);
         $this->assertSame('NAYRA', $rows->first()->name);
@@ -134,11 +134,11 @@ class ReportingServiceTest extends TestCase
     }
 
     #[Test]
-    public function artists_without_spending_are_left_out(): void
+    public function creators_without_spending_are_left_out(): void
     {
-        Artist::factory()->create(['name' => 'Sans campagne']);
+        Creator::factory()->create(['name' => 'Sans campagne']);
 
-        $this->assertCount(0, $this->reporting->spendPerArtist());
+        $this->assertCount(0, $this->reporting->spendPerCreator());
     }
 
     #[Test]

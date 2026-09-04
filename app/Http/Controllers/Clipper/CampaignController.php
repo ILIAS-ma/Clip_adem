@@ -26,7 +26,7 @@ class CampaignController extends Controller
     ): View {
         abort_unless($campaign->isVisibleToClippers(), 404);
 
-        $campaign->load(['artist', 'rates']);
+        $campaign->load(['creator', 'rates', 'assets']);
         $clipper = $request->user();
 
         return view('clipper.campaigns.show', [

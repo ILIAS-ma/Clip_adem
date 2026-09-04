@@ -29,7 +29,7 @@ class ClipsRelationManager extends RelationManager
                 TextColumn::make('campaign.title')
                     ->label('Campagne')
                     ->weight('bold')
-                    ->description(fn (Clip $record) => $record->campaign?->artist?->name),
+                    ->description(fn (Clip $record) => $record->campaign?->creator?->name),
 
                 TextColumn::make('platform')
                     ->label('Plateforme')

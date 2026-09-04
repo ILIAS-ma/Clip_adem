@@ -7,7 +7,7 @@
             <div class="lg:col-span-2">
                 <label for="search" class="text-xs font-semibold uppercase tracking-wide text-ink-400">Rechercher</label>
                 <input id="search" type="search" wire:model.live.debounce.300ms="search"
-                       placeholder="Titre ou artiste" class="field mt-1.5 text-sm">
+                       placeholder="Titre ou créateur" class="field mt-1.5 text-sm">
             </div>
 
             <div>
@@ -21,10 +21,10 @@
             </div>
 
             <div>
-                <label for="artist" class="text-xs font-semibold uppercase tracking-wide text-ink-400">Artiste</label>
-                <select id="artist" wire:model.live="artist" class="field mt-1.5 text-sm">
+                <label for="creator" class="text-xs font-semibold uppercase tracking-wide text-ink-400">Créateur</label>
+                <select id="creator" wire:model.live="creator" class="field mt-1.5 text-sm">
                     <option value="">Tous</option>
-                    @foreach ($artists as $id => $name)
+                    @foreach ($creators as $id => $name)
                         <option value="{{ $id }}">{{ $name }}</option>
                     @endforeach
                 </select>
@@ -81,7 +81,7 @@
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0">
                             <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">
-                                {{ $campaign->artist?->name }}
+                                {{ $campaign->creator?->name }}
                             </p>
                             <h2 class="mt-1 font-display text-lg font-bold leading-snug text-ink-50">
                                 {{ $campaign->title }}

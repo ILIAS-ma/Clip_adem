@@ -18,7 +18,7 @@ class DashboardController extends Controller
         $clipper = $request->user();
 
         $clips = Clip::where('user_id', $clipper->getKey())
-            ->with('campaign.artist')
+            ->with('campaign.creator')
             ->latest('submitted_at')
             ->get();
 

@@ -45,18 +45,12 @@
                             <option value="{{ $code }}" @selected(old('country', $user->country) === $code)>{{ $label }}</option>
                         @endforeach
                     </select>
-                    <p class="hint">PayPal restreint certains versements selon le pays du bénéficiaire.</p>
+                    <p class="hint">Le pays du bénéficiaire conditionne les modes de versement disponibles.</p>
                     <x-input-error class="mt-2" :messages="$errors->get('country')" />
                 </div>
 
-                <div>
-                    <x-input-label for="paypal_email" value="Adresse PayPal" />
-                    <x-text-input id="paypal_email" name="paypal_email" type="email" class="mt-1.5"
-                                  :value="old('paypal_email', $user->paypal_email)" required />
-                    <p class="hint">
-                        Destination de vos retraits. Elle peut différer de votre adresse de connexion.
-                    </p>
-                    <x-input-error class="mt-2" :messages="$errors->get('paypal_email')" />
+                <div class="border-t border-ink-700 pt-6">
+                    <x-payout-method-fields :user="$user" />
                 </div>
 
                 <div class="border-t border-ink-700 pt-6">

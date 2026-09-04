@@ -83,7 +83,7 @@ class AccountingExport
         return match ($journal) {
             self::SPENDINGS => [
                 $this->filename(self::SPENDINGS, $from, $to),
-                ['Date', 'Type', 'Artiste', 'Campagne', 'Clip', 'Clippeur', 'Vues', 'Montant EUR', 'Solde campagne EUR', 'Référence'],
+                ['Date', 'Type', 'Créateur', 'Campagne', 'Clip', 'Clippeur', 'Vues', 'Montant EUR', 'Solde campagne EUR', 'Référence'],
                 fn () => $this->spendingRows($from, $to),
             ],
             self::PAYOUTS => [
@@ -100,7 +100,7 @@ class AccountingExport
     protected function spendingRows(?CarbonInterface $from, ?CarbonInterface $to): iterable
     {
         $query = BudgetTransaction::query()
-            ->with(['campaign.artist', 'clip', 'user'])
+            ->with(['campaign.creator', 'clip', 'user'])
             ->when($from, fn ($q) => $q->where('created_at', '>=', $from))
             ->when($to, fn ($q) => $q->where('created_at', '<=', $to))
             ->orderBy('created_at');
@@ -109,7 +109,7 @@ class AccountingExport
             yield [
                 $transaction->created_at->format('d/m/Y H:i'),
                 $transaction->type->label(),
-                $transaction->campaign?->artist?->name,
+                $transaction->campaign?->creator?->name,
                 $transaction->campaign?->title,
                 $transaction->clip?->external_post_id,
                 $transaction->user?->name,
@@ -135,7 +135,7 @@ class AccountingExport
                 $payout->processed_at?->format('d/m/Y H:i'),
                 $payout->status->label(),
                 $payout->user?->name,
-                $payout->paypal_email,
+                $payout->destinationLabel(),
                 $this->amount($payout->amount_cents),
                 $payout->currency,
                 $payout->paypal_batch_id,

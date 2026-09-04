@@ -74,6 +74,7 @@ class ClipperAccessTest extends TestCase
         $this->actingAs($user)->patch(route('profile.complete.update'), [
             'pseudo' => 'lina.clips',
             'country' => 'fr',
+            'payout_method' => 'paypal',
             'paypal_email' => 'lina@paypal.test',
         ])->assertRedirect(route('dashboard'));
 
@@ -95,6 +96,7 @@ class ClipperAccessTest extends TestCase
             ->patch(route('profile.complete.update'), [
                 'pseudo' => 'lina.clips',
                 'country' => 'FR',
+                'payout_method' => 'paypal',
                 'paypal_email' => 'x@paypal.test',
             ])
             ->assertSessionHasErrors('pseudo');

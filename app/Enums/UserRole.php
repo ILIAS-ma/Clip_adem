@@ -7,7 +7,7 @@ enum UserRole: string
     case SuperAdmin = 'super_admin';
     case Moderator = 'moderator';
     case Clipper = 'clipper';
-    case Artist = 'artist';
+    case Creator = 'creator';
 
     public function label(): string
     {
@@ -15,7 +15,7 @@ enum UserRole: string
             self::SuperAdmin => 'Super administrateur',
             self::Moderator => 'Modérateur',
             self::Clipper => 'Clippeur',
-            self::Artist => 'Artiste',
+            self::Creator => 'Créateur',
         };
     }
 
@@ -35,7 +35,7 @@ enum UserRole: string
     {
         return match ($this) {
             self::SuperAdmin, self::Moderator => '/admin',
-            self::Artist => '/artiste',
+            self::Creator => '/createur',
             self::Clipper => '/dashboard',
         };
     }

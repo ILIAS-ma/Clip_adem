@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureAccountIsNotBanned;
-use App\Http\Middleware\EnsureArtistProfileExists;
+use App\Http\Middleware\EnsureCreatorProfileExists;
 use App\Http\Middleware\EnsureProfileIsComplete;
 use App\Http\Middleware\EnsureRole;
 use Illuminate\Foundation\Application;
@@ -33,7 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => EnsureRole::class,
             'profile.completed' => EnsureProfileIsComplete::class,
-            'artist.profile' => EnsureArtistProfileExists::class,
+            'creator.profile' => EnsureCreatorProfileExists::class,
             'not.banned' => EnsureAccountIsNotBanned::class,
         ]);
     })

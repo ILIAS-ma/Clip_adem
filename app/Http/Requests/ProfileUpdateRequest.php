@@ -25,10 +25,6 @@ class ProfileUpdateRequest extends FormRequest
                 Rule::unique(User::class, 'pseudo')->ignore($this->user()->id),
             ],
 
-            // L'adresse PayPal peut différer de l'adresse de connexion : c'est
-            // fréquent, et l'imposer identique bloquerait des retraits.
-            'paypal_email' => ['nullable', 'email', 'max:255'],
-
             'email' => [
                 'required',
                 'string',

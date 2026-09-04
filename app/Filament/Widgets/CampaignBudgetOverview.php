@@ -32,7 +32,7 @@ class CampaignBudgetOverview extends StatsOverviewWidget
 
         return [
             Stat::make('Budget total', static::euros($campaign->budget_total_cents))
-                ->description($campaign->artist?->name)
+                ->description($campaign->creator?->name)
                 ->color('gray'),
 
             Stat::make('Consommé', static::euros($campaign->spent_cents))

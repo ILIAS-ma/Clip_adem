@@ -5,8 +5,8 @@ namespace App\Livewire;
 use App\Contracts\CampaignBudgetService;
 use App\Enums\CampaignStatus;
 use App\Enums\Platform;
-use App\Models\Artist;
 use App\Models\Campaign;
+use App\Models\Creator;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -28,8 +28,8 @@ class CampaignCatalogue extends Component
     #[Url(as: 'plateforme', except: '')]
     public string $platform = '';
 
-    #[Url(as: 'artiste', except: '')]
-    public string $artist = '';
+    #[Url(as: 'créateur', except: '')]
+    public string $creator = '';
 
     /** Cachet minimum, en euros pour 1000 vues. */
     #[Url(as: 'cachet', except: '')]
@@ -47,7 +47,7 @@ class CampaignCatalogue extends Component
 
     public function resetFilters(): void
     {
-        $this->reset(['search', 'platform', 'artist', 'minRate']);
+        $this->reset(['search', 'platform', 'creator', 'minRate']);
         $this->onlyOpen = true;
         $this->resetPage();
     }
@@ -58,13 +58,13 @@ class CampaignCatalogue extends Component
 
         $campaigns = Campaign::query()
             ->visibleToClippers()
-            ->with(['artist', 'rates'])
+            ->with(['creator', 'rates'])
             ->when($this->onlyOpen, fn ($q) => $q->where('status', CampaignStatus::Active))
             ->when($this->search, fn ($q) => $q->where(function ($query) {
                 $query->where('title', 'like', "%{$this->search}%")
-                    ->orWhereHas('artist', fn ($a) => $a->where('name', 'like', "%{$this->search}%"));
+                    ->orWhereHas('creator', fn ($a) => $a->where('name', 'like', "%{$this->search}%"));
             }))
-            ->when($this->artist, fn ($q) => $q->where('artist_id', $this->artist))
+            ->when($this->creator, fn ($q) => $q->where('creator_id', $this->creator))
             ->when($this->platform, fn ($q) => $q->whereHas(
                 'rates',
                 fn ($r) => $r->where('platform', $this->platform)->where('is_enabled', true),
@@ -85,7 +85,7 @@ class CampaignCatalogue extends Component
             'remaining' => $campaigns->mapWithKeys(fn (Campaign $campaign) => [
                 $campaign->getKey() => $budget->remaining($campaign),
             ]),
-            'artists' => Artist::whereHas('campaigns', fn ($q) => $q->visibleToClippers())
+            'creators' => Creator::whereHas('campaigns', fn ($q) => $q->visibleToClippers())
                 ->orderBy('name')
                 ->pluck('name', 'id'),
             'platforms' => collect(Platform::cases())

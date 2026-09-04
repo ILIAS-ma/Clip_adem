@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Contracts\CampaignBudgetService;
+use App\Enums\AssetKind;
 use App\Enums\CampaignStatus;
 use App\Enums\ClipStatus;
 use App\Enums\PayoutStatus;
@@ -80,7 +81,7 @@ class AdminPagesRenderTest extends TestCase
 
         $pages = [
             '/admin' => 'tableau de bord',
-            '/admin/artists' => 'artistes',
+            '/admin/creators' => 'créateurs',
             '/admin/campaigns' => 'campagnes',
             '/admin/clips' => 'clips',
             '/admin/clippers' => 'clippeurs',
@@ -92,6 +93,27 @@ class AdminPagesRenderTest extends TestCase
                 ->get($url)
                 ->assertSuccessful("La page {$label} ({$url}) ne s'affiche pas.");
         }
+    }
+
+    #[Test]
+    public function the_campaign_form_renders_in_creation_and_in_edition(): void
+    {
+        // Le formulaire de campagne porte le budget, les taux et la matière
+        // première du brief : une erreur de schéma n'y serait visible qu'en
+        // ouvrant la page à la main.
+        $this->seedActivity();
+        $admin = $this->admin();
+
+        $campaign = Campaign::first();
+        $campaign->assets()->create([
+            'kind' => AssetKind::Audio,
+            'label' => 'Son officiel',
+            'external_url' => 'https://example.com/son.mp3',
+            'is_required' => true,
+        ]);
+
+        $this->actingAs($admin)->get('/admin/campaigns/create')->assertSuccessful();
+        $this->actingAs($admin)->get("/admin/campaigns/{$campaign->getKey()}/edit")->assertSuccessful();
     }
 
     #[Test]

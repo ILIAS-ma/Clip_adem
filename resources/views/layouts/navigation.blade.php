@@ -1,10 +1,10 @@
 @php
-    // La barre s'adapte au rôle : un artiste n'a ni clips ni solde, lui montrer
+    // La barre s'adapte au rôle : un créateur n'a ni clips ni solde, lui montrer
     // des liens morts vaudrait moins que rien.
-    $links = auth()->user()->isArtist()
+    $links = auth()->user()->isCreator()
         ? [
-            ['route' => 'artist.dashboard',    'pattern' => 'artist.dashboard', 'label' => 'Mes campagnes'],
-            ['route' => 'artist.profile.edit', 'pattern' => 'artist.profile.*', 'label' => 'Ma fiche'],
+            ['route' => 'creator.dashboard',    'pattern' => 'creator.dashboard', 'label' => 'Mes campagnes'],
+            ['route' => 'creator.profile.edit', 'pattern' => 'creator.profile.*', 'label' => 'Ma fiche'],
         ]
         : [
             ['route' => 'dashboard',       'pattern' => 'dashboard',   'label' => 'Tableau de bord'],
@@ -14,7 +14,7 @@
             ['route' => 'earnings.index',  'pattern' => 'earnings.*',  'label' => 'Revenus'],
         ];
 
-    $home = auth()->user()->isArtist() ? route('artist.dashboard') : route('dashboard');
+    $home = auth()->user()->isCreator() ? route('creator.dashboard') : route('dashboard');
 @endphp
 
 <nav x-data="{ open: false }" class="sticky top-0 z-30 border-b border-ink-700 bg-ink-900/85 backdrop-blur">
@@ -42,8 +42,8 @@
                        class="rounded-xl bg-brand-500/15 px-3 py-1.5 text-sm font-semibold tabular text-brand-300 transition hover:bg-brand-500/25">
                         {{ \App\Support\Money::euros(auth()->user()->availableBalanceCents()) }}
                     </a>
-                @elseif (auth()->user()->isArtist())
-                    <span class="chip-neutral">Espace artiste</span>
+                @elseif (auth()->user()->isCreator())
+                    <span class="chip-neutral">Espace créateur</span>
                 @endif
 
                 <x-dropdown align="right" width="48">
@@ -61,6 +61,10 @@
 
                     <x-slot name="content">
                         <x-dropdown-link :href="route('profile.edit')">Mon compte</x-dropdown-link>
+
+                        @if (auth()->user()->isClipper())
+                            <x-dropdown-link :href="route('payout-method.edit')">Moyen de paiement</x-dropdown-link>
+                        @endif
 
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
@@ -110,6 +114,10 @@
 
             <div class="mt-3">
                 <x-responsive-nav-link :href="route('profile.edit')">Mon compte</x-responsive-nav-link>
+
+                @if (auth()->user()->isClipper())
+                    <x-responsive-nav-link :href="route('payout-method.edit')">Moyen de paiement</x-responsive-nav-link>
+                @endif
 
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf

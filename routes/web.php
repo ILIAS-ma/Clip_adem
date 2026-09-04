@@ -1,14 +1,15 @@
 <?php
 
-use App\Http\Controllers\Artist\ArtistCampaignController;
-use App\Http\Controllers\Artist\ArtistDashboardController;
-use App\Http\Controllers\Artist\ArtistProfileController;
 use App\Http\Controllers\Clipper\CampaignController;
 use App\Http\Controllers\Clipper\ClipController;
 use App\Http\Controllers\Clipper\DashboardController;
 use App\Http\Controllers\Clipper\EarningsController;
+use App\Http\Controllers\Clipper\PayoutMethodController;
 use App\Http\Controllers\Clipper\ProfileCompletionController;
 use App\Http\Controllers\Clipper\SocialAccountController;
+use App\Http\Controllers\Creator\CampaignController as CreatorCampaignController;
+use App\Http\Controllers\Creator\DashboardController as CreatorDashboardController;
+use App\Http\Controllers\Creator\ProfileController as CreatorProfileController;
 use App\Http\Controllers\PayPalWebhookController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -96,36 +97,39 @@ Route::middleware(['auth', 'not.banned', 'role:clipper'])->group(function () use
             ->name('accounts.destroy');
 
         Route::get('/revenus', [EarningsController::class, 'index'])->name('earnings.index');
+
+        Route::get('/revenus/paiement', [PayoutMethodController::class, 'edit'])->name('payout-method.edit');
+        Route::patch('/revenus/paiement', [PayoutMethodController::class, 'update'])->name('payout-method.update');
     });
 });
 
 /*
 |--------------------------------------------------------------------------
-| Espace artiste
+| Espace créateur
 |--------------------------------------------------------------------------
 |
-| Consultation seule : l'artiste suit ses campagnes, il ne les crée ni ne les
+| Consultation seule : le créateur suit ses campagnes, il ne les crée ni ne les
 | modifie. Le budget et la modération restent le métier de l'administrateur.
 |
 */
 Route::middleware(array_merge(
-    ['auth', 'not.banned', 'role:artist'],
+    ['auth', 'not.banned', 'role:creator'],
     config('clipping.onboarding.require_email_verification') ? ['verified'] : [],
 ))
-    ->prefix('artiste')
-    ->name('artist.')
+    ->prefix('createur')
+    ->name('creator.')
     ->group(function () {
 
         // Hors du garde « fiche existante », sinon la redirection boucle.
-        Route::get('/profil/creer', [ArtistProfileController::class, 'create'])->name('profile.create');
-        Route::post('/profil/creer', [ArtistProfileController::class, 'store'])->name('profile.store');
+        Route::get('/profil/creer', [CreatorProfileController::class, 'create'])->name('profile.create');
+        Route::post('/profil/creer', [CreatorProfileController::class, 'store'])->name('profile.store');
 
-        Route::middleware('artist.profile')->group(function () {
-            Route::get('/', ArtistDashboardController::class)->name('dashboard');
-            Route::get('/campagnes/{campaign:slug}', [ArtistCampaignController::class, 'show'])->name('campaigns.show');
+        Route::middleware('creator.profile')->group(function () {
+            Route::get('/', CreatorDashboardController::class)->name('dashboard');
+            Route::get('/campagnes/{campaign:slug}', [CreatorCampaignController::class, 'show'])->name('campaigns.show');
 
-            Route::get('/profil', [ArtistProfileController::class, 'edit'])->name('profile.edit');
-            Route::patch('/profil', [ArtistProfileController::class, 'update'])->name('profile.update');
+            Route::get('/profil', [CreatorProfileController::class, 'edit'])->name('profile.edit');
+            Route::patch('/profil', [CreatorProfileController::class, 'update'])->name('profile.update');
         });
     });
 

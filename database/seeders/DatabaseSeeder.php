@@ -8,11 +8,11 @@ use App\Enums\ClipStatus;
 use App\Enums\PayoutStatus;
 use App\Enums\Platform;
 use App\Enums\UserRole;
-use App\Models\Artist;
 use App\Models\BudgetTransaction;
 use App\Models\Campaign;
 use App\Models\Clip;
 use App\Models\ClipViewSnapshot;
+use App\Models\Creator;
 use App\Models\Payout;
 use App\Models\SocialAccount;
 use App\Models\User;
@@ -43,24 +43,24 @@ class DatabaseSeeder extends Seeder
             ],
         );
 
-        // L'artiste a son propre compte de connexion : il suit ses statistiques
+        // le créateur a son propre compte de connexion : il suit ses statistiques
         // sans pouvoir toucher au budget ni à la modération.
-        $artistUser = User::updateOrCreate(
-            ['email' => 'nayra@artiste.test'],
+        $creatorUser = User::updateOrCreate(
+            ['email' => 'nayra@créateur.test'],
             [
                 'name' => 'Nayra Diallo',
                 'password' => Hash::make('password'),
-                'role' => UserRole::Artist,
+                'role' => UserRole::Creator,
                 'email_verified_at' => now(),
             ],
         );
 
-        $artist = Artist::updateOrCreate(
+        $creator = Creator::updateOrCreate(
             ['slug' => 'nayra'],
             [
-                'user_id' => $artistUser->getKey(),
+                'user_id' => $creatorUser->getKey(),
                 'name' => 'NAYRA',
-                'bio' => 'Artiste rap/afro en développement, sortie de single prévue ce trimestre.',
+                'bio' => 'Créateur rap/afro en développement, sortie de single prévue ce trimestre.',
                 'tiktok_handle' => 'nayra.officiel',
                 'is_active' => true,
                 'created_by' => $admin->getKey(),
@@ -70,10 +70,10 @@ class DatabaseSeeder extends Seeder
         $campaign = Campaign::updateOrCreate(
             ['slug' => 'nayra-nouveau-single'],
             [
-                'artist_id' => $artist->getKey(),
+                'creator_id' => $creator->getKey(),
                 'title' => 'NAYRA — Nouveau single',
                 'brief' => "Utiliser l'extrait de 15 secondes du refrain. Mentionner @nayra.officiel "
-                    .'en légende. Interdit : contenu politique, alcool, montage avec un autre artiste.',
+                    .'en légende. Interdit : contenu politique, alcool, montage avec un autre créateur.',
                 'required_hashtags' => ['#nayra', '#nouveausingle'],
                 'status' => CampaignStatus::Active,
                 'budget_total_cents' => 150_000, // 1 500 €

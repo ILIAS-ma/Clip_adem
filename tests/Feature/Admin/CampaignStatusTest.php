@@ -21,7 +21,7 @@ class CampaignStatusTest extends TestCase
             ->create(array_merge([
                 'status' => CampaignStatus::Draft,
                 'budget_total_cents' => 10_000,
-                'brief' => 'Utiliser le refrain, mentionner l\'artiste.',
+                'brief' => 'Utiliser le refrain, mentionner l\'créateur.',
             ], $attributes));
     }
 

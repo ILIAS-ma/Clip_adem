@@ -15,7 +15,7 @@
             <div class="grid grid-cols-2 gap-3">
                 @foreach ([
                     [UserRole::Clipper, 'Clippeur', 'Je publie des clips et je suis payé aux vues'],
-                    [UserRole::Artist, 'Artiste', 'Je suis promu et je suis les statistiques'],
+                    [UserRole::Creator, 'Créateur', 'Je suis promu et je suis les statistiques'],
                 ] as [$option, $title, $description])
                     <label class="cursor-pointer">
                         <input type="radio" name="role" value="{{ $option->value }}"
@@ -43,7 +43,7 @@
             <p class="hint" x-show="role === 'clipper'">
                 Utilisé pour vos versements. Votre pseudo public sera choisi à l'étape suivante.
             </p>
-            <p class="hint" x-show="role === 'artist'" x-cloak>
+            <p class="hint" x-show="role === 'creator'" x-cloak>
                 Votre nom réel. Votre nom de scène sera choisi à l'étape suivante.
             </p>
             <x-input-error :messages="$errors->get('name')" class="mt-2" />

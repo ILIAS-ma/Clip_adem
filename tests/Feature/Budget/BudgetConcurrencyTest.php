@@ -60,7 +60,7 @@ class BudgetConcurrencyTest extends TestCase
         // qui, elles, travaillent dans une transaction annulée.
         if (DB::connection()->getDriverName() === 'mysql') {
             Schema::withoutForeignKeyConstraints(function () {
-                foreach (['campaign_budget_transactions', 'clips', 'campaign_rates', 'campaigns', 'artists', 'users'] as $table) {
+                foreach (['campaign_budget_transactions', 'clips', 'campaign_rates', 'campaigns', 'creators', 'users'] as $table) {
                     DB::table($table)->truncate();
                 }
             });

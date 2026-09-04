@@ -3,6 +3,7 @@
 namespace App\Services\Payouts;
 
 use App\Enums\ModerationAction;
+use App\Enums\PayoutMethod;
 use App\Enums\PayoutStatus;
 use App\Exceptions\PayoutRefused;
 use App\Exceptions\PayPalException;
@@ -49,8 +50,10 @@ class PayoutService
                 throw PayoutRefused::bannedClipper();
             }
 
-            if (blank($clipper->paypal_email)) {
-                throw PayoutRefused::missingPaypalEmail();
+            $method = $clipper->payoutMethod();
+
+            if (! $clipper->hasPayoutDestination()) {
+                throw PayoutRefused::missingPayoutDestination($method);
             }
 
             if ($amount < $minimum) {
@@ -66,7 +69,12 @@ class PayoutService
                 'amount_cents' => $amount,
                 'currency' => 'EUR',
                 'status' => PayoutStatus::Requested,
-                'paypal_email' => $clipper->paypal_email,
+                'method' => $method,
+
+                // Destination figée et masquée : l'historique doit continuer
+                // de dire où l'argent est parti même si le profil change.
+                'destination' => $clipper->payoutDestinationLabel(),
+                'paypal_email' => $method === PayoutMethod::PayPal ? $clipper->paypal_email : null,
                 'requested_at' => now(),
             ]);
 
@@ -135,6 +143,39 @@ class PayoutService
     }
 
     /**
+     * Pointe un virement bancaire exécuté depuis la banque.
+     *
+     * C'est le pendant manuel de `sendApproved()` : la plateforme n'a aucun
+     * moyen de savoir qu'un virement SEPA est parti, quelqu'un doit le lui
+     * dire. La trace de modération dit qui l'a dit et quand.
+     */
+    public function markPaid(Payout $payout, ?User $by = null, ?string $reference = null): Payout
+    {
+        if (! $payout->isManual()) {
+            throw PayoutRefused::notAManualPayout($payout->payoutMethod());
+        }
+
+        if ($payout->status !== PayoutStatus::Approved) {
+            throw PayoutRefused::notApproved($payout->status);
+        }
+
+        $payout->forceFill([
+            'status' => PayoutStatus::Paid,
+            'processed_at' => now(),
+            'failure_reason' => null,
+            // La référence du virement est ce qui permet de rapprocher la ligne
+            // avec le relevé bancaire six mois plus tard.
+            'paypal_payout_item_id' => $reference ?: $payout->paypal_payout_item_id,
+        ])->save();
+
+        ModerationLog::record(ModerationAction::PayoutApproved, $payout, $by, $reference
+            ? 'Virement bancaire exécuté, référence '.$reference
+            : 'Virement bancaire exécuté');
+
+        return $payout;
+    }
+
+    /**
      * Envoie les retraits validés à PayPal, par lot.
      *
      * L'ordre des opérations est ce qui protège l'argent : les payouts sont
@@ -156,6 +197,9 @@ class PayoutService
         $batch = DB::transaction(function () use ($payouts, $senderBatchId) {
             $query = Payout::query()
                 ->where('status', PayoutStatus::Approved)
+                // Un virement bancaire n'a rien à faire dans un lot PayPal :
+                // il part de la banque, puis il est pointé à la main.
+                ->where('method', PayoutMethod::PayPal->value)
                 ->when($payouts, fn ($q) => $q->whereKey($payouts->modelKeys()))
                 ->limit(config('clipping.payouts.batch_size'))
                 ->lockForUpdate();

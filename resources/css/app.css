@@ -3,6 +3,12 @@
 @tailwind utilities;
 
 @layer base {
+    /* Sans ça, un bloc Alpine masqué apparaît une fraction de seconde au
+       chargement, le temps qu'Alpine prenne la main. */
+    [x-cloak] {
+        display: none !important;
+    }
+
     html {
         -webkit-tap-highlight-color: transparent;
         color-scheme: dark;

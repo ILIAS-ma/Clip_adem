@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PayoutMethod;
 use App\Enums\PayoutStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * échoué rend le solde au clippeur, pas au budget.
  */
 #[Fillable([
-    'user_id', 'amount_cents', 'currency', 'status', 'paypal_email',
+    'user_id', 'amount_cents', 'currency', 'status', 'method', 'destination', 'paypal_email',
     'paypal_batch_id', 'paypal_payout_item_id',
     'requested_at', 'approved_at', 'processed_at', 'failure_reason', 'approved_by',
 ])]
@@ -28,6 +29,7 @@ class Payout extends Model
     {
         return [
             'status' => PayoutStatus::class,
+            'method' => PayoutMethod::class,
             'amount_cents' => 'integer',
             'requested_at' => 'datetime',
             'approved_at' => 'datetime',
@@ -43,5 +45,28 @@ class Payout extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /** PayPal par défaut : les retraits antérieurs au RIB n'ont pas de mode. */
+    public function payoutMethod(): PayoutMethod
+    {
+        return $this->method ?? PayoutMethod::PayPal;
+    }
+
+    /**
+     * Où l'argent est parti, figé au moment de la demande.
+     *
+     * On ne relit jamais le profil : un changement de RIB ne doit pas réécrire
+     * l'histoire d'un virement déjà exécuté.
+     */
+    public function destinationLabel(): string
+    {
+        return $this->destination ?: ($this->paypal_email ?: '—');
+    }
+
+    /** Un virement bancaire est exécuté à la main, puis pointé ici. */
+    public function isManual(): bool
+    {
+        return ! $this->payoutMethod()->isAutomatic();
     }
 }

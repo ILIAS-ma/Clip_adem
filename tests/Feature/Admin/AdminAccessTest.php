@@ -4,8 +4,8 @@ namespace Tests\Feature\Admin;
 
 use App\Enums\CampaignStatus;
 use App\Enums\UserRole;
-use App\Models\Artist;
 use App\Models\Campaign;
+use App\Models\Creator;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -68,13 +68,13 @@ class AdminAccessTest extends TestCase
     }
 
     #[Test]
-    public function only_a_super_admin_may_delete_an_artist(): void
+    public function only_a_super_admin_may_delete_a_creator(): void
     {
-        $artist = Artist::factory()->create();
+        $creator = Creator::factory()->create();
 
-        $this->assertTrue($this->user(UserRole::SuperAdmin)->can('delete', $artist));
-        $this->assertFalse($this->user(UserRole::Moderator)->can('delete', $artist));
-        $this->assertTrue($this->user(UserRole::Moderator)->can('update', $artist));
+        $this->assertTrue($this->user(UserRole::SuperAdmin)->can('delete', $creator));
+        $this->assertFalse($this->user(UserRole::Moderator)->can('delete', $creator));
+        $this->assertTrue($this->user(UserRole::Moderator)->can('update', $creator));
     }
 
     #[Test]

@@ -1,7 +1,7 @@
 # Clip Adem
 
 Plateforme de clipping : un administrateur crée des campagnes de promotion pour
-des artistes avec un budget total et un taux de rémunération par plateforme.
+des créateurs avec un budget total et un taux de rémunération par plateforme.
 Des clippeurs publient des clips, et sont payés selon les vues générées, jusqu'à
 épuisement du budget — premier arrivé, premier servi.
 
@@ -11,7 +11,7 @@ Le dépôt est partagé entre deux périmètres :
 |---|---|---|
 | Espace admin + moteur de campagne / budget | Ilias | Livré |
 | Espace clippeur complet : auth, catalogue, comptes, clips, revenus | Ilias | Livré |
-| Espace artiste : suivi des campagnes et du rendement | Ilias | Livré |
+| Espace créateur : suivi des campagnes et du rendement | Ilias | Livré |
 | Validation des intégrations sur les API réelles | Anas | En attente des clés |
 
 ## Démarrage
@@ -30,7 +30,7 @@ php artisan serve
 
 La connexion est à la racine `/`, le panel admin sur `/admin`. Chaque rôle est
 ensuite renvoyé vers son propre espace — `/dashboard` pour un clippeur,
-`/artiste` pour un artiste, `/admin` pour le staff. La page de présentation du
+`/createur` pour un créateur, `/admin` pour le staff. La page de présentation du
 fonctionnement reste sur `/presentation`.
 
 ### Comptes de démonstration
@@ -50,10 +50,10 @@ les dupliquer.
 | `admin@clip.test` | super-administrateur | Campagnes, modération, retraits, reporting |
 | `moderateur@clip.test` | modérateur | Idem sans les paiements |
 | `clippeur@clip.test` | clippeur | Niveau Expert, deux clips, un retrait en attente |
-| `artiste@clip.test` | artiste | Sa campagne, ses vues, son coût réel aux 1000 vues |
+| `createur@clip.test` | créateur | Sa campagne, ses vues, son coût réel aux 1000 vues |
 
 Le seed crée en plus `lina@clippeur.test`, `karim@clippeur.test` (un clip aux
-vues suspectes) et `nayra@artiste.test`.
+vues suspectes) et `nayra@createur.test`.
 
 > Les sessions partagent le même cookie : pour comparer deux rôles côte à côte,
 > ouvrez-les dans des fenêtres de navigation privée distinctes.
@@ -66,9 +66,9 @@ pendant le développement :
 | Variable `.env` | Effet quand `false` |
 |---|---|
 | `REQUIRE_EMAIL_VERIFICATION` | L'e-mail n'a plus besoin d'être confirmé |
-| `REQUIRE_COMPLETE_PROFILE` | Pseudo, pays et PayPal ne bloquent plus |
+| `REQUIRE_COMPLETE_PROFILE` | Pseudo, pays et moyen de paiement ne bloquent plus |
 | `REQUIRE_ADMIN_2FA` | Le panel n'impose plus de scanner un QR code |
-| `REQUIRE_ARTIST_VALIDATION` | Une fiche artiste est active dès sa création |
+| `REQUIRE_CREATOR_VALIDATION` | Une fiche créateur est active dès sa création |
 
 Aucun code n'est commenté ni supprimé : les contrôles restent en place, et la
 suite de tests **les force à `true`** pour continuer de les vérifier. Un bandeau
@@ -290,29 +290,67 @@ connues. Il produit **un rapport, jamais une décision** : un clip conforme rest
 en attente de modération, un clip non conforme arrive devant le modérateur avec
 ses motifs.
 
-## Espace artiste
+### Matière première du brief
 
-Un artiste peut avoir son propre compte : `artists.user_id`, nullable et unique.
+Un brief textuel ne suffit pas : un clippeur a besoin d'entendre le son imposé
+et de voir des exemples avant de tourner. `campaign_assets` porte les pièces
+jointes d'une campagne — **son, vidéo, image, document** — déposées comme
+fichiers ou pointées par un lien externe.
+
+Une table plutôt que deux colonnes d'URL : le nombre de pièces varie, chacune
+porte son propre type, sa consigne d'usage (« caler le drop à 0:12 ») et son
+caractère imposé ou non. Un lien unique « pack visuel » ne dit ni ce que c'est,
+ni s'il faut absolument s'en servir.
+
+- **Fichier OU lien, jamais les deux.** Un fichier déposé efface le lien : deux
+  sources pour la même pièce, c'est deux vérités sur ce qu'il faut utiliser.
+- **Poids et type relus depuis le disque**, pas depuis le formulaire — le
+  navigateur peut se tromper, le disque non.
+- **Aperçu sur place** pour ce que le navigateur sait lire. Envoyer quelqu'un
+  télécharger 80 Mo pour découvrir que ce n'était pas le bon son, c'est le
+  perdre.
+- Les extensions et le poids maximum acceptés sont dérivés du type choisi
+  (`AssetKind`), source unique côté formulaire comme côté validation.
+
+## Espace créateur
+
+Un créateur peut avoir son propre compte : `creators.user_id`, nullable et unique.
 Nullable parce qu'une fiche créée par l'admin n'a pas forcément de compte,
-unique parce que « de quel artiste voit-il les statistiques ? » doit avoir une
+unique parce que « de quel créateur voit-il les statistiques ? » doit avoir une
 réponse unique.
 
-**Consultation seule.** L'artiste suit ses campagnes ; il ne les crée pas, ne
+**Consultation seule.** Le créateur suit ses campagnes ; il ne les crée pas, ne
 touche ni au budget ni à la modération. Il voit : budget engagé, dépensé,
 restant, vues générées, **coût réel pour 1000 vues** — le seul indicateur de
 rendement qui ait du sens, à comparer au CPM annoncé — le détail par campagne,
 les clips classés par vues et la répartition par plateforme.
 
-**Ce qu'il ne voit jamais** : les campagnes des autres artistes (404), ni
+**Ce qu'il ne voit jamais** : les campagnes des autres créateurs (404), ni
 l'identité civile, l'e-mail ou l'adresse PayPal des clippeurs. Seul leur pseudo
 apparaît. Deux tests verrouillent ces deux points.
 
 Une fiche créée depuis l'inscription publique naît **inactive** : sans
 validation d'un administrateur, n'importe qui apparaîtrait au catalogue sous le
 nom qu'il veut. Le badge de navigation du back-office compte les fiches en
-attente, sinon l'artiste attendrait une validation que personne ne sait devoir
+attente, sinon le créateur attendrait une validation que personne ne sait devoir
 faire. Ce contrôle fait partie des passages obligés suspendables
-(`REQUIRE_ARTIST_VALIDATION`).
+(`REQUIRE_CREATOR_VALIDATION`).
+
+### Des chiffres lisibles par un créateur
+
+`CreatorStatsService` répond aux trois seules questions qu'un créateur pose :
+combien de vues, combien ça m'a coûté, est-ce que ça marche. Le tableau de bord
+s'ouvre sur **une phrase** puis trois chiffres — vues, dépensé, coût pour 1000
+vues — chacun accompagné de ce qu'il veut dire, suivis de deux graphiques sur 30
+jours et des clips qui ont réellement porté la campagne.
+
+Tout est lu depuis `campaign_budget_transactions`, jamais depuis
+`campaigns.spent_cents` : le grand livre est la seule table qui redescend d'elle-
+même quand des vues achetées sont invalidées. Afficher le cache montrerait au
+créateur une dépense que la plateforme a déjà annulée.
+
+Les clips sont classés sur les **vues rémunérées**, pas sur le compteur brut : un
+clip dont les vues ont été refusées n'a rien apporté.
 
 ### Aiguillage par rôle
 
@@ -322,7 +360,7 @@ issue. `isStaff()` est une **liste blanche explicite** et non « tout sauf
 clippeur » : ajouter un rôle ne doit pas lui ouvrir le back-office et les
 paiements par simple oubli.
 
-L'inscription publique ne peut créer qu'un clippeur ou un artiste — les rôles du
+L'inscription publique ne peut créer qu'un clippeur ou un créateur — les rôles du
 back-office ne se donnent pas par formulaire, même en trafiquant la requête.
 
 ## Progression des clippeurs
@@ -422,11 +460,40 @@ en double, dans le désordre, ou pas du tout — `payouts:sync` est le filet.
 Configuration : `PAYPAL_MODE`, `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`,
 `PAYPAL_WEBHOOK_ID` dans `.env`. Sandbox par défaut.
 
+### Moyen de paiement : PayPal ou virement bancaire
+
+Une page, un formulaire : « où voulez-vous être payé ». Le moyen de paiement est
+sorti du profil général parce que c'est la seule information qu'un clippeur
+revient modifier, et qu'elle ne doit pas se perdre au milieu du pseudo et du
+pays. Le même bloc sert à la fin d'inscription et à la page dédiée — deux
+formulaires finiraient par ne plus accepter les mêmes IBAN.
+
+- **L'IBAN est chiffré** au niveau du modèle : une donnée bancaire ne doit pas
+  sortir en clair d'un dump de base. Seuls les quatre derniers chiffres sont
+  conservés en clair, pour afficher `•••• 0189` et rapprocher un virement sans
+  jamais déchiffrer quoi que ce soit.
+- **Vérification structurelle** (longueur par pays + clé mod 97) : elle attrape
+  la faute de frappe, pas le compte fermé. C'est déjà l'essentiel — un virement
+  rejeté coûte des frais et une semaine.
+- **Changer de mode efface l'autre.** Garder un IBAN dormant sur un compte passé
+  à PayPal, c'est conserver une donnée bancaire dont plus personne n'a l'usage.
+- **La destination est figée sur le retrait**, masquée, au moment de la demande.
+  Un changement de RIB ne réécrit pas l'histoire d'un virement déjà parti.
+
+Les virements bancaires ne partent **jamais** dans un lot PayPal. Le
+back-office propose un **fichier des virements** (CSV, IBAN en clair, réservé au
+super-administrateur) à ouvrir à côté de l'interface bancaire, puis une action
+« Virement effectué » par ligne, avec la référence du relevé. Aucune API ne nous
+dit qu'un SEPA est parti : quelqu'un doit le dire, et la trace de modération dit
+qui et quand. Symétriquement, un retrait PayPal **ne peut pas** être pointé à la
+main — sinon un administrateur pourrait déclarer versé un retrait que PayPal n'a
+jamais envoyé, et le solde du clippeur disparaîtrait.
+
 ## Reporting
 
 Tableau de bord `/admin` : budget engagé, consommé, **dû aux clippeurs**
 (consommé − versé, le chiffre à provisionner), vues et CPM réel ; courbe de
-consommation sur 30 jours ; dépenses par artiste ; top clippeurs avec leur taux
+consommation sur 30 jours ; dépenses par créateur ; top clippeurs avec leur taux
 d'invalidation.
 
 Toutes les agrégations lisent le grand livre plutôt que les compteurs
@@ -478,3 +545,9 @@ externes, pas à du code manquant :
 - **Publication depuis la plateforme** (Content Posting API de TikTok). Hors
   périmètre à ce jour : le modèle est que le clippeur publie lui-même, puis
   colle le lien.
+- **Exécution automatique des virements SEPA.** Aujourd'hui l'administrateur
+  télécharge le fichier des virements et les saisit en banque. Un fichier
+  pain.001 déposé chez la banque supprimerait cette étape, mais suppose un
+  contrat de télétransmission — décision commerciale avant décision technique.
+- **Stockage des pièces jointes.** Le disque `public` local convient au
+  développement ; des rushes vidéo en production appellent S3 et un CDN.

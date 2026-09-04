@@ -5,10 +5,10 @@ namespace App\Services\Reporting;
 use App\Enums\CampaignStatus;
 use App\Enums\ClipStatus;
 use App\Enums\PayoutStatus;
-use App\Models\Artist;
 use App\Models\BudgetTransaction;
 use App\Models\Campaign;
 use App\Models\Clip;
+use App\Models\Creator;
 use App\Models\Payout;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -54,26 +54,26 @@ class ReportingService
     }
 
     /**
-     * Dépenses et rendement par artiste.
+     * Dépenses et rendement par créateur.
      *
      * Le CPM réel est le seul indicateur de ROI qui ait du sens ici : il se
      * compare directement au CPM affiché sur les campagnes.
      *
      * @return Collection<int, object>
      */
-    public function spendPerArtist(int $limit = 20): Collection
+    public function spendPerCreator(int $limit = 20): Collection
     {
-        return Artist::query()
-            ->select('artists.id', 'artists.name')
+        return Creator::query()
+            ->select('creators.id', 'creators.name')
             ->selectRaw('COALESCE(SUM(campaigns.budget_total_cents), 0) as budget_cents')
             ->selectRaw('COALESCE(SUM(campaigns.spent_cents), 0) as spent_cents')
             ->selectRaw('COUNT(DISTINCT campaigns.id) as campaigns_count')
             ->leftJoin('campaigns', function ($join) {
-                $join->on('campaigns.artist_id', '=', 'artists.id')
+                $join->on('campaigns.creator_id', '=', 'creators.id')
                     ->whereNull('campaigns.deleted_at');
             })
-            ->whereNull('artists.deleted_at')
-            ->groupBy('artists.id', 'artists.name')
+            ->whereNull('creators.deleted_at')
+            ->groupBy('creators.id', 'creators.name')
             ->having('spent_cents', '>', 0)
             ->orderByDesc('spent_cents')
             ->limit($limit)
@@ -81,7 +81,7 @@ class ReportingService
             ->map(function ($row) {
                 $views = (int) Clip::whereIn(
                     'campaign_id',
-                    Campaign::where('artist_id', $row->id)->select('id'),
+                    Campaign::where('creator_id', $row->id)->select('id'),
                 )->sum('views_total');
 
                 $row->views = $views;

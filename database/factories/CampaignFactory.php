@@ -4,8 +4,8 @@ namespace Database\Factories;
 
 use App\Enums\CampaignStatus;
 use App\Enums\Platform;
-use App\Models\Artist;
 use App\Models\Campaign;
+use App\Models\Creator;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -19,7 +19,7 @@ class CampaignFactory extends Factory
         $title = fake()->unique()->sentence(3);
 
         return [
-            'artist_id' => Artist::factory(),
+            'creator_id' => Creator::factory(),
             'title' => $title,
             'slug' => Str::slug($title).'-'.fake()->unique()->numberBetween(1, 999999),
             'brief' => fake()->paragraph(),

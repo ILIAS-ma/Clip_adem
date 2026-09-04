@@ -22,12 +22,12 @@ return [
         'require_complete_profile' => env('REQUIRE_COMPLETE_PROFILE', true),
         'require_admin_2fa' => env('REQUIRE_ADMIN_2FA', true),
 
-        // Une fiche artiste créée depuis l'inscription publique naît inactive
+        // Une fiche créateur créée depuis l'inscription publique naît inactive
         // et attend un administrateur. Suspendre ce contrôle la rend active
-        // immédiatement — pratique pour parcourir l'espace artiste, mais à
+        // immédiatement — pratique pour parcourir l'espace créateur, mais à
         // rétablir avant l'ouverture : sans lui, n'importe qui apparaît au
         // catalogue sous le nom de scène qu'il veut.
-        'require_artist_validation' => env('REQUIRE_ARTIST_VALIDATION', true),
+        'require_creator_validation' => env('REQUIRE_CREATOR_VALIDATION', true),
     ],
 
     /*

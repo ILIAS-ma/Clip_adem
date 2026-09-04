@@ -13,7 +13,7 @@ class ClipController extends Controller
     public function index(Request $request, CampaignBudgetService $budget): View
     {
         $clips = Clip::where('user_id', $request->user()->getKey())
-            ->with(['campaign.artist', 'socialAccount'])
+            ->with(['campaign.creator', 'socialAccount'])
             ->latest('submitted_at')
             ->get();
 
@@ -31,7 +31,7 @@ class ClipController extends Controller
     {
         abort_unless($clip->user_id === $request->user()->getKey(), 403);
 
-        $clip->load(['campaign.artist', 'socialAccount']);
+        $clip->load(['campaign.creator', 'socialAccount']);
 
         return view('clipper.clips.show', [
             'clip' => $clip,

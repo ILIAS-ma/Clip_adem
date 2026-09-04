@@ -2,16 +2,19 @@
 
 namespace App\Filament\Resources\Payouts\Tables;
 
+use App\Enums\PayoutMethod;
 use App\Enums\PayoutStatus;
 use App\Exceptions\PayoutRefused;
 use App\Models\Payout;
 use App\Services\Accounting\AccountingExport;
+use App\Services\Payouts\BankTransferExport;
 use App\Services\Payouts\PayoutService;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -34,7 +37,15 @@ class PayoutsTable
                     ->label('Clippeur')
                     ->searchable()
                     ->weight('bold')
-                    ->description(fn (Payout $record) => $record->paypal_email),
+                    ->description(fn (Payout $record) => $record->destinationLabel()),
+
+                TextColumn::make('method')
+                    ->label('Mode')
+                    ->badge()
+                    ->formatStateUsing(fn (?PayoutMethod $state) => ($state ?? PayoutMethod::PayPal)->label())
+                    ->color(fn (?PayoutMethod $state) => ($state ?? PayoutMethod::PayPal) === PayoutMethod::PayPal
+                        ? 'info'
+                        : 'warning'),
 
                 TextColumn::make('amount_cents')
                     ->label('Montant')
@@ -74,13 +85,21 @@ class PayoutsTable
                     ->options(collect(PayoutStatus::cases())
                         ->mapWithKeys(fn (PayoutStatus $status) => [$status->value => $status->label()])
                         ->all()),
+
+                SelectFilter::make('method')
+                    ->label('Mode')
+                    ->options(collect(PayoutMethod::cases())
+                        ->mapWithKeys(fn (PayoutMethod $method) => [$method->value => $method->label()])
+                        ->all()),
             ])
             ->headerActions([
                 static::sendBatchAction(),
+                static::bankTransferFileAction(),
                 static::exportAction(),
             ])
             ->recordActions([
                 static::approveAction(),
+                static::markPaidAction(),
                 static::cancelAction(),
             ])
             ->toolbarActions([
@@ -98,12 +117,75 @@ class PayoutsTable
             ->color('success')
             ->visible(fn (Payout $record) => $record->status === PayoutStatus::Requested)
             ->requiresConfirmation()
-            ->modalDescription('Le retrait partira au prochain envoi de lot PayPal.')
+            ->modalDescription(fn (Payout $record) => $record->isManual()
+                ? 'Le virement sera à exécuter depuis la banque, puis à pointer ici.'
+                : 'Le retrait partira au prochain envoi de lot PayPal.')
             ->action(function (Payout $record) {
                 app(PayoutService::class)->approve($record, auth()->user());
 
                 Notification::make()->success()->title('Retrait validé')->send();
             });
+    }
+
+    /**
+     * Pointage d'un virement bancaire exécuté depuis la banque.
+     *
+     * Rien ne peut le faire à notre place : aucune API ne nous dit qu'un SEPA
+     * est parti. La référence saisie est ce qui permettra le rapprochement
+     * avec le relevé bancaire.
+     */
+    protected static function markPaidAction(): Action
+    {
+        return Action::make('markPaid')
+            ->label('Virement effectué')
+            ->icon('heroicon-o-banknotes')
+            ->color('success')
+            ->visible(fn (Payout $record) => $record->isManual()
+                && $record->status === PayoutStatus::Approved)
+            ->schema([
+                TextInput::make('reference')
+                    ->label('Référence du virement')
+                    ->helperText('Celle du relevé bancaire. Facultative, mais elle vous sauvera un jour.')
+                    ->maxLength(64),
+            ])
+            ->action(function (Payout $record, array $data) {
+                try {
+                    app(PayoutService::class)->markPaid($record, auth()->user(), $data['reference'] ?? null);
+                } catch (PayoutRefused $exception) {
+                    Notification::make()->danger()->title('Pointage refusé')->body($exception->getMessage())->send();
+
+                    return;
+                }
+
+                Notification::make()->success()->title('Virement pointé comme versé')->send();
+            });
+    }
+
+    /**
+     * Le fichier des virements à saisir en banque.
+     *
+     * Réservé au super administrateur : il contient des IBAN en clair, ce qui
+     * est précisément son intérêt et sa dangerosité.
+     */
+    protected static function bankTransferFileAction(): Action
+    {
+        return Action::make('bankTransferFile')
+            ->label('Fichier des virements')
+            ->icon('heroicon-o-building-library')
+            ->color('gray')
+            ->visible(fn () => auth()->user()?->isSuperAdmin())
+            ->requiresConfirmation()
+            ->modalHeading('Télécharger le fichier des virements')
+            ->modalDescription(function () {
+                $pending = app(BankTransferExport::class)->pending();
+
+                return sprintf(
+                    '%d virement(s) validé(s) pour %s €. Le fichier contient les IBAN en clair.',
+                    $pending->count(),
+                    number_format($pending->sum('amount_cents') / 100, 2, ',', ' '),
+                );
+            })
+            ->action(fn () => app(BankTransferExport::class)->download());
     }
 
     protected static function bulkApproveAction(): BulkAction
@@ -170,7 +252,11 @@ class PayoutsTable
             ->color('primary')
             ->requiresConfirmation()
             ->modalDescription(function () {
-                $approved = Payout::where('status', PayoutStatus::Approved)->get();
+                // Seuls les PayPal partent en lot : compter les virements
+                // bancaires ici annoncerait un envoi qui n'aura pas lieu.
+                $approved = Payout::where('status', PayoutStatus::Approved)
+                    ->where('method', PayoutMethod::PayPal->value)
+                    ->get();
 
                 return sprintf(
                     '%d retrait(s) validé(s) pour %s € seront envoyés à PayPal.',

@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Chaque rôle a son espace, et n'entre pas dans celui des autres.
  *
- * On redirige plutôt qu'on interdit : un artiste qui suit un lien vers
+ * On redirige plutôt qu'on interdit : un créateur qui suit un lien vers
  * `/dashboard` a fait une erreur d'adresse, pas une tentative d'intrusion —
  * l'envoyer chez lui vaut mieux qu'un 403 sans issue.
  */

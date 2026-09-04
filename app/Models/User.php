@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\PayoutMethod;
 use App\Enums\PayoutStatus;
 use App\Enums\UserRole;
+use App\Support\Iban;
 use Database\Factories\UserFactory;
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthenticationRecovery;
@@ -21,7 +23,7 @@ use Illuminate\Notifications\Notifiable;
 use SensitiveParameter;
 
 #[Fillable(['name', 'pseudo', 'country', 'email', 'password', 'role', 'paypal_email'])]
-#[Hidden(['password', 'remember_token', 'app_authentication_secret', 'app_authentication_recovery_codes'])]
+#[Hidden(['password', 'remember_token', 'app_authentication_secret', 'app_authentication_recovery_codes', 'iban'])]
 class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
@@ -45,6 +47,11 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
             'app_authentication_secret' => 'encrypted',
             'app_authentication_recovery_codes' => 'encrypted:array',
             'profile_completed_at' => 'datetime',
+            'payout_method' => PayoutMethod::class,
+            // Donnée bancaire : un dump de base ne doit pas la livrer en clair.
+            // Les quatre derniers chiffres vivent à part, eux en clair, pour
+            // l'affichage et le rapprochement d'un virement.
+            'iban' => 'encrypted',
         ];
     }
 
@@ -57,15 +64,15 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         return $this->role === UserRole::Clipper;
     }
 
-    public function isArtist(): bool
+    public function isCreator(): bool
     {
-        return $this->role === UserRole::Artist;
+        return $this->role === UserRole::Creator;
     }
 
-    /** Fiche artiste pilotée par ce compte. */
-    public function artist(): HasOne
+    /** Fiche créateur pilotée par ce compte. */
+    public function creator(): HasOne
     {
-        return $this->hasOne(Artist::class);
+        return $this->hasOne(Creator::class);
     }
 
     /** Nom affiché publiquement : le pseudo s'il existe, le prénom sinon. */
@@ -88,7 +95,10 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         return collect([
             'pseudo' => $this->pseudo,
             'country' => $this->country,
-            'paypal_email' => $this->paypal_email,
+            // Un seul manque possible côté paiement, quel que soit le mode :
+            // l'écran n'a pas à expliquer « il manque un IBAN » à quelqu'un qui
+            // a choisi PayPal.
+            'payout' => $this->payoutDestination(),
         ])->filter(fn ($value) => blank($value))->keys()->all();
     }
 
@@ -193,5 +203,45 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     public function availableBalanceCents(): int
     {
         return max(0, $this->earnedCents() - $this->lockedPayoutCents());
+    }
+
+    // ------------------------------------------------------------------
+    // Moyen de paiement
+    // ------------------------------------------------------------------
+
+    /** PayPal par défaut : c'est ce que faisaient les comptes créés avant le RIB. */
+    public function payoutMethod(): PayoutMethod
+    {
+        return $this->payout_method ?? PayoutMethod::PayPal;
+    }
+
+    /**
+     * Où part l'argent, en clair, pour l'appel au prestataire.
+     *
+     * `null` signifie « aucune destination utilisable » : c'est ce qui sert de
+     * test partout ailleurs, plutôt que de reposer la question du mode.
+     */
+    public function payoutDestination(): ?string
+    {
+        return match ($this->payoutMethod()) {
+            PayoutMethod::PayPal => $this->paypal_email ?: null,
+            PayoutMethod::BankTransfer => $this->iban ?: null,
+        };
+    }
+
+    /** La même chose, mais montrable : l'IBAN n'apparaît jamais en entier. */
+    public function payoutDestinationLabel(): ?string
+    {
+        return match ($this->payoutMethod()) {
+            PayoutMethod::PayPal => $this->paypal_email ?: null,
+            PayoutMethod::BankTransfer => $this->iban_last4
+                ? Iban::mask($this->iban_last4)
+                : null,
+        };
+    }
+
+    public function hasPayoutDestination(): bool
+    {
+        return $this->payoutDestination() !== null;
     }
 }
