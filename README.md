@@ -33,15 +33,30 @@ ensuite renvoyé vers son propre espace — `/dashboard` pour un clippeur,
 `/artiste` pour un artiste, `/admin` pour le staff. La page de présentation du
 fonctionnement reste sur `/presentation`.
 
-Comptes de démonstration (mot de passe `password`) :
+### Comptes de démonstration
 
-| Compte | Rôle |
-|---|---|
-| `admin@clip-adem.test` | super-administrateur |
-| `moderateur@clip-adem.test` | modérateur |
-| `lina@clippeur.test` | clippeur, avec clips et gains |
-| `karim@clippeur.test` | clippeur, avec un clip aux vues suspectes |
-| `nayra@artiste.test` | artiste, avec une campagne en cours |
+```bash
+php artisan demo:accounts
+```
+
+Quatre comptes remplis, un par rôle, mot de passe `password`. Chacun arrive sur
+un espace déjà peuplé : un tableau de bord vide ne montre que des états
+d'attente, et c'est précisément ce qu'on ne cherche pas à voir en découvrant le
+produit. La commande est idempotente — la relancer met les comptes à jour sans
+les dupliquer.
+
+| Compte | Rôle | Ce qu'il voit |
+|---|---|---|
+| `admin@clip.test` | super-administrateur | Campagnes, modération, retraits, reporting |
+| `moderateur@clip.test` | modérateur | Idem sans les paiements |
+| `clippeur@clip.test` | clippeur | Niveau Expert, deux clips, un retrait en attente |
+| `artiste@clip.test` | artiste | Sa campagne, ses vues, son coût réel aux 1000 vues |
+
+Le seed crée en plus `lina@clippeur.test`, `karim@clippeur.test` (un clip aux
+vues suspectes) et `nayra@artiste.test`.
+
+> Les sessions partagent le même cookie : pour comparer deux rôles côte à côte,
+> ouvrez-les dans des fenêtres de navigation privée distinctes.
 
 ### Passages obligés, suspendables
 
