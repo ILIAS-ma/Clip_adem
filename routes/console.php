@@ -34,3 +34,21 @@ Schedule::command('payouts:sync')
 // compteurs dénormalisés.
 Schedule::command('budget:audit')
     ->dailyAt('06:00');
+
+/*
+ * Vidange de la file d'attente.
+ *
+ * Les notifications aux clippeurs sont mises en file pour ne jamais retarder
+ * — ni faire échouer — une décision de modération ou un versement. Elles
+ * exigent donc un processus qui les consomme.
+ *
+ * `--stop-when-empty` plutôt qu'un démon permanent : sur un hébergement
+ * mutualisé, il n'y a souvent aucun moyen de garder un processus vivant, et
+ * une file qu'on croit traitée est pire que pas de file du tout. Quand un vrai
+ * worker supervisé existera, cette ligne devient redondante et sans effet —
+ * `withoutOverlapping` empêche les deux de se marcher dessus.
+ */
+Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=3')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->runInBackground();

@@ -10,6 +10,8 @@ use App\Exceptions\PayPalException;
 use App\Models\ModerationLog;
 use App\Models\Payout;
 use App\Models\User;
+use App\Notifications\PayoutFailed;
+use App\Notifications\PayoutPaid;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -107,6 +109,25 @@ class PayoutService
             ->doesntExist();
     }
 
+    /**
+     * Prévient le clippeur sans jamais compromettre l'opération d'argent.
+     *
+     * Le versement est déjà parti quand cette méthode est appelée : échouer
+     * ici et remonter l'exception ferait croire à un échec de paiement, et
+     * `payouts:sync` repasserait derrière sur un état incohérent.
+     */
+    protected function tellTheClipper(Payout $payout, $notification): void
+    {
+        try {
+            $payout->user?->notify($notification);
+        } catch (\Throwable $exception) {
+            Log::warning('Notification de retrait non envoyée', [
+                'payout_id' => $payout->getKey(),
+                'error' => $exception->getMessage(),
+            ]);
+        }
+    }
+
     public function approve(Payout $payout, ?User $by = null): Payout
     {
         if ($payout->status !== PayoutStatus::Requested) {
@@ -171,6 +192,8 @@ class PayoutService
         ModerationLog::record(ModerationAction::PayoutApproved, $payout, $by, $reference
             ? 'Virement bancaire exécuté, référence '.$reference
             : 'Virement bancaire exécuté');
+
+        $this->tellTheClipper($payout, new PayoutPaid($payout));
 
         return $payout;
     }
@@ -332,6 +355,19 @@ class PayoutService
                 ? trim($status.' '.(string) data_get($item, 'errors.message'))
                 : null,
         ])->save();
+
+        /*
+         * « En cours » ne mérite pas d'e-mail : le clippeur n'a rien à en
+         * faire, et une notification par changement d'état intermédiaire finit
+         * en filtre anti-spam — ce qui coûterait ensuite les deux qui comptent.
+         */
+        if ($mapped === PayoutStatus::Paid) {
+            $this->tellTheClipper($payout, new PayoutPaid($payout));
+        }
+
+        if ($mapped === PayoutStatus::Failed) {
+            $this->tellTheClipper($payout, new PayoutFailed($payout, $payout->failure_reason));
+        }
 
         return true;
     }

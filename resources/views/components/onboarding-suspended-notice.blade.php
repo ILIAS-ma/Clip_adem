@@ -6,6 +6,7 @@
         'require_complete_profile' => 'profil complet obligatoire',
         'require_admin_2fa' => '2FA administrateur',
         'require_creator_validation' => 'validation des fiches créateur',
+        'require_funded_campaigns' => 'budget de campagne encaissé',
     ])->reject(fn ($label, $key) => config("clipping.onboarding.{$key}"));
 @endphp
 

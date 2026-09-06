@@ -39,7 +39,23 @@ class ClipsTable
                 TextColumn::make('status')
                     ->label('Statut')
                     ->badge()
-                    ->formatStateUsing(fn (ClipStatus $state) => $state->label())
+                    // La disparition prime sur le statut à l'affichage : un
+                    // clip « Validé » dont la publication n'existe plus est
+                    // exactement ce qu'il faut voir en premier.
+                    ->formatStateUsing(fn (ClipStatus $state, Clip $record) => $record->hasDisappeared()
+                        ? 'Publication disparue'
+                        : $state->label())
+                    ->color(fn (ClipStatus $state, Clip $record) => $record->hasDisappeared()
+                        ? 'danger'
+                        : match ($state) {
+                            ClipStatus::Approved => 'success',
+                            ClipStatus::PendingReview => 'warning',
+                            ClipStatus::Rejected => 'gray',
+                            ClipStatus::Invalidated => 'danger',
+                        })
+                    ->description(fn (Clip $record) => $record->hasDisappeared()
+                        ? 'Introuvable depuis le '.$record->missing_since?->format('d/m/Y')
+                        : null)
                     ->color(fn (ClipStatus $state) => match ($state) {
                         ClipStatus::Approved => 'success',
                         ClipStatus::PendingReview => 'warning',
@@ -98,6 +114,17 @@ class ClipsTable
                 Filter::make('unpaid')
                     ->label('Vues non rémunérées')
                     ->query(fn ($query) => $query->whereColumn('views_total', '>', 'paid_views')),
+
+                /*
+                 * Publier, encaisser, effacer : le vecteur de fraude le moins
+                 * coûteux contre la plateforme. Ce filtre le rend visible en
+                 * un clic, en mettant devant ceux qui ont déjà été payés.
+                 */
+                Filter::make('disappeared')
+                    ->label('Publication disparue')
+                    ->query(fn ($query) => $query
+                        ->where('missing_checks', '>=', Clip::MISSING_THRESHOLD)
+                        ->orderByDesc('earned_cents')),
             ])
             ->recordActions([
                 ActionGroup::make([

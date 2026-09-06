@@ -146,6 +146,21 @@ class CreateDemoAccountsCommand extends Command
             ['rate_per_1k_cents' => 80, 'is_enabled' => true],
         );
 
+        // Encaissement du créateur : sans lui, la campagne de démonstration
+        // serait active tout en promettant de l'argent jamais reçu — soit
+        // exactement ce que le contrôle d'activation existe pour empêcher.
+        $campaign->fundings()->firstOrCreate(
+            ['reference' => 'VIR-DEMO-SAYA'],
+            [
+                'amount_cents' => $campaign->budget_total_cents,
+                'currency' => 'EUR',
+                'method' => 'transfer',
+                'note' => 'Encaissement de démonstration.',
+                'received_at' => now()->subWeeks(3),
+                'recorded_by' => $admin->getKey(),
+            ],
+        );
+
         // Matière première du brief. Des liens externes plutôt que des fichiers :
         // une commande de démonstration n'a pas à déposer 200 Mo sur le disque
         // de qui la lance.

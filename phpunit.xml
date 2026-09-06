@@ -42,6 +42,7 @@
         <env name="REQUIRE_COMPLETE_PROFILE" value="true"/>
         <env name="REQUIRE_ADMIN_2FA" value="true"/>
         <env name="REQUIRE_CREATOR_VALIDATION" value="true"/>
+        <env name="REQUIRE_FUNDED_CAMPAIGNS" value="true"/>
 
         <!--
             Captcha neutralisé : un client de test ne peut pas résoudre un défi

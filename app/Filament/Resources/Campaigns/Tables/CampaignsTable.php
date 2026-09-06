@@ -55,6 +55,28 @@ class CampaignsTable
                         default => 'success',
                     }),
 
+                /*
+                 * Ce que la plateforme a dépensé au-delà de ce qu'elle a
+                 * encaissé. C'est le seul chiffre qui dit si elle est solvable
+                 * sur cette campagne : au-delà, l'argent promis aux clippeurs
+                 * sort de sa propre poche.
+                 */
+                TextColumn::make('funded')
+                    ->label('Encaissé')
+                    ->alignEnd()
+                    ->state(fn (Campaign $record) => $record->exposureCents() > 0
+                        ? static::euros($record->fundedCents()).' · découvert '.static::euros($record->exposureCents())
+                        : static::euros($record->fundedCents()))
+                    ->color(fn (Campaign $record) => match (true) {
+                        $record->exposureCents() > 0 => 'danger',
+                        $record->isFullyFunded() => 'success',
+                        default => 'warning',
+                    })
+                    ->description(fn (Campaign $record) => $record->isFullyFunded()
+                        ? null
+                        : 'reste '.static::euros($record->unfundedCents()).' à encaisser')
+                    ->toggleable(),
+
                 TextColumn::make('remaining')
                     ->label('Restant')
                     ->alignEnd()

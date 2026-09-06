@@ -5,10 +5,12 @@ namespace App\Services\Social;
 use App\Contracts\CampaignBudgetService;
 use App\Enums\CampaignStatus;
 use App\Enums\ClipStatus;
+use App\Enums\ModerationAction;
 use App\Enums\Platform;
 use App\Models\BudgetTransaction;
 use App\Models\Clip;
 use App\Models\ClipViewSnapshot;
+use App\Models\ModerationLog;
 use App\Models\SocialSyncRun;
 use App\Services\Clips\ClipComplianceChecker;
 use App\Support\Social\PostMetrics;
@@ -132,6 +134,52 @@ class ClipSyncService
      * @param  Collection<int, Clip>  $clips
      * @param  Collection<string, PostMetrics>  $metrics
      */
+    /**
+     * La plateforme ne renvoie plus cette publication.
+     *
+     * On ne touche JAMAIS aux vues ni aux gains déjà acquis : le budget a été
+     * consommé, et seule une invalidation par un modérateur peut le rendre. Ce
+     * qu'on fait ici, c'est rendre la disparition visible — parce que sans ça,
+     * publier, encaisser sur trois jours puis effacer ne laissait aucune trace.
+     *
+     * Le journal n'est écrit qu'une fois, au franchissement du seuil : un
+     * relevé horaire produirait sinon vingt-quatre lignes par jour pour la même
+     * publication, et la file de modération deviendrait illisible.
+     */
+    protected function noteMissingPost(Clip $clip): void
+    {
+        $wasFlagged = $clip->hasDisappeared();
+
+        $clip->forceFill([
+            'last_synced_at' => now(),
+            'missing_since' => $clip->missing_since ?? now(),
+            'missing_checks' => $clip->missing_checks + 1,
+        ])->save();
+
+        if ($wasFlagged || ! $clip->hasDisappeared()) {
+            return;
+        }
+
+        ModerationLog::record(
+            ModerationAction::ClipDisappeared,
+            $clip,
+            null,
+            $clip->earned_cents > 0
+                ? sprintf(
+                    'Publication introuvable depuis %d relevés, après %s € déjà crédités.',
+                    $clip->missing_checks,
+                    number_format($clip->earned_cents / 100, 2, ',', ' '),
+                )
+                : sprintf('Publication introuvable depuis %d relevés.', $clip->missing_checks),
+        );
+
+        Log::warning('Publication disparue de la plateforme', [
+            'clip_id' => $clip->getKey(),
+            'platform' => $clip->platform->value,
+            'earned_cents' => $clip->earned_cents,
+        ]);
+    }
+
     protected function applyMetrics(Collection $clips, Collection $metrics): int
     {
         $synced = 0;
@@ -140,11 +188,16 @@ class ClipSyncService
             $post = $metrics->get($clip->external_post_id);
 
             if (! $post) {
-                // Publication supprimée ou passée en privé : on le note sans
-                // toucher aux vues déjà acquises.
-                $clip->forceFill(['last_synced_at' => now()])->save();
+                $this->noteMissingPost($clip);
 
                 continue;
+            }
+
+            // La publication est de retour : elle était privée un moment, ou
+            // l'API a bafouillé. On efface l'alerte plutôt que de laisser un
+            // soupçon s'installer sur quelqu'un qui n'a rien fait.
+            if ($clip->isMissing()) {
+                $clip->forceFill(['missing_since' => null, 'missing_checks' => 0])->save();
             }
 
             // Le compteur des plateformes descend régulièrement : on écrit la

@@ -28,6 +28,13 @@ return [
         // rétablir avant l'ouverture : sans lui, n'importe qui apparaît au
         // catalogue sous le nom de scène qu'il veut.
         'require_creator_validation' => env('REQUIRE_CREATOR_VALIDATION', true),
+
+        // Une campagne ne s'active que si son budget est couvert par de
+        // l'argent réellement encaissé. Sans ce contrôle, `budget_total_cents`
+        // n'est qu'un nombre tapé au clavier : la plateforme peut promettre
+        // 5 000 € à des clippeurs sans avoir reçu un centime, et ce sont eux
+        // qui ne seraient pas payés.
+        'require_funded_campaigns' => env('REQUIRE_FUNDED_CAMPAIGNS', true),
     ],
 
     /*

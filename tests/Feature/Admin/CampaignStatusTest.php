@@ -18,6 +18,9 @@ class CampaignStatusTest extends TestCase
     {
         return Campaign::factory()
             ->withRate(Platform::TikTok, ratePer1kCents: 100)
+            // Financée : ces tests éprouvent la machine à états, pas le
+            // contrôle d'encaissement, qui a ses propres tests.
+            ->funded(1_000_000)
             ->create(array_merge([
                 'status' => CampaignStatus::Draft,
                 'budget_total_cents' => 10_000,
@@ -81,6 +84,76 @@ class CampaignStatusTest extends TestCase
 
         $this->assertSame(CampaignStatus::Active, $campaign->fresh()->status);
         $this->assertNull($campaign->fresh()->exhausted_at);
+    }
+
+    #[Test]
+    public function a_campaign_cannot_be_activated_on_money_that_never_arrived(): void
+    {
+        // Sans ce contrôle, `budget_total_cents` n'est qu'un nombre tapé au
+        // clavier : la plateforme promettrait 1 000 € à des clippeurs sans
+        // avoir encaissé un centime, et ce sont eux qui ne seraient pas payés.
+        $campaign = Campaign::factory()
+            ->withRate(Platform::TikTok, ratePer1kCents: 100)
+            ->create([
+                'status' => CampaignStatus::Draft,
+                'budget_total_cents' => 100_000,
+                'brief' => 'Brief complet.',
+            ]);
+
+        $this->expectException(InvalidCampaignTransition::class);
+        $this->expectExceptionMessage('n’est pas couvert');
+
+        $campaign->transitionTo(CampaignStatus::Active);
+    }
+
+    #[Test]
+    public function a_partial_payment_is_not_enough(): void
+    {
+        $campaign = Campaign::factory()
+            ->withRate(Platform::TikTok, ratePer1kCents: 100)
+            ->funded(60_000)   // 600 € reçus pour 1 000 € engagés
+            ->create([
+                'status' => CampaignStatus::Draft,
+                'budget_total_cents' => 100_000,
+                'brief' => 'Brief complet.',
+            ]);
+
+        $this->assertSame(40_000, $campaign->unfundedCents());
+        $this->assertFalse($campaign->isFullyFunded());
+
+        $this->expectException(InvalidCampaignTransition::class);
+
+        $campaign->transitionTo(CampaignStatus::Active);
+    }
+
+    #[Test]
+    public function a_refund_lowers_what_has_been_received(): void
+    {
+        // Un remboursement est une ligne négative, jamais une suppression :
+        // six mois plus tard, il faut encore savoir ce qui a transité.
+        $campaign = $this->draft();
+        $campaign->fundings()->create([
+            'amount_cents' => -400_000,
+            'received_at' => now(),
+        ]);
+
+        $this->assertSame(600_000, $campaign->fundedCents());
+    }
+
+    #[Test]
+    public function the_exposure_is_what_was_spent_beyond_what_was_received(): void
+    {
+        // Le seul chiffre qui dit si la plateforme est solvable sur cette
+        // campagne : au-delà, l'argent sort de sa propre poche.
+        $campaign = Campaign::factory()
+            ->funded(30_000)
+            ->create(['budget_total_cents' => 100_000, 'spent_cents' => 50_000]);
+
+        $this->assertSame(20_000, $campaign->exposureCents());
+
+        $campaign->fundings()->create(['amount_cents' => 70_000, 'received_at' => now()]);
+
+        $this->assertSame(0, $campaign->fresh()->exposureCents());
     }
 
     #[Test]

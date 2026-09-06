@@ -69,6 +69,7 @@ pendant le développement :
 | `REQUIRE_COMPLETE_PROFILE` | Pseudo, pays et moyen de paiement ne bloquent plus |
 | `REQUIRE_ADMIN_2FA` | Le panel n'impose plus de scanner un QR code |
 | `REQUIRE_CREATOR_VALIDATION` | Une fiche créateur est active dès sa création |
+| `REQUIRE_FUNDED_CAMPAIGNS` | Une campagne s'active sans encaissement enregistré |
 
 Aucun code n'est commenté ni supprimé : les contrôles restent en place, et la
 suite de tests **les force à `true`** pour continuer de les vérifier. Un bandeau
@@ -562,6 +563,78 @@ qui et quand. Symétriquement, un retrait PayPal **ne peut pas** être pointé �
 main — sinon un administrateur pourrait déclarer versé un retrait que PayPal n'a
 jamais envoyé, et le solde du clippeur disparaîtrait.
 
+## L'argent qui entre
+
+`campaigns.budget_total_cents` n'était qu'un nombre tapé au clavier : rien ne le
+reliait à un encaissement réel. La plateforme pouvait donc devoir 5 000 € à des
+clippeurs sans avoir reçu un centime — `budget:audit` vérifiait la cohérence
+interne, jamais la solvabilité.
+
+`campaign_fundings` est le pendant du grand livre des dépenses : en ajout seul,
+signé, jamais modifié. Un remboursement au créateur est une ligne négative, pas
+une suppression, parce que six mois plus tard il faut encore savoir ce qui a
+transité.
+
+Trois chiffres en découlent, et le troisième est le seul qui compte vraiment :
+
+- `fundedCents()` — ce qui a été reçu ;
+- `unfundedCents()` — ce qui reste à recevoir pour couvrir le budget engagé ;
+- **`exposureCents()`** — ce qui a été dépensé au-delà de ce qui a été encaissé.
+  Au-delà de zéro, l'argent promis aux clippeurs sort de la poche de la
+  plateforme. La colonne « Encaissé » du back-office l'affiche en rouge.
+
+**Une campagne ne s'active plus si son budget n'est pas couvert.** Le contrôle
+rejoint les autres passages obligés suspendables (`REQUIRE_FUNDED_CAMPAIGNS`) —
+mais le suspendre en production, c'est promettre de l'argent qu'on n'a pas.
+
+La saisie des encaissements est réservée au super-administrateur : c'est ce qui
+débloque l'activation, donc ce qui engage la plateforme à payer. Un modérateur
+n'a pas à pouvoir déclarer qu'un virement est arrivé.
+
+## Publication disparue
+
+Publier, encaisser sur trois jours, effacer la vidéo : le vecteur de fraude le
+moins coûteux contre la plateforme. Le relevé notait « rien à lire » et passait
+au suivant, sans laisser de trace.
+
+`clips.missing_since` et `clips.missing_checks` changent ça. Deux colonnes
+plutôt qu'un booléen : la date dit depuis quand, le compteur dit combien de
+relevés consécutifs l'ont manquée. **Un seul échec ne prouve rien** — une
+publication passée en privé une heure, une API qui bafouille — et accuser
+quelqu'un sur un hoquet coûte plus cher que d'attendre le relevé suivant. Au
+deuxième, une ligne de modération est écrite, une seule fois, avec le montant
+déjà crédité. Si la publication revient, l'alerte s'efface.
+
+Rien n'est repris automatiquement : le budget consommé ne revient que par une
+invalidation explicite d'un modérateur. Une disparition signale, elle ne juge
+pas.
+
+## Notifications
+
+Un clippeur travaille et attend d'être payé ; il ne devrait pas avoir à ouvrir
+le site pour savoir où il en est. Trois e-mails, et trois seulement :
+
+| Quand | Pourquoi |
+|---|---|
+| Clip refusé ou invalidé | Sans le motif, la personne republiera à l'identique. Si le clip avait déjà été payé, l'e-mail dit que le solde baisse — le découvrir soi-même fait croire à une erreur. |
+| Virement exécuté | Avec le délai bancaire, sinon « je n'ai rien reçu » arrive deux heures plus tard. |
+| Versement rejeté | L'argent réapparaît dans le solde : sans explication, la lecture naturelle est « on ne m'a pas payé ». |
+
+Pas d'e-mail pour un clip validé ni pour un état intermédiaire : une
+notification par changement d'état finit en filtre anti-spam, ce qui coûterait
+ensuite les trois qui comptent.
+
+Les envois sont **mis en file et ne peuvent jamais faire échouer l'opération**
+qui les déclenche : une invalidation qui rend le budget à la campagne ne
+s'annule pas parce qu'un e-mail n'est pas parti. Un test le vérifie en faisant
+exploser l'envoi.
+
+La file exige un consommateur. `routes/console.php` planifie
+`queue:work --stop-when-empty` chaque minute plutôt qu'un démon : sur un
+hébergement mutualisé, il n'y a souvent aucun moyen de garder un processus
+vivant, et une file qu'on croit traitée est pire que pas de file du tout. Avec
+un vrai worker supervisé, cette ligne devient sans effet.
+
 ## Reporting
 
 Tableau de bord `/admin` : budget engagé, consommé, **dû aux clippeurs**
@@ -618,6 +691,12 @@ externes, pas à du code manquant :
 - **Publication depuis la plateforme** (Content Posting API de TikTok). Hors
   périmètre à ce jour : le modèle est que le clippeur publie lui-même, puis
   colle le lien.
+- **Statut réglementaire du flux d'argent.** Encaisser pour reverser à des
+  tiers est réglementé, et une plateforme de mise en relation a des obligations
+  déclaratives (DAC7) qui supposent des données d'identité que nous ne
+  collectons pas. À faire trancher par un comptable ou un juriste **avant**
+  l'ouverture : la réponse peut supprimer purement et simplement le stockage
+  des IBAN, au profit d'un prestataire qui porte l'agrément.
 - **Exécution automatique des virements SEPA.** Aujourd'hui l'administrateur
   télécharge le fichier des virements et les saisit en banque. Un fichier
   pain.001 déposé chez la banque supprimerait cette étape, mais suppose un

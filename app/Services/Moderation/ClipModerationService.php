@@ -12,8 +12,10 @@ use App\Models\Clip;
 use App\Models\ModerationLog;
 use App\Models\Payout;
 use App\Models\User;
+use App\Notifications\ClipRejected;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Décisions de modération sur les clips et les clippeurs.
@@ -27,6 +29,26 @@ class ClipModerationService
     public function __construct(
         protected CampaignBudgetService $budget,
     ) {}
+
+    /**
+     * Prévient le clippeur sans jamais faire échouer la décision.
+     *
+     * L'envoi est mis en file, mais même la mise en file peut échouer — base
+     * de file injoignable, sérialisation. Une invalidation qui rend le budget
+     * à la campagne ne doit pas être annulée parce qu'un e-mail n'est pas
+     * parti : la trace de modération, elle, est déjà écrite.
+     */
+    protected function tellTheClipper(Clip $clip, string $reason, bool $wasPaid): void
+    {
+        try {
+            $clip->user?->notify(new ClipRejected($clip, $reason, $wasPaid));
+        } catch (\Throwable $exception) {
+            Log::warning('Notification de refus non envoyée', [
+                'clip_id' => $clip->getKey(),
+                'error' => $exception->getMessage(),
+            ]);
+        }
+    }
 
     public function approve(Clip $clip, ?User $by = null): Clip
     {
@@ -56,6 +78,8 @@ class ClipModerationService
 
             ModerationLog::record(ModerationAction::ClipRejected, $clip, $by, $reason);
 
+            $this->tellTheClipper($clip, $reason, wasPaid: false);
+
             return $clip;
         });
     }
@@ -82,6 +106,11 @@ class ClipModerationService
                 'refunded_views' => $reversal->refundedViews,
                 'campaign_reactivated' => $reversal->campaignReactivated,
             ]);
+
+            // `wasPaid` vient du remboursement réel, pas du statut : c'est lui
+            // qui dit si le solde du clippeur vient de baisser, et donc s'il
+            // faut le prévenir avant qu'il le constate tout seul.
+            $this->tellTheClipper($clip, $reason, wasPaid: $reversal->refundedCents > 0);
 
             return $clip;
         });

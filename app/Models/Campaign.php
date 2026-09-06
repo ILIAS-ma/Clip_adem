@@ -52,6 +52,12 @@ class Campaign extends Model
         return $this->hasMany(CampaignRate::class);
     }
 
+    /** Encaissements reçus du créateur pour financer cette campagne. */
+    public function fundings(): HasMany
+    {
+        return $this->hasMany(CampaignFunding::class)->orderByDesc('received_at');
+    }
+
     /** Pièces du brief : sons, vidéos, images, documents. */
     public function assets(): HasMany
     {
@@ -223,5 +229,58 @@ class Campaign extends Model
         if (blank($this->brief)) {
             throw InvalidCampaignTransition::because('le brief est obligatoire pour activer une campagne.');
         }
+
+        /*
+         * Le budget doit être couvert par de l'argent réellement reçu.
+         *
+         * Sans ce contrôle, `budget_total_cents` n'est qu'un nombre tapé au
+         * clavier : la plateforme peut promettre 5 000 € à des clippeurs sans
+         * avoir encaissé un centime, et ce sont eux qui ne seraient pas payés.
+         *
+         * Suspendable comme les autres passages obligés, pour parcourir le
+         * back-office sans saisir d'encaissement — mais à rétablir avant
+         * l'ouverture, sous peine de devoir de l'argent qu'on n'a pas.
+         */
+        if (config('clipping.onboarding.require_funded_campaigns') && $this->fundedCents() < $this->budget_total_cents) {
+            throw InvalidCampaignTransition::because(sprintf(
+                'le budget n’est pas couvert : %s € encaissés pour %s € engagés. '
+                .'Enregistrez l’encaissement du créateur avant d’activer.',
+                number_format($this->fundedCents() / 100, 2, ',', ' '),
+                number_format($this->budget_total_cents / 100, 2, ',', ' '),
+            ));
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Financement
+    // ------------------------------------------------------------------
+
+    /** Somme réellement encaissée, remboursements déduits. */
+    public function fundedCents(): int
+    {
+        return (int) $this->fundings()->sum('amount_cents');
+    }
+
+    /** Ce qui reste à encaisser pour couvrir le budget engagé. */
+    public function unfundedCents(): int
+    {
+        return max(0, $this->budget_total_cents - $this->fundedCents());
+    }
+
+    public function isFullyFunded(): bool
+    {
+        return $this->unfundedCents() === 0;
+    }
+
+    /**
+     * L'argent promis aux clippeurs mais pas encore reçu du créateur.
+     *
+     * C'est le seul chiffre qui dit si la plateforme est solvable sur cette
+     * campagne : ce qui a été dépensé au-delà de ce qui a été encaissé sortira
+     * de la poche de la plateforme.
+     */
+    public function exposureCents(): int
+    {
+        return max(0, $this->spent_cents - $this->fundedCents());
     }
 }

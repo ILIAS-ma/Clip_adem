@@ -38,6 +38,25 @@ class CampaignFactory extends Factory
         return $this->state(fn () => ['budget_total_cents' => (int) round($euros * 100)]);
     }
 
+    /**
+     * Encaissement couvrant tout le budget.
+     *
+     * Une campagne ne s'active plus sans argent réellement reçu : la majorité
+     * des tests veulent une campagne activable, pas éprouver ce contrôle-là.
+     */
+    public function funded(?int $cents = null): static
+    {
+        return $this->afterCreating(function (Campaign $campaign) use ($cents) {
+            $campaign->fundings()->create([
+                'amount_cents' => $cents ?? $campaign->budget_total_cents,
+                'currency' => 'EUR',
+                'method' => 'transfer',
+                'reference' => 'VIR-TEST',
+                'received_at' => now(),
+            ]);
+        });
+    }
+
     public function status(CampaignStatus $status): static
     {
         return $this->state(fn () => ['status' => $status]);

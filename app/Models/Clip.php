@@ -41,7 +41,45 @@ class Clip extends Model
             'posted_at' => 'datetime',
             'submitted_at' => 'datetime',
             'last_synced_at' => 'datetime',
+            'missing_since' => 'datetime',
+            'missing_checks' => 'integer',
         ];
+    }
+
+    // ------------------------------------------------------------------
+    // Publication disparue
+    // ------------------------------------------------------------------
+
+    /** Combien de relevés consécutifs manqués avant de crier au loup. */
+    public const MISSING_THRESHOLD = 2;
+
+    /** La plateforme ne renvoie plus cette publication. */
+    public function isMissing(): bool
+    {
+        return $this->missing_since !== null;
+    }
+
+    /**
+     * Assez d'absences consécutives pour que ce ne soit plus un hoquet.
+     *
+     * Un seul relevé manqué ne prouve rien : une publication passée en privé
+     * une heure, une API qui bafouille. Accuser quelqu'un là-dessus coûte plus
+     * cher que d'attendre le relevé suivant.
+     */
+    public function hasDisappeared(): bool
+    {
+        return $this->missing_checks >= self::MISSING_THRESHOLD;
+    }
+
+    /**
+     * Le cas qui coûte de l'argent : disparue *après* avoir été payée.
+     *
+     * Publier, encaisser sur trois jours, effacer — sans ce test, la fraude ne
+     * laissait aucune trace.
+     */
+    public function disappearedAfterBeingPaid(): bool
+    {
+        return $this->hasDisappeared() && $this->earned_cents > 0;
     }
 
     public function campaign(): BelongsTo
