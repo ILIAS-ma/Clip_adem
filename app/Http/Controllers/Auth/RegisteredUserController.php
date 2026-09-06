@@ -62,7 +62,16 @@ class RegisteredUserController extends Controller
             // formulaire, même en trafiquant la requête.
             'role' => ['required', Rule::in([UserRole::Clipper->value, UserRole::Creator->value])],
 
-            'cf-turnstile-response' => ['required', new ValidTurnstile($request->ip())],
+            // `requiredIf` et non `required` : sans clé de site, le widget
+            // Cloudflare ne s'affiche pas, donc aucun jeton n'est envoyé et
+            // l'inscription deviendrait impossible. La règle elle-même tolère
+            // déjà l'absence de secret — les deux bouts doivent dégrader de la
+            // même façon, sinon un déploiement sans clés bloque tout le monde
+            // au lieu de laisser passer les robots.
+            'cf-turnstile-response' => [
+                Rule::requiredIf(filled(config('services.turnstile.site_key'))),
+                new ValidTurnstile($request->ip()),
+            ],
         ]);
 
         $user = User::create([

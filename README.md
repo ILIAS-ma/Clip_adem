@@ -348,6 +348,33 @@ porte son propre type, sa consigne d'usage (« caler le drop à 0:12 ») et son
 caractère imposé ou non. Un lien unique « pack visuel » ne dit ni ce que c'est,
 ni s'il faut absolument s'en servir.
 
+Cinq types, et `AssetKind` en est la source unique — extensions acceptées,
+traduction en types MIME, poids maximum :
+
+| Type | Formats | Poids max |
+|---|---|---|
+| Son | mp3, wav, m4a, aac, ogg, flac, aiff… | 50 Mo |
+| Vidéo | mp4, mov, webm, m4v, avi, mkv, mpeg… | 500 Mo |
+| Image | jpg, png, webp, gif, avif, heic, tiff… | 25 Mo |
+| Document | pdf, txt, md, docx, xlsx, pptx, csv, odt, srt… | 50 Mo |
+| Archive | zip, rar, 7z, tar, gz | 500 Mo |
+
+Le SVG est la seule exclusion délibérée : servi depuis notre propre domaine, il
+peut embarquer du script et s'exécuter dans le contexte du site. Un test le
+verrouille, pour qu'on ne le réintroduise pas par distraction.
+
+**Le plafond de Livewire est le vrai goulot.** Il est à 12 Mo par défaut, et
+s'applique *avant* la validation de Filament : un rush vidéo était refusé par un
+message qui n'expliquait rien. `config/livewire.php` le porte à 512 Mo, et un
+test vérifie qu'aucun type déclaré ne le dépasse. PHP doit suivre —
+`upload_max_filesize` et `post_max_size` au moins aussi hauts.
+
+Les pièces se gèrent depuis le formulaire de campagne **et** depuis l'onglet
+« Matière première » de la page d'édition. Le second existe parce qu'ajouter un
+rush trois jours après le lancement ne devrait pas obliger à re-soumettre un
+formulaire qui porte le budget et les taux : une erreur de manipulation y
+coûterait bien plus cher qu'une pièce jointe.
+
 - **Fichier OU lien, jamais les deux.** Un fichier déposé efface le lien : deux
   sources pour la même pièce, c'est deux vérités sur ce qu'il faut utiliser.
 - **Poids et type relus depuis le disque**, pas depuis le formulaire — le

@@ -6,6 +6,7 @@ use App\Enums\CampaignStatus;
 use App\Filament\Resources\Campaigns\Pages\CreateCampaign;
 use App\Filament\Resources\Campaigns\Pages\EditCampaign;
 use App\Filament\Resources\Campaigns\Pages\ListCampaigns;
+use App\Filament\Resources\Campaigns\RelationManagers\AssetsRelationManager;
 use App\Filament\Resources\Campaigns\Schemas\CampaignForm;
 use App\Filament\Resources\Campaigns\Tables\CampaignsTable;
 use App\Models\Campaign;
@@ -56,6 +57,13 @@ class CampaignResource extends Resource
     public static function getNavigationBadgeColor(): ?string
     {
         return 'success';
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            AssetsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

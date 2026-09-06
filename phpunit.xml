@@ -42,6 +42,16 @@
         <env name="REQUIRE_COMPLETE_PROFILE" value="true"/>
         <env name="REQUIRE_ADMIN_2FA" value="true"/>
         <env name="REQUIRE_CREATOR_VALIDATION" value="true"/>
+
+        <!--
+            Captcha neutralisé : un client de test ne peut pas résoudre un défi
+            Cloudflare, et la suite ne doit pas dépendre du fait que la machine
+            du développeur ait des clés dans son .env. Que le captcha morde
+            réellement quand il est configuré est vérifié par un test qui pose
+            la clé lui-même (RegistrationTest).
+        -->
+        <env name="TURNSTILE_SITE_KEY" value=""/>
+        <env name="TURNSTILE_SECRET_KEY" value=""/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>

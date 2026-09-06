@@ -176,6 +176,103 @@ class CampaignAssetTest extends TestCase
     }
 
     #[Test]
+    public function an_archive_can_carry_a_whole_kit_in_one_file(): void
+    {
+        Storage::fake('public');
+
+        $path = UploadedFile::fake()->create('pack-visuel.zip', 2_048)->store('campagnes/pieces', 'public');
+
+        $asset = $this->campaign()->assets()->create([
+            'kind' => AssetKind::Archive,
+            'label' => 'Pack visuel complet',
+            'path' => $path,
+        ]);
+
+        $this->assertSame(AssetKind::Archive, $asset->kind);
+        $this->assertTrue($asset->isHosted());
+        // Rien à jouer dans le navigateur : une archive se télécharge.
+        $this->assertFalse($asset->isPreviewable());
+    }
+
+    #[Test]
+    public function every_accepted_extension_has_a_real_mime_type(): void
+    {
+        // Le repli `application/octet-stream` existe pour ne jamais bloquer un
+        // fichier légitime, mais s'il sert vraiment, l'attribut `accept` du
+        // navigateur cesse de filtrer quoi que ce soit. Ce test attrape
+        // l'extension ajoutée sans sa correspondance.
+        foreach (AssetKind::cases() as $kind) {
+            $this->assertNotSame([], $kind->acceptedExtensions(), "{$kind->label()} n'accepte aucune extension.");
+
+            $this->assertNotContains(
+                'application/octet-stream',
+                $kind->acceptedMimeTypes(),
+                "Une extension de {$kind->label()} n'a pas de type MIME déclaré.",
+            );
+        }
+    }
+
+    #[Test]
+    public function the_common_formats_an_admin_will_actually_drop_are_accepted(): void
+    {
+        // La demande était explicite : mp4, mp3, texte, « tout type de doc ».
+        $expected = [
+            'audio' => ['mp3', 'wav', 'm4a'],
+            'video' => ['mp4', 'mov', 'webm'],
+            'image' => ['jpg', 'png', 'webp'],
+            'document' => ['pdf', 'txt', 'docx', 'xlsx', 'pptx', 'csv'],
+            'archive' => ['zip', 'rar'],
+        ];
+
+        foreach ($expected as $value => $extensions) {
+            $kind = AssetKind::from($value);
+
+            foreach ($extensions as $extension) {
+                $this->assertContains(
+                    $extension,
+                    $kind->acceptedExtensions(),
+                    "{$extension} devrait être accepté comme {$kind->label()}.",
+                );
+            }
+        }
+    }
+
+    #[Test]
+    public function svg_is_deliberately_refused(): void
+    {
+        // Servi depuis notre propre domaine, un SVG peut embarquer du script et
+        // s'exécuter dans le contexte du site. C'est une exclusion voulue, pas
+        // un oubli — ce test est là pour qu'on ne l'annule pas par distraction.
+        $this->assertNotContains('svg', AssetKind::Image->acceptedExtensions());
+    }
+
+    #[Test]
+    public function a_video_may_weigh_far_more_than_an_image(): void
+    {
+        // Un plafond unique obligerait soit à refuser un rush, soit à laisser
+        // passer une image de 500 Mo.
+        $this->assertGreaterThan(
+            AssetKind::Image->maxSizeKb(),
+            AssetKind::Video->maxSizeKb(),
+        );
+
+        // Livewire plafonne les téléversements temporaires : un type qui
+        // dépasserait ce plafond serait refusé avant d'atteindre Filament,
+        // avec un message qui ne dit pas pourquoi.
+        $livewireCeiling = (int) collect(config('livewire.temporary_file_upload.rules'))
+            ->map(fn ($rule) => str_starts_with((string) $rule, 'max:') ? (int) substr((string) $rule, 4) : 0)
+            ->max();
+
+        foreach (AssetKind::cases() as $kind) {
+            $this->assertLessThanOrEqual(
+                $livewireCeiling,
+                $kind->maxSizeKb(),
+                "Le plafond de {$kind->label()} dépasse celui de Livewire : l'upload échouerait sans explication.",
+            );
+        }
+    }
+
+    #[Test]
     public function deleting_a_campaign_takes_its_material_with_it(): void
     {
         $campaign = $this->campaign();

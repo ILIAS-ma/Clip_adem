@@ -154,6 +154,7 @@ class CreateDemoAccountsCommand extends Command
             ['video', 'Rushes du clip', 'Trois plans libres de droits, à mélanger avec vos propres images.', false],
             ['image', 'Pochette de l’EP', 'À faire apparaître au moins une seconde, sans la recadrer.', false],
             ['document', 'Charte de la campagne', 'Ce qui est interdit, en une page. À lire avant de tourner.', false],
+            ['archive', 'Pack complet', 'Tout ce qui précède en un seul téléchargement.', false],
         ] as $position => [$kind, $label, $description, $required]) {
             $campaign->assets()->updateOrCreate(
                 ['label' => $label],

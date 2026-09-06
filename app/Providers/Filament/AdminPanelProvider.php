@@ -12,10 +12,12 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\AccountWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -62,6 +64,30 @@ class AdminPanelProvider extends PanelProvider
                 ? view('filament.brand-logo')
                 : null)
             ->brandLogoHeight('2rem')
+            // Même famille que le site public : un back-office qui n'a pas la
+            // typographie du produit donne l'impression d'un outil emprunté.
+            ->font('Figtree')
+            /*
+             * Groupes ordonnés du quotidien vers l'exceptionnel : on vient ici
+             * modérer des clips bien plus souvent que créer une campagne, et
+             * beaucoup plus souvent que payer.
+             */
+            ->navigationGroups([
+                NavigationGroup::make('Catalogue')
+                    ->icon(Heroicon::OutlinedRectangleStack),
+                NavigationGroup::make('Modération')
+                    ->icon(Heroicon::OutlinedShieldCheck),
+                NavigationGroup::make('Finances')
+                    ->icon(Heroicon::OutlinedBanknotes),
+            ])
+            ->sidebarCollapsibleOnDesktop()
+            ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
+            /*
+             * Le formulaire de campagne est long et porte des téléversements :
+             * le quitter par inadvertance coûte le brief entier et les fichiers
+             * déjà déposés.
+             */
+            ->unsavedChangesAlerts()
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([

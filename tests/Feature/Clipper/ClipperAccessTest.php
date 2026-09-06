@@ -32,7 +32,8 @@ class ClipperAccessTest extends TestCase
         Event::fake([Registered::class]);
 
         $this->post('/register', [
-            'name' => 'Lina Dupont',
+            'first_name' => 'Lina',
+            'last_name' => 'Dupont',
             'email' => 'lina@example.test',
             'password' => 'motdepasse-solide',
             'password_confirmation' => 'motdepasse-solide',

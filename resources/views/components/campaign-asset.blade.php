@@ -33,6 +33,8 @@
                class="btn-ghost shrink-0">
                 {{ $asset->isHosted() ? 'Télécharger' : 'Ouvrir' }}
                 @if ($asset->humanSize())
+                    {{-- Le poids avant le clic : personne n'a envie de lancer
+                         180 Mo en 4G sans le savoir. --}}
                     <span class="ml-1 text-xs text-ink-400 tabular">{{ $asset->humanSize() }}</span>
                 @endif
             </a>

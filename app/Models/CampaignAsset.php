@@ -98,7 +98,6 @@ class CampaignAsset extends Model
     /** L'aperçu n'a de sens que pour ce que le navigateur sait lire. */
     public function isPreviewable(): bool
     {
-        return $this->isHosted()
-            && in_array($this->kind, [AssetKind::Audio, AssetKind::Video, AssetKind::Image], true);
+        return $this->isHosted() && $this->kind->isPlayable();
     }
 }

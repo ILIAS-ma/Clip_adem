@@ -77,7 +77,8 @@ class CreatorSpaceTest extends TestCase
     public function registration_can_create_a_creator_account(): void
     {
         $this->post('/register', [
-            'name' => 'Nayra Diallo',
+            'first_name' => 'Nayra',
+            'last_name' => 'Diallo',
             'email' => 'nayra@exemple.test',
             'password' => 'motdepasse-solide',
             'password_confirmation' => 'motdepasse-solide',
@@ -93,7 +94,8 @@ class CreatorSpaceTest extends TestCase
         // Le rôle vient d'un formulaire : sans liste blanche, il suffirait de
         // trafiquer la requête pour s'ouvrir le back-office et les paiements.
         $this->post('/register', [
-            'name' => 'Pirate',
+            'first_name' => 'Pirate',
+            'last_name' => 'Anonyme',
             'email' => 'pirate@exemple.test',
             'password' => 'motdepasse-solide',
             'password_confirmation' => 'motdepasse-solide',
