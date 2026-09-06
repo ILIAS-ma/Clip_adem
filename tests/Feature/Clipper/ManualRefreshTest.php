@@ -140,6 +140,38 @@ class ManualRefreshTest extends TestCase
     }
 
     #[Test]
+    public function a_clipper_can_analyze_their_own_clip(): void
+    {
+        $clipper = $this->clipper();
+        $clip = $this->clipFor($clipper);
+
+        $response = $this->actingAs($clipper)
+            ->get(route('clips.analyze', $clip))
+            ->assertSuccessful()
+            ->assertJsonStructure([
+                'statut', 'url_originale', 'auteur', 'titre_description', 'hashtags',
+                'statistiques' => ['vues', 'likes', 'commentaires', 'partages'],
+                'duree_secondes', 'date_publication',
+            ]);
+
+        $response->assertJson(['statut' => 'success']);
+    }
+
+    #[Test]
+    public function nobody_analyzes_somebody_elses_clip(): void
+    {
+        // Même raisonnement que le bouton d'actualisation : sans ce contrôle,
+        // n'importe quel clippeur connecté pourrait lire le détail (auteur,
+        // légende, statistiques) du clip de quelqu'un d'autre en devinant son
+        // identifiant dans l'URL.
+        $clip = $this->clipFor($this->clipper());
+
+        $this->actingAs($this->clipper())
+            ->get(route('clips.analyze', $clip))
+            ->assertForbidden();
+    }
+
+    #[Test]
     public function a_clip_whose_account_needs_reconnecting_is_not_pulled(): void
     {
         // Interroger avec un jeton mort ne rapporte que des 401 et consomme le
