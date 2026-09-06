@@ -195,7 +195,7 @@ class CreateDemoAccountsCommand extends Command
                 'access_token' => 'demo-access-token',
                 'refresh_token' => 'demo-refresh-token',
                 'token_expires_at' => now()->addDays(60),
-                'scopes' => ['read.profile', 'read.metrics'],
+                'scopes' => ['user.info.basic', 'video.list'],
                 'followers_count' => 68_000,
                 'verified_at' => now(),
                 'is_active' => true,

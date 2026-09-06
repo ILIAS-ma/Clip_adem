@@ -24,6 +24,8 @@ use Illuminate\Support\Facades\Http;
  */
 class InstagramProvider implements SocialProvider
 {
+    use ResolvesRedirectUri;
+
     protected const VERSION = 'v21.0';
 
     public function platform(): Platform
@@ -41,11 +43,35 @@ class InstagramProvider implements SocialProvider
     {
         return 'https://www.facebook.com/'.self::VERSION.'/dialog/oauth?'.http_build_query([
             'client_id' => config('services.instagram.app_id'),
-            'redirect_uri' => route('social.callback', ['platform' => $this->platform()->value]),
+            'redirect_uri' => $this->redirectUri(),
             'response_type' => 'code',
-            'scope' => 'instagram_basic,instagram_manage_insights,pages_show_list,pages_read_engagement',
+            'scope' => implode(',', $this->requestedScopes()),
             'state' => $state,
         ]);
+    }
+
+    /**
+     * Les deux permissions « pages » servent à retrouver le compte
+     * professionnel rattaché : Meta n'expose les statistiques Instagram qu'à
+     * travers la page Facebook liée.
+     *
+     * @return array<int, string>
+     */
+    public function requestedScopes(): array
+    {
+        return ['instagram_basic', 'instagram_manage_insights', 'pages_show_list', 'pages_read_engagement'];
+    }
+
+    /**
+     * Meta ne renvoie pas toujours les permissions « pages » dans la réponse
+     * du jeton : les exiger ici produirait un refus à tort. Seule celle qui
+     * porte les statistiques est vérifiée.
+     *
+     * @return array<int, string>
+     */
+    public function requiredScopes(): array
+    {
+        return ['instagram_manage_insights'];
     }
 
     public function connect(string $code): ConnectedAccount
@@ -55,7 +81,7 @@ class InstagramProvider implements SocialProvider
             [
                 'client_id' => config('services.instagram.app_id'),
                 'client_secret' => config('services.instagram.app_secret'),
-                'redirect_uri' => route('social.callback', ['platform' => $this->platform()->value]),
+                'redirect_uri' => $this->redirectUri(),
                 'code' => $code,
             ],
         );

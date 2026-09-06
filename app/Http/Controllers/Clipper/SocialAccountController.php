@@ -52,9 +52,14 @@ class SocialAccountController extends Controller
         abort_unless($platform, 404);
 
         if ($error = $request->query('error')) {
+            // La description est le seul endroit où la plateforme dit ce qui
+            // s'est réellement passé : « user_cancelled » tout seul ne permet
+            // ni d'aider le clippeur, ni de diagnostiquer.
+            $detail = (string) $request->query('error_description') ?: $error;
+
             return redirect()
                 ->route('accounts.index')
-                ->withErrors(['social' => 'Connexion annulée ('.$error.').']);
+                ->withErrors(['social' => 'Connexion annulée : '.$detail]);
         }
 
         $expected = $request->session()->pull('social.state');

@@ -24,6 +24,8 @@ use Illuminate\Support\Facades\Http;
  */
 class TikTokProvider implements SocialProvider
 {
+    use ResolvesRedirectUri;
+
     public function platform(): Platform
     {
         return Platform::TikTok;
@@ -39,11 +41,33 @@ class TikTokProvider implements SocialProvider
     {
         return 'https://www.tiktok.com/v2/auth/authorize/?'.http_build_query([
             'client_key' => config('services.tiktok.client_key'),
-            'scope' => 'user.info.basic,video.list',
+            'scope' => implode(',', $this->requestedScopes()),
             'response_type' => 'code',
-            'redirect_uri' => route('social.callback', ['platform' => $this->platform()->value]),
+            'redirect_uri' => $this->redirectUri(),
             'state' => $state,
         ]);
+    }
+
+    /**
+     * `user.info.basic` identifie le compte, `video.list` donne les vues.
+     *
+     * @return array<int, string>
+     */
+    public function requestedScopes(): array
+    {
+        return ['user.info.basic', 'video.list'];
+    }
+
+    /**
+     * Seule `video.list` est vérifiée : sans elle aucune vue ne remonte, donc
+     * aucun euro. `user.info.basic` refusée fait déjà échouer `connect()`, qui
+     * ne peut alors pas lire l'`open_id`.
+     *
+     * @return array<int, string>
+     */
+    public function requiredScopes(): array
+    {
+        return ['video.list'];
     }
 
     public function connect(string $code): ConnectedAccount
@@ -53,7 +77,7 @@ class TikTokProvider implements SocialProvider
             'client_secret' => config('services.tiktok.client_secret'),
             'code' => $code,
             'grant_type' => 'authorization_code',
-            'redirect_uri' => route('social.callback', ['platform' => $this->platform()->value]),
+            'redirect_uri' => $this->redirectUri(),
         ]);
 
         if ($token->failed()) {

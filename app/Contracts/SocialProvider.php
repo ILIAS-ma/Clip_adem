@@ -25,6 +25,26 @@ interface SocialProvider
     /** URL de consentement, avec le jeton anti-CSRF de la session. */
     public function redirectUrl(string $state): string;
 
+    /**
+     * Permissions demandées au consentement.
+     *
+     * @return array<int, string>
+     */
+    public function requestedScopes(): array;
+
+    /**
+     * Permissions sans lesquelles le compte ne sert à rien.
+     *
+     * Sous-ensemble délibéré de `requestedScopes()` : les plateformes laissent
+     * refuser une permission tout en accordant les autres, et un compte lié
+     * sans accès aux statistiques ne remontera jamais la moindre vue. Le
+     * découvrir à la liaison plutôt qu'au premier relevé évite un clippeur qui
+     * publie pendant une semaine sans jamais être payé.
+     *
+     * @return array<int, string>
+     */
+    public function requiredScopes(): array;
+
     public function connect(string $code): ConnectedAccount;
 
     public function refresh(SocialAccount $account): ConnectedAccount;

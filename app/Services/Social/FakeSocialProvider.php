@@ -49,6 +49,31 @@ class FakeSocialProvider implements SocialProvider
         ]);
     }
 
+    /**
+     * Celles de la plateforme simulée, pour que le contrôle de permissions
+     * soit exercé en développement comme en production.
+     *
+     * @return array<int, string>
+     */
+    public function requestedScopes(): array
+    {
+        return match ($this->platform) {
+            Platform::TikTok => ['user.info.basic', 'video.list'],
+            Platform::YouTube => ['https://www.googleapis.com/auth/youtube.readonly'],
+            Platform::Instagram => ['instagram_basic', 'instagram_manage_insights'],
+        };
+    }
+
+    /** @return array<int, string> */
+    public function requiredScopes(): array
+    {
+        return match ($this->platform) {
+            Platform::TikTok => ['video.list'],
+            Platform::YouTube => ['https://www.googleapis.com/auth/youtube.readonly'],
+            Platform::Instagram => ['instagram_manage_insights'],
+        };
+    }
+
     public function connect(string $code): ConnectedAccount
     {
         $seed = crc32($code.$this->platform->value);
@@ -60,7 +85,7 @@ class FakeSocialProvider implements SocialProvider
             accessToken: 'fake-access-'.Str::random(32),
             refreshToken: 'fake-refresh-'.Str::random(32),
             expiresAt: now()->addDays(60),
-            scopes: ['read.profile', 'read.metrics'],
+            scopes: $this->requestedScopes(),
             followersCount: $seed % 90_000 + 1_000,
         );
     }
@@ -74,7 +99,7 @@ class FakeSocialProvider implements SocialProvider
             accessToken: 'fake-access-'.Str::random(32),
             refreshToken: 'fake-refresh-'.Str::random(32),
             expiresAt: now()->addDays(60),
-            scopes: $account->scopes ?? ['read.profile', 'read.metrics'],
+            scopes: $account->scopes ?: $this->requestedScopes(),
             followersCount: $account->followers_count,
         );
     }

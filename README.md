@@ -251,6 +251,52 @@ sans quoi la contrainte d'unicité ne protégerait pas des doublons.
 Un clip soumis naît toujours en `pending_review`, quelle que soit sa conformité :
 un hashtag correct ne dit rien du respect réel du brief.
 
+### Brancher les vraies plateformes
+
+TikTok publie **deux** guides Login Kit, aux règles opposées. Clip Adem est une
+application web serveur : c'est le guide **Web** qui s'applique, et il faut
+enregistrer une application de type Web.
+
+| | Web (le nôtre) | Desktop |
+|---|---|---|
+| Adresse de retour | `https` obligatoire | `localhost` / `127.0.0.1`, `http` accepté |
+| PKCE | non utilisé | obligatoire, SHA256 en **hexadécimal** |
+| Utilisable en production | oui | non — l'adresse de retour ne peut être que locale |
+
+Enregistrer une application Desktop pour éviter un tunnel en développement est
+une impasse : la même application ne pourra jamais servir en ligne.
+
+Pour TikTok :
+
+1. Application **Web** sur developers.tiktok.com, produit Login Kit, portées
+   `user.info.basic` et `video.list` (revue d'application, plusieurs jours).
+2. Adresse de retour enregistrée : `https://votre-domaine/oauth/tiktok/callback`
+   — absolue, sans paramètre, sans fragment.
+3. `TIKTOK_CLIENT_KEY` et `TIKTOK_CLIENT_SECRET` dans `.env`.
+
+En développement, il faut donc un tunnel HTTPS. Deux réglages, sans lesquels la
+plateforme répond « invalid redirect_uri » sans dire pourquoi :
+
+```
+TRUSTED_PROXIES=*
+TIKTOK_REDIRECT_URI=https://votre-tunnel/oauth/tiktok/callback
+```
+
+Le premier parce que le tunnel termine TLS en amont : sans lui Laravel se croit
+en HTTP et fabrique une adresse `http://`. Le second parce que l'adresse est
+comparée **caractère par caractère** avec celle enregistrée, et que la déduire
+de l'hôte de la requête est fragile. Laissés vides, l'adresse est déduite de la
+route — ce qui suffit tant qu'on reste sur le fournisseur simulé.
+
+**Permissions accordées.** Les plateformes laissent refuser une permission tout
+en accordant les autres. Un compte lié sans l'accès aux statistiques se comporte
+normalement — il apparaît dans la liste, on peut rejoindre une campagne et
+publier — puis ne remonte jamais une vue : le clippeur découvre au bout d'une
+semaine qu'il ne sera pas payé. `SocialAccountLinker` refuse donc la liaison en
+nommant la permission manquante. Le contrôle ne s'applique que si le
+fournisseur renvoie la liste : un refus à tort empêcherait quelqu'un de gagner
+sa vie, alors qu'un contrôle manqué revient au comportement d'avant.
+
 ### Comptes réseaux et synchronisation
 
 Tout ce qui dépend d'une API externe passe par le contrat `SocialProvider`.

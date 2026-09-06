@@ -44,17 +44,23 @@ return [
         'client_id' => env('YOUTUBE_CLIENT_ID'),
         'client_secret' => env('YOUTUBE_CLIENT_SECRET'),
         'daily_quota' => env('YOUTUBE_DAILY_QUOTA', 10_000),
+
+        // Vide : l'URL est déduite de la route. À figer dès qu'un tunnel ou un
+        // répartiteur de charge s'intercale — voir ResolvesRedirectUri.
+        'redirect' => env('YOUTUBE_REDIRECT_URI'),
     ],
 
     'tiktok' => [
         'client_key' => env('TIKTOK_CLIENT_KEY'),
         'client_secret' => env('TIKTOK_CLIENT_SECRET'),
         'daily_quota' => env('TIKTOK_DAILY_QUOTA'),
+        'redirect' => env('TIKTOK_REDIRECT_URI'),
     ],
 
     'instagram' => [
         'app_id' => env('INSTAGRAM_APP_ID'),
         'app_secret' => env('INSTAGRAM_APP_SECRET'),
+        'redirect' => env('INSTAGRAM_REDIRECT_URI'),
     ],
 
     /*

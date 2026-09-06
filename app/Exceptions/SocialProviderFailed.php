@@ -43,6 +43,20 @@ class SocialProviderFailed extends RuntimeException
         return new self(sprintf('Aucune chaîne %s associée à ce compte.', $platform->label()));
     }
 
+    /**
+     * @param  array<int, string>  $missing
+     */
+    public static function missingScopes(Platform $platform, array $missing): self
+    {
+        return new self(sprintf(
+            'Il manque une autorisation sur votre compte %s : %s. Relancez la connexion en laissant '
+            .'toutes les cases activées — sans elle, nous ne pouvons pas lire les vues de vos clips, '
+            .'donc pas vous payer.',
+            $platform->label(),
+            implode(', ', $missing),
+        ));
+    }
+
     public static function invalidState(): self
     {
         return new self('Session de connexion expirée ou invalide. Relancez la liaison du compte.');

@@ -16,6 +16,18 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Derrière un tunnel de développement ou un répartiteur de charge, TLS
+        // est terminé en amont : sans ces en-têtes, Laravel se croit en HTTP et
+        // fabrique des URL `http://` — dont l'adresse de retour OAuth, que le
+        // fournisseur compare caractère par caractère avec celle enregistrée.
+        //
+        // Vide par défaut, parce que faire confiance à tous les proxys quand
+        // l'application est joignable en direct laisserait n'importe qui
+        // usurper son adresse IP via X-Forwarded-For.
+        if ($proxies = env('TRUSTED_PROXIES')) {
+            $middleware->trustProxies(at: $proxies === '*' ? '*' : explode(',', $proxies));
+        }
+
         // PayPal ne peut pas porter de jeton CSRF : la requête est authentifiée
         // par sa signature, vérifiée dans PayPalWebhookController.
         $middleware->validateCsrfTokens(except: [

@@ -25,6 +25,8 @@ use Illuminate\Support\Facades\Http;
  */
 class YouTubeProvider implements SocialProvider
 {
+    use ResolvesRedirectUri;
+
     public function platform(): Platform
     {
         return Platform::YouTube;
@@ -40,9 +42,9 @@ class YouTubeProvider implements SocialProvider
     {
         return 'https://accounts.google.com/o/oauth2/v2/auth?'.http_build_query([
             'client_id' => config('services.youtube.client_id'),
-            'redirect_uri' => route('social.callback', ['platform' => $this->platform()->value]),
+            'redirect_uri' => $this->redirectUri(),
             'response_type' => 'code',
-            'scope' => 'https://www.googleapis.com/auth/youtube.readonly',
+            'scope' => implode(' ', $this->requestedScopes()),   // Google sépare par espaces
             // Sans « offline » et « consent », Google ne renvoie pas de jeton de
             // rafraîchissement à la deuxième connexion du même compte.
             'access_type' => 'offline',
@@ -51,13 +53,25 @@ class YouTubeProvider implements SocialProvider
         ]);
     }
 
+    /** @return array<int, string> */
+    public function requestedScopes(): array
+    {
+        return ['https://www.googleapis.com/auth/youtube.readonly'];
+    }
+
+    /** @return array<int, string> */
+    public function requiredScopes(): array
+    {
+        return ['https://www.googleapis.com/auth/youtube.readonly'];
+    }
+
     public function connect(string $code): ConnectedAccount
     {
         $token = Http::asForm()->post('https://oauth2.googleapis.com/token', [
             'code' => $code,
             'client_id' => config('services.youtube.client_id'),
             'client_secret' => config('services.youtube.client_secret'),
-            'redirect_uri' => route('social.callback', ['platform' => $this->platform()->value]),
+            'redirect_uri' => $this->redirectUri(),
             'grant_type' => 'authorization_code',
         ]);
 

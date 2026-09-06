@@ -25,6 +25,8 @@ class SocialAccountLinker
 
     public function link(User $clipper, ConnectedAccount $connected): SocialAccount
     {
+        $this->assertScopesGranted($connected);
+
         $existing = SocialAccount::where('platform', $connected->platform)
             ->where('external_account_id', $connected->externalAccountId)
             ->first();
@@ -64,6 +66,38 @@ class SocialAccountLinker
         ])->save();
 
         return $account;
+    }
+
+    /**
+     * Refuse une liaison amputée de la permission qui porte les statistiques.
+     *
+     * Les plateformes laissent l'utilisateur refuser une permission tout en
+     * accordant les autres. Un compte lié sans cet accès se comporte
+     * normalement partout — il apparaît dans la liste, on peut rejoindre une
+     * campagne, publier — puis ne remonte jamais une vue. Le clippeur découvre
+     * au bout d'une semaine qu'il ne sera pas payé, et personne ne sait
+     * pourquoi. Autant refuser tout de suite, en nommant ce qui manque.
+     *
+     * Si le fournisseur ne renvoie aucune permission, on ne bloque pas : un
+     * refus à tort empêcherait quelqu'un de gagner sa vie, alors qu'un
+     * contrôle manqué ne fait que revenir au comportement d'avant.
+     */
+    protected function assertScopesGranted(ConnectedAccount $connected): void
+    {
+        $granted = array_filter(array_map('trim', $connected->scopes));
+
+        if ($granted === []) {
+            return;
+        }
+
+        $missing = array_diff(
+            $this->providers->for($connected->platform)->requiredScopes(),
+            $granted,
+        );
+
+        if ($missing !== []) {
+            throw SocialProviderFailed::missingScopes($connected->platform, array_values($missing));
+        }
     }
 
     /**
