@@ -13,7 +13,9 @@ use App\Models\Campaign;
 use App\Models\Clip;
 use App\Models\Payout;
 use App\Models\User;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -114,6 +116,26 @@ class AdminPagesRenderTest extends TestCase
 
         $this->actingAs($admin)->get('/admin/campaigns/create')->assertSuccessful();
         $this->actingAs($admin)->get("/admin/campaigns/{$campaign->getKey()}/edit")->assertSuccessful();
+    }
+
+    #[Test]
+    public function every_dashboard_widget_actually_renders(): void
+    {
+        /*
+         * Les widgets sont des composants Livewire chargés APRÈS la page : une
+         * erreur à l'intérieur laisse `/admin` répondre 200 tout en n'affichant
+         * rien. Le test de fumée sur l'URL ne suffit donc pas — il faut monter
+         * chaque composant.
+         *
+         * Écrit après un vrai incident : un widget interrogeait une table
+         * inexistante et le tableau de bord semblait sain.
+         */
+        $this->seedActivity();
+        $this->actingAs($this->admin());
+
+        foreach (Filament::getPanel('admin')->getWidgets() as $widget) {
+            Livewire::test($widget)->assertOk();
+        }
     }
 
     #[Test]

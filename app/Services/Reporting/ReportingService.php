@@ -137,13 +137,18 @@ class ReportingService
      */
     public function topClippersThisWeek(int $limit = 10, int $days = 7): Collection
     {
-        return DB::table('budget_transactions')
-            ->join('users', 'users.id', '=', 'budget_transactions.user_id')
-            ->where('budget_transactions.created_at', '>=', now()->subDays($days))
+        // Le nom de la table est pris sur le modèle : l'écrire en dur invite
+        // exactement la faute qu'on répare ici — elle s'appelle
+        // `campaign_budget_transactions`, pas `budget_transactions`.
+        $table = (new BudgetTransaction)->getTable();
+
+        return DB::table($table)
+            ->join('users', 'users.id', '=', $table.'.user_id')
+            ->where($table.'.created_at', '>=', now()->subDays($days))
             ->groupBy('users.id', 'users.name', 'users.is_banned')
             ->select('users.id', 'users.name', 'users.is_banned')
-            ->selectRaw('SUM(budget_transactions.views_delta) as views')
-            ->havingRaw('SUM(budget_transactions.views_delta) > 0')
+            ->selectRaw('SUM('.$table.'.views_delta) as views')
+            ->havingRaw('SUM('.$table.'.views_delta) > 0')
             ->orderByDesc('views')
             ->limit($limit)
             ->get()
