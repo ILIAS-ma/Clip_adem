@@ -7,10 +7,11 @@
     $consumed = min(100, round(($total - $remaining) / $total * 100));
 
     // À 10 % de reliquat, un clippeur doit savoir qu'il risque de ne pas être
-    // payé s'il publie maintenant. La couleur porte cette urgence.
+    // payé s'il publie maintenant. La couleur porte cette urgence : ambre pour
+    // « dépêchez-vous », rouge pour « c'est fini », comme partout ailleurs.
     $tone = match (true) {
-        $remaining <= 0 => 'bg-red-500/150',
-        $consumed >= 90 => 'bg-brand-500',
+        $remaining <= 0 => 'bg-red-500',
+        $consumed >= 90 => 'bg-amber-400',
         default => 'bg-brand-500',
     };
 @endphp

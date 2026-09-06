@@ -118,7 +118,13 @@ class CreateDemoAccountsCommand extends Command
                 'required_hashtags' => ['#saya', '#epprintemps'],
                 'status' => CampaignStatus::Active,
                 'budget_total_cents' => 500_000,   // 5 000 €
-                'spent_cents' => 0,
+
+                // Uniquement à la création. Remettre le compteur à zéro sur une
+                // campagne existante le désynchroniserait du grand livre : les
+                // crédits déjà inscrits ne repartent pas, et le garde-fou
+                // d'idempotence empêche de les rejouer pour recoller.
+                ...($campaign->exists ? [] : ['spent_cents' => 0]),
+
                 'target_views' => 8_000_000,
                 'min_views_per_clip' => 1_000,
                 'max_payout_per_clip_cents' => 60_000,
