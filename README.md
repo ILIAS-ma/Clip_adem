@@ -563,6 +563,69 @@ qui et quand. Symétriquement, un retrait PayPal **ne peut pas** être pointé �
 main — sinon un administrateur pourrait déclarer versé un retrait que PayPal n'a
 jamais envoyé, et le solde du clippeur disparaîtrait.
 
+## Connexion Google
+
+Écrite à la main, pas via Socialite : celui-ci exige Guzzle 7 quand le projet
+tourne sur Guzzle 8, et descendre une bibliothèque HTTP centrale pour une page
+de connexion serait un mauvais échange. Le projet parle déjà OAuth avec TikTok,
+YouTube et Instagram — c'est le même patron, et il reste sous notre contrôle.
+
+L'identifiant stocké est le `sub` de Google, **jamais l'e-mail** : une adresse
+peut changer de main, le `sub` désigne le même compte pour toujours.
+
+La règle qui compte tient en une phrase : **on ne rattache jamais un compte
+existant sur une adresse que Google n'a pas vérifiée.** Sans elle, il suffirait
+de créer un compte Google déclarant l'adresse d'un administrateur pour prendre
+sa place. Trois tests l'entourent.
+
+Le profil est relu par l'API `userinfo` plutôt que décodé depuis l'`id_token` :
+vérifier une signature JWT à la main est exactement le genre de code qu'on écrit
+une fois, mal, et qui laisse passer un jeton forgé.
+
+Configuration : `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, et l'URI de
+redirection `https://votre-domaine/auth/google/callback` déclarée à l'identique
+dans la console Google Cloud. Sans clé, le bouton ne s'affiche pas — un bouton
+qui mène à une erreur est pire que pas de bouton.
+
+## Parrainage
+
+**La commission ne sort jamais du budget d'une campagne.** Elle est payée par
+la plateforme sur sa marge. Sinon le créateur financerait la croissance de la
+plateforme sans le savoir, et le budget qu'il a provisionné ne servirait plus
+entièrement à ses vues — ce que le contrôle d'encaissement existe justement
+pour garantir. Le filleul n'est pas amputé non plus : il touche exactement ce
+que ses vues valent, la commission s'ajoute par-dessus. Deux tests gardent
+cette règle, parce que c'est le genre d'invariant qu'une optimisation
+« évidente » casse six mois plus tard.
+
+`referral_commissions` suit la même forme que le grand livre : ajout seul,
+signé, idempotent. Une transaction budget ne donne qu'une commission — index
+unique — et l'invalidation d'un clip écrit des lignes négatives plutôt que de
+supprimer les anciennes : le parrain doit pouvoir comprendre pourquoi son total
+a baissé.
+
+Les commissions entrent dans le solde retirable, sinon elles s'afficheraient
+sans jamais pouvoir être touchées.
+
+Le code est attribué à la demande, pas à l'inscription, et son alphabet exclut
+O/0 et I/1 : ces codes se recopient à la main depuis une story. Le parrain est
+figé à l'inscription — le laisser changer permettrait de déplacer des
+commissions déjà acquises.
+
+Barème : `REFERRAL_RATE_BP`, en points de base (500 = 5 %).
+
+## Message groupé
+
+`/admin/send-broadcast`, réservé au super-administrateur : c'est le seul écran
+qui parle à tous les utilisateurs à la fois, et un e-mail parti ne se rappelle
+pas. Le nombre exact de destinataires s'affiche en gros au-dessus du formulaire
+et se recalcule à chaque changement de filtre — c'est ce qui empêche de se
+tromper de groupe.
+
+L'envoi passe par `chunkById` et par la file : tout charger en mémoire tombe à
+quelques milliers de comptes, et trois cents e-mails dans le cycle d'une requête
+HTTP la font expirer bien avant la fin, sans qu'on sache qui a reçu quoi.
+
 ## L'argent qui entre
 
 `campaigns.budget_total_cents` n'était qu'un nombre tapé au clavier : rien ne le

@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Rules\ValidTurnstile;
+use App\Services\Referrals\ReferralService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,6 +19,10 @@ use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
 {
+    public function __construct(
+        protected ReferralService $referrals,
+    ) {}
+
     public function create(Request $request): View
     {
         return view('auth.register', [
@@ -88,6 +93,10 @@ class RegisteredUserController extends Controller
         if (config('clipping.onboarding.require_email_verification')) {
             event(new Registered($user));
         }
+
+        // Le code peut venir du champ, de l'URL, ou du cookie posé à l'arrivée
+        // sur un lien de parrainage consulté dix minutes plus tôt.
+        $this->referrals->attachFromRequest($user, $request);
 
         Auth::login($user);
 

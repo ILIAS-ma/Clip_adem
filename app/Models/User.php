@@ -15,6 +15,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -52,6 +53,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
             // Les quatre derniers chiffres vivent à part, eux en clair, pour
             // l'affichage et le rapprochement d'un virement.
             'iban' => 'encrypted',
+            'referred_at' => 'datetime',
         ];
     }
 
@@ -169,6 +171,28 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         return $this->hasMany(Payout::class);
     }
 
+    // ------------------------------------------------------------------
+    // Parrainage
+    // ------------------------------------------------------------------
+
+    /** Qui m'a parrainé. */
+    public function referrer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'referred_by');
+    }
+
+    /** Les personnes que j'ai parrainées. */
+    public function referrals(): HasMany
+    {
+        return $this->hasMany(User::class, 'referred_by');
+    }
+
+    /** Mes commissions de parrainage, positives comme reprises. */
+    public function referralCommissions(): HasMany
+    {
+        return $this->hasMany(ReferralCommission::class, 'referrer_id');
+    }
+
     public function isStaff(): bool
     {
         return $this->role->isStaff() && ! $this->is_banned;
@@ -179,10 +203,23 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         return $this->role === UserRole::SuperAdmin && ! $this->is_banned;
     }
 
-    /** Total gagné, tous clips et toutes campagnes confondus, en centimes. */
+    /**
+     * Total gagné, en centimes : les clips, plus les commissions de parrainage.
+     *
+     * Les deux entrent dans le même solde parce qu'elles se retirent de la
+     * même façon. Elles ne viennent pas du même endroit pour autant : les
+     * clips consomment le budget d'une campagne, les commissions sortent de la
+     * marge de la plateforme.
+     */
     public function earnedCents(): int
     {
-        return (int) $this->clips()->sum('earned_cents');
+        return (int) $this->clips()->sum('earned_cents') + $this->referralEarnedCents();
+    }
+
+    /** Ce que le parrainage a rapporté, reprises déduites. */
+    public function referralEarnedCents(): int
+    {
+        return max(0, (int) $this->referralCommissions()->sum('amount_cents'));
     }
 
     /** Montant déjà demandé ou versé, donc immobilisé, en centimes. */

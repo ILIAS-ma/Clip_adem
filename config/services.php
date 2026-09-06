@@ -40,6 +40,17 @@ return [
     | fournisseur simulé prend le relais hors production — voir
     | SocialProviderManager.
     */
+    /*
+    | Connexion Google. Console Google Cloud > Identifiants > ID client OAuth,
+    | type « Application Web ». L'URI de redirection autorisée doit être
+    | exactement https://votre-domaine/auth/google/callback
+    */
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+    ],
+
     'youtube' => [
         'client_id' => env('YOUTUBE_CLIENT_ID'),
         'client_secret' => env('YOUTUBE_CLIENT_SECRET'),

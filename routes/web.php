@@ -6,6 +6,7 @@ use App\Http\Controllers\Clipper\DashboardController;
 use App\Http\Controllers\Clipper\EarningsController;
 use App\Http\Controllers\Clipper\PayoutMethodController;
 use App\Http\Controllers\Clipper\ProfileCompletionController;
+use App\Http\Controllers\Clipper\ReferralController;
 use App\Http\Controllers\Clipper\SocialAccountController;
 use App\Http\Controllers\Creator\CampaignController as CreatorCampaignController;
 use App\Http\Controllers\Creator\DashboardController as CreatorDashboardController;
@@ -95,6 +96,8 @@ Route::middleware(['auth', 'not.banned', 'role:clipper'])->group(function () use
             ->name('accounts.destroy');
 
         Route::get('/revenus', [EarningsController::class, 'index'])->name('earnings.index');
+
+        Route::get('/parrainage', ReferralController::class)->name('referrals.index');
 
         Route::get('/revenus/paiement', [PayoutMethodController::class, 'edit'])->name('payout-method.edit');
         Route::patch('/revenus/paiement', [PayoutMethodController::class, 'update'])->name('payout-method.update');

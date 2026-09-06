@@ -6,8 +6,17 @@
         <p class="mt-2 text-ink-200">Gratuit. Vous choisissez ce que vous faites sur la plateforme.</p>
     </div>
 
+    <x-google-button :role="$role->value" label="S’inscrire avec Google" />
+
     <form method="POST" action="{{ route('register') }}" class="space-y-5" x-data="{ role: '{{ old('role', $role->value) }}' }">
         @csrf
+
+        @if ($parrain = request('parrain'))
+            <input type="hidden" name="parrain" value="{{ $parrain }}" />
+            <p class="rounded-xl border border-brand-500/40 bg-brand-500/10 px-4 py-3 text-sm text-brand-200">
+                Vous avez été invité avec le code <span class="font-semibold tabular">{{ $parrain }}</span>.
+            </p>
+        @endif
 
         {{-- Piège à robots : un champ qu'un humain ne voit ni ne remplit
              jamais, mais qu'un bot de remplissage automatique complète

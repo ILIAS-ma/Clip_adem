@@ -12,6 +12,7 @@
             ['route' => 'clips.index',     'pattern' => 'clips.*',     'label' => 'Mes clips'],
             ['route' => 'accounts.index',  'pattern' => 'accounts.*',  'label' => 'Mes comptes'],
             ['route' => 'earnings.index',  'pattern' => 'earnings.*',  'label' => 'Revenus'],
+            ['route' => 'referrals.index', 'pattern' => 'referrals.*', 'label' => 'Parrainage'],
         ];
 
     $home = auth()->user()->isCreator() ? route('creator.dashboard') : route('dashboard');

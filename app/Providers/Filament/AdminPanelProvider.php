@@ -79,6 +79,8 @@ class AdminPanelProvider extends PanelProvider
                     ->icon(Heroicon::OutlinedShieldCheck),
                 NavigationGroup::make('Finances')
                     ->icon(Heroicon::OutlinedBanknotes),
+                NavigationGroup::make('Communication')
+                    ->icon(Heroicon::OutlinedEnvelope),
             ])
             ->sidebarCollapsibleOnDesktop()
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])

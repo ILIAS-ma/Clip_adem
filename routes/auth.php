@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
@@ -23,6 +24,18 @@ Route::middleware('guest')->group(function () {
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
+
+    /*
+     * Connexion Google. Débitée par IP comme le reste : le parcours crée des
+     * comptes, donc il s'automatise aussi bien qu'un formulaire.
+     */
+    Route::get('auth/google', [GoogleController::class, 'redirect'])
+        ->middleware('throttle:10,1')
+        ->name('google.redirect');
+
+    Route::get('auth/google/callback', [GoogleController::class, 'callback'])
+        ->middleware('throttle:10,1')
+        ->name('google.callback');
 
     // S'ajoute au verrou par couple email+IP déjà posé dans LoginRequest
     // (5 essais avant blocage d'un compte précis) : celui-ci limite la même

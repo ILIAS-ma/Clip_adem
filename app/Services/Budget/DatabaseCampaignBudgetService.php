@@ -11,11 +11,13 @@ use App\Models\Campaign;
 use App\Models\Clip;
 use App\Models\User;
 use App\Services\Clippers\ClipperProgressionService;
+use App\Services\Referrals\ReferralService;
 use App\Support\Budget\BudgetQuote;
 use App\Support\Budget\CreditOutcome;
 use App\Support\Budget\CreditResult;
 use App\Support\Budget\ReversalResult;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Moteur de budget.
@@ -41,6 +43,7 @@ class DatabaseCampaignBudgetService implements CampaignBudgetService
 
     public function __construct(
         protected ClipperProgressionService $progression,
+        protected ReferralService $referrals,
     ) {}
 
     public function remaining(Campaign|int $campaign): int
@@ -151,12 +154,31 @@ class DatabaseCampaignBudgetService implements CampaignBudgetService
             CampaignExhausted::dispatch($exhaustedCampaign);
         }
 
+        /*
+         * Commission de parrainage, APRÈS le commit et hors de la transaction.
+         *
+         * Elle est payée par la plateforme, pas par la campagne : rien de ce
+         * qui suit ne touche au budget. Et si l'écriture échoue, le clippeur a
+         * déjà été payé — c'est l'ordre qui compte, l'inverse pourrait annuler
+         * un crédit pour une commission.
+         */
+        if ($result->transaction && config('clipping.referrals.enabled')) {
+            try {
+                $this->referrals->creditFor($result->transaction);
+            } catch (\Throwable $exception) {
+                Log::warning('Commission de parrainage non versée', [
+                    'budget_transaction_id' => $result->transaction->getKey(),
+                    'error' => $exception->getMessage(),
+                ]);
+            }
+        }
+
         return $result;
     }
 
     public function reverseClip(Clip $clip, string $reason, ?User $by = null): ReversalResult
     {
-        return DB::transaction(function () use ($clip, $reason, $by) {
+        $result = DB::transaction(function () use ($clip, $reason, $by) {
             $campaign = Campaign::whereKey($clip->campaign_id)->lockForUpdate()->firstOrFail();
             $clip = Clip::whereKey($clip->getKey())->lockForUpdate()->firstOrFail();
 
@@ -213,6 +235,22 @@ class DatabaseCampaignBudgetService implements CampaignBudgetService
                 transaction: $transaction,
             );
         }, self::TRANSACTION_ATTEMPTS);
+
+        // Les commissions nées de ce clip sont reprises par des lignes
+        // négatives : le parrain ne garde pas une commission sur des vues
+        // reconnues frauduleuses.
+        if ($result->transaction && config('clipping.referrals.enabled')) {
+            try {
+                $this->referrals->reverseForClip($clip, $result->transaction);
+            } catch (\Throwable $exception) {
+                Log::warning('Reprise de commissions de parrainage impossible', [
+                    'clip_id' => $clip->getKey(),
+                    'error' => $exception->getMessage(),
+                ]);
+            }
+        }
+
+        return $result;
     }
 
     public function acceptsNewClips(Campaign $campaign): bool

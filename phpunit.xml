@@ -43,6 +43,8 @@
         <env name="REQUIRE_ADMIN_2FA" value="true"/>
         <env name="REQUIRE_CREATOR_VALIDATION" value="true"/>
         <env name="REQUIRE_FUNDED_CAMPAIGNS" value="true"/>
+        <env name="REFERRALS_ENABLED" value="true"/>
+        <env name="REFERRAL_RATE_BP" value="500"/>
 
         <!--
             Captcha neutralisé : un client de test ne peut pas résoudre un défi

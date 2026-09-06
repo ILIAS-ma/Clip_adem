@@ -136,6 +136,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Parrainage
+    |--------------------------------------------------------------------------
+    |
+    | La commission est payée par la plateforme sur sa marge, JAMAIS prélevée
+    | sur le budget d'une campagne : le créateur n'a pas à financer la
+    | croissance de la plateforme, et le filleul touche exactement ce que ses
+    | vues valent.
+    |
+    | Exprimée en points de base pour rester en entiers : 500 = 5 %.
+    |
+    */
+
+    'referrals' => [
+        'rate_bp' => env('REFERRAL_RATE_BP', 500),
+
+        // Le barème s'applique tant que le filleul gagne. Une durée limitée
+        // serait plus prudente financièrement ; à trancher sur les chiffres
+        // réels, pas à l'avance.
+        'enabled' => env('REFERRALS_ENABLED', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Retraits
     |--------------------------------------------------------------------------
     */
