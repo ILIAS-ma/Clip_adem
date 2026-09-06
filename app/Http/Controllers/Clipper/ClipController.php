@@ -6,6 +6,8 @@ use App\Contracts\CampaignBudgetService;
 use App\Http\Controllers\Controller;
 use App\Models\Clip;
 use App\Services\Social\ClipSyncService;
+use App\Support\Social\ClipAnalysisPresenter;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -56,6 +58,33 @@ class ClipController extends Controller
         return back()->with('status', $gained > 0
             ? number_format($gained, 0, ',', ' ').' vues de plus depuis le dernier relevé.'
             : 'Relevé effectué : aucune vue supplémentaire pour l’instant.');
+    }
+
+    /**
+     * Relevé JSON complet d'un clip — même circuit que refresh() (API
+     * officielle du compte lié, même délai de garde), mais renvoie le
+     * détail exploitable par l'interface plutôt qu'un message flash.
+     *
+     * Jamais de scraping de l'URL soumise : les chiffres viennent du compte
+     * du clippeur, déjà lié en OAuth au moment de la soumission.
+     */
+    public function analyze(Request $request, Clip $clip, ClipSyncService $sync): JsonResponse
+    {
+        abort_unless($clip->user_id === $request->user()->getKey(), 403);
+
+        $metrics = $sync->syncClipWithMetrics($clip);
+
+        // Le clip a pu être relevé récemment (délai de garde) sans que ce
+        // soit une erreur : on renvoie alors les dernières données connues,
+        // déjà persistées, plutôt qu'un échec qui ferait croire à un lien
+        // cassé.
+        if ($metrics === null && ! $clip->last_synced_at) {
+            return response()->json(ClipAnalysisPresenter::error(
+                'Vidéo introuvable ou pas encore accessible sur la plateforme liée.'
+            ), 422);
+        }
+
+        return response()->json(ClipAnalysisPresenter::success($clip->fresh(), $metrics));
     }
 
     public function show(Request $request, Clip $clip, CampaignBudgetService $budget): View

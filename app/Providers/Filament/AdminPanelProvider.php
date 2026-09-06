@@ -6,6 +6,7 @@ use App\Filament\Widgets\BudgetConsumptionChart;
 use App\Filament\Widgets\PlatformOverview;
 use App\Filament\Widgets\SpendPerCreator;
 use App\Filament\Widgets\TopClippers;
+use App\Filament\Widgets\TopClippersWeekly;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Enums\ThemeMode;
 use Filament\Http\Middleware\Authenticate;
@@ -105,6 +106,7 @@ class AdminPanelProvider extends PanelProvider
                 BudgetConsumptionChart::class,
                 SpendPerCreator::class,
                 TopClippers::class,
+                TopClippersWeekly::class,
                 AccountWidget::class,
             ])
             ->middleware([

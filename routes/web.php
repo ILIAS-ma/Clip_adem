@@ -95,6 +95,12 @@ Route::middleware(['auth', 'not.banned', 'role:clipper'])->group(function () use
             ->middleware('throttle:20,1')
             ->name('clips.refresh');
 
+        // Même circuit que ci-dessus, format JSON pour l'interface plutôt
+        // qu'une redirection avec message flash.
+        Route::get('/mes-clips/{clip}/analyse', [ClipController::class, 'analyze'])
+            ->middleware('throttle:20,1')
+            ->name('clips.analyze');
+
         Route::get('/mes-comptes', [SocialAccountController::class, 'index'])->name('accounts.index');
         Route::get('/mes-comptes/{platform}/connexion', [SocialAccountController::class, 'redirect'])
             ->name('social.redirect');

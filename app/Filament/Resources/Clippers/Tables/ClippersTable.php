@@ -53,6 +53,11 @@ class ClippersTable
                     ->alignEnd()
                     ->sortable(),
 
+                TextColumn::make('views')
+                    ->label('Vues')
+                    ->alignEnd()
+                    ->state(fn (User $record) => number_format($record->viewsTotal(), 0, ',', ' ')),
+
                 TextColumn::make('earned')
                     ->label('Gagné')
                     ->alignEnd()

@@ -119,13 +119,21 @@ class FakeSocialProvider implements SocialProvider
                     return [];
                 }
 
+                $views = $this->simulateViews($id, $clip);
+
                 return [$id => new PostMetrics(
                     externalPostId: $id,
-                    views: $this->simulateViews($id, $clip),
+                    views: $views,
                     caption: $clip->caption ?? $this->simulateCaption($clip),
                     durationSeconds: $clip->duration_seconds ?? (18 + crc32($id) % 25),
                     postedAt: $clip->posted_at ?? $clip->submitted_at,
                     ownerExternalId: $account->external_account_id,
+                    // Taux d'engagement plausibles plutôt que des ratios fixes :
+                    // un peu de variation par publication (via crc32 de son id),
+                    // mais toujours dans une fourchette réaliste.
+                    likes: $this->simulateEngagement($id, $views, .06, .02),
+                    comments: $this->simulateEngagement($id, $views, .008, .004),
+                    shares: $this->simulateEngagement($id, $views, .015, .01),
                 )];
             });
     }
@@ -163,6 +171,20 @@ class FakeSocialProvider implements SocialProvider
         $progress = 1 - exp(-$hours / 72);
 
         return (int) floor($ceiling * $progress);
+    }
+
+    /**
+     * Un compteur d'engagement plausible pour un nombre de vues donné :
+     * taux de base plus une variation déterministe (±) propre à la
+     * publication, pour que deux clips à vues égales n'affichent pas
+     * exactement le même nombre de likes.
+     */
+    protected function simulateEngagement(string $externalId, int $views, float $baseRate, float $jitter): int
+    {
+        $seed = crc32($externalId.'|engagement');
+        $rate = $baseRate + ($jitter * (($seed % 1000) / 1000 * 2 - 1));
+
+        return (int) floor($views * max(0, $rate));
     }
 
     protected function simulateCaption(Clip $clip): string

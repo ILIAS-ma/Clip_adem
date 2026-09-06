@@ -20,5 +20,14 @@ final readonly class PostMetrics
         public ?int $durationSeconds = null,
         public ?CarbonInterface $postedAt = null,
         public ?string $ownerExternalId = null,
+
+        // Non exposés par tous les fournisseurs (Instagram Graph ne les
+        // donne pas pour les Reels, YouTube n'a pas d'équivalent aux
+        // partages) : 0 par défaut plutôt que nullable, pour ne pas obliger
+        // chaque lecteur à gérer un troisième état en plus de « zéro » et
+        // « non mesuré ».
+        public int $likes = 0,
+        public int $comments = 0,
+        public int $shares = 0,
     ) {}
 }

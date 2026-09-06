@@ -216,6 +216,19 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         return (int) $this->clips()->sum('earned_cents') + $this->referralEarnedCents();
     }
 
+    /**
+     * Vues cumulées, tous statuts de clip confondus.
+     *
+     * Volontairement plus large que earnedCents() : un clip en attente de
+     * modération compte déjà des vues, même avant d'avoir généré le moindre
+     * centime. Pour le classement admin, c'est l'activité qui compte, pas
+     * seulement ce qui a déjà été crédité.
+     */
+    public function viewsTotal(): int
+    {
+        return (int) $this->clips()->sum('views_total');
+    }
+
     /** Ce que le parrainage a rapporté, reprises déduites. */
     public function referralEarnedCents(): int
     {

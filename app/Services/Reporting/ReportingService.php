@@ -124,6 +124,37 @@ class ReportingService
     }
 
     /**
+     * Classement des clippeurs sur les vues gagnées cette semaine, pas leurs
+     * gains cumulés depuis toujours : topClippers() répond « qui rapporte le
+     * plus au total », celui-ci répond « qui est actif en ce moment ».
+     *
+     * Lu dans le grand livre (`budget_transactions.views_delta`), comme
+     * `ClipperProgressionService::recentViews()` pour un clippeur seul : les
+     * invalidations y figurent en négatif, donc un clippeur sanctionné cette
+     * semaine ne remonte pas artificiellement dans le classement.
+     *
+     * @return Collection<int, object{id: int, name: string, is_banned: bool, views: int}>
+     */
+    public function topClippersThisWeek(int $limit = 10, int $days = 7): Collection
+    {
+        return DB::table('budget_transactions')
+            ->join('users', 'users.id', '=', 'budget_transactions.user_id')
+            ->where('budget_transactions.created_at', '>=', now()->subDays($days))
+            ->groupBy('users.id', 'users.name', 'users.is_banned')
+            ->select('users.id', 'users.name', 'users.is_banned')
+            ->selectRaw('SUM(budget_transactions.views_delta) as views')
+            ->havingRaw('SUM(budget_transactions.views_delta) > 0')
+            ->orderByDesc('views')
+            ->limit($limit)
+            ->get()
+            ->map(function ($row) {
+                $row->views = (int) $row->views;
+
+                return $row;
+            });
+    }
+
+    /**
      * Consommation quotidienne du budget, depuis le grand livre.
      *
      * @return Collection<string, int> Date (Y-m-d) => centimes

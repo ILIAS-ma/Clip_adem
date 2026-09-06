@@ -162,16 +162,35 @@ class ClipSyncService
      */
     public function syncClip(Clip $clip): bool
     {
+        return $this->syncClipWithMetrics($clip) !== null;
+    }
+
+    /**
+     * Identique à syncClip(), mais renvoie le relevé brut plutôt qu'un simple
+     * booléen.
+     *
+     * Sert à l'affichage détaillé (likes, commentaires, partages) : ces
+     * chiffres ne sont pas persistés sur le clip — seuls views_total et les
+     * champs de conformité le sont — donc syncClip() seul ne permet pas de
+     * les lire après coup.
+     *
+     * @return PostMetrics|null Null pour les mêmes raisons que syncClip()
+     *                          renvoie faux : délai de garde actif, compte non
+     *                          synchronisable, échec du fournisseur, ou
+     *                          publication introuvable côté plateforme.
+     */
+    public function syncClipWithMetrics(Clip $clip): ?PostMetrics
+    {
         $cooldown = (int) config('clipping.sync.manual_cooldown_minutes');
 
         if ($clip->last_synced_at && $clip->last_synced_at->gt(now()->subMinutes($cooldown))) {
-            return false;
+            return null;
         }
 
         $account = $clip->socialAccount;
 
         if (! $account || ! $account->isSyncable()) {
-            return false;
+            return null;
         }
 
         $provider = $this->providers->for($clip->platform);
@@ -184,13 +203,15 @@ class ClipSyncService
                 'error' => $exception->getMessage(),
             ]);
 
-            return false;
+            return null;
         }
 
         // Le même chemin que le relevé automatique : conformité, instantané,
         // crédit du budget. Deux chemins d'écriture pour la même chose
         // finiraient par diverger, et c'est de l'argent qui passe ici.
-        return $this->applyMetrics(collect([$clip]), $metrics) > 0;
+        return $this->applyMetrics(collect([$clip]), $metrics) > 0
+            ? $metrics->get($clip->external_post_id)
+            : null;
     }
 
     protected function noteMissingPost(Clip $clip): void

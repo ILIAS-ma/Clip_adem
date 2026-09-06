@@ -117,6 +117,7 @@ class TikTokProvider implements SocialProvider
             ->asJson()
             ->post('https://open.tiktokapis.com/v2/video/query/?fields='.implode(',', [
                 'id', 'view_count', 'video_description', 'duration', 'create_time',
+                'like_count', 'comment_count', 'share_count',
             ]), [
                 'filters' => ['video_ids' => array_values($externalIds)],
             ]);
@@ -134,6 +135,9 @@ class TikTokProvider implements SocialProvider
                     durationSeconds: isset($video['duration']) ? (int) $video['duration'] : null,
                     postedAt: isset($video['create_time']) ? Carbon::createFromTimestamp($video['create_time']) : null,
                     ownerExternalId: $account->external_account_id,
+                    likes: (int) ($video['like_count'] ?? 0),
+                    comments: (int) ($video['comment_count'] ?? 0),
+                    shares: (int) ($video['share_count'] ?? 0),
                 ),
             ]);
     }
