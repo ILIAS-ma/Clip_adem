@@ -8,6 +8,7 @@ use App\Enums\ClipStatus;
 use App\Enums\PayoutStatus;
 use App\Enums\Platform;
 use App\Enums\UserRole;
+use App\Models\BudgetTransaction;
 use App\Models\Campaign;
 use App\Models\Clip;
 use App\Models\Creator;
@@ -176,6 +177,46 @@ class ReportingServiceTest extends TestCase
 
         $this->assertSame(4, (int) $row->clips_count);
         $this->assertSame(25.0, $row->invalidation_rate);
+    }
+
+    #[Test]
+    public function the_weekly_ranking_reads_the_ledger_and_ignores_older_weeks(): void
+    {
+        // Ce classement répond à « qui est actif cette semaine », pas « qui
+        // rapporte le plus au total » : un clippeur qui ne publie plus doit en
+        // sortir tout seul.
+        $campaign = $this->campaign();
+
+        $actif = User::factory()->create(['role' => UserRole::Clipper, 'name' => 'Actif']);
+        $ancien = User::factory()->create(['role' => UserRole::Clipper, 'name' => 'Ancien']);
+
+        $this->credit($campaign, 30_000, $actif);
+        $vieux = $this->credit($campaign, 50_000, $ancien);
+
+        // Le crédit de l'ancien date de trois semaines.
+        BudgetTransaction::where('clip_id', $vieux->getKey())
+            ->update(['created_at' => now()->subWeeks(3)]);
+
+        $rows = $this->reporting->topClippersThisWeek();
+
+        $this->assertCount(1, $rows, 'Seule la semaine en cours compte.');
+        $this->assertSame('Actif', $rows->first()->name);
+        $this->assertSame(30_000, $rows->first()->views);
+    }
+
+    #[Test]
+    public function the_weekly_ranking_drops_a_clipper_whose_views_were_invalidated(): void
+    {
+        // Les lignes négatives de l'invalidation annulent les positives : sans
+        // ça, quelqu'un dont toutes les vues sont refusées trônerait en tête du
+        // classement de la semaine.
+        $campaign = $this->campaign();
+        $clipper = User::factory()->create(['role' => UserRole::Clipper, 'name' => 'Refusé']);
+
+        $clip = $this->credit($campaign, 40_000, $clipper);
+        app(ClipModerationService::class)->invalidate($clip, 'Vues achetées');
+
+        $this->assertCount(0, $this->reporting->topClippersThisWeek());
     }
 
     #[Test]
