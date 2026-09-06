@@ -146,6 +146,53 @@ class ClipSyncService
      * relevé horaire produirait sinon vingt-quatre lignes par jour pour la même
      * publication, et la file de modération deviendrait illisible.
      */
+    /**
+     * Relève un clip précis, à la demande.
+     *
+     * TikTok ne pousse rien : il n'existe aucun webhook sur le compteur de
+     * vues, tout se fait en interrogeant. Entre deux passages automatiques, un
+     * clippeur qui veut voir où il en est n'a donc que ce chemin — et le lui
+     * refuser le pousserait à recharger la page toutes les trente secondes en
+     * pensant que la plateforme est cassée.
+     *
+     * Le délai de garde est ce qui empêche ce bouton de devenir une attaque
+     * sur notre propre quota d'API.
+     *
+     * @return bool Faux si le clip vient d'être relevé, ou n'est pas relevable.
+     */
+    public function syncClip(Clip $clip): bool
+    {
+        $cooldown = (int) config('clipping.sync.manual_cooldown_minutes');
+
+        if ($clip->last_synced_at && $clip->last_synced_at->gt(now()->subMinutes($cooldown))) {
+            return false;
+        }
+
+        $account = $clip->socialAccount;
+
+        if (! $account || ! $account->isSyncable()) {
+            return false;
+        }
+
+        $provider = $this->providers->for($clip->platform);
+
+        try {
+            $metrics = $provider->fetchPosts($account, [$clip->external_post_id]);
+        } catch (\Throwable $exception) {
+            Log::warning('Relevé manuel impossible', [
+                'clip_id' => $clip->getKey(),
+                'error' => $exception->getMessage(),
+            ]);
+
+            return false;
+        }
+
+        // Le même chemin que le relevé automatique : conformité, instantané,
+        // crédit du budget. Deux chemins d'écriture pour la même chose
+        // finiraient par diverger, et c'est de l'argent qui passe ici.
+        return $this->applyMetrics(collect([$clip]), $metrics) > 0;
+    }
+
     protected function noteMissingPost(Clip $clip): void
     {
         $wasFlagged = $clip->hasDisappeared();

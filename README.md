@@ -329,6 +329,31 @@ des 401 et consommerait le quota des comptes valides. Le clippeur voit un
 bandeau d'alerte tant qu'il n'a pas reconnecté — c'est la panne la plus
 silencieuse du système.
 
+### Pourquoi les vues ne sont pas « en direct »
+
+La question revient toujours, et la réponse est structurelle : **aucune des
+trois plateformes ne pousse son compteur de vues.** Il n'existe pas de webhook
+« cette vidéo vient de gagner mille vues » — il faut interroger. Tout ce qui
+suit en découle.
+
+Pire : le compteur que TikTok renvoie sur un compte autorisé n'est lui-même pas
+temps réel. Interroger toutes les minutes rendrait donc le même nombre, en
+brûlant le quota. Un relevé horaire pour un clip récent est, en pratique,
+aussi frais que ce que la plateforme sait.
+
+D'où la cadence dégressive : toutes les 3 h la première semaine, une fois par
+jour ensuite, plus rien après 30 jours. Un clip d'un mois ne bouge plus ;
+continuer à l'interroger consommerait le quota des clips qui, eux, rapportent.
+
+**Le bouton « Actualiser les vues »** de la page d'un clip comble l'écart
+ressenti : entre deux passages automatiques, c'est le seul recours d'un clippeur
+qui veut voir son solde bouger. Un délai de garde de 15 minutes l'empêche de
+devenir une attaque sur notre propre quota — sans lui, un clic répété brûlerait
+les appels dont les autres ont besoin. Le relevé manuel passe exactement par le
+même chemin que le relevé automatique : conformité, instantané, crédit du
+budget. Deux chemins d'écriture pour la même chose finiraient par diverger, et
+c'est de l'argent qui passe là.
+
 ### Conformité au brief
 
 `ClipComplianceChecker` confronte la publication aux exigences de la campagne au

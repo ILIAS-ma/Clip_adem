@@ -132,6 +132,12 @@ return [
         // Un clip qui ne rapporte plus rien (budget épuisé, plafond atteint)
         // n'a pas besoin d'être relevé plus d'une fois par jour.
         'unpayable_interval_hours' => 24,
+
+        // Délai de garde du bouton « actualiser » de l'espace clippeur.
+        // Aucune plateforme ne pousse les vues : entre deux passages
+        // automatiques, ce bouton est le seul recours. Sans délai, il
+        // deviendrait une attaque sur notre propre quota d'API.
+        'manual_cooldown_minutes' => 15,
     ],
 
     /*

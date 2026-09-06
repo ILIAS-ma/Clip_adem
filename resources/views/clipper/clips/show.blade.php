@@ -11,7 +11,14 @@
                 <p class="mt-1 text-sm text-ink-400">{{ $clip->platform->label() }} · {{ $clip->external_post_id }}</p>
             </div>
 
-            <div class="flex gap-3">
+            <div class="flex flex-wrap gap-3">
+                {{-- Aucune plateforme ne pousse le compteur de vues : entre deux
+                     passages automatiques, ce bouton est le seul recours. --}}
+                <form method="POST" action="{{ route('clips.refresh', $clip) }}">
+                    @csrf
+                    <button type="submit" class="btn-primary">Actualiser les vues</button>
+                </form>
+
                 <a href="{{ $clip->url }}" target="_blank" rel="noopener" class="btn-ghost">Voir la publication</a>
                 <a href="{{ route('clips.index') }}" class="btn-ghost">← Mes clips</a>
             </div>
@@ -19,6 +26,10 @@
     </x-slot>
 
     <div class="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+
+        @if (session('status'))
+            <div class="alert-ok">{{ session('status') }}</div>
+        @endif
 
         <div class="grid gap-4 sm:grid-cols-3">
             <x-stat label="Vues" :value="Money::views($clip->views_total)"

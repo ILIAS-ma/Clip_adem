@@ -89,6 +89,12 @@ Route::middleware(['auth', 'not.banned', 'role:clipper'])->group(function () use
         Route::get('/mes-clips', [ClipController::class, 'index'])->name('clips.index');
         Route::get('/mes-clips/{clip}', [ClipController::class, 'show'])->name('clips.show');
 
+        // Débité en plus du délai de garde : celui-ci protège le quota d'API,
+        // celui-là protège le serveur d'un clic répété.
+        Route::post('/mes-clips/{clip}/actualiser', [ClipController::class, 'refresh'])
+            ->middleware('throttle:20,1')
+            ->name('clips.refresh');
+
         Route::get('/mes-comptes', [SocialAccountController::class, 'index'])->name('accounts.index');
         Route::get('/mes-comptes/{platform}/connexion', [SocialAccountController::class, 'redirect'])
             ->name('social.redirect');
