@@ -737,6 +737,31 @@ Le reste de la suite couvre la machine à états, la modération, les paiements
 test de fumée qui charge chaque page du back-office — les widgets sont des vues
 Blade, sans quoi une erreur de template ne se verrait qu'à l'œil nu.
 
+## Avant d'ouvrir au public
+
+```bash
+php artisan clip:preflight
+```
+
+Le développement se fait volontairement garde-fous baissés : e-mails capturés
+en local, contrôles suspendus, fournisseurs simulés, comptes de démonstration à
+mot de passe public. Aucun de ces réglages ne doit survivre à la mise en ligne,
+et un `.env` recopié tel quel est la façon la plus banale de mettre un site
+ouvert en danger.
+
+La commande contrôle en une page l'environnement, les cinq passages obligés,
+l'envoi réel des e-mails, les clés des trois plateformes, PayPal et la
+signature de ses webhooks, le lien de stockage, la file d'attente, la
+solvabilité des campagnes actives et les comptes `@clip.test` oubliés. Elle
+rend un code de sortie non nul s'il reste un point bloquant : un script de
+déploiement peut s'arrêter dessus.
+
+Un point mérite d'être connu d'avance : **sans clés TikTok, YouTube et
+Instagram, l'application lève une exception en production** — c'est délibéré,
+`SocialProviderManager` refuse de basculer silencieusement sur le fournisseur
+simulé hors développement. Ce serait pire : des vues inventées crédiseraient
+de l'argent réel.
+
 ## Périmètre restant
 
 Le produit tourne de bout en bout. Ce qui reste tient à des dépendances
