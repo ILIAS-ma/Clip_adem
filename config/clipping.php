@@ -135,7 +135,7 @@ return [
 
     'payouts' => [
         // Montant minimum d'une demande de retrait, en centimes.
-        'minimum_cents' => 1_000,
+        'minimum_cents' => 2_000,
 
         // En dessous de ce montant, un retrait peut être validé
         // automatiquement si le clippeur n'a aucun incident de modération.

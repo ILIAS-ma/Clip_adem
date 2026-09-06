@@ -25,6 +25,7 @@ export default {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
                 display: ['"Bricolage Grotesque"', 'Figtree', ...defaultTheme.fontFamily.sans],
+                serif: ['Fraunces', 'Georgia', ...defaultTheme.fontFamily.serif],
             },
 
             colors: {

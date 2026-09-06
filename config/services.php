@@ -64,6 +64,16 @@ return [
     ],
 
     /*
+    | Cloudflare Turnstile — captcha de l'inscription publique. Les clés de
+    | test ci-dessous (voir .env.example) valident toujours en local ; à
+    | remplacer par les vraies clés du compte Cloudflare en production.
+    */
+    'turnstile' => [
+        'site_key' => env('TURNSTILE_SITE_KEY'),
+        'secret_key' => env('TURNSTILE_SECRET_KEY'),
+    ],
+
+    /*
     | PayPal Payouts. Les identifiants restent en .env : les stocker en base
     | reviendrait à mettre la trésorerie derrière un accès SQL.
     */

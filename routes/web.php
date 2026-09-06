@@ -29,24 +29,22 @@ $onboardingGuards = static fn (): array => array_values(array_filter([
 ]));
 
 /*
- * La racine est l'écran de connexion.
+ * La racine est la landing page publique — brief du fonctionnement,
+ * avertissement sur le budget qui part au premier arrivé. L'écran de
+ * connexion vit sur /login (voir routes/auth.php).
  *
- * Le formulaire est rendu directement plutôt que redirigé vers /login : une
- * redirection ajouterait un aller-retour à chaque arrivée sur le site, y
- * compris après déconnexion.
- *
- * Un utilisateur déjà connecté repart vers son propre espace.
+ * Un utilisateur déjà connecté repart vers son propre espace : il n'a rien à
+ * faire sur une page de présentation destinée aux visiteurs.
  */
 Route::get('/', function () {
     return auth()->check()
         ? redirect(auth()->user()->role->homeRoute())
-        : view('auth.login');
+        : view('welcome');
 })->name('home');
 
-// La page de présentation garde son contenu — brief du fonctionnement,
-// avertissement sur le budget qui part au premier arrivé — accessible depuis
-// l'écran de connexion.
-Route::get('/presentation', fn () => view('welcome'))->name('presentation');
+// Ancienne URL de la landing page, conservée pour ne pas casser les liens
+// déjà partagés.
+Route::redirect('/presentation', '/');
 
 // Retours asynchrones de PayPal sur les versements. Hors session et hors CSRF :
 // l'authenticité est établie par la signature de la requête (voir le contrôleur).

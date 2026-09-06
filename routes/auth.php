@@ -15,17 +15,26 @@ Route::middleware('guest')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])
         ->name('register');
 
-    Route::post('register', [RegisteredUserController::class, 'store']);
+    // Débit par IP, en plus de la validation habituelle : un formulaire
+    // public sans limite est une invitation à la création de comptes en
+    // masse, peu importe la qualité de la validation derrière.
+    Route::post('register', [RegisteredUserController::class, 'store'])
+        ->middleware('throttle:5,1');
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 
-    Route::post('login', [AuthenticatedSessionController::class, 'store']);
+    // S'ajoute au verrou par couple email+IP déjà posé dans LoginRequest
+    // (5 essais avant blocage d'un compte précis) : celui-ci limite la même
+    // IP même si elle change d'e-mail à chaque tentative.
+    Route::post('login', [AuthenticatedSessionController::class, 'store'])
+        ->middleware('throttle:10,1');
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
 
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
+        ->middleware('throttle:5,1')
         ->name('password.email');
 
     Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])

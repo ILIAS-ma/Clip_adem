@@ -3,11 +3,21 @@
 <x-guest-layout>
     <div class="mb-8">
         <h2 class="font-display text-3xl font-bold text-ink-50">Créer un compte</h2>
-        <p class="mt-2 text-ink-300">Gratuit. Vous choisissez ce que vous faites sur la plateforme.</p>
+        <p class="mt-2 text-ink-200">Gratuit. Vous choisissez ce que vous faites sur la plateforme.</p>
     </div>
 
     <form method="POST" action="{{ route('register') }}" class="space-y-5" x-data="{ role: '{{ old('role', $role->value) }}' }">
         @csrf
+
+        {{-- Piège à robots : un champ qu'un humain ne voit ni ne remplit
+             jamais, mais qu'un bot de remplissage automatique complète
+             presque toujours. Visuellement invisible plutôt que
+             `display:none`, que certains bots savent déjà ignorer, et hors
+             du parcours au clavier pour ne gêner personne. --}}
+        <div class="absolute left-[-9999px]" aria-hidden="true">
+            <label for="website">Laissez ce champ vide</label>
+            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+        </div>
 
         <fieldset>
             <legend class="label mb-2">Je suis…</legend>
@@ -24,7 +34,7 @@
                                      peer-checked:border-ink-700 peer-checked:bg-ink-800
                                      peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500 peer-focus-visible:ring-offset-2">
                             <span class="block font-display text-base font-bold text-ink-50">{{ $title }}</span>
-                            <span class="mt-1 block text-xs leading-relaxed text-ink-300">{{ $description }}</span>
+                            <span class="mt-1 block text-xs leading-relaxed text-ink-200">{{ $description }}</span>
                         </span>
                     </label>
                 @endforeach
@@ -34,9 +44,20 @@
         </fieldset>
 
         <div>
-            <x-input-label for="name" value="Nom et prénom" />
-            <x-text-input id="name" class="mt-1.5" type="text" name="name"
-                          :value="old('name')" required autofocus autocomplete="name" />
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <x-input-label for="first_name" value="Prénom" />
+                    <x-text-input id="first_name" class="mt-1.5" type="text" name="first_name"
+                                  :value="old('first_name')" required autofocus autocomplete="given-name" />
+                    <x-input-error :messages="$errors->get('first_name')" class="mt-2" />
+                </div>
+                <div>
+                    <x-input-label for="last_name" value="Nom" />
+                    <x-text-input id="last_name" class="mt-1.5" type="text" name="last_name"
+                                  :value="old('last_name')" required autocomplete="family-name" />
+                    <x-input-error :messages="$errors->get('last_name')" class="mt-2" />
+                </div>
+            </div>
             {{-- Le nom réel sert aux versements ; le pseudo ou le nom de scène
                  est demandé à l'étape suivante, pour ne pas avoir à s'exposer
                  publiquement afin d'être payé. --}}
@@ -46,7 +67,6 @@
             <p class="hint" x-show="role === 'creator'" x-cloak>
                 Votre nom réel. Votre nom de scène sera choisi à l'étape suivante.
             </p>
-            <x-input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
 
         <div>
@@ -71,10 +91,22 @@
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 
+        {{-- Défi anti-robot Cloudflare Turnstile : invisible pour la grande
+             majorité des visiteurs, il ne demande une action que si le
+             trafic paraît suspect. --}}
+        <div>
+            <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}" data-theme="dark"></div>
+            <x-input-error :messages="$errors->get('cf-turnstile-response')" class="mt-2" />
+        </div>
+
         <x-primary-button class="w-full">Créer mon compte</x-primary-button>
     </form>
 
-    <p class="mt-8 text-center text-sm text-ink-300">
+    @once
+        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    @endonce
+
+    <p class="mt-8 text-center text-sm text-ink-200">
         Déjà inscrit ?
         <a href="{{ route('login') }}" class="font-semibold text-ink-50 underline underline-offset-2">
             Se connecter

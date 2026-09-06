@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Rules\ValidTurnstile;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,13 +34,26 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        // Piège à robots : un visiteur humain ne voit jamais ce champ, donc
+        // ne le remplit jamais. On répond comme si l'inscription avait
+        // réussi plutôt que de renvoyer une erreur qui aiderait le bot à
+        // ajuster son script.
+        if (filled($request->input('website'))) {
+            return redirect()->route('register');
+        }
+
         // Rôle absent : on retombe sur le profil le moins privilégié plutôt que
         // de rejeter la requête. La liste blanche ci-dessous reste la vraie
         // protection.
         $request->merge(['role' => $request->input('role', UserRole::Clipper->value)]);
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            // Deux champs à la saisie — plus naturel pour un formulaire — mais
+            // une seule colonne en base : le nom complet reste ce qui sert
+            // partout ailleurs (versements, affichage), pas de raison de le
+            // fragmenter côté modèle pour un simple choix de mise en page.
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
 
@@ -47,10 +61,12 @@ class RegisteredUserController extends Controller
             // créateur : les rôles du back-office ne se donnent pas par
             // formulaire, même en trafiquant la requête.
             'role' => ['required', Rule::in([UserRole::Clipper->value, UserRole::Creator->value])],
+
+            'cf-turnstile-response' => ['required', new ValidTurnstile($request->ip())],
         ]);
 
         $user = User::create([
-            'name' => $validated['name'],
+            'name' => trim($validated['first_name'].' '.$validated['last_name']),
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role' => UserRole::from($validated['role']),

@@ -2,6 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Révélation au scroll : opaque et en place par défaut (dégradation
+   propre si JS désactivé), et seulement animé une fois le script chargé. */
+[data-reveal] {
+    opacity: 1;
+    transform: none;
+}
+
+/* Le sélecteur ne s'active qu'avec la classe .js, posée en inline dans
+   <head> avant tout rendu : sans JS (ou s'il échoue), le contenu reste
+   visible d'emblée plutôt que bloqué à opacité 0. */
+@media (prefers-reduced-motion: no-preference) {
+    .js [data-reveal] {
+        opacity: 0;
+        transform: translateY(24px);
+        transition: opacity .7s ease-out, transform .7s ease-out;
+        transition-delay: var(--reveal-delay, 0ms);
+    }
+
+    .js [data-reveal].is-visible {
+        opacity: 1;
+        transform: none;
+    }
+}
+
 @layer base {
     /* Sans ça, un bloc Alpine masqué apparaît une fraction de seconde au
        chargement, le temps qu'Alpine prenne la main. */
@@ -38,7 +62,67 @@
     }
 }
 
+@keyframes fade-slide-in {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes word-reveal {
+    from {
+        opacity: 0;
+        transform: translateY(45%);
+        filter: blur(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
+}
+
+@keyframes gradient-shimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
 @layer components {
+    /* Entrée échelonnée du hero : chaque bloc apparaît un cran après le
+       précédent plutôt que tous en même temps. */
+    .animate-fade-slide-in-1 { animation: fade-slide-in .6s ease-out both; }
+    .animate-fade-slide-in-2 { animation: fade-slide-in .6s ease-out .1s both; }
+    .animate-fade-slide-in-3 { animation: fade-slide-in .6s ease-out .2s both; }
+    .animate-fade-slide-in-4 { animation: fade-slide-in .6s ease-out .3s both; }
+
+    /* Titre du hero : chaque mot arrive séparément (--word-delay posé en
+       inline par mot) plutôt que le bloc entier d'un coup — un effet qui ne
+       coûte rien en lisibilité puisque le texte est déjà là au premier
+       rendu, juste animé par-dessus. */
+    .hero-word {
+        display: inline-block;
+        opacity: 0;
+        animation: word-reveal .7s cubic-bezier(.16, 1, .3, 1) both;
+        animation-delay: var(--word-delay, 0ms);
+    }
+
+    /* Dégradé qui scintille en continu plutôt qu'un aplat de couleur figé :
+       le seul mouvement du hero qui ne s'arrête jamais, discret sur un
+       cycle de 4s. Arrive après les mots de la première ligne (délai .5s),
+       puis boucle indéfiniment — deux animations combinées en une seule
+       déclaration, pas deux classes qui s'écraseraient l'une l'autre. */
+    .hero-gradient-text {
+        background-size: 200% auto;
+        opacity: 0;
+        animation:
+            fade-slide-in .6s ease-out .5s both,
+            gradient-shimmer 4s ease-in-out .5s infinite;
+    }
+
     .card {
         @apply rounded-2xl border border-ink-700 bg-ink-900 shadow-card;
     }
