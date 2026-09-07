@@ -20,7 +20,9 @@
     $home = auth()->user()->isCreator() ? route('creator.dashboard') : route('dashboard');
 @endphp
 
-<nav x-data="{ open: false }" class="sticky top-0 z-30 border-b border-ink-700 bg-ink-900/85 backdrop-blur">
+<nav x-data="{ open: false }"
+     x-effect="document.body.classList.toggle('overflow-hidden', open)"
+     class="sticky top-0 z-30 border-b border-ink-700 bg-ink-900/85 backdrop-blur">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 justify-between">
             <div class="flex">
@@ -92,8 +94,39 @@
         </div>
     </div>
 
-    <div x-show="open" x-cloak class="border-t border-ink-700 sm:hidden">
-        <div class="py-2">
+    {{-- Plein écran plutôt qu'un simple menu déroulant sous l'en-tête : sur
+         mobile, une courte liste flottant au milieu d'une page à moitié
+         visible se manque facilement du regard.
+
+         Téléporté dans <body> plutôt que laissé enfant de <nav> : ce dernier
+         a `backdrop-blur` (backdrop-filter), qui — comme `filter` ou
+         `transform` — transforme tout descendant `position:fixed` en élément
+         positionné relativement à LUI plutôt qu'au viewport. Le tiroir se
+         retrouvait ainsi contenu dans les 64px de hauteur du <nav>, au lieu
+         de couvrir l'écran entier. --}}
+    <template x-teleport="body">
+    <div x-show="open" x-cloak
+         x-transition:enter="transition-opacity ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition-opacity ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-40 flex flex-col overflow-y-auto bg-ink-900 sm:hidden">
+        <div class="flex h-16 flex-none items-center justify-between border-b border-ink-700 px-4">
+            <a href="{{ $home }}" class="flex items-center" @click="open = false">
+                <x-brand-mark />
+            </a>
+            <button @click="open = false"
+                    class="rounded-lg p-2 text-ink-400 transition hover:bg-ink-800 hover:text-ink-100"
+                    aria-label="Fermer le menu">
+                <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="flex-1 py-2" @click="open = false">
             @foreach ($links as $link)
                 <x-responsive-nav-link :href="route($link['route'])" :active="request()->routeIs($link['pattern'])">
                     {{ $link['label'] }}
@@ -101,7 +134,7 @@
             @endforeach
         </div>
 
-        <div class="border-t border-ink-700 py-4">
+        <div class="flex-none border-t border-ink-700 py-4">
             <div class="flex items-center justify-between px-4">
                 <div>
                     <div class="font-semibold text-ink-100">{{ auth()->user()->displayName() }}</div>
@@ -115,7 +148,7 @@
                 @endif
             </div>
 
-            <div class="mt-3">
+            <div class="mt-3" @click="open = false">
                 <x-responsive-nav-link :href="route('profile.edit')">Mon compte</x-responsive-nav-link>
 
                 @if (auth()->user()->isClipper())
@@ -132,4 +165,5 @@
             </div>
         </div>
     </div>
+    </template>
 </nav>
