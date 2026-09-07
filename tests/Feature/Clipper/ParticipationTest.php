@@ -86,6 +86,35 @@ class ParticipationTest extends TestCase
     }
 
     #[Test]
+    public function a_clip_attaches_to_a_usable_account_not_the_oldest_one(): void
+    {
+        /*
+         * Un clippeur relie de nouveaux comptes avec le temps et peut donc
+         * avoir plusieurs participations sur une même campagne. Prendre la
+         * première venue rattachait le clip à un compte devenu inutilisable,
+         * et le relevé échouait ensuite pour une raison qui n'avait rien à
+         * voir avec la vidéo — un « 0 vue » incompréhensible.
+         */
+        $campaign = $this->campaign();
+        $clipper = $this->clipper();
+
+        $ancien = $this->account($clipper);
+        $this->participations->join($campaign, $clipper, $ancien);
+        $ancien->forceFill(['needs_reconnect' => true])->save();
+
+        $recent = $this->account($clipper);
+        $this->participations->join($campaign, $clipper, $recent);
+
+        $clip = $this->submissions->submit(
+            $campaign,
+            $clipper,
+            'https://www.tiktok.com/@lina.clips/video/7123456789012345678',
+        );
+
+        $this->assertSame($recent->getKey(), $clip->social_account_id);
+    }
+
+    #[Test]
     public function joining_an_open_campaign_approves_immediately_when_no_review_is_required(): void
     {
         $clipper = $this->clipper();

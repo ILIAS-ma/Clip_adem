@@ -37,12 +37,28 @@ class ClipSubmissionService
             throw ClipSubmissionRefused::campaignClosed();
         }
 
+        /*
+         * Un clippeur peut avoir plusieurs participations sur une même
+         * campagne — une par compte lié, et il en relie de nouveaux avec le
+         * temps. Prendre la première venue rattache le clip à un compte qui
+         * n'est peut-être plus utilisable, et le relevé des vues échoue alors
+         * pour une raison qui n'a rien à voir avec la vidéo.
+         *
+         * On préfère donc un compte réellement interrogeable, et le plus
+         * récemment lié à égalité : c'est celui depuis lequel on vient
+         * vraisemblablement de publier.
+         */
         $participation = $campaign->participations()
             ->where('user_id', $clipper->getKey())
             ->whereIn('status', [ParticipationStatus::Pending, ParticipationStatus::Approved])
             ->with('socialAccount')
             ->get()
-            ->first(fn ($p) => $p->socialAccount?->platform === $parsed->platform);
+            ->filter(fn ($p) => $p->socialAccount?->platform === $parsed->platform)
+            ->sortByDesc(fn ($p) => [
+                $p->socialAccount->isSyncable() ? 1 : 0,
+                $p->socialAccount->getKey(),
+            ])
+            ->first();
 
         if (! $participation) {
             // Soit il n'a pas rejoint, soit il a rejoint avec un compte d'une
