@@ -73,6 +73,19 @@ class ClipSubmissionService
                 : ClipSubmissionRefused::noParticipation();
         }
 
+        // Contrôle immédiat, sans appel réseau : si l'URL porte un pseudo et
+        // qu'il ne correspond pas à celui du compte lié, la vidéo n'est
+        // probablement pas la sienne. Un second contrôle, plus fiable mais
+        // différé au premier relevé de vues, compare l'identifiant API du
+        // propriétaire (ClipComplianceChecker::checkOwnership) — celui-ci
+        // n'est qu'un premier filtre, pas remplacé par lui.
+        $accountHandle = $participation->socialAccount->handle;
+
+        if ($parsed->handle && $accountHandle
+            && strcasecmp(ltrim($parsed->handle, '@'), ltrim($accountHandle, '@')) !== 0) {
+            throw ClipSubmissionRefused::handleMismatch($parsed->handle, $accountHandle);
+        }
+
         if ($participation->status !== ParticipationStatus::Approved) {
             throw ClipSubmissionRefused::participationNotApproved();
         }

@@ -65,6 +65,24 @@ class ClipSubmissionRefused extends RuntimeException
         return new self('Votre participation à cette campagne attend encore la validation d\'un administrateur.');
     }
 
+    /**
+     * Le pseudo présent dans l'URL n'est pas celui du compte lié.
+     *
+     * Le contrôle après coup (checkOwnership dans ClipComplianceChecker)
+     * attend le premier relevé de vues — un appel API, donc un délai. Celui-ci
+     * coûte une comparaison de chaînes et bloque avant même de créer le clip :
+     * une vidéo volée n'a pas besoin d'attendre une heure pour être refusée
+     * quand son URL le trahit déjà.
+     */
+    public static function handleMismatch(string $urlHandle, string $accountHandle): self
+    {
+        return new self(sprintf(
+            "Cette publication semble venir du compte @%s, pas de @%s. Vérifiez que c'est bien votre vidéo.",
+            $urlHandle,
+            $accountHandle,
+        ));
+    }
+
     public static function platformMismatch(Platform $clip, Platform $account): self
     {
         return new self(sprintf(

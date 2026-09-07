@@ -60,6 +60,10 @@ class ParticipationTest extends TestCase
         return SocialAccount::factory()->create([
             'user_id' => $user->getKey(),
             'platform' => $platform,
+            // Doit correspondre au pseudo des URLs TikTok utilisées dans ce
+            // fichier : soumettre.php compare désormais celui de l'URL à
+            // celui du compte lié avant même de créer le clip.
+            'handle' => 'lina.clips',
         ]);
     }
 
@@ -257,6 +261,48 @@ class ParticipationTest extends TestCase
     }
 
     #[Test]
+    public function a_url_bearing_someone_elses_handle_is_refused(): void
+    {
+        /*
+         * Le cas concret que ce contrôle attrape : coller le lien d'une
+         * vidéo virale de quelqu'un d'autre. Le pseudo dans l'URL
+         * (@quelquundautre) ne correspond pas à celui du compte lié
+         * (@lina.clips) — refusé avant même que le clip n'existe, sans
+         * attendre le premier relevé de vues.
+         */
+        $campaign = $this->campaign();
+        $clipper = $this->clipper();
+        $this->participations->join($campaign, $clipper, $this->account($clipper));
+
+        $this->expectException(ClipSubmissionRefused::class);
+        $this->expectExceptionMessage('@quelquundautre');
+
+        $this->submissions->submit(
+            $campaign,
+            $clipper,
+            'https://www.tiktok.com/@quelquundautre/video/7123456789012345678',
+        );
+    }
+
+    #[Test]
+    public function a_matching_handle_with_different_casing_is_accepted(): void
+    {
+        // TikTok ne distingue pas la casse des pseudos : @Lina.Clips et
+        // @lina.clips désignent le même compte.
+        $campaign = $this->campaign();
+        $clipper = $this->clipper();
+        $this->participations->join($campaign, $clipper, $this->account($clipper));
+
+        $clip = $this->submissions->submit(
+            $campaign,
+            $clipper,
+            'https://www.tiktok.com/@Lina.Clips/video/7123456789012345678',
+        );
+
+        $this->assertSame(ClipStatus::PendingReview, $clip->status);
+    }
+
+    #[Test]
     public function submitting_without_joining_is_refused(): void
     {
         $this->expectException(ClipSubmissionRefused::class);
@@ -279,7 +325,7 @@ class ParticipationTest extends TestCase
         $this->expectException(ClipSubmissionRefused::class);
         $this->expectExceptionMessage('validation');
 
-        $this->submissions->submit($campaign, $clipper, 'https://www.tiktok.com/@l/video/7123456789012345678');
+        $this->submissions->submit($campaign, $clipper, 'https://www.tiktok.com/@lina.clips/video/7123456789012345678');
     }
 
     #[Test]
@@ -329,7 +375,7 @@ class ParticipationTest extends TestCase
         $this->expectException(ClipSubmissionRefused::class);
         $this->expectExceptionMessage("n'accepte plus");
 
-        $this->submissions->submit($campaign->fresh(), $clipper, 'https://www.tiktok.com/@l/video/7123456789012345678');
+        $this->submissions->submit($campaign->fresh(), $clipper, 'https://www.tiktok.com/@lina.clips/video/7123456789012345678');
     }
 
     #[Test]
@@ -341,7 +387,7 @@ class ParticipationTest extends TestCase
         $clipper = $this->clipper();
         $this->participations->join($campaign, $clipper, $this->account($clipper));
 
-        $clip = $this->submissions->submit($campaign, $clipper, 'https://www.tiktok.com/@l/video/7123456789012345678');
+        $clip = $this->submissions->submit($campaign, $clipper, 'https://www.tiktok.com/@lina.clips/video/7123456789012345678');
 
         $result = app(CampaignBudgetService::class)->creditViews($clip, 50_000, "clip:{$clip->id}:snapshot:1");
 

@@ -17,5 +17,11 @@ final readonly class ClipUrl
         public Platform $platform,
         public string $externalPostId,
         public string $canonicalUrl,
+
+        // Le pseudo tel qu'écrit dans l'URL, quand la plateforme en porte un
+        // (TikTok). Sert à un premier contrôle de propriété, immédiat et sans
+        // appel réseau — avant celui, plus fiable mais différé, qui compare
+        // l'identifiant API du propriétaire au premier relevé de vues.
+        public ?string $handle = null,
     ) {}
 }

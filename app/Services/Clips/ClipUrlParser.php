@@ -59,6 +59,7 @@ class ClipUrlParser
             Platform::TikTok,
             $matches[2],
             "https://www.tiktok.com/@{$matches[1]}/video/{$matches[2]}",
+            handle: $matches[1],
         );
     }
 
