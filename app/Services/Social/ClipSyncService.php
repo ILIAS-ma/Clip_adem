@@ -16,6 +16,7 @@ use App\Models\SocialAccount;
 use App\Models\SocialSyncRun;
 use App\Services\Clips\ClipComplianceChecker;
 use App\Support\Social\PostMetrics;
+use App\Support\Social\SyncOutcome;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -167,7 +168,33 @@ class ClipSyncService
      */
     public function syncClip(Clip $clip): bool
     {
-        return $this->syncClipWithMetrics($clip) !== null;
+        return $this->refreshClip($clip)->succeeded();
+    }
+
+    /**
+     * Comme `syncClip()`, mais en disant POURQUOI quand ça ne donne rien.
+     *
+     * Un booléen ne distingue pas « revenez dans quinze minutes » de
+     * « reconnectez votre compte » : le clippeur attendait alors pour rien,
+     * devant un compteur à zéro qu'aucun délai n'allait faire bouger.
+     */
+    public function refreshClip(Clip $clip): SyncOutcome
+    {
+        $cooldown = (int) config('clipping.sync.manual_cooldown_minutes');
+
+        if ($clip->last_synced_at && $clip->last_synced_at->gt(now()->subMinutes($cooldown))) {
+            return SyncOutcome::Cooldown;
+        }
+
+        $account = $clip->socialAccount;
+
+        if (! $account || ! $account->isSyncable()) {
+            return SyncOutcome::AccountUnusable;
+        }
+
+        return $this->syncClipWithMetrics($clip) !== null
+            ? SyncOutcome::Updated
+            : SyncOutcome::Unreachable;
     }
 
     /**

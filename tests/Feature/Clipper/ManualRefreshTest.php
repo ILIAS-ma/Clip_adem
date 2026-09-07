@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Clipper;
 
+use App\Contracts\SocialProvider;
 use App\Enums\CampaignStatus;
 use App\Enums\ClipStatus;
 use App\Enums\Platform;
@@ -11,6 +12,7 @@ use App\Models\Clip;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Services\Social\ClipSyncService;
+use App\Services\Social\SocialProviderManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -169,6 +171,57 @@ class ManualRefreshTest extends TestCase
         $this->actingAs($this->clipper())
             ->get(route('clips.analyze', $clip))
             ->assertForbidden();
+    }
+
+    #[Test]
+    public function each_refusal_says_what_to_do_about_it(): void
+    {
+        /*
+         * Un booléen ne distinguait pas « revenez dans quinze minutes » de
+         * « reconnectez votre compte » : tout était annoncé comme un délai de
+         * garde. Le clippeur attendait alors devant un compteur à zéro
+         * qu'aucune attente n'allait faire bouger.
+         */
+        $clipper = $this->clipper();
+
+        $enAttente = $this->clipFor($clipper, ['last_synced_at' => now()->subMinute()]);
+        $this->actingAs($clipper)
+            ->post(route('clips.refresh', $enAttente))
+            ->assertSessionHas('status', fn (string $s) => str_contains($s, 'Déjà relevé'));
+
+        $aReconnecter = $this->clipFor($clipper);
+        $aReconnecter->socialAccount->forceFill(['needs_reconnect' => true])->save();
+
+        $this->actingAs($clipper)
+            ->post(route('clips.refresh', $aReconnecter))
+            ->assertSessionHas('status', fn (string $s) => str_contains($s, 'Mes comptes'));
+    }
+
+    #[Test]
+    public function a_publication_the_platform_will_not_return_says_so(): void
+    {
+        /*
+         * Le cas exact d'une vidéo appartenant à quelqu'un d'autre : TikTok ne
+         * renvoie que les publications du compte autorisé, donc il ne renvoie
+         * rien. Annoncer « déjà relevé » enverrait attendre une réponse qui ne
+         * viendra jamais.
+         */
+        $provider = \Mockery::mock(SocialProvider::class);
+        $provider->shouldReceive('fetchPosts')->andReturn(collect());
+        $provider->shouldReceive('platform')->andReturn(Platform::TikTok);
+
+        $manager = \Mockery::mock(SocialProviderManager::class);
+        $manager->shouldReceive('for')->andReturn($provider);
+        $this->app->instance(SocialProviderManager::class, $manager);
+
+        $clipper = $this->clipper();
+        $clip = $this->clipFor($clipper);
+
+        $this->actingAs($clipper)
+            ->post(route('clips.refresh', $clip))
+            ->assertSessionHas('status', fn (string $s) => str_contains($s, 'appartient à un autre compte'));
+
+        \Mockery::close();
     }
 
     #[Test]

@@ -45,11 +45,13 @@ class ClipController extends Controller
 
         $before = $clip->views_total;
 
-        if (! $sync->syncClip($clip)) {
-            return back()->with('status', sprintf(
-                'Déjà relevé il y a moins de %d minutes. Les plateformes ne mettent pas leurs '
-                .'compteurs à jour en continu : revenez un peu plus tard.',
-                config('clipping.sync.manual_cooldown_minutes'),
+        $outcome = $sync->refreshClip($clip);
+
+        // Chaque raison a son message : annoncer « déjà relevé » à quelqu'un
+        // dont le compte est à reconnecter le fait attendre pour rien.
+        if (! $outcome->succeeded()) {
+            return back()->with('status', $outcome->message(
+                (int) config('clipping.sync.manual_cooldown_minutes'),
             ));
         }
 
