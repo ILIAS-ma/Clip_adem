@@ -50,7 +50,7 @@ class DatabaseCampaignBudgetService implements CampaignBudgetService
     {
         $campaign = $campaign instanceof Campaign
             ? $campaign
-            : Campaign::findOrFail($campaign);
+            : Campaign::withTrashed()->findOrFail($campaign);
 
         return $campaign->remainingCents();
     }
@@ -76,7 +76,13 @@ class DatabaseCampaignBudgetService implements CampaignBudgetService
             // 2. Verrous, TOUJOURS campagne puis clip. Tous les crédits d'une
             //    même campagne se sérialisent ici ; deux campagnes différentes
             //    ne se bloquent pas entre elles.
-            $campaign = Campaign::whereKey($clip->campaign_id)->lockForUpdate()->firstOrFail();
+            //
+            //    `withTrashed()` est délibéré : une campagne retirée du
+            //    catalogue doit être chargée pour que `acceptsCredits()` puisse
+            //    refuser le crédit. Sans lui, la ligne devient introuvable et
+            //    l'appel se termine en exception — le clip n'est pas refusé, il
+            //    fait tomber la page qui l'affiche.
+            $campaign = Campaign::withTrashed()->whereKey($clip->campaign_id)->lockForUpdate()->firstOrFail();
             $clip = Clip::whereKey($clip->getKey())->lockForUpdate()->firstOrFail();
 
             // 3. Idempotence, second passage. Deux rejeux simultanés peuvent
@@ -179,7 +185,7 @@ class DatabaseCampaignBudgetService implements CampaignBudgetService
     public function reverseClip(Clip $clip, string $reason, ?User $by = null): ReversalResult
     {
         $result = DB::transaction(function () use ($clip, $reason, $by) {
-            $campaign = Campaign::whereKey($clip->campaign_id)->lockForUpdate()->firstOrFail();
+            $campaign = Campaign::withTrashed()->whereKey($clip->campaign_id)->lockForUpdate()->firstOrFail();
             $clip = Clip::whereKey($clip->getKey())->lockForUpdate()->firstOrFail();
 
             $refund = $clip->earned_cents;

@@ -114,6 +114,18 @@ class Campaign extends Model
      */
     public function acceptsCredits(): bool
     {
+        /*
+         * Une campagne retirée du catalogue ne paie plus.
+         *
+         * La suppression est douce — les clips gardent leur histoire — mais
+         * elle doit arrêter l'argent : sans ce test, un clip continuerait
+         * d'être crédité sur une campagne que plus personne ne voit ni ne
+         * surveille.
+         */
+        if ($this->trashed()) {
+            return false;
+        }
+
         if (! $this->status->acceptsCredits()) {
             return false;
         }
