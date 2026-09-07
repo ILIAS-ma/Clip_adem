@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureAccountIsNotBanned;
 use App\Http\Middleware\EnsureCreatorProfileExists;
 use App\Http\Middleware\EnsureProfileIsComplete;
 use App\Http\Middleware\EnsureRole;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -27,6 +28,11 @@ return Application::configure(basePath: dirname(__DIR__))
         if ($proxies = env('TRUSTED_PROXIES')) {
             $middleware->trustProxies(at: $proxies === '*' ? '*' : explode(',', $proxies));
         }
+
+        // Sur toute réponse, y compris les pages d'erreur : un en-tête de
+        // sécurité qui ne s'applique qu'aux pages qui fonctionnent ne protège
+        // pas grand-chose.
+        $middleware->append(SecurityHeaders::class);
 
         // PayPal ne peut pas porter de jeton CSRF : la requête est authentifiée
         // par sa signature, vérifiée dans PayPalWebhookController.
