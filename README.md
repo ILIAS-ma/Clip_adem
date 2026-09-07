@@ -362,6 +362,20 @@ connues. Il produit **un rapport, jamais une décision** : un clip conforme rest
 en attente de modération, un clip non conforme arrive devant le modérateur avec
 ses motifs.
 
+**Une seule exception, et elle bloque le paiement : la propriété.** Les autres
+contrôles relèvent du jugement — un hashtag oublié se discute, une durée limite
+aussi — et laissent donc le crédit suivre son cours, quitte à être repris par
+une invalidation ; bloquer sur un hashtag priverait de leur argent des clippeurs
+de bonne foi. La propriété est factuelle et binaire : soit la publication vient
+du compte lié, soit elle vient d'ailleurs. Se tromper signifie payer quelqu'un
+pour la vidéo virale d'un inconnu.
+
+La fenêtre a existé : un clip validé par un modérateur *avant* son premier
+relevé était crédité deux lignes après le contrôle, sans que personne consulte
+le résultat. Le crédit est désormais refusé, les vues restent enregistrées pour
+que la modération voie l'ampleur de ce qui a failli partir, et une ligne de
+journal est écrite — une seule, le relevé repassant toutes les trois heures.
+
 ### Matière première du brief
 
 Un brief textuel ne suffit pas : un clippeur a besoin d'entendre le son imposé

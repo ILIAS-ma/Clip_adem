@@ -214,6 +214,37 @@ class ClipSyncService
             : null;
     }
 
+    /**
+     * Signale une publication qui n'appartient pas au compte lié.
+     *
+     * Une seule ligne de journal, au premier constat : le relevé repasse
+     * toutes les trois heures, et vingt-quatre lignes par jour pour le même
+     * clip rendraient la file de modération inutilisable.
+     */
+    protected function flagStolenPost(Clip $clip): void
+    {
+        $already = ModerationLog::where('subject_type', $clip->getMorphClass())
+            ->where('subject_id', $clip->getKey())
+            ->where('action', ModerationAction::ClipNotOwned)
+            ->exists();
+
+        if ($already) {
+            return;
+        }
+
+        ModerationLog::record(
+            ModerationAction::ClipNotOwned,
+            $clip,
+            null,
+            'Publication émise par un autre compte que celui lié : aucun crédit versé.',
+        );
+
+        Log::warning('Publication non détenue par le clippeur', [
+            'clip_id' => $clip->getKey(),
+            'user_id' => $clip->user_id,
+        ]);
+    }
+
     protected function noteMissingPost(Clip $clip): void
     {
         $wasFlagged = $clip->hasDisappeared();
@@ -287,6 +318,26 @@ class ClipSyncService
             // et la durée réelles, donc où la conformité devient vérifiable.
             if ($clip->compliance_status === ClipComplianceChecker::PENDING || $clip->compliance_status === null) {
                 $this->compliance->check($clip, $post);
+            }
+
+            /*
+             * La publication appartient à quelqu'un d'autre : on ne crédite
+             * pas, et on n'attend pas un modérateur pour ça.
+             *
+             * Les autres contrôles relèvent du jugement — un hashtag oublié se
+             * discute — et laissent donc le crédit suivre son cours, quitte à
+             * être repris par une invalidation. Celui-ci est factuel et
+             * binaire, et se tromper signifie payer un clippeur pour la vidéo
+             * virale d'un inconnu. La fenêtre existait vraiment : le contrôle
+             * tournait juste avant, et le crédit partait quand même deux
+             * lignes plus bas.
+             */
+            if (ClipComplianceChecker::ownershipFailed($clip->refresh())) {
+                $this->flagStolenPost($clip);
+
+                $synced++;
+
+                continue;
             }
 
             $this->budget->creditViews(

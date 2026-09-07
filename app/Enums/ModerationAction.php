@@ -12,6 +12,7 @@ enum ModerationAction: string
     case ClipRejected = 'clip_rejected';
     case ClipInvalidated = 'clip_invalidated';
     case ClipDisappeared = 'clip_disappeared';
+    case ClipNotOwned = 'clip_not_owned';
     case CampaignFunded = 'campaign_funded';
     case ClipperBanned = 'clipper_banned';
     case ClipperUnbanned = 'clipper_unbanned';
@@ -25,6 +26,7 @@ enum ModerationAction: string
             self::ClipRejected => 'Clip refusé',
             self::ClipInvalidated => 'Clip invalidé',
             self::ClipDisappeared => 'Publication disparue',
+            self::ClipNotOwned => 'Publication d’un autre compte',
             self::CampaignFunded => 'Encaissement enregistré',
             self::ClipperBanned => 'Clippeur banni',
             self::ClipperUnbanned => 'Clippeur débanni',
@@ -38,7 +40,7 @@ enum ModerationAction: string
         return match ($this) {
             self::ClipApproved, self::ClipperUnbanned, self::PayoutApproved, self::CampaignFunded => 'success',
             self::ClipRejected, self::PayoutCancelled, self::ClipDisappeared => 'warning',
-            self::ClipInvalidated, self::ClipperBanned => 'danger',
+            self::ClipInvalidated, self::ClipperBanned, self::ClipNotOwned => 'danger',
         };
     }
 }

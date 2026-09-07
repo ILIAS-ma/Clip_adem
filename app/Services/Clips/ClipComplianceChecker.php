@@ -26,6 +26,16 @@ class ClipComplianceChecker
 
     public const PENDING = 'pending';
 
+    /**
+     * Clé du contrôle de propriété.
+     *
+     * Les autres contrôles relèvent du jugement — un hashtag manquant peut se
+     * discuter, une durée limite aussi. Celui-ci est factuel et binaire : soit
+     * la publication vient du compte lié, soit elle vient d'ailleurs. C'est le
+     * seul qui doive empêcher un paiement sans attendre un humain.
+     */
+    public const OWNERSHIP = 'ownership';
+
     public function check(Clip $clip, PostMetrics $metrics): Clip
     {
         $campaign = $clip->campaign;
@@ -63,12 +73,30 @@ class ClipComplianceChecker
         }
 
         return [
+            'key' => self::OWNERSHIP,
             'label' => 'Publication émise par le compte lié',
             'passed' => $metrics->ownerExternalId === $expected,
             'detail' => $metrics->ownerExternalId === $expected
                 ? null
                 : 'La publication appartient à un autre compte que celui utilisé pour rejoindre la campagne.',
         ];
+    }
+
+    /**
+     * La publication appartient-elle à quelqu'un d'autre ?
+     *
+     * Lu depuis le rapport figé sur le clip, jamais recalculé : la question
+     * porte sur ce qui était vrai au moment du relevé.
+     */
+    public static function ownershipFailed(Clip $clip): bool
+    {
+        foreach ($clip->compliance['checks'] ?? [] as $check) {
+            if (($check['key'] ?? null) === self::OWNERSHIP) {
+                return $check['passed'] === false;
+            }
+        }
+
+        return false;
     }
 
     /** @return array{label: string, passed: bool, detail: ?string}|null */
