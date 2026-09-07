@@ -81,10 +81,14 @@ class ClipSubmissionService
         } catch (QueryException $exception) {
             // L'unicité (platform, external_post_id) couvre aussi le cas où un
             // autre clippeur a déjà soumis le même post.
-            if (Clip::where('platform', $parsed->platform)
+            $existant = Clip::where('platform', $parsed->platform)
                 ->where('external_post_id', $parsed->externalPostId)
-                ->exists()) {
-                throw ClipSubmissionRefused::alreadySubmitted();
+                ->first();
+
+            if ($existant) {
+                throw $existant->user_id === $clipper->getKey()
+                    ? ClipSubmissionRefused::alreadySubmittedByYou()
+                    : ClipSubmissionRefused::alreadySubmittedBySomeoneElse();
             }
 
             throw $exception;

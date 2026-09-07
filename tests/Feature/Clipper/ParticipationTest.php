@@ -64,6 +64,28 @@ class ParticipationTest extends TestCase
     }
 
     #[Test]
+    public function resubmitting_your_own_clip_points_you_to_it(): void
+    {
+        /*
+         * C'est le cas le plus fréquent : quelqu'un ressoumet son lien sans
+         * avoir vu que la première soumission avait fonctionné. Un message qui
+         * ne dit pas « c'est déjà le vôtre, il est là » le laisse recommencer
+         * en boucle.
+         */
+        $campaign = $this->campaign();
+        $url = 'https://www.tiktok.com/@lina.clips/video/7123456789012345678';
+
+        $clipper = $this->clipper();
+        $this->participations->join($campaign, $clipper, $this->account($clipper));
+        $this->submissions->submit($campaign, $clipper, $url);
+
+        $this->expectException(ClipSubmissionRefused::class);
+        $this->expectExceptionMessage('Mes clips');
+
+        $this->submissions->submit($campaign, $clipper, $url);
+    }
+
+    #[Test]
     public function joining_an_open_campaign_approves_immediately_when_no_review_is_required(): void
     {
         $clipper = $this->clipper();

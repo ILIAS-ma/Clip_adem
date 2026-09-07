@@ -33,9 +33,26 @@ class ClipSubmissionRefused extends RuntimeException
         return new self("Les liens raccourcis {$platform} ne peuvent pas être vérifiés. Ouvrez la publication et copiez l'adresse complète.");
     }
 
-    public static function alreadySubmitted(): self
+    /**
+     * Distinguer « c'est déjà le vôtre » de « quelqu'un d'autre l'a prise »
+     * n'est pas un détail : dans le premier cas il n'y a rien à faire, dans le
+     * second il y a un litige. Le même message pour les deux laisse le
+     * clippeur ressoumettre en boucle sans comprendre.
+     */
+    public static function alreadySubmittedByYou(): self
     {
-        return new self('Cette publication a déjà été soumise.');
+        return new self(
+            'Vous avez déjà soumis cette publication. Retrouvez-la dans « Mes clips » '
+            .'pour suivre ses vues et ses gains.'
+        );
+    }
+
+    public static function alreadySubmittedBySomeoneElse(): self
+    {
+        return new self(
+            'Cette publication a déjà été soumise par un autre clippeur. '
+            .'Une même vidéo ne peut être rémunérée qu’une fois.'
+        );
     }
 
     public static function noParticipation(): self
