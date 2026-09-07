@@ -9,6 +9,7 @@ use App\Models\SocialAccount;
 use App\Support\Social\ConnectedAccount;
 use App\Support\Social\PostMetrics;
 use Carbon\Carbon;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 
@@ -55,7 +56,7 @@ class TikTokProvider implements SocialProvider
      */
     public function requestedScopes(): array
     {
-        return ['user.info.basic', 'video.list'];
+        return ['user.info.basic', 'user.info.stats', 'video.list'];
     }
 
     /**
@@ -157,14 +158,32 @@ class TikTokProvider implements SocialProvider
         return config('services.tiktok.daily_quota');
     }
 
+    /** Lit le profil avec la liste de champs demandée. */
+    protected function readProfile(string $accessToken, string $fields): Response
+    {
+        return Http::withToken($accessToken)
+            ->acceptJson()
+            ->get('https://open.tiktokapis.com/v2/user/info/', ['fields' => $fields]);
+    }
+
     /** @param  array<string, mixed>  $token */
     protected function accountFrom(array $token, ?SocialAccount $existing = null): ConnectedAccount
     {
-        $user = Http::withToken($token['access_token'])
-            ->acceptJson()
-            ->get('https://open.tiktokapis.com/v2/user/info/', [
-                'fields' => 'open_id,display_name,follower_count',
-            ]);
+        /*
+         * `follower_count` relève de la portée `user.info.stats`, distincte de
+         * `user.info.basic`. Demander le champ sans la portée fait échouer
+         * TOUT l'appel avec un « scope_not_authorized » — et donc la liaison
+         * du compte, alors que le nombre d'abonnés n'est qu'un signal de
+         * fraude secondaire.
+         *
+         * On tente donc avec, puis sans. Perdre un indicateur de modération
+         * vaut mieux qu'empêcher quelqu'un de lier son compte.
+         */
+        $user = $this->readProfile($token['access_token'], 'open_id,display_name,follower_count');
+
+        if ($user->failed() && $user->status() === 401) {
+            $user = $this->readProfile($token['access_token'], 'open_id,display_name');
+        }
 
         if ($user->failed()) {
             throw SocialProviderFailed::fetchFailed($this->platform(), $user->status(), $user->body());
