@@ -160,6 +160,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Plateformes simulées
+    |--------------------------------------------------------------------------
+    |
+    | Une plateforme sans identifiants d'application tourne sur le fournisseur
+    | simulé. La proposer au clippeur avec une pastille « démonstration » dit
+    | la vérité, mais donne d'une plateforme qui verse de l'argent réel l'image
+    | d'un prototype — et une option qui ne mène à rien vaut moins que pas
+    | d'option du tout.
+    |
+    | À passer à true pour éprouver le parcours complet sans aucune clé.
+    |
+    */
+
+    'show_simulated_platforms' => env('SHOW_SIMULATED_PLATFORMS', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Parrainage
     |--------------------------------------------------------------------------
     |

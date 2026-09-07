@@ -168,6 +168,10 @@ class ClipperEarningsTest extends TestCase
     #[Test]
     public function the_accounts_page_renders_and_announces_the_simulation(): void
     {
+        // Les plateformes simulées ne sont plus proposées par défaut : ce test
+        // porte justement sur ce mode-là, il l'active donc explicitement.
+        config(['clipping.show_simulated_platforms' => true]);
+
         $this->actingAs($this->clipper())
             ->get(route('accounts.index'))
             ->assertSuccessful()

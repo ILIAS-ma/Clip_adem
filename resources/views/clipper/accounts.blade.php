@@ -95,9 +95,12 @@
                        class="group rounded-2xl border border-ink-700 p-5 transition hover:-translate-y-0.5 hover:border-brand-500 hover:shadow-card">
                         <span class="font-display text-base font-bold text-ink-50">{{ $platform->label() }}</span>
 
+                        {{-- La pastille reste utile quand on force l'affichage
+                             des plateformes simulées pour éprouver le parcours
+                             sans clés : laisser croire à une vraie liaison
+                             ferait perdre du temps au premier comportement
+                             inattendu. --}}
                         @if ($simulated[$platform->value])
-                            {{-- Laisser croire à une vraie liaison ferait perdre du
-                                 temps au premier comportement inattendu. --}}
                             <span class="chip-wait mt-2 block w-fit">Démonstration</span>
                         @else
                             <span class="chip-ok mt-2 block w-fit">Connexion officielle</span>
@@ -106,7 +109,7 @@
                 @endforeach
             </div>
 
-            @if (collect($simulated)->contains(true))
+            @if (collect($platforms)->contains(fn ($p) => $simulated[$p->value]))
                 <div class="alert-warn mt-6">
                     <p class="font-semibold">Mode démonstration</p>
                     <p class="mt-1 leading-relaxed">

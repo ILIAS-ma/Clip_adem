@@ -24,7 +24,19 @@ class SocialAccountController extends Controller
     {
         return view('clipper.accounts', [
             'accounts' => $request->user()->socialAccounts()->withCount('clips')->get(),
-            'platforms' => Platform::cases(),
+            /*
+             * Seules les plateformes réellement branchées sont proposées.
+             *
+             * Afficher YouTube et Instagram avec une pastille « démonstration »
+             * disait la vérité, mais donnait d'une plateforme qui paie de
+             * l'argent réel l'image d'un prototype. Une option qui ne mène à
+             * rien vaut moins que pas d'option du tout.
+             */
+            'platforms' => collect(Platform::cases())
+                ->reject(fn (Platform $p) => $this->providers->isSimulated($p)
+                    && ! config('clipping.show_simulated_platforms'))
+                ->values()
+                ->all(),
             'simulated' => collect(Platform::cases())
                 ->mapWithKeys(fn (Platform $p) => [$p->value => $this->providers->isSimulated($p)]),
         ]);
