@@ -7,6 +7,21 @@ use RuntimeException;
 
 class SocialProviderFailed extends RuntimeException
 {
+    /**
+     * Code HTTP renvoyé par la plateforme, quand il y en a un.
+     *
+     * Porté sur l'exception plutôt que noyé dans le message : distinguer un
+     * jeton mort (401) d'une panne passagère (500) change ce qu'on fait — on
+     * arrête d'interroger le compte dans un cas, on réessaie dans l'autre.
+     */
+    public ?int $status = null;
+
+    /** L'échec vient-il d'une autorisation, et non d'un incident réseau ? */
+    public function isAuthFailure(): bool
+    {
+        return in_array($this->status, [401, 403], true);
+    }
+
     public static function notConfigured(Platform $platform): self
     {
         return new self(sprintf(
@@ -35,7 +50,10 @@ class SocialProviderFailed extends RuntimeException
 
     public static function fetchFailed(Platform $platform, int $status, string $body): self
     {
-        return new self(sprintf('Lecture %s échouée (HTTP %d) : %s', $platform->label(), $status, $body));
+        return tap(
+            new self(sprintf('Lecture %s échouée (HTTP %d) : %s', $platform->label(), $status, $body)),
+            fn (self $e) => $e->status = $status,
+        );
     }
 
     public static function noChannel(Platform $platform): self

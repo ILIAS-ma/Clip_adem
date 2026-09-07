@@ -7,16 +7,19 @@ use App\Enums\CampaignStatus;
 use App\Enums\ClipStatus;
 use App\Enums\ModerationAction;
 use App\Enums\Platform;
+use App\Exceptions\SocialProviderFailed;
 use App\Models\BudgetTransaction;
 use App\Models\Clip;
 use App\Models\ClipViewSnapshot;
 use App\Models\ModerationLog;
+use App\Models\SocialAccount;
 use App\Models\SocialSyncRun;
 use App\Services\Clips\ClipComplianceChecker;
 use App\Support\Social\PostMetrics;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 /**
  * Relève les vues des clips et les fait créditer par le moteur de budget.
@@ -95,6 +98,8 @@ class ClipSyncService
                 } catch (\Throwable $exception) {
                     $error = $exception->getMessage();
                     $rateLimited = str_contains($error, '429');
+
+                    $this->noteAccountFailure($account, $exception);
 
                     Log::warning('Synchronisation interrompue', [
                         'platform' => $platform->value,
@@ -198,6 +203,8 @@ class ClipSyncService
         try {
             $metrics = $provider->fetchPosts($account, [$clip->external_post_id]);
         } catch (\Throwable $exception) {
+            $this->noteAccountFailure($account, $exception);
+
             Log::warning('Relevé manuel impossible', [
                 'clip_id' => $clip->getKey(),
                 'error' => $exception->getMessage(),
@@ -221,6 +228,36 @@ class ClipSyncService
      * toutes les trois heures, et vingt-quatre lignes par jour pour le même
      * clip rendraient la file de modération inutilisable.
      */
+    /**
+     * Marque un compte à reconnecter quand la plateforme refuse le jeton.
+     *
+     * Sans ça, un jeton mort est réinterrogé à chaque passage : il consomme le
+     * quota qui manquera aux comptes valides, et le clippeur ne voit jamais
+     * pourquoi ses vues ont cessé de monter. Le bandeau d'alerte de son espace
+     * ne s'allume que sur cet indicateur.
+     *
+     * Seules les erreurs d'autorisation comptent. Une panne passagère de
+     * l'API — un 500, un délai dépassé — ne doit pas obliger quelqu'un à
+     * refaire son consentement OAuth pour rien.
+     */
+    protected function noteAccountFailure(SocialAccount $account, \Throwable $exception): void
+    {
+        if (! $exception instanceof SocialProviderFailed || ! $exception->isAuthFailure()) {
+            return;
+        }
+
+        $account->forceFill([
+            'needs_reconnect' => true,
+            'last_error' => Str::limit($exception->getMessage(), 480),
+        ])->save();
+
+        Log::warning('Compte à reconnecter : la plateforme a refusé le jeton', [
+            'social_account_id' => $account->getKey(),
+            'platform' => $account->platform->value,
+            'status' => $exception->status,
+        ]);
+    }
+
     protected function flagStolenPost(Clip $clip): void
     {
         $already = ModerationLog::where('subject_type', $clip->getMorphClass())
