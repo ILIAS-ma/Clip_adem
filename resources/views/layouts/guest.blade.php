@@ -7,6 +7,8 @@
     <meta name="theme-color" content="#101210">
     <title>{{ $title ?? config('app.name') }}</title>
 
+    <x-site-verification />
+
     <x-favicon />
 
     <link rel="preconnect" href="https://fonts.bunny.net">

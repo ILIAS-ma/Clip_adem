@@ -66,6 +66,29 @@ Route::middleware(['auth', 'not.banned'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
+| Pages légales
+|--------------------------------------------------------------------------
+|
+| Publiques et sans état : elles sont lues par des humains, mais aussi par les
+| vérificateurs de TikTok et de Google, qui n'ont ni session ni cookie. Les
+| placer derrière le moindre garde-fou ferait échouer une revue d'application.
+|
+| Les URL sont en anglais parce qu'elles sont saisies dans des consoles de
+| développeurs anglophones, où « conditions-dutilisation » se recopie mal.
+|
+*/
+Route::view('/terms', 'legal.terms', [
+    'updatedAt' => '7 septembre 2026',
+    'contactEmail' => config('mail.from.address'),
+])->name('legal.terms');
+
+Route::view('/privacy', 'legal.privacy', [
+    'updatedAt' => '7 septembre 2026',
+    'contactEmail' => config('mail.from.address'),
+])->name('legal.privacy');
+
+/*
+|--------------------------------------------------------------------------
 | Espace clippeur
 |--------------------------------------------------------------------------
 |

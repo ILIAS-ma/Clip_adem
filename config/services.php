@@ -49,6 +49,7 @@ return [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI'),
+        'site_verification' => env('GOOGLE_SITE_VERIFICATION'),
     ],
 
     'youtube' => [
@@ -66,6 +67,9 @@ return [
         'client_secret' => env('TIKTOK_CLIENT_SECRET'),
         'daily_quota' => env('TIKTOK_DAILY_QUOTA'),
         'redirect' => env('TIKTOK_REDIRECT_URI'),
+
+        // Jeton de la méthode « balise meta » de vérification de domaine.
+        'site_verification' => env('TIKTOK_SITE_VERIFICATION'),
     ],
 
     'instagram' => [

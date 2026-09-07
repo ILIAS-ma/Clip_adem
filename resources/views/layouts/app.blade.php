@@ -8,6 +8,8 @@
 
     <meta name="theme-color" content="#080908">
 
+    <x-site-verification />
+
     <x-favicon />
 
     <link rel="preconnect" href="https://fonts.bunny.net">

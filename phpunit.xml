@@ -53,6 +53,29 @@
             réellement quand il est configuré est vérifié par un test qui pose
             la clé lui-même (RegistrationTest).
         -->
+        <!--
+            Réseaux sociaux et tunnel neutralisés.
+
+            Sans ça, la suite dépend de ce que le développeur a dans son .env :
+            des clés réelles font parler les tests au vrai TikTok, qui répond
+            par des erreurs réseau. Les tests doivent exercer le fournisseur
+            simulé, et l'un d'eux vérifie justement que la bascule vers le
+            simulé a bien lieu quand aucune clé n'est configurée.
+        -->
+        <env name="APP_URL" value="http://localhost:8000"/>
+        <env name="TRUSTED_PROXIES" value=""/>
+        <env name="TIKTOK_CLIENT_KEY" value=""/>
+        <env name="TIKTOK_CLIENT_SECRET" value=""/>
+        <env name="TIKTOK_REDIRECT_URI" value=""/>
+        <env name="TIKTOK_SITE_VERIFICATION" value=""/>
+        <env name="YOUTUBE_CLIENT_ID" value=""/>
+        <env name="YOUTUBE_CLIENT_SECRET" value=""/>
+        <env name="INSTAGRAM_APP_ID" value=""/>
+        <env name="INSTAGRAM_APP_SECRET" value=""/>
+        <env name="GOOGLE_CLIENT_ID" value=""/>
+        <env name="GOOGLE_CLIENT_SECRET" value=""/>
+        <env name="GOOGLE_REDIRECT_URI" value=""/>
+
         <env name="TURNSTILE_SITE_KEY" value=""/>
         <env name="TURNSTILE_SECRET_KEY" value=""/>
         <env name="MAIL_MAILER" value="array"/>

@@ -12,6 +12,8 @@
          contenu à opacité 0 si le JS échoue. --}}
     <script>document.documentElement.classList.add('js')</script>
 
+    <x-site-verification />
+
     <x-favicon />
 
     <link rel="preconnect" href="https://fonts.bunny.net">

@@ -56,6 +56,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Proxys de confiance
+    |--------------------------------------------------------------------------
+    |
+    | Derrière un tunnel de développement, Cloudflare ou un répartiteur de
+    | charge, TLS est terminé en amont. Sans confiance accordée à
+    | `X-Forwarded-Proto`, Laravel se croit en HTTP et fabrique des URL
+    | `http://` : les feuilles de style d'une page HTTPS sont alors bloquées
+    | par le navigateur, et l'adresse de retour OAuth ne correspond plus à
+    | celle enregistrée chez le fournisseur.
+    |
+    | Vide par défaut : faire confiance à tous les proxys quand l'application
+    | est joignable en direct laisserait n'importe qui usurper son adresse IP
+    | via `X-Forwarded-For`, et donc contourner les limitations de débit.
+    |
+    */
+
+    'trusted_proxies' => env('TRUSTED_PROXIES'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

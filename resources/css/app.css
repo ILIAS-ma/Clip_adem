@@ -177,3 +177,49 @@
     .alert-warn   { @apply alert border-amber-500 bg-amber-500/10 text-amber-200; }
     .alert-danger { @apply alert border-red-500 bg-red-500/10 text-red-200; }
 }
+
+/* Pages légales : de la prose longue, lue en entier par des humains comme par
+   les vérificateurs de TikTok et Google. Les styles vivent ici plutôt qu'en
+   classes répétées sur chaque balise. */
+@layer components {
+    .legal h2 {
+        @apply font-display text-xl font-bold text-ink-50;
+    }
+
+    .legal h3 {
+        @apply mt-6 font-semibold text-ink-100;
+    }
+
+    .legal p,
+    .legal li {
+        @apply leading-relaxed text-ink-300;
+    }
+
+    .legal p + p {
+        @apply mt-3;
+    }
+
+    .legal ul {
+        @apply mt-3 list-disc space-y-2 pl-5;
+    }
+
+    .legal strong {
+        @apply font-semibold text-ink-100;
+    }
+
+    .legal a {
+        @apply text-brand-400 underline underline-offset-2;
+    }
+
+    .legal table {
+        @apply mt-4 w-full text-left text-sm;
+    }
+
+    .legal th {
+        @apply border-b border-ink-700 py-2 font-semibold text-ink-100;
+    }
+
+    .legal td {
+        @apply border-b border-ink-800 py-2 align-top text-ink-300;
+    }
+}
