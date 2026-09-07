@@ -56,7 +56,25 @@ class TikTokProvider implements SocialProvider
      */
     public function requestedScopes(): array
     {
-        return ['user.info.basic', 'user.info.stats', 'video.list'];
+        /*
+         * Lue en configuration, pas figée ici.
+         *
+         * Cette liste doit correspondre à ce que la console TikTok autorise
+         * réellement pour l'application — et un Sandbox a sa propre liste,
+         * souvent plus courte. Demander une portée que l'application n'a pas
+         * fait échouer l'écran de consentement avant même que l'utilisateur ne
+         * voie quoi que ce soit.
+         *
+         * `user.info.stats` n'est donc pas dans le défaut : elle n'apporte que
+         * le nombre d'abonnés, un signal de fraude secondaire. Ajoutez-la dans
+         * la console puis dans TIKTOK_SCOPES si vous la voulez.
+         */
+        $scopes = array_filter(array_map(
+            trim(...),
+            explode(',', (string) config('services.tiktok.scopes')),
+        ));
+
+        return $scopes ?: ['user.info.basic', 'video.list'];
     }
 
     /**

@@ -29,14 +29,34 @@ class TikTokProfileTest extends TestCase
     }
 
     #[Test]
-    public function the_stats_scope_is_requested_alongside_the_field_it_unlocks(): void
+    public function the_default_scopes_match_what_a_sandbox_actually_grants(): void
     {
-        // Demander le champ sans la portée est exactement ce qui produisait un
-        // « scope_not_authorized » au moment de lier un compte.
-        $scopes = app(TikTokProvider::class)->requestedScopes();
+        /*
+         * Un Sandbox TikTok n'active que `user.info.basic` et `video.list`.
+         * Demander une portée que l'application n'a pas fait échouer l'écran
+         * de consentement avant même que l'utilisateur ne voie quoi que ce
+         * soit — un échec bien plus coûteux que de se passer du nombre
+         * d'abonnés.
+         */
+        config(['services.tiktok.scopes' => null]);
 
-        $this->assertContains('user.info.stats', $scopes);
-        $this->assertContains('user.info.basic', $scopes);
+        $this->assertSame(
+            ['user.info.basic', 'video.list'],
+            app(TikTokProvider::class)->requestedScopes(),
+        );
+    }
+
+    #[Test]
+    public function the_scopes_follow_the_configuration(): void
+    {
+        // La liste doit suivre la console TikTok sans toucher au code : c'est
+        // une valeur qui vit chez eux, pas chez nous.
+        config(['services.tiktok.scopes' => 'user.info.basic, user.info.stats , video.list']);
+
+        $this->assertSame(
+            ['user.info.basic', 'user.info.stats', 'video.list'],
+            app(TikTokProvider::class)->requestedScopes(),
+        );
     }
 
     #[Test]

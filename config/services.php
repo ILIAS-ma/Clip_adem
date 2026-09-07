@@ -66,6 +66,11 @@ return [
         'client_key' => env('TIKTOK_CLIENT_KEY'),
         'client_secret' => env('TIKTOK_CLIENT_SECRET'),
         'daily_quota' => env('TIKTOK_DAILY_QUOTA'),
+
+        // Doit correspondre exactement aux portées activées dans la console —
+        // un Sandbox a la sienne, souvent plus courte. En demander une que
+        // l'application n'a pas fait échouer l'écran de consentement.
+        'scopes' => env('TIKTOK_SCOPES', 'user.info.basic,video.list'),
         'redirect' => env('TIKTOK_REDIRECT_URI'),
 
         // Jeton de la méthode « balise meta » de vérification de domaine.
