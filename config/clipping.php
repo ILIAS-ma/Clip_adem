@@ -118,6 +118,24 @@ return [
     */
 
     'sync' => [
+        /*
+         * Trois paliers, du plus chaud au plus froid.
+         *
+         * Les vues d'un clip se font massivement dans les deux premiers jours :
+         * c'est là que le relevé doit être serré, et c'est là que le clippeur
+         * regarde son solde. Passé cette fenêtre, la courbe s'aplatit et
+         * interroger souvent ne rend que le même nombre.
+         *
+         * La cadence chaude coûte peu : TikTok annonce 600 appels/minute et
+         * nous groupons 20 vidéos par appel. À 500 clips suivis, un passage
+         * complet fait 25 appels — 4 % de la limite. La contrainte réelle est
+         * le quota QUOTIDIEN, que TikTok ne documente pas clairement : le
+         * mesurer en sandbox avant de resserrer davantage, `SocialSyncRun` le
+         * journalise à chaque passage.
+         */
+        'hot_window_hours' => 48,
+        'hot_interval_minutes' => 30,
+
         // Un clip publié depuis moins de N heures est relevé toutes les
         // `fresh_interval_hours`.
         'fresh_window_hours' => 168,   // 7 jours

@@ -378,6 +378,15 @@ class ClipSyncService
             })
             ->get()
             ->filter(fn (Clip $clip) => $this->isDue($clip, $now))
+            /*
+             * Les plus récents d'abord.
+             *
+             * Si le quota s'épuise en cours de passage, ce sont les clips dont
+             * les vues bougent — et rapportent — qui doivent avoir été servis.
+             * Sans cet ordre, un mois d'archives figées pourrait consommer le
+             * quota avant que la publication d'hier soit relevée une seule fois.
+             */
+            ->sortByDesc(fn (Clip $clip) => $clip->posted_at ?? $clip->submitted_at ?? $clip->created_at)
             ->when($limit, fn (Collection $c) => $c->take($limit))
             ->values();
     }
@@ -392,15 +401,23 @@ class ClipSyncService
         $reference = $clip->posted_at ?? $clip->submitted_at ?? $clip->created_at;
         $ageHours = $reference->diffInHours($now);
 
-        $interval = match (true) {
+        // Exprimé en minutes : le palier chaud descend sous l'heure, et
+        // mélanger deux unités dans la même comparaison est le meilleur moyen
+        // de relever cent fois trop souvent sans s'en apercevoir.
+        $minutes = match (true) {
             // Un clip qui ne rapporte plus rien n'a plus besoin d'être suivi de
             // près : ses vues restent comptées, simplement moins souvent.
-            ! $this->isPayable($clip) => $config['unpayable_interval_hours'],
-            $ageHours <= $config['fresh_window_hours'] => $config['fresh_interval_hours'],
-            default => $config['mature_interval_hours'],
+            ! $this->isPayable($clip) => $config['unpayable_interval_hours'] * 60,
+
+            // Les deux premiers jours font l'essentiel des vues : c'est là que
+            // le relevé doit être serré, et là que le clippeur regarde.
+            $ageHours <= $config['hot_window_hours'] => $config['hot_interval_minutes'],
+
+            $ageHours <= $config['fresh_window_hours'] => $config['fresh_interval_hours'] * 60,
+            default => $config['mature_interval_hours'] * 60,
         };
 
-        return $clip->last_synced_at->addHours($interval)->lte($now);
+        return $clip->last_synced_at->addMinutes($minutes)->lte($now);
     }
 
     protected function isPayable(Clip $clip): bool

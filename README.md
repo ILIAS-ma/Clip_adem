@@ -341,9 +341,25 @@ temps réel. Interroger toutes les minutes rendrait donc le même nombre, en
 brûlant le quota. Un relevé horaire pour un clip récent est, en pratique,
 aussi frais que ce que la plateforme sait.
 
-D'où la cadence dégressive : toutes les 3 h la première semaine, une fois par
-jour ensuite, plus rien après 30 jours. Un clip d'un mois ne bouge plus ;
-continuer à l'interroger consommerait le quota des clips qui, eux, rapportent.
+D'où la cadence dégressive, en trois paliers :
+
+| Âge du clip | Relevé | Pourquoi |
+|---|---|---|
+| moins de 48 h | toutes les **30 min** | L'essentiel des vues se fait là, et c'est là que le clippeur regarde son solde |
+| 2 à 7 jours | toutes les 3 h | La courbe s'aplatit |
+| 7 à 30 jours | une fois par jour | Elle ne bouge presque plus |
+| au-delà | plus rien | Interroger consommerait le quota des clips qui rapportent |
+
+Le palier chaud ne coûte presque rien : TikTok annonce 600 appels par minute et
+nous groupons 20 vidéos par appel. À 500 clips suivis, un passage complet fait
+25 appels — **4 % de la limite**. La contrainte réelle est le quota *quotidien*,
+que TikTok ne documente pas clairement : `SocialSyncRun` le journalise à chaque
+passage, à mesurer en sandbox avant de resserrer davantage.
+
+Les clips les plus récents sont servis en premier. Si le quota s'épuise en cours
+de passage, ce sont ceux dont les vues bougent qui doivent avoir été relevés —
+sans cet ordre, un mois d'archives figées pourrait tout consommer avant que la
+publication d'hier soit lue une seule fois.
 
 **Le bouton « Actualiser les vues »** de la page d'un clip comble l'écart
 ressenti : entre deux passages automatiques, c'est le seul recours d'un clippeur
