@@ -16,13 +16,33 @@ class ClipController extends Controller
 {
     public function index(Request $request, CampaignBudgetService $budget): View
     {
-        $clips = Clip::where('user_id', $request->user()->getKey())
+        $clipper = $request->user();
+
+        // Filtres facultatifs, lus depuis la query string : l'URL reste
+        // partageable et le bouton retour du navigateur fonctionne, ce qu'un
+        // état Livewire seul n'aurait pas donné pour un simple filtre.
+        $clips = Clip::where('user_id', $clipper->getKey())
             ->with(['campaign.creator', 'socialAccount'])
+            ->when($request->filled('campagne'), fn ($q) => $q->where('campaign_id', $request->integer('campagne')))
+            ->when($request->filled('plateforme'), fn ($q) => $q->where('platform', $request->string('plateforme')))
+            ->when($request->filled('statut'), fn ($q) => $q->where('status', $request->string('statut')))
             ->latest('submitted_at')
             ->get();
 
         return view('clipper.clips.index', [
             'clips' => $clips,
+            'filters' => $request->only(['campagne', 'plateforme', 'statut']),
+
+            // Options des filtres : uniquement les campagnes où ce clippeur a
+            // effectivement un clip, pas tout le catalogue.
+            'campaignOptions' => Clip::where('user_id', $clipper->getKey())
+                ->with('campaign:id,title')
+                ->get()
+                ->pluck('campaign')
+                ->filter()
+                ->unique('id')
+                ->sortBy('title'),
+
             // Estimation par clip : ce que rapporteraient les vues pas encore
             // créditées. Passe par le service, donc plafonds et reliquat inclus.
             'pending' => $clips->mapWithKeys(fn (Clip $clip) => [

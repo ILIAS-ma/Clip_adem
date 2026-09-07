@@ -77,8 +77,15 @@
                                     <p class="font-display font-bold tabular text-ink-50">
                                         {{ Money::euros($payout->amount_cents) }}
                                     </p>
-                                    <p class="mt-0.5 text-sm text-ink-400">
+                                    <p class="mt-0.5 text-sm text-ink-300">
+                                        {{ $payout->payoutMethod()->label() }}
+                                        · {{ $payout->destinationLabel() }}
+                                    </p>
+                                    <p class="mt-0.5 text-xs text-ink-400">
                                         Demandé le {{ $payout->requested_at?->format('d/m/Y') }}
+                                        @if ($payout->approved_at)
+                                            · validé le {{ $payout->approved_at->format('d/m/Y') }}
+                                        @endif
                                         @if ($payout->processed_at)
                                             · versé le {{ $payout->processed_at->format('d/m/Y') }}
                                         @endif
@@ -97,6 +104,12 @@
                             </li>
                         @endforeach
                     </ul>
+
+                    @if ($payouts->hasPages())
+                        <div class="border-t border-ink-700 px-6 py-4">
+                            {{ $payouts->onEachSide(1)->links() }}
+                        </div>
+                    @endif
                 @endif
             </div>
         </div>

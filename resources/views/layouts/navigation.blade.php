@@ -13,6 +13,8 @@
             ['route' => 'accounts.index',  'pattern' => 'accounts.*',  'label' => 'Mes comptes'],
             ['route' => 'earnings.index',  'pattern' => 'earnings.*',  'label' => 'Revenus'],
             ['route' => 'referrals.index', 'pattern' => 'referrals.*', 'label' => 'Parrainage'],
+            ['route' => 'leaderboard.index', 'pattern' => 'leaderboard.*', 'label' => 'Classement'],
+            ['route' => 'achievements.index', 'pattern' => 'achievements.*', 'label' => 'Succès'],
         ];
 
     $home = auth()->user()->isCreator() ? route('creator.dashboard') : route('dashboard');

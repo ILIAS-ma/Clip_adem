@@ -8,12 +8,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Campaign;
 use App\Models\Clip;
 use App\Services\Clippers\ClipperProgressionService;
+use App\Services\Clips\ParticipationService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request, CampaignBudgetService $budget): View
+    public function __invoke(Request $request, CampaignBudgetService $budget, ParticipationService $participations): View
     {
         $clipper = $request->user();
 
@@ -41,6 +42,24 @@ class DashboardController extends Controller
             'openCampaigns' => Campaign::where('status', CampaignStatus::Active)->count(),
             'accountsCount' => $clipper->socialAccounts()->count(),
             'needsReconnect' => $clipper->socialAccounts()->where('needs_reconnect', true)->count(),
+
+            // Calendrier : campagnes déjà actives mais dont la diffusion n'a
+            // pas commencé, pour anticiper plutôt que découvrir une campagne
+            // déjà à moitié consommée par d'autres.
+            'upcomingCampaigns' => Campaign::visibleToClippers()
+                ->where('status', CampaignStatus::Active)
+                ->whereNotNull('starts_at')
+                ->where('starts_at', '>', now())
+                ->with('creator')
+                ->orderBy('starts_at')
+                ->limit(4)
+                ->get()
+                ->map(fn (Campaign $campaign) => [
+                    'campaign' => $campaign,
+                    // Personnalisé : un niveau avec accès anticipé peut
+                    // rejoindre avant que la campagne ne s'ouvre à tous.
+                    'opensAt' => $participations->opensAtFor($campaign, $clipper),
+                ]),
         ]);
     }
 }

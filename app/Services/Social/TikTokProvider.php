@@ -136,7 +136,7 @@ class TikTokProvider implements SocialProvider
             ->asJson()
             ->post('https://open.tiktokapis.com/v2/video/query/?fields='.implode(',', [
                 'id', 'view_count', 'video_description', 'duration', 'create_time',
-                'like_count', 'comment_count', 'share_count',
+                'like_count', 'comment_count', 'share_count', 'cover_image_url',
             ]), [
                 'filters' => ['video_ids' => array_values($externalIds)],
             ]);
@@ -157,6 +157,7 @@ class TikTokProvider implements SocialProvider
                     likes: (int) ($video['like_count'] ?? 0),
                     comments: (int) ($video['comment_count'] ?? 0),
                     shares: (int) ($video['share_count'] ?? 0),
+                    thumbnailUrl: $video['cover_image_url'] ?? null,
                 ),
             ]);
     }

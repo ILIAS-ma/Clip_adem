@@ -3,12 +3,24 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-wrap items-start justify-between gap-4">
-            <div>
-                <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">
-                    {{ $clip->campaign?->creator?->name }}
-                </p>
-                <h1 class="mt-1 font-display text-2xl font-bold text-ink-50">{{ $clip->campaign?->title }}</h1>
-                <p class="mt-1 text-sm text-ink-400">{{ $clip->platform->label() }} · {{ $clip->external_post_id }}</p>
+            <div class="flex items-start gap-4">
+                <div class="h-20 w-14 flex-none overflow-hidden rounded-lg bg-ink-700">
+                    @if ($clip->thumbnail_url)
+                        <img src="{{ $clip->thumbnail_url }}" alt="" class="h-full w-full object-cover">
+                    @else
+                        <div class="flex h-full w-full items-center justify-center text-[10px] font-semibold uppercase text-ink-400">
+                            {{ $clip->platform->label() }}
+                        </div>
+                    @endif
+                </div>
+
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">
+                        {{ $clip->campaign?->creator?->name }}
+                    </p>
+                    <h1 class="mt-1 font-display text-2xl font-bold text-ink-50">{{ $clip->campaign?->title }}</h1>
+                    <p class="mt-1 text-sm text-ink-400">{{ $clip->platform->label() }} · {{ $clip->external_post_id }}</p>
+                </div>
             </div>
 
             <div class="flex flex-wrap gap-3">

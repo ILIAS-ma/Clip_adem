@@ -29,5 +29,9 @@ final readonly class PostMetrics
         public int $likes = 0,
         public int $comments = 0,
         public int $shares = 0,
+
+        // Nullable plutôt qu'obligatoire : YouTube en fournit toujours une,
+        // Instagram parfois, un post supprimé jamais.
+        public ?string $thumbnailUrl = null,
     ) {}
 }

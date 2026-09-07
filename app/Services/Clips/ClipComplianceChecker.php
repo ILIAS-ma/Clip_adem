@@ -51,6 +51,7 @@ class ClipComplianceChecker
 
         $clip->forceFill([
             'caption' => $metrics->caption ?? $clip->caption,
+            'thumbnail_url' => $metrics->thumbnailUrl ?? $clip->thumbnail_url,
             'duration_seconds' => $metrics->durationSeconds ?? $clip->duration_seconds,
             'posted_at' => $metrics->postedAt ?? $clip->posted_at,
             'compliance_status' => $failed ? self::FAILED : self::PASSED,

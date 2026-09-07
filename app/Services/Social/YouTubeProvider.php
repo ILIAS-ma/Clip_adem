@@ -136,6 +136,7 @@ class YouTubeProvider implements SocialProvider
                     durationSeconds: $this->parseDuration(data_get($item, 'contentDetails.duration')),
                     postedAt: ($published = data_get($item, 'snippet.publishedAt')) ? Carbon::parse($published) : null,
                     ownerExternalId: data_get($item, 'snippet.channelId'),
+                    thumbnailUrl: data_get($item, 'snippet.thumbnails.medium.url', data_get($item, 'snippet.thumbnails.default.url')),
                 ),
             ]);
     }

@@ -16,9 +16,9 @@
 @endphp
 
 <div {{ $attributes->merge(['class' => 'card p-5 '.($highlight ? 'ring-2 ring-brand-500' : '')]) }}>
-    <p class="text-sm font-medium text-ink-400">{{ $label }}</p>
+    <p class="text-sm font-medium text-ink-300">{{ $label }}</p>
     <p class="mt-1.5 font-display text-2xl font-bold tabular {{ $valueTone }}">{{ $value }}</p>
     @if ($hint)
-        <p class="mt-1 text-xs text-ink-400">{{ $hint }}</p>
+        <p class="mt-1 text-xs text-ink-300">{{ $hint }}</p>
     @endif
 </div>

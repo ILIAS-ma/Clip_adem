@@ -1,4 +1,8 @@
-@php use App\Support\Money; @endphp
+@php
+    use App\Enums\ClipStatus;
+    use App\Enums\Platform;
+    use App\Support\Money;
+@endphp
 
 <x-app-layout>
     <x-slot name="header">
@@ -16,7 +20,59 @@
 
     <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
 
-        @if ($clips->isEmpty())
+        {{-- Filtres en GET plutôt qu'en Livewire : l'URL reste partageable et
+             le bouton retour du navigateur fonctionne, pour un simple filtre
+             qui n'a pas besoin de réactivité. --}}
+        <form method="GET" class="card mb-6 flex flex-wrap items-end gap-4 p-4">
+            <div>
+                <label for="campagne" class="label">Campagne</label>
+                <select id="campagne" name="campagne" onchange="this.form.submit()" class="field mt-1.5">
+                    <option value="">Toutes</option>
+                    @foreach ($campaignOptions as $campaign)
+                        <option value="{{ $campaign->id }}" @selected(($filters['campagne'] ?? '') == $campaign->id)>
+                            {{ $campaign->title }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+                <label for="plateforme" class="label">Plateforme</label>
+                <select id="plateforme" name="plateforme" onchange="this.form.submit()" class="field mt-1.5">
+                    <option value="">Toutes</option>
+                    @foreach (Platform::cases() as $platform)
+                        <option value="{{ $platform->value }}" @selected(($filters['plateforme'] ?? '') === $platform->value)>
+                            {{ $platform->label() }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+                <label for="statut" class="label">Statut</label>
+                <select id="statut" name="statut" onchange="this.form.submit()" class="field mt-1.5">
+                    <option value="">Tous</option>
+                    @foreach (ClipStatus::cases() as $status)
+                        <option value="{{ $status->value }}" @selected(($filters['statut'] ?? '') === $status->value)>
+                            {{ $status->label() }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            @if (array_filter($filters))
+                <a href="{{ route('clips.index') }}" class="text-sm font-medium text-ink-300 underline-offset-2 hover:text-ink-50 hover:underline">
+                    Réinitialiser
+                </a>
+            @endif
+        </form>
+
+        @if ($clips->isEmpty() && array_filter($filters))
+            <div class="card px-6 py-16 text-center">
+                <p class="font-display text-lg font-bold text-ink-50">Aucun clip pour ces filtres</p>
+                <a href="{{ route('clips.index') }}" class="btn-ghost mt-6">Réinitialiser les filtres</a>
+            </div>
+        @elseif ($clips->isEmpty())
             <div class="card px-6 py-16 text-center">
                 <p class="font-display text-lg font-bold text-ink-50">Aucun clip soumis</p>
                 <p class="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-300">
@@ -29,8 +85,18 @@
             <div class="space-y-3">
                 @foreach ($clips as $clip)
                     <a href="{{ route('clips.show', $clip) }}"
-                       class="flex flex-wrap items-center justify-between gap-4 card p-5 transition hover:-translate-y-0.5 hover:shadow-lifted">
-                        <div class="min-w-0">
+                       class="flex flex-wrap items-center gap-4 card p-5 transition hover:-translate-y-0.5 hover:shadow-lifted">
+                        <div class="h-16 w-12 flex-none overflow-hidden rounded-lg bg-ink-700">
+                            @if ($clip->thumbnail_url)
+                                <img src="{{ $clip->thumbnail_url }}" alt="" class="h-full w-full object-cover">
+                            @else
+                                <div class="flex h-full w-full items-center justify-center text-[10px] font-semibold uppercase text-ink-400">
+                                    {{ $clip->platform->label() }}
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="min-w-0 flex-1">
                             <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">
                                 {{ $clip->campaign?->creator?->name }}
                             </p>

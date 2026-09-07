@@ -134,6 +134,10 @@ class FakeSocialProvider implements SocialProvider
                     likes: $this->simulateEngagement($id, $views, .06, .02),
                     comments: $this->simulateEngagement($id, $views, .008, .004),
                     shares: $this->simulateEngagement($id, $views, .015, .01),
+                    // Une image de substitution stable par identifiant, pour
+                    // que la démonstration ait quelque chose à montrer là où
+                    // la vraie API renverrait une miniature.
+                    thumbnailUrl: $clip->thumbnail_url ?? "https://picsum.photos/seed/{$id}/400/500",
                 )];
             });
     }

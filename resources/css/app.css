@@ -91,6 +91,17 @@
     50% { background-position: 100% 50%; }
 }
 
+@keyframes stagger-slide-x {
+    from {
+        opacity: 0;
+        transform: translateX(24px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
 @layer components {
     /* Entrée échelonnée du hero : chaque bloc apparaît un cran après le
        précédent plutôt que tous en même temps. */
@@ -110,6 +121,27 @@
         animation-delay: var(--word-delay, 0ms);
     }
 
+    /* Même principe que .hero-word, réutilisé pour tout ce qui doit
+       apparaître en cascade (menu mobile, listes) : une classe utilitaire
+       plutôt qu'un nom lié au hero. Une animation CSS (pas une transition)
+       rejoue à chaque fois que l'élément repasse de display:none à visible —
+       donc à chaque ouverture du menu, pas seulement au premier chargement. */
+    .stagger-item {
+        opacity: 0;
+        animation: word-reveal .45s cubic-bezier(.16, 1, .3, 1) both;
+        animation-delay: var(--stagger-delay, 0ms);
+    }
+
+    /* Variante horizontale : le texte glisse de droite à gauche, dans le
+       même sens que le tiroir qui l'accueille. Le délai part typiquement à
+       1s pour laisser le tiroir finir d'arriver avant que le texte ne bouge
+       à son tour — deux mouvements distincts plutôt qu'un seul brouillon. */
+    .stagger-item-x {
+        opacity: 0;
+        animation: stagger-slide-x .4s ease-out both;
+        animation-delay: var(--stagger-delay, 0ms);
+    }
+
     /* Dégradé qui scintille en continu plutôt qu'un aplat de couleur figé :
        le seul mouvement du hero qui ne s'arrête jamais, discret sur un
        cycle de 4s. Arrive après les mots de la première ligne (délai .5s),
@@ -123,8 +155,13 @@
             gradient-shimmer 4s ease-in-out .5s infinite;
     }
 
+    /* bg-ink-800, pas ink-900 : sur le fond de page ink-950 par défaut, ink-900
+       ne se distinguait quasiment pas — deux nuances de noir presque
+       identiques, aucune carte ne se détachait. Le seul endroit qui misait sur
+       ink-900 exprès (encart en retrait sur un fond déjà clair) le précise en
+       ligne plutôt que de dépendre de cette valeur par défaut. */
     .card {
-        @apply rounded-2xl border border-ink-700 bg-ink-900 shadow-card;
+        @apply rounded-2xl border border-ink-700 bg-ink-800 shadow-card;
     }
 
     .label {
@@ -132,7 +169,7 @@
     }
 
     .hint {
-        @apply mt-1.5 text-xs leading-relaxed text-ink-400;
+        @apply mt-1.5 text-xs leading-relaxed text-ink-300;
     }
 
     .field {

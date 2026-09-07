@@ -3,7 +3,9 @@
 use App\Http\Controllers\Clipper\CampaignController;
 use App\Http\Controllers\Clipper\ClipController;
 use App\Http\Controllers\Clipper\DashboardController;
+use App\Http\Controllers\Clipper\AchievementController;
 use App\Http\Controllers\Clipper\EarningsController;
+use App\Http\Controllers\Clipper\LeaderboardController;
 use App\Http\Controllers\Clipper\PayoutMethodController;
 use App\Http\Controllers\Clipper\ProfileCompletionController;
 use App\Http\Controllers\Clipper\ReferralController;
@@ -133,6 +135,9 @@ Route::middleware(['auth', 'not.banned', 'role:clipper'])->group(function () use
         Route::get('/revenus', [EarningsController::class, 'index'])->name('earnings.index');
 
         Route::get('/parrainage', ReferralController::class)->name('referrals.index');
+
+        Route::get('/classement', [LeaderboardController::class, 'index'])->name('leaderboard.index');
+        Route::get('/succes', [AchievementController::class, 'index'])->name('achievements.index');
 
         Route::get('/revenus/paiement', [PayoutMethodController::class, 'edit'])->name('payout-method.edit');
         Route::patch('/revenus/paiement', [PayoutMethodController::class, 'update'])->name('payout-method.update');

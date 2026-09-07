@@ -23,7 +23,9 @@
 </head>
 <body class="bg-ink-900">
     <main>
-        <section x-data="{ mobileNavOpen: false }" class="relative isolate min-h-screen overflow-hidden border-b border-ink-800 bg-ink-900">
+        <section x-data="{ mobileNavOpen: false }"
+                 x-effect="document.body.classList.toggle('overflow-hidden', mobileNavOpen)"
+                 class="relative isolate min-h-screen overflow-hidden border-b border-ink-800 bg-ink-900">
             {{-- Halos doux façon aurore, à la place d'un trait qui coupait le
                  regard en diagonale : deux masses de couleur asymétriques,
                  sans ligne dure qui traverse le texte. --}}
@@ -55,7 +57,6 @@
                     <a href="{{ route('login') }}"
                        class="hidden items-center gap-2 rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-ink-950 transition-colors hover:bg-brand-400 md:inline-flex">
                         Se connecter
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
                     </a>
 
                     <button @click="mobileNavOpen = !mobileNavOpen"
@@ -66,12 +67,59 @@
                     </button>
                 </div>
 
-                <div x-show="mobileNavOpen" x-cloak x-transition
-                     class="mx-6 mt-3 flex flex-col overflow-hidden rounded-2xl bg-ink-900/95 ring-1 ring-ink-700 backdrop-blur md:hidden">
-                    <a href="#comment-ca-marche" @click="mobileNavOpen = false" class="border-b border-ink-800 px-5 py-3.5 text-sm font-medium text-ink-200 hover:text-ink-50">Comment ça marche</a>
-                    <a href="#pour-les-createurs" @click="mobileNavOpen = false" class="border-b border-ink-800 px-5 py-3.5 text-sm font-medium text-ink-200 hover:text-ink-50">Pour les créateurs</a>
-                    <a href="#faq" @click="mobileNavOpen = false" class="border-b border-ink-800 px-5 py-3.5 text-sm font-medium text-ink-200 hover:text-ink-50">FAQ</a>
-                    <a href="{{ route('login') }}" class="px-5 py-3.5 text-sm font-semibold text-brand-400">Se connecter</a>
+                {{-- Rideau : assombrit le reste de la page et referme le
+                     tiroir au clic, comme n'importe quel panneau mobile. --}}
+                <div x-show="mobileNavOpen" x-cloak
+                     x-transition:enter="transition-opacity ease-out duration-300"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition-opacity ease-in duration-200"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     @click="mobileNavOpen = false"
+                     class="fixed inset-0 z-40 bg-ink-950/70 backdrop-blur-sm md:hidden"></div>
+
+                {{-- Tiroir : glisse depuis la droite plutôt qu'un menu qui
+                     dépliait la page vers le bas — plus proche de ce qu'un
+                     visiteur attend d'un menu mobile aujourd'hui. --}}
+                <div x-show="mobileNavOpen" x-cloak
+                     x-transition:enter="transition-transform ease-out duration-300"
+                     x-transition:enter-start="translate-x-full"
+                     x-transition:enter-end="translate-x-0"
+                     x-transition:leave="transition-transform ease-in duration-200"
+                     x-transition:leave-start="translate-x-0"
+                     x-transition:leave-end="translate-x-full"
+                     class="fixed inset-y-0 right-0 z-50 flex w-[80%] max-w-xs flex-col bg-ink-900 ring-1 ring-ink-800 md:hidden">
+                    <div class="flex items-center justify-between px-6 pt-6">
+                        <x-brand-mark />
+                        <button @click="mobileNavOpen = false"
+                                class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-ink-50/5 ring-1 ring-ink-50/10"
+                                aria-label="Fermer le menu">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-ink-100"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        </button>
+                    </div>
+
+                    {{-- Le texte glisse de droite à gauche, dans le sens
+                         d'arrivée du tiroir, avec un temps de retard : il ne
+                         bouge qu'une fois le tiroir posé, pas en même temps
+                         que lui. --}}
+                    <nav class="mt-6 flex flex-1 flex-col px-3">
+                        <a href="#comment-ca-marche" @click="mobileNavOpen = false"
+                           class="stagger-item-x border-b border-ink-800 px-3 py-4 text-xl font-medium text-ink-200 hover:text-ink-50"
+                           style="--stagger-delay: 280ms">Comment ça marche</a>
+                        <a href="#pour-les-createurs" @click="mobileNavOpen = false"
+                           class="stagger-item-x border-b border-ink-800 px-3 py-4 text-xl font-medium text-ink-200 hover:text-ink-50"
+                           style="--stagger-delay: 340ms">Pour les créateurs</a>
+                        <a href="#faq" @click="mobileNavOpen = false"
+                           class="stagger-item-x border-b border-ink-800 px-3 py-4 text-xl font-medium text-ink-200 hover:text-ink-50"
+                           style="--stagger-delay: 400ms">FAQ</a>
+
+                        <a href="{{ route('login') }}"
+                           class="stagger-item-x mt-auto mb-6 inline-flex items-center justify-center gap-2 rounded-full bg-brand-500 px-5 py-3.5 text-xl font-semibold text-ink-950"
+                           style="--stagger-delay: 460ms">
+                            Se connecter
+                        </a>
+                    </nav>
                 </div>
             </header>
 
@@ -94,9 +142,8 @@
                      glissé en simple lien plutôt que noyé dans la rangée. --}}
                 <div class="animate-fade-slide-in-4 mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4" style="animation-delay: .7s">
                     <a href="{{ route('register') }}"
-                       class="group inline-flex items-center gap-2 rounded-full bg-brand-500 px-7 py-3.5 text-base font-semibold text-ink-950 shadow-glow transition-transform hover:-translate-y-0.5 hover:bg-brand-400">
+                       class="inline-flex items-center gap-2 rounded-full bg-brand-500 px-7 py-3.5 text-base font-semibold text-ink-950 shadow-glow transition-transform hover:-translate-y-0.5 hover:bg-brand-400">
                         Je suis clippeur
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:translate-x-0.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                     </a>
                     <a href="{{ route('register', ['profil' => 'creator']) }}"
                        class="inline-flex items-center gap-2 rounded-full bg-ink-50/10 px-7 py-3.5 text-base font-medium text-ink-50 ring-1 ring-ink-50/15 backdrop-blur transition-colors hover:bg-ink-50/15">
@@ -128,12 +175,6 @@
                 </div>
             </div>
 
-            {{-- Repère de défilement : signale qu'il y a du contenu sous le
-                 pli sans dépendre d'une barre de scroll visible. --}}
-            <a href="#comment-ca-marche" aria-label="Voir la suite"
-               class="absolute bottom-8 left-1/2 z-10 hidden -translate-x-1/2 animate-bounce text-ink-500 transition-colors hover:text-brand-400 sm:block">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
-            </a>
         </section>
 
         <section id="comment-ca-marche" class="relative mx-auto max-w-6xl px-6 py-24 sm:py-32">
@@ -148,31 +189,21 @@
                     [
                         'Choisissez une campagne',
                         "Chaque campagne affiche son cachet pour 1000 vues, son brief, et le budget qu'il lui reste en temps réel.",
-                        '<path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5Z"/>',
                     ],
                     [
                         'Publiez et soumettez',
                         "Vous publiez depuis votre propre compte, comme d'habitude. Il suffit ensuite de coller le lien de la publication.",
-                        '<rect x="2" y="4" width="20" height="16" rx="3"/><path d="m10 9 5 3-5 3V9Z"/>',
                     ],
                     [
                         'Suivez vos gains',
                         'Vos vues sont relevées automatiquement et créditées au fil du temps. Retrait sur PayPal dès 20 €.',
-                        '<path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-4 4"/>',
                     ],
-                ] as $index => [$title, $text, $icon])
+                ] as $index => [$title, $text])
                     <li data-reveal style="--reveal-delay: {{ $index * 120 }}ms"
-                        class="card group relative overflow-hidden bg-ink-800 p-6 transition-transform hover:-translate-y-1 hover:shadow-lifted">
-                        <span aria-hidden="true" class="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-brand-500/0 blur-2xl transition-colors group-hover:bg-brand-500/15"></span>
+                        class="card relative overflow-hidden bg-ink-800 p-6 transition-transform hover:-translate-y-1 hover:shadow-lifted">
+                        <span class="font-serif text-4xl font-semibold text-brand-500/70">{{ sprintf('%02d', $index + 1) }}</span>
 
-                        <div class="flex items-center gap-3">
-                            <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500/15 text-brand-400">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">{!! $icon !!}</svg>
-                            </span>
-                            <span class="font-display text-sm font-bold text-ink-500">Étape {{ $index + 1 }}</span>
-                        </div>
-
-                        <h3 class="mt-5 font-display text-lg font-bold text-ink-50">{{ $title }}</h3>
+                        <h3 class="mt-4 font-display text-lg font-bold text-ink-50">{{ $title }}</h3>
                         <p class="mt-2 text-sm leading-relaxed text-ink-200">{{ $text }}</p>
                     </li>
                 @endforeach
@@ -182,20 +213,29 @@
         <section id="chiffres" class="border-t border-ink-800 bg-ink-800">
             <div class="mx-auto grid max-w-6xl gap-8 px-6 py-20 sm:grid-cols-3">
                 @foreach ([
-                    ['<path d="M16.6 5.82s.51.5 0 0A4.278 4.278 0 0 1 15.54 3h-3.09v12.4a2.592 2.592 0 0 1-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88.09-3.24-1.48Z" fill="currentColor" stroke="none"/>', 'TikTok · YouTube · Instagram', 'Liez vos comptes en un clic'],
-                    ['<path d="M12 2v4"/><path d="m16.24 7.76 2.83-2.83"/><path d="M18 12h4"/><path d="m16.24 16.24 2.83 2.83"/><path d="M12 18v4"/><path d="m4.93 19.07 2.83-2.83"/><path d="M2 12h4"/><path d="m4.93 4.93 2.83 2.83"/>', 'Aux 1000 vues', 'Cachet annoncé avant de publier'],
-                    ['<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>', 'PayPal', 'Retrait à partir de 20 €'],
-                ] as $index => [$icon, $value, $label])
-                    <div data-reveal style="--reveal-delay: {{ $index * 120 }}ms" class="flex items-start gap-4">
-                        <span class="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-brand-500/10 text-brand-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">{!! $icon !!}</svg>
-                        </span>
-                        <div>
-                            <p class="font-display text-2xl font-bold text-ink-50">{{ $value }}</p>
-                            <p class="mt-1 text-sm text-ink-200">{{ $label }}</p>
-                        </div>
+                    ['TikTok · YouTube · Instagram', 'Liez vos comptes en un clic'],
+                    ['Aux 1000 vues', 'Cachet annoncé avant de publier'],
+                    ['PayPal', 'Retrait à partir de 20 €'],
+                ] as $index => [$value, $label])
+                    <div data-reveal style="--reveal-delay: {{ $index * 120 }}ms">
+                        <p class="font-display text-2xl font-bold text-ink-50">{{ $value }}</p>
+                        <p class="mt-1 text-sm text-ink-200">{{ $label }}</p>
                     </div>
                 @endforeach
+            </div>
+        </section>
+
+        {{-- Photo pleine largeur : coupe le rythme des sections en grille et
+             donne un visage réel à ce qui reste sinon très abstrait. --}}
+        <section class="relative isolate overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=1920&q=70"
+                 alt="Studio d'enregistrement"
+                 class="h-72 w-full object-cover sm:h-96">
+            <div aria-hidden="true" class="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink-900 via-ink-900/40 to-transparent"></div>
+            <div data-reveal class="pointer-events-none absolute inset-x-0 bottom-0 mx-auto max-w-6xl px-6 pb-8">
+                <p class="max-w-md font-display text-xl font-bold text-ink-50 sm:text-2xl">
+                    Des artistes et des streamers qui misent sur de vrais clippeurs, pas sur des vues achetées.
+                </p>
             </div>
         </section>
 
@@ -210,16 +250,13 @@
 
             <div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 @foreach ([
-                    ['Aucune audience minimum', "Un compte tout neuf peut publier : c'est la vue qui est payée, pas le nombre d'abonnés.", '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'],
-                    ['Budget transparent', "Chaque campagne affiche son budget restant en temps réel, avant que vous ne publiiez quoi que ce soit.", '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 2v4"/><path d="M16 2v4"/>'],
-                    ['Vues vérifiées automatiquement', "Les compteurs sont relevés directement sur vos publications, sans déclaration manuelle à faire.", '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>'],
-                    ['Retrait dès 20 €', 'Les gains se cumulent au fil des vues et se retirent sur PayPal sans palier élevé à atteindre.', '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>'],
-                ] as $index => [$title, $text, $icon])
+                    ['Aucune audience minimum', "Un compte tout neuf peut publier : c'est la vue qui est payée, pas le nombre d'abonnés."],
+                    ['Budget transparent', "Chaque campagne affiche son budget restant en temps réel, avant que vous ne publiiez quoi que ce soit."],
+                    ['Vues vérifiées automatiquement', "Les compteurs sont relevés directement sur vos publications, sans déclaration manuelle à faire."],
+                    ['Retrait dès 20 €', 'Les gains se cumulent au fil des vues et se retirent sur PayPal sans palier élevé à atteindre.'],
+                ] as $index => [$title, $text])
                     <div data-reveal style="--reveal-delay: {{ $index * 100 }}ms" class="card bg-ink-800 p-6">
-                        <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500/15 text-brand-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">{!! $icon !!}</svg>
-                        </span>
-                        <h3 class="mt-5 font-display text-base font-bold text-ink-50">{{ $title }}</h3>
+                        <h3 class="font-display text-base font-bold text-ink-50">{{ $title }}</h3>
                         <p class="mt-2 text-sm leading-relaxed text-ink-200">{{ $text }}</p>
                     </div>
                 @endforeach
@@ -232,25 +269,21 @@
             <div class="mx-auto grid max-w-6xl items-center gap-12 px-6 py-24 sm:py-32 lg:grid-cols-2">
                 <div data-reveal>
                     <span class="chip bg-brand-500/15 text-brand-300">Pour les créateurs</span>
-                    <h2 class="mt-4 font-display text-3xl font-bold text-ink-50 sm:text-4xl">Votre musique, portée par de vrais clippeurs</h2>
+                    <h2 class="mt-4 font-display text-3xl font-bold text-ink-50 sm:text-4xl">Votre contenu, porté par de vrais clippeurs</h2>
                     <p class="mt-4 leading-relaxed text-ink-200">
-                        Lancez une campagne, fixez votre cachet aux 1000 vues et votre budget total.
-                        Les clippeurs publient depuis leurs propres comptes TikTok, YouTube et Instagram :
-                        vous ne payez que pour les vues réellement générées, jamais à l'avance.
+                        Artiste ou streamer, lancez une campagne, fixez votre cachet aux 1000 vues et
+                        votre budget total. Les clippeurs publient depuis leurs propres comptes TikTok,
+                        YouTube et Instagram : vous ne payez que pour les vues réellement générées,
+                        jamais à l'avance.
                     </p>
 
-                    <ul class="mt-8 space-y-4">
+                    <ul class="mt-8 space-y-4 border-l-2 border-brand-500/40 pl-5">
                         @foreach ([
                             'Budget maîtrisé — vous ne dépensez jamais plus que ce que vous avez fixé',
                             'Diffusion sur trois plateformes sans gérer un seul compte vous-même',
                             'Suivi des clips et des vues consultable à tout moment depuis votre espace',
                         ] as $point)
-                            <li class="flex items-start gap-3">
-                                <span class="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full bg-brand-500/15 text-brand-400">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                                </span>
-                                <span class="text-sm leading-relaxed text-ink-200">{{ $point }}</span>
-                            </li>
+                            <li class="text-sm leading-relaxed text-ink-200">{{ $point }}</li>
                         @endforeach
                     </ul>
 
@@ -261,9 +294,14 @@
 
                 <div data-reveal style="--reveal-delay: 120ms" class="relative">
                     <div aria-hidden="true" class="pointer-events-none absolute -inset-6 rounded-full bg-brand-500/10 blur-3xl"></div>
-                    <div class="card relative space-y-4 p-6">
+
+                    <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=900&q=70"
+                         alt="Artiste sur scène"
+                         class="relative mb-4 h-48 w-full rounded-2xl object-cover shadow-lifted sm:h-56">
+
+                    <div class="card relative space-y-4 bg-ink-900 p-6">
                         <div class="flex items-center justify-between">
-                            <span class="text-sm font-semibold text-ink-50">Campagne — Nouvel EP</span>
+                            <span class="text-sm font-semibold text-ink-50">Campagne — Lancement</span>
                             <span class="chip-ok">Active</span>
                         </div>
                         <div>

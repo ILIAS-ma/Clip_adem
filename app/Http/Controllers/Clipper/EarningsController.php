@@ -34,7 +34,9 @@ class EarningsController extends Controller
             'lockedCents' => $clipper->lockedPayoutCents(),
             'minimumCents' => config('clipping.payouts.minimum_cents'),
 
-            'payouts' => $clipper->payouts()->latest('requested_at')->get(),
+            // Paginé : l'historique s'allonge indéfiniment, contrairement au
+            // reste de la page qui ne montre que l'état actuel.
+            'payouts' => $clipper->payouts()->latest('requested_at')->paginate(10, pageName: 'retraits'),
 
             // Historique des crédits, lu dans le grand livre : c'est la seule
             // source dont les chiffres sont auditables.

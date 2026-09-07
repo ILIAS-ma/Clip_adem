@@ -44,7 +44,7 @@
             <x-level-card class="lg:col-span-2" :progression="$progression" />
 
             <div class="card p-6">
-                <p class="text-sm font-medium text-ink-400">Comment gagner de l'XP</p>
+                <p class="text-sm font-medium text-ink-300">Comment gagner de l'XP</p>
                 <ul class="mt-4 space-y-3 text-sm">
                     <li class="flex items-baseline justify-between gap-3">
                         <span class="text-ink-300">Chaque vue rémunérée</span>
@@ -78,6 +78,30 @@
                 </p>
             </div>
         </div>
+
+        @if ($upcomingCampaigns->isNotEmpty())
+            {{-- Anticiper plutôt que découvrir une campagne déjà à moitié
+                 consommée par d'autres au moment où elle s'ouvre. --}}
+            <div class="card">
+                <div class="border-b border-ink-700 px-6 py-4">
+                    <h2 class="font-display text-lg font-bold text-ink-50">Campagnes à venir</h2>
+                    <p class="mt-0.5 text-sm text-ink-300">Déjà budgétées, pas encore ouvertes.</p>
+                </div>
+                <ul class="divide-y divide-ink-700">
+                    @foreach ($upcomingCampaigns as $item)
+                        <li class="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
+                            <div>
+                                <p class="font-semibold text-ink-50">{{ $item['campaign']->title }}</p>
+                                <p class="mt-0.5 text-sm text-ink-400">{{ $item['campaign']->creator?->name }}</p>
+                            </div>
+                            <span class="chip-wait">
+                                Ouvre {{ $item['opensAt']->isFuture() ? $item['opensAt']->diffForHumans() : "aujourd'hui" }}
+                            </span>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
         @if ($accountsCount === 0)
             {{-- Sans compte lié, rien n'est possible : c'est la première action

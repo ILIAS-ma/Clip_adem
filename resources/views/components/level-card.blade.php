@@ -20,7 +20,7 @@
 <div {{ $attributes->merge(['class' => 'card p-6']) }}>
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-            <p class="text-sm font-medium text-ink-400">Votre niveau</p>
+            <p class="text-sm font-medium text-ink-300">Votre niveau</p>
             <p class="mt-1.5 flex items-center gap-3">
                 <span class="font-display text-2xl font-bold text-ink-50">{{ $level->label() }}</span>
                 <span class="chip {{ $tone }}">{{ Money::views($progression->careerXp) }} XP</span>
@@ -38,7 +38,7 @@
         <div class="mt-5">
             <div class="flex items-baseline justify-between text-sm">
                 <span class="text-ink-300">Prochain niveau : {{ $next->label() }}</span>
-                <span class="tabular text-ink-400">
+                <span class="tabular text-ink-300">
                     {{ Money::views($progression->xpToNextLevel()) }} XP restants
                 </span>
             </div>

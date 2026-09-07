@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 #[Fillable([
     'campaign_id', 'participation_id', 'user_id', 'social_account_id',
-    'platform', 'external_post_id', 'url', 'caption', 'duration_seconds',
+    'platform', 'external_post_id', 'url', 'caption', 'thumbnail_url', 'duration_seconds',
     'posted_at', 'submitted_at', 'status', 'rejection_reason',
     'compliance_status', 'compliance', 'views_total', 'last_synced_at',
 ])]

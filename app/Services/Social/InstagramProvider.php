@@ -114,7 +114,7 @@ class InstagramProvider implements SocialProvider
             ->acceptJson()
             ->get('https://graph.facebook.com/'.self::VERSION.'/', [
                 'ids' => implode(',', $externalIds),
-                'fields' => 'id,caption,media_type,timestamp,permalink,insights.metric(plays,reach)',
+                'fields' => 'id,caption,media_type,timestamp,permalink,thumbnail_url,media_url,insights.metric(plays,reach)',
             ]);
 
         if ($response->failed()) {
@@ -131,6 +131,9 @@ class InstagramProvider implements SocialProvider
                     durationSeconds: null, // Non exposé par Graph pour les Reels.
                     postedAt: isset($media['timestamp']) ? Carbon::parse($media['timestamp']) : null,
                     ownerExternalId: $account->external_account_id,
+                    // Les Reels exposent thumbnail_url ; les photos n'ont que
+                    // media_url, qui est alors l'image elle-même.
+                    thumbnailUrl: $media['thumbnail_url'] ?? $media['media_url'] ?? null,
                 ),
             ]);
     }
