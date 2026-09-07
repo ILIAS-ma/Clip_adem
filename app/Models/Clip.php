@@ -82,9 +82,18 @@ class Clip extends Model
         return $this->hasDisappeared() && $this->earned_cents > 0;
     }
 
+    /**
+     * La campagne du clip, même archivée.
+     *
+     * Sans `withTrashed()`, supprimer une campagne rendait `null` sur tous ses
+     * clips : la page « Mes clips » tombait alors en erreur 500, et le
+     * clippeur perdait l'historique de ce qu'il avait publié — y compris les
+     * sommes qu'il avait gagnées. Une campagne se retire du catalogue, elle
+     * n'efface pas le travail de ceux qui y ont participé.
+     */
     public function campaign(): BelongsTo
     {
-        return $this->belongsTo(Campaign::class);
+        return $this->belongsTo(Campaign::class)->withTrashed();
     }
 
     public function user(): BelongsTo
