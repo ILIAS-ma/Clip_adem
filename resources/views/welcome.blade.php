@@ -133,7 +133,7 @@
                 </h1>
 
                 <p class="animate-fade-slide-in-3 mx-auto mt-7 max-w-xl text-lg leading-relaxed text-ink-200" style="animation-delay: .55s">
-                    Choisissez une campagne, publiez votre clip sur TikTok, YouTube ou Instagram,
+                    Choisissez une campagne, publiez votre clip sur TikTok,
                     et touchez un cachet à chaque palier de vues — jusqu'à épuisement du budget.
                 </p>
 
@@ -155,21 +155,13 @@
                     J'ai déjà un compte
                 </a>
 
-                {{-- Bandeau de plateformes supportées. --}}
+                {{-- Bandeau de plateforme supportée. --}}
                 <div class="animate-fade-slide-in-4 mx-auto mt-16 max-w-lg border-t border-ink-800/80 pt-10">
-                    <p class="text-xs font-medium uppercase tracking-wider text-ink-500">Publiez depuis vos comptes habituels</p>
-                    <div class="mt-5 grid grid-cols-3 items-center justify-items-center gap-3">
-                        <span class="flex h-12 w-full items-center justify-center gap-2 rounded-full text-ink-200 ring-1 ring-ink-800 transition-all hover:text-ink-50 hover:ring-brand-500/50">
+                    <p class="text-xs font-medium uppercase tracking-wider text-ink-500">Publiez depuis votre compte habituel</p>
+                    <div class="mt-5 flex items-center justify-center">
+                        <span class="flex h-12 w-full max-w-[10rem] items-center justify-center gap-2 rounded-full text-ink-200 ring-1 ring-ink-800 transition-all hover:text-ink-50 hover:ring-brand-500/50">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.82s.51.5 0 0A4.278 4.278 0 0 1 15.54 3h-3.09v12.4a2.592 2.592 0 0 1-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88.09-3.24-1.48Z"/></svg>
                             <span class="text-sm font-semibold">TikTok</span>
-                        </span>
-                        <span class="flex h-12 w-full items-center justify-center gap-2 rounded-full text-ink-200 ring-1 ring-ink-800 transition-all hover:text-ink-50 hover:ring-brand-500/50">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M21.58 7.19a2.75 2.75 0 0 0-1.94-1.95C17.9 4.75 12 4.75 12 4.75s-5.9 0-7.64.49A2.75 2.75 0 0 0 2.42 7.2 28.6 28.6 0 0 0 2 12a28.6 28.6 0 0 0 .42 4.81 2.75 2.75 0 0 0 1.94 1.95c1.74.49 7.64.49 7.64.49s5.9 0 7.64-.49a2.75 2.75 0 0 0 1.94-1.95A28.6 28.6 0 0 0 22 12a28.6 28.6 0 0 0-.42-4.81ZM10 15.02V8.98L15.27 12 10 15.02Z"/></svg>
-                            <span class="text-sm font-semibold">YouTube</span>
-                        </span>
-                        <span class="flex h-12 w-full items-center justify-center gap-2 rounded-full text-ink-200 ring-1 ring-ink-800 transition-all hover:text-ink-50 hover:ring-brand-500/50">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="17.4" cy="6.6" r="1" fill="currentColor" stroke="none"/></svg>
-                            <span class="text-sm font-semibold">Instagram</span>
                         </span>
                     </div>
                 </div>
@@ -213,7 +205,7 @@
         <section id="chiffres" class="border-t border-ink-800 bg-ink-800">
             <div class="mx-auto grid max-w-6xl gap-8 px-6 py-20 sm:grid-cols-3">
                 @foreach ([
-                    ['TikTok · YouTube · Instagram', 'Liez vos comptes en un clic'],
+                    ['TikTok', 'Liez votre compte en un clic'],
                     ['Aux 1000 vues', 'Cachet annoncé avant de publier'],
                     ['PayPal', 'Retrait à partir de 20 €'],
                 ] as $index => [$value, $label])
@@ -272,9 +264,8 @@
                     <h2 class="mt-4 font-display text-3xl font-bold text-ink-50 sm:text-4xl">Votre contenu, porté par de vrais clippeurs</h2>
                     <p class="mt-4 leading-relaxed text-ink-200">
                         Artiste ou streamer, lancez une campagne, fixez votre cachet aux 1000 vues et
-                        votre budget total. Les clippeurs publient depuis leurs propres comptes TikTok,
-                        YouTube et Instagram : vous ne payez que pour les vues réellement générées,
-                        jamais à l'avance.
+                        votre budget total. Les clippeurs publient depuis leur propre compte TikTok :
+                        vous ne payez que pour les vues réellement générées, jamais à l'avance.
                     </p>
 
                     <ul class="mt-8 space-y-4 border-l-2 border-brand-500/40 pl-5">
@@ -341,7 +332,7 @@
                     ['Comment mes vues sont-elles comptées ?', "Une fois votre clip soumis, la plateforme relève automatiquement le compteur de vues de votre publication à intervalles réguliers, sans action de votre part."],
                     ['Quand suis-je payé ?', "Vos gains sont crédités sur votre solde au fil des relevés de vues. Vous pouvez retirer sur PayPal dès que votre solde atteint 20 €."],
                     ['Que se passe-t-il quand le budget d\'une campagne est épuisé ?', "La campagne se ferme aux nouvelles soumissions. Les clips déjà publiés continuent d'être suivis, mais les vues generées après épuisement du budget ne sont plus rémunérées."],
-                    ['Puis-je publier sur plusieurs plateformes pour la même campagne ?', "Oui, tant que le brief de la campagne l'autorise : chaque plateforme liée (TikTok, YouTube, Instagram) peut recevoir sa propre publication."],
+                    ['Quelles plateformes sont disponibles ?', "TikTok pour l'instant. YouTube et Instagram arriveront ensuite — votre compte fonctionnera de la même façon le jour où ils ouvrent."],
                     ['Y a-t-il des frais pour les clippeurs ?', "Non, l'inscription et la participation aux campagnes sont gratuites pour les clippeurs. Seul le retrait via PayPal peut être soumis aux frais habituels de PayPal."],
                 ] as $index => [$question, $answer])
                     <div>

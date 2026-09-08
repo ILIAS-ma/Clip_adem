@@ -111,7 +111,7 @@
                     <div class="flex-1 min-w-[16rem]">
                         <h2 class="font-display text-xl font-bold text-ink-50">Liez un compte pour commencer</h2>
                         <p class="mt-2 max-w-lg text-sm leading-relaxed text-ink-300">
-                            TikTok, YouTube ou Instagram. C'est par ce compte que vos vues seront relevées
+                            TikTok. C'est par ce compte que vos vues seront relevées
                             et vos gains calculés — sans lui, vous ne pouvez pas rejoindre de campagne.
                         </p>
                     </div>

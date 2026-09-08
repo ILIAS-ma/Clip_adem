@@ -46,14 +46,14 @@
                     <span class="bg-gradient-to-r from-brand-300 via-brand-500 to-brand-300 bg-clip-text text-transparent">vos vues font le reste.</span>
                 </h1>
                 <p class="mt-6 text-lg leading-relaxed text-ink-200">
-                    Choisissez une campagne, publiez sur TikTok, YouTube ou Instagram, et touchez
+                    Choisissez une campagne, publiez sur TikTok, et touchez
                     un cachet à chaque palier de vues.
                 </p>
 
-                {{-- Un mot qui tourne plutôt qu'une liste de chiffres figée :
-                     montre que la plateforme couvre plusieurs plateformes
-                     sans occuper plus de place qu'une ligne de texte. --}}
-                <div x-data="{ words: ['TikTok', 'YouTube', 'Instagram'], index: 0 }"
+                {{-- Une seule plateforme pour l'instant : plus la peine de
+                     faire tourner un mot, YouTube et Instagram viendront
+                     s'ajouter à la liste plus tard. --}}
+                <div x-data="{ words: ['TikTok'], index: 0 }"
                      x-init="setInterval(() => index = (index + 1) % words.length, 2200)"
                      class="mt-12 flex flex-wrap items-baseline gap-x-2 border-t border-ink-700 pt-8 text-lg text-ink-200">
                     <span>Payé pour vos clips sur</span>
