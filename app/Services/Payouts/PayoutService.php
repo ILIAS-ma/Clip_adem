@@ -164,11 +164,13 @@ class PayoutService
     }
 
     /**
-     * Pointe un virement bancaire exécuté depuis la banque.
+     * Pointe un versement exécuté à la main — virement bancaire depuis la
+     * banque, ou PayPal envoyé directement par un administrateur tant que
+     * clipping.payouts.paypal_automatic est désactivé.
      *
      * C'est le pendant manuel de `sendApproved()` : la plateforme n'a aucun
-     * moyen de savoir qu'un virement SEPA est parti, quelqu'un doit le lui
-     * dire. La trace de modération dit qui l'a dit et quand.
+     * moyen de savoir qu'un virement est parti, quelqu'un doit le lui dire.
+     * La trace de modération dit qui l'a dit et quand.
      */
     public function markPaid(Payout $payout, ?User $by = null, ?string $reference = null): Payout
     {
@@ -189,9 +191,11 @@ class PayoutService
             'paypal_payout_item_id' => $reference ?: $payout->paypal_payout_item_id,
         ])->save();
 
+        $label = $payout->payoutMethod() === PayoutMethod::PayPal ? 'PayPal envoyé' : 'Virement bancaire exécuté';
+
         ModerationLog::record(ModerationAction::PayoutApproved, $payout, $by, $reference
-            ? 'Virement bancaire exécuté, référence '.$reference
-            : 'Virement bancaire exécuté');
+            ? $label.', référence '.$reference
+            : $label);
 
         $this->tellTheClipper($payout, new PayoutPaid($payout));
 

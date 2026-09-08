@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Enums\PayoutMethod;
 use App\Models\Payout;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -38,11 +39,13 @@ class PayoutPaid extends Notification implements ShouldQueue
             ->greeting('Bonjour '.$notifiable->displayName().',')
             ->line('Votre retrait de **'.$this->euros().'** vient d’être versé sur '
                 .$this->payout->destinationLabel().'.')
-            // Le délai bancaire évite le message « je n'ai rien reçu » deux
-            // heures après : l'argent est parti, il n'est pas encore arrivé.
-            ->line($this->payout->isManual()
-                ? 'Comptez 1 à 3 jours ouvrés avant de le voir sur votre compte.'
-                : 'Il devrait apparaître sur votre compte PayPal sous quelques minutes.')
+            // Le délai évite le message « je n'ai rien reçu » deux heures
+            // après : l'argent est parti, il n'est pas encore arrivé. Un
+            // envoi PayPal manuel arrive aussi vite qu'un envoi automatique
+            // — seule la façon dont il a été déclenché diffère.
+            ->line($this->payout->payoutMethod() === PayoutMethod::PayPal
+                ? 'Il devrait apparaître sur votre compte PayPal sous quelques minutes.'
+                : 'Comptez 1 à 3 jours ouvrés avant de le voir sur votre compte.')
             ->action('Voir mes revenus', route('earnings.index'));
     }
 

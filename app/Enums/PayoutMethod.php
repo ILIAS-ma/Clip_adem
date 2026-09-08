@@ -25,17 +25,24 @@ enum PayoutMethod: string
     public function hint(): string
     {
         return match ($this) {
-            self::PayPal => 'Versement automatique, sous 24 h après validation.',
+            self::PayPal => $this->isAutomatic()
+                ? 'Versement automatique, sous 24 h après validation.'
+                : 'Envoyé à la main par un administrateur, sous 24 à 48 h après validation.',
             self::BankTransfer => 'Virement SEPA, 1 à 3 jours ouvrés après validation.',
         };
     }
 
     /**
-     * Les virements PayPal partent tout seuls ; les virements bancaires sont
-     * exécutés par un humain depuis la banque, puis pointés dans le back-office.
+     * En principe, les virements PayPal partent tout seuls par lot via
+     * l'API Payouts ; les virements bancaires sont exécutés par un humain
+     * depuis la banque, puis pointés dans le back-office.
+     *
+     * En pratique, tant que l'app PayPal n'a pas ses identifiants Payouts
+     * vérifiés en production, PayPal suit le même chemin manuel qu'un
+     * virement bancaire — voir clipping.payouts.paypal_automatic.
      */
     public function isAutomatic(): bool
     {
-        return $this === self::PayPal;
+        return $this === self::PayPal && config('clipping.payouts.paypal_automatic');
     }
 }

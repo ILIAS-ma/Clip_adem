@@ -215,10 +215,32 @@ class BankPayoutTest extends TestCase
     }
 
     #[Test]
-    public function a_paypal_payout_cannot_be_settled_by_hand(): void
+    public function a_paypal_payout_can_be_settled_by_hand_while_the_app_has_no_paypal_keys(): void
     {
-        // Sinon un administrateur pourrait déclarer versé un retrait que PayPal
-        // n'a jamais envoyé, et le solde du clippeur disparaîtrait.
+        // Tant que clipping.payouts.paypal_automatic est désactivé (défaut),
+        // PayPal suit le même chemin manuel qu'un virement bancaire : un
+        // administrateur l'envoie lui-même, puis le pointe ici.
+        config(['clipping.payouts.paypal_automatic' => false]);
+
+        $payout = Payout::factory()->create([
+            'status' => PayoutStatus::Approved,
+            'method' => PayoutMethod::PayPal,
+        ]);
+
+        app(PayoutService::class)->markPaid($payout);
+
+        $this->assertSame(PayoutStatus::Paid, $payout->fresh()->status);
+    }
+
+    #[Test]
+    public function a_paypal_payout_cannot_be_settled_by_hand_once_automatic_sending_is_enabled(): void
+    {
+        // Une fois de vraies clés PayPal Payouts en place, un administrateur
+        // ne doit plus pouvoir déclarer versé un retrait que PayPal n'a
+        // jamais réellement envoyé : le solde du clippeur disparaîtrait pour
+        // de vrai sans qu'aucun argent ne soit parti.
+        config(['clipping.payouts.paypal_automatic' => true]);
+
         $payout = Payout::factory()->create([
             'status' => PayoutStatus::Approved,
             'method' => PayoutMethod::PayPal,

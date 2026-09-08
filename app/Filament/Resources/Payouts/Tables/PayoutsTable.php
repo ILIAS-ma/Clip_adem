@@ -118,7 +118,9 @@ class PayoutsTable
             ->visible(fn (Payout $record) => $record->status === PayoutStatus::Requested)
             ->requiresConfirmation()
             ->modalDescription(fn (Payout $record) => $record->isManual()
-                ? 'Le virement sera à exécuter depuis la banque, puis à pointer ici.'
+                ? ($record->payoutMethod() === PayoutMethod::PayPal
+                    ? 'À envoyer vous-même depuis PayPal, puis à pointer ici.'
+                    : 'Le virement sera à exécuter depuis la banque, puis à pointer ici.')
                 : 'Le retrait partira au prochain envoi de lot PayPal.')
             ->action(function (Payout $record) {
                 app(PayoutService::class)->approve($record, auth()->user());
@@ -137,15 +139,19 @@ class PayoutsTable
     protected static function markPaidAction(): Action
     {
         return Action::make('markPaid')
-            ->label('Virement effectué')
+            ->label(fn (Payout $record) => $record->payoutMethod() === PayoutMethod::PayPal
+                ? 'PayPal envoyé'
+                : 'Virement effectué')
             ->icon('heroicon-o-banknotes')
             ->color('success')
             ->visible(fn (Payout $record) => $record->isManual()
                 && $record->status === PayoutStatus::Approved)
             ->schema([
                 TextInput::make('reference')
-                    ->label('Référence du virement')
-                    ->helperText('Celle du relevé bancaire. Facultative, mais elle vous sauvera un jour.')
+                    ->label(fn (Payout $record) => $record->payoutMethod() === PayoutMethod::PayPal
+                        ? 'Référence de la transaction PayPal'
+                        : 'Référence du virement')
+                    ->helperText('Celle du relevé, PayPal ou bancaire. Facultative, mais elle vous sauvera un jour.')
                     ->maxLength(64),
             ])
             ->action(function (Payout $record, array $data) {

@@ -214,6 +214,13 @@ return [
 
         // Nombre maximum d'items dans un lot PayPal Payouts.
         'batch_size' => 250,
+
+        // Tant que l'app PayPal n'a pas ses identifiants Payouts en
+        // production, un virement « PayPal » est exécuté à la main par un
+        // administrateur (comme un virement bancaire), pas envoyé par lot
+        // via l'API. À passer à true dès que PAYPAL_CLIENT_ID/SECRET et
+        // PAYPAL_WEBHOOK_ID sont en place et vérifiés.
+        'paypal_automatic' => env('PAYPAL_AUTOMATIC_PAYOUTS', false),
     ],
 
 ];
