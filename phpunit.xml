@@ -70,8 +70,10 @@
         <env name="TIKTOK_SITE_VERIFICATION" value=""/>
         <env name="YOUTUBE_CLIENT_ID" value=""/>
         <env name="YOUTUBE_CLIENT_SECRET" value=""/>
+        <env name="YOUTUBE_REDIRECT_URI" value=""/>
         <env name="INSTAGRAM_APP_ID" value=""/>
         <env name="INSTAGRAM_APP_SECRET" value=""/>
+        <env name="INSTAGRAM_REDIRECT_URI" value=""/>
         <env name="GOOGLE_CLIENT_ID" value=""/>
         <env name="GOOGLE_CLIENT_SECRET" value=""/>
         <env name="GOOGLE_REDIRECT_URI" value=""/>

@@ -1,5 +1,28 @@
 <?php
 
+/*
+ * Adresse publique du site, sans slash final.
+ *
+ * Toutes les adresses de retour OAuth en dérivent. Derrière un tunnel de
+ * développement, l'URL change à chaque redémarrage : sans cette dérivation il
+ * fallait corriger quatre variables à la main, et celle qu'on oubliait
+ * produisait un « redirect_uri » refusé plusieurs jours plus tard, chez un
+ * seul fournisseur. Une seule valeur à changer, désormais : APP_URL.
+ *
+ * `env()` plutôt que `config('app.url')` : ce fichier est évalué pendant la
+ * construction de la configuration, `config()` n'y répond pas encore.
+ */
+$appUrl = rtrim((string) env('APP_URL', 'http://localhost'), '/');
+
+/*
+ * Adresse de retour d'un fournisseur.
+ *
+ * La variable d'environnement reste prioritaire : un domaine de production
+ * peut différer de l'APP_URL interne, et le jour où un fournisseur impose une
+ * adresse particulière, on la fige sans toucher au reste.
+ */
+$callback = fn (string $variable, string $path): string => env($variable) ?: $appUrl.$path;
+
 return [
 
     /*
@@ -48,7 +71,7 @@ return [
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('GOOGLE_REDIRECT_URI'),
+        'redirect' => $callback('GOOGLE_REDIRECT_URI', '/auth/google/callback'),
         'site_verification' => env('GOOGLE_SITE_VERIFICATION'),
     ],
 
@@ -57,9 +80,7 @@ return [
         'client_secret' => env('YOUTUBE_CLIENT_SECRET'),
         'daily_quota' => env('YOUTUBE_DAILY_QUOTA', 10_000),
 
-        // Vide : l'URL est déduite de la route. À figer dès qu'un tunnel ou un
-        // répartiteur de charge s'intercale — voir ResolvesRedirectUri.
-        'redirect' => env('YOUTUBE_REDIRECT_URI'),
+        'redirect' => $callback('YOUTUBE_REDIRECT_URI', '/oauth/youtube/callback'),
     ],
 
     'tiktok' => [
@@ -71,7 +92,7 @@ return [
         // un Sandbox a la sienne, souvent plus courte. En demander une que
         // l'application n'a pas fait échouer l'écran de consentement.
         'scopes' => env('TIKTOK_SCOPES', 'user.info.basic,video.list'),
-        'redirect' => env('TIKTOK_REDIRECT_URI'),
+        'redirect' => $callback('TIKTOK_REDIRECT_URI', '/oauth/tiktok/callback'),
 
         // Jeton de la méthode « balise meta » de vérification de domaine.
         'site_verification' => env('TIKTOK_SITE_VERIFICATION'),
@@ -80,7 +101,7 @@ return [
     'instagram' => [
         'app_id' => env('INSTAGRAM_APP_ID'),
         'app_secret' => env('INSTAGRAM_APP_SECRET'),
-        'redirect' => env('INSTAGRAM_REDIRECT_URI'),
+        'redirect' => $callback('INSTAGRAM_REDIRECT_URI', '/oauth/instagram/callback'),
     ],
 
     /*
