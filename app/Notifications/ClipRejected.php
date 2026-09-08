@@ -29,7 +29,17 @@ class ClipRejected extends Notification implements ShouldQueue
     /** @return array<int, string> */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
+    }
+
+    /** @return array<string, mixed> */
+    public function toArray(object $notifiable): array
+    {
+        return [
+            'title' => 'Clip non retenu',
+            'body' => 'Votre clip pour « '.$this->clip->campaign?->title.' » n’a pas été retenu : '.$this->reason,
+            'url' => route('clips.show', $this->clip),
+        ];
     }
 
     public function toMail(object $notifiable): MailMessage

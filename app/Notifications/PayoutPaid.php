@@ -18,7 +18,17 @@ class PayoutPaid extends Notification implements ShouldQueue
     /** @return array<int, string> */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
+    }
+
+    /** @return array<string, mixed> */
+    public function toArray(object $notifiable): array
+    {
+        return [
+            'title' => 'Retrait versé',
+            'body' => 'Votre retrait de '.$this->euros().' a été versé sur '.$this->payout->destinationLabel().'.',
+            'url' => route('earnings.index'),
+        ];
     }
 
     public function toMail(object $notifiable): MailMessage

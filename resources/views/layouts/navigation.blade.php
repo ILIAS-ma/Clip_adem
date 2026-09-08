@@ -51,12 +51,12 @@
                     <span class="chip-neutral">Espace créateur</span>
                 @endif
 
+                <x-notifications-bell />
+
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button class="flex items-center gap-2 rounded-xl px-2 py-1.5 text-sm font-medium text-ink-300 transition hover:bg-ink-800 hover:text-ink-50">
-                            <span class="flex h-7 w-7 items-center justify-center rounded-full bg-brand-500 text-xs font-bold text-ink-950">
-                                {{ mb_strtoupper(mb_substr(auth()->user()->displayName(), 0, 1)) }}
-                            </span>
+                            <x-avatar-badge :user="auth()->user()" />
                             {{ auth()->user()->displayName() }}
                             <svg class="h-4 w-4 fill-current" viewBox="0 0 20 20" aria-hidden="true">
                                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -82,7 +82,9 @@
                 </x-dropdown>
             </div>
 
-            <div class="-me-2 flex items-center sm:hidden">
+            <div class="-me-2 flex items-center gap-1 sm:hidden">
+                <x-notifications-bell />
+
                 <button @click="open = ! open" class="rounded-lg p-2 text-ink-400 transition hover:bg-ink-800 hover:text-ink-100"
                         :aria-expanded="open" aria-label="Menu">
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24" aria-hidden="true">

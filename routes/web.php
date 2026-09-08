@@ -13,6 +13,7 @@ use App\Http\Controllers\Clipper\SocialAccountController;
 use App\Http\Controllers\Creator\CampaignController as CreatorCampaignController;
 use App\Http\Controllers\Creator\DashboardController as CreatorDashboardController;
 use App\Http\Controllers\Creator\ProfileController as CreatorProfileController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PayPalWebhookController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -64,6 +65,10 @@ Route::middleware(['auth', 'not.banned'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{notification}/lue', [NotificationController::class, 'read'])->name('notifications.read');
+    Route::post('/notifications/tout-lire', [NotificationController::class, 'readAll'])->name('notifications.read-all');
 });
 
 /*

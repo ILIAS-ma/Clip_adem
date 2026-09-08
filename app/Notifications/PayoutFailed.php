@@ -27,7 +27,19 @@ class PayoutFailed extends Notification implements ShouldQueue
     /** @return array<int, string> */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
+    }
+
+    /** @return array<string, mixed> */
+    public function toArray(object $notifiable): array
+    {
+        $amount = number_format($this->payout->amount_cents / 100, 2, ',', ' ').' €';
+
+        return [
+            'title' => 'Retrait échoué',
+            'body' => 'Le versement de '.$amount.' a été rejeté. Le montant est de nouveau dans votre solde.',
+            'url' => route('payout-method.edit'),
+        ];
     }
 
     public function toMail(object $notifiable): MailMessage

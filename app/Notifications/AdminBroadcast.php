@@ -28,7 +28,17 @@ class AdminBroadcast extends Notification implements ShouldQueue
     /** @return array<int, string> */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
+    }
+
+    /** @return array<string, mixed> */
+    public function toArray(object $notifiable): array
+    {
+        return [
+            'title' => $this->subjectLine,
+            'body' => trim(preg_split('/\n\s*\n/', trim($this->body))[0] ?? ''),
+            'url' => $this->actionUrl,
+        ];
     }
 
     public function toMail(object $notifiable): MailMessage
