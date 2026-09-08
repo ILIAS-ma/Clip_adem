@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ProfileTest extends TestCase
@@ -100,5 +102,95 @@ class ProfileTest extends TestCase
             ->assertRedirect('/profile');
 
         $this->assertNotNull($user->fresh());
+    }
+
+    public function test_a_user_can_upload_an_avatar(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->post('/profile/avatar', [
+                'avatar' => UploadedFile::fake()->image('moi.jpg'),
+            ]);
+
+        $response->assertRedirect(route('profile.edit'));
+
+        $user->refresh();
+        $this->assertNotNull($user->avatar_url);
+        Storage::disk('public')->assertExists('avatars/'.basename($user->avatar_url));
+    }
+
+    /**
+     * Le SVG est le seul format volontairement exclu : servi depuis notre
+     * domaine, il peut embarquer du script et s'exécuter dans le contexte
+     * du site — même raison que pour les pièces jointes de campagne.
+     */
+    public function test_an_svg_avatar_is_refused(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->post('/profile/avatar', [
+                'avatar' => UploadedFile::fake()->create('avatar.svg', 10, 'image/svg+xml'),
+            ]);
+
+        $response->assertSessionHasErrors('avatar');
+        $this->assertNull($user->fresh()->avatar_url);
+    }
+
+    public function test_uploading_a_new_avatar_deletes_the_previous_file(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post('/profile/avatar', [
+            'avatar' => UploadedFile::fake()->image('un.jpg'),
+        ]);
+        $firstPath = 'avatars/'.basename($user->fresh()->avatar_url);
+
+        $this->actingAs($user)->post('/profile/avatar', [
+            'avatar' => UploadedFile::fake()->image('deux.jpg'),
+        ]);
+
+        Storage::disk('public')->assertMissing($firstPath);
+    }
+
+    public function test_a_user_can_remove_their_avatar(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post('/profile/avatar', [
+            'avatar' => UploadedFile::fake()->image('moi.jpg'),
+        ]);
+        $path = 'avatars/'.basename($user->fresh()->avatar_url);
+
+        $this->actingAs($user)->delete('/profile/avatar');
+
+        $this->assertNull($user->fresh()->avatar_url);
+        Storage::disk('public')->assertMissing($path);
+    }
+
+    public function test_removing_a_google_avatar_does_not_touch_local_storage(): void
+    {
+        // L'URL Google n'est pas sur notre disque : il ne faut surtout pas
+        // tenter d'y appliquer un chemin local et supprimer autre chose.
+        Storage::fake('public');
+
+        $user = User::factory()->create([
+            'avatar_url' => 'https://lh3.googleusercontent.com/a/photo.jpg',
+        ]);
+
+        $this->actingAs($user)->delete('/profile/avatar');
+
+        $this->assertNull($user->fresh()->avatar_url);
     }
 }

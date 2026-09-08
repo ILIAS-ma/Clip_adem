@@ -66,6 +66,12 @@ Route::middleware(['auth', 'not.banned'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // Débité : un envoi de fichier coûte plus qu'une simple écriture.
+    Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])
+        ->middleware('throttle:10,1')
+        ->name('profile.avatar.update');
+    Route::delete('/profile/avatar', [ProfileController::class, 'destroyAvatar'])->name('profile.avatar.destroy');
+
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{notification}/lue', [NotificationController::class, 'read'])->name('notifications.read');
     Route::post('/notifications/tout-lire', [NotificationController::class, 'readAll'])->name('notifications.read-all');
