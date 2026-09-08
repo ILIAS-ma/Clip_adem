@@ -804,6 +804,10 @@ mot de passe public. Aucun de ces réglages ne doit survivre à la mise en ligne
 et un `.env` recopié tel quel est la façon la plus banale de mettre un site
 ouvert en danger.
 
+La mise en ligne elle-même — serveur, script de déploiement, worker,
+planificateur, plafonds d'upload — est décrite dans
+[docs/deploiement-ploi.md](docs/deploiement-ploi.md).
+
 La commande contrôle en une page l'environnement, les cinq passages obligés,
 l'envoi réel des e-mails, les clés des trois plateformes, PayPal et la
 signature de ses webhooks, le lien de stockage, la file d'attente, la
