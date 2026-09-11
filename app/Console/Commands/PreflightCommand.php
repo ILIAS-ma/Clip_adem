@@ -156,11 +156,33 @@ class PreflightCommand extends Command
             // tous les deux, c'est-à-dire le produit entier.
             $configured = rescue(fn () => ! $providers->isSimulated($platform), false, report: false);
 
+            if ($configured) {
+                $this->assert('Intégration '.$platform->label(), true, 'configurée', '');
+
+                continue;
+            }
+
+            /*
+             * Une plateforme sans clés est invisible pour les clippeurs : la
+             * page « Mes comptes » n'affiche que celles réellement branchées.
+             * Exiger des identifiants pour une plateforme qu'on ne lance pas
+             * ferait crier le garde-fou à tort — et un contrôle qui crie à tort
+             * finit par être ignoré, y compris le jour où il a raison.
+             *
+             * Elle redevient bloquante dès qu'un clip ou un compte lié en
+             * dépend : là, le relevé des vues échouerait pour de bon, et
+             * quelqu'un cesserait d'être payé sans que rien ne le signale.
+             */
+            $used = $this->platformUsage($platform);
+
             $this->assert(
                 'Intégration '.$platform->label(),
-                $configured,
-                $configured ? 'configurée' : 'AUCUNE CLÉ',
-                'Sans identifiants, plus aucun clippeur ne peut lier son compte et aucune vue n\'est relevée.',
+                false,
+                $used > 0 ? 'AUCUNE CLÉ' : 'non lancée',
+                $used > 0
+                    ? "AUCUNE CLÉ alors que {$used} élément(s) en dépendent : leurs vues ne seront plus relevées."
+                    : 'Non proposée aux clippeurs. Renseignez ses clés pour l’ouvrir.',
+                blocking: $used > 0,
             );
         }
 
@@ -173,6 +195,28 @@ class PreflightCommand extends Command
             'Le bouton reste simplement caché. Rien ne casse.',
             blocking: false,
         );
+    }
+
+    /**
+     * Ce qui dépend concrètement d'une plateforme : clips publiés et comptes liés.
+     *
+     * Les tables sont vérifiées avant d'être interrogées : la commande doit
+     * pouvoir tourner sur une installation dont les migrations n'ont pas encore
+     * été jouées — c'est même le moment où l'on en a le plus besoin.
+     */
+    protected function platformUsage(Platform $platform): int
+    {
+        $total = 0;
+
+        foreach (['clips', 'social_accounts'] as $table) {
+            if (! Schema::hasTable($table)) {
+                continue;
+            }
+
+            $total += DB::table($table)->where('platform', $platform->value)->count();
+        }
+
+        return $total;
     }
 
     protected function checkPayments(): void

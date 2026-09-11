@@ -4,7 +4,9 @@ namespace Tests\Feature\Console;
 
 use App\Enums\CampaignStatus;
 use App\Enums\Platform;
+use App\Enums\UserRole;
 use App\Models\Campaign;
+use App\Models\SocialAccount;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -101,11 +103,41 @@ class PreflightTest extends TestCase
     public function missing_platform_keys_block_the_launch(): void
     {
         // En production, l'absence de clés lève une exception au premier usage :
-        // plus aucune liaison de compte, plus aucun relevé de vues.
+        // plus aucune liaison de compte, plus aucun relevé de vues. Un compte
+        // déjà lié suffit à rendre la situation fatale — quelqu'un cesserait
+        // d'être payé sans que rien ne le signale.
         $this->productionConfig();
         config(['services.tiktok.client_key' => null]);
 
+        SocialAccount::factory()->create([
+            'user_id' => User::factory()->create(['role' => UserRole::Clipper])->getKey(),
+            'platform' => Platform::TikTok,
+        ]);
+
         $this->artisan('clip:preflight')->assertFailed();
+    }
+
+    #[Test]
+    public function a_platform_nobody_uses_does_not_block_the_launch(): void
+    {
+        /*
+         * Le lancement se fait avec TikTok seul : YouTube et Instagram restent
+         * implémentés mais ne sont pas proposés aux clippeurs, faute de clés.
+         * Les réclamer ferait crier le garde-fou à tort — et un contrôle qui
+         * crie à tort finit par être ignoré, y compris le jour où il a raison.
+         */
+        $this->productionConfig();
+
+        config([
+            'services.youtube.client_id' => null,
+            'services.youtube.client_secret' => null,
+            'services.instagram.app_id' => null,
+            'services.instagram.app_secret' => null,
+        ]);
+
+        $this->artisan('clip:preflight')
+            ->expectsOutputToContain('non lancée')
+            ->assertSuccessful();
     }
 
     #[Test]
