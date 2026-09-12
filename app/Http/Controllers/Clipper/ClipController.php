@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Clipper;
 
 use App\Contracts\CampaignBudgetService;
+use App\Enums\Platform;
 use App\Http\Controllers\Controller;
 use App\Models\Clip;
 use App\Services\Social\ClipSyncService;
+use App\Services\Social\SocialProviderManager;
 use App\Support\Social\ClipAnalysisPresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -14,7 +16,7 @@ use Illuminate\View\View;
 
 class ClipController extends Controller
 {
-    public function index(Request $request, CampaignBudgetService $budget): View
+    public function index(Request $request, CampaignBudgetService $budget, SocialProviderManager $providers): View
     {
         $clipper = $request->user();
 
@@ -32,6 +34,16 @@ class ClipController extends Controller
         return view('clipper.clips.index', [
             'clips' => $clips,
             'filters' => $request->only(['campagne', 'plateforme', 'statut']),
+
+            // Seules les plateformes réellement branchées sont proposées au
+            // filtre : même raison que pour le choix de compte à lier
+            // (SocialAccountController) — un clip existant sur une
+            // plateforme simulée reste filtrable via l'URL, juste pas via
+            // ce menu.
+            'platformOptions' => collect(Platform::cases())
+                ->reject(fn (Platform $p) => $providers->isSimulated($p)
+                    && ! config('clipping.show_simulated_platforms'))
+                ->values(),
 
             // Options des filtres : uniquement les campagnes où ce clippeur a
             // effectivement un clip, pas tout le catalogue.

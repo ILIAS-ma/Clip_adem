@@ -7,6 +7,7 @@ use App\Enums\CampaignStatus;
 use App\Enums\Platform;
 use App\Models\Campaign;
 use App\Models\Creator;
+use App\Services\Social\SocialProviderManager;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -55,6 +56,7 @@ class CampaignCatalogue extends Component
     public function render()
     {
         $budget = app(CampaignBudgetService::class);
+        $providers = app(SocialProviderManager::class);
 
         $campaigns = Campaign::query()
             ->visibleToClippers()
@@ -88,7 +90,12 @@ class CampaignCatalogue extends Component
             'creators' => Creator::whereHas('campaigns', fn ($q) => $q->visibleToClippers())
                 ->orderBy('name')
                 ->pluck('name', 'id'),
+            // Même raison que pour le filtre de « Mes clips » et le choix
+            // de compte à lier : pas de plateforme simulée dans un menu qui
+            // laisse croire qu'on peut réellement l'utiliser.
             'platforms' => collect(Platform::cases())
+                ->reject(fn (Platform $p) => $providers->isSimulated($p)
+                    && ! config('clipping.show_simulated_platforms'))
                 ->mapWithKeys(fn (Platform $p) => [$p->value => $p->label()]),
         ]);
     }
