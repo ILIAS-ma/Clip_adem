@@ -42,19 +42,19 @@ enum ClipperLevel: string
     }
 
     /**
-     * Anneau autour de l'avatar, sur le même front que l'application (pas
-     * l'admin) : l'intensité du lime monte avec le niveau, comme le fond de
-     * la pastille XP sur la carte de niveau — jamais une couleur différente
-     * par palier, qui diluerait la couleur de marque.
+     * Cadre illustré autour de l'avatar, sur le même front que l'application
+     * (pas l'admin) : le matériau monte en prestige avec le niveau (fer,
+     * bronze, argent, or, puis un cadre en lumière), comme le fond de la
+     * pastille XP sur la carte de niveau — jamais un signal qui régresse.
      */
-    public function avatarRingClasses(): string
+    public function avatarFrameImage(): string
     {
         return match ($this) {
-            self::Beginner => 'ring-2 ring-ink-700',
-            self::Confirmed => 'ring-2 ring-brand-500/40',
-            self::Expert => 'ring-2 ring-brand-500/70',
-            self::Elite => 'ring-2 ring-brand-400',
-            self::Legend => 'ring-2 ring-brand-300 shadow-glow',
+            self::Beginner => 'images/avatar-frames/beginner.png',
+            self::Confirmed => 'images/avatar-frames/confirmed.png',
+            self::Expert => 'images/avatar-frames/expert.png',
+            self::Elite => 'images/avatar-frames/elite.png',
+            self::Legend => 'images/avatar-frames/legend.png',
         };
     }
 

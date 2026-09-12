@@ -13,7 +13,7 @@
                     @csrf
                     <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp"
                            class="block w-full max-w-xs text-sm text-ink-300 file:mr-3 file:rounded-lg file:border-0 file:bg-ink-700 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-ink-100 hover:file:bg-ink-600">
-                    <x-primary-button>Envoyer</x-primary-button>
+                    <x-primary-button>Enregistrer</x-primary-button>
                 </form>
 
                 @if ($user->avatar_url)
