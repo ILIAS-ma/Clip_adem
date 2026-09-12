@@ -1,6 +1,5 @@
 @php
     use App\Enums\ClipStatus;
-    use App\Enums\Platform;
     use App\Support\Money;
 @endphp
 
@@ -26,38 +25,38 @@
         <form method="GET" class="card mb-6 flex flex-wrap items-end gap-4 p-4">
             <div>
                 <label for="campagne" class="label">Campagne</label>
-                <select id="campagne" name="campagne" onchange="this.form.submit()" class="field mt-1.5">
+                <x-select id="campagne" name="campagne" onchange="this.form.submit()">
                     <option value="">Toutes</option>
                     @foreach ($campaignOptions as $campaign)
                         <option value="{{ $campaign->id }}" @selected(($filters['campagne'] ?? '') == $campaign->id)>
                             {{ $campaign->title }}
                         </option>
                     @endforeach
-                </select>
+                </x-select>
             </div>
 
             <div>
                 <label for="plateforme" class="label">Plateforme</label>
-                <select id="plateforme" name="plateforme" onchange="this.form.submit()" class="field mt-1.5">
+                <x-select id="plateforme" name="plateforme" onchange="this.form.submit()">
                     <option value="">Toutes</option>
-                    @foreach (Platform::cases() as $platform)
+                    @foreach ($platformOptions as $platform)
                         <option value="{{ $platform->value }}" @selected(($filters['plateforme'] ?? '') === $platform->value)>
                             {{ $platform->label() }}
                         </option>
                     @endforeach
-                </select>
+                </x-select>
             </div>
 
             <div>
                 <label for="statut" class="label">Statut</label>
-                <select id="statut" name="statut" onchange="this.form.submit()" class="field mt-1.5">
+                <x-select id="statut" name="statut" onchange="this.form.submit()">
                     <option value="">Tous</option>
                     @foreach (ClipStatus::cases() as $status)
                         <option value="{{ $status->value }}" @selected(($filters['statut'] ?? '') === $status->value)>
                             {{ $status->label() }}
                         </option>
                     @endforeach
-                </select>
+                </x-select>
             </div>
 
             @if (array_filter($filters))
@@ -85,7 +84,7 @@
             <div class="space-y-3">
                 @foreach ($clips as $clip)
                     <a href="{{ route('clips.show', $clip) }}"
-                       class="flex flex-wrap items-center gap-4 card p-5 transition hover:-translate-y-0.5 hover:shadow-lifted">
+                       class="flex items-center gap-4 card p-5 transition hover:-translate-y-0.5 hover:shadow-lifted">
                         <div class="h-16 w-12 flex-none overflow-hidden rounded-lg bg-ink-700">
                             @if ($clip->thumbnail_url)
                                 <img src="{{ $clip->thumbnail_url }}" alt="" class="h-full w-full object-cover">
@@ -97,10 +96,10 @@
                         </div>
 
                         <div class="min-w-0 flex-1">
-                            <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">
+                            <p class="truncate text-xs font-semibold uppercase tracking-wide text-ink-400">
                                 {{ $clip->campaign?->creator?->name }}
                             </p>
-                            <p class="mt-0.5 font-display text-base font-bold text-ink-50">
+                            <p class="mt-0.5 truncate font-display text-base font-bold text-ink-50">
                                 {{ $clip->campaign?->title }}
                             </p>
 
@@ -122,8 +121,8 @@
                             </div>
                         </div>
 
-                        <div class="text-right">
-                            <p class="font-display text-xl font-bold tabular text-ink-50">
+                        <div class="shrink-0 text-right">
+                            <p class="font-display text-lg font-bold tabular text-ink-50 sm:text-xl">
                                 {{ Money::euros($clip->earned_cents) }}
                             </p>
                             <p class="text-xs tabular text-ink-400">{{ Money::views($clip->views_total) }} vues</p>

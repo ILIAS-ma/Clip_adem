@@ -123,7 +123,29 @@
             @if ($transactions->isEmpty())
                 <p class="px-6 py-10 text-center text-sm text-ink-300">Aucun crédit pour le moment.</p>
             @else
-                <div class="overflow-x-auto">
+                {{-- Sous sm : une ligne de tableau à 4 colonnes force chaque
+                     cellule à casser sur plusieurs lignes. Une carte par
+                     transaction reste lisible sans défiler horizontalement. --}}
+                <ul class="divide-y divide-ink-700 sm:hidden">
+                    @foreach ($transactions as $transaction)
+                        <li class="flex items-start justify-between gap-3 px-6 py-3">
+                            <div class="min-w-0">
+                                <p class="truncate text-ink-100">{{ $transaction->campaign?->title }}</p>
+                                <p class="mt-0.5 text-xs text-ink-400">
+                                    {{ $transaction->created_at->format('d/m/Y H:i') }}
+                                    · {{ Money::views($transaction->views_delta) }} vues
+                                </p>
+                            </div>
+                            <p @class([
+                                'shrink-0 font-semibold tabular',
+                                'text-red-400' => $transaction->amount_cents < 0,
+                                'text-ink-50' => $transaction->amount_cents >= 0,
+                            ])>{{ Money::euros($transaction->amount_cents) }}</p>
+                        </li>
+                    @endforeach
+                </ul>
+
+                <div class="hidden overflow-x-auto sm:block">
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="text-xs uppercase tracking-wide text-ink-400">

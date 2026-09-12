@@ -25,7 +25,7 @@
     <main>
         <section x-data="{ mobileNavOpen: false }"
                  x-effect="document.body.classList.toggle('overflow-hidden', mobileNavOpen)"
-                 class="relative isolate min-h-screen overflow-hidden border-b border-ink-800 bg-ink-900">
+                 class="relative isolate overflow-hidden border-b border-ink-800 bg-ink-900 sm:min-h-screen">
             {{-- Halos doux façon aurore, à la place d'un trait qui coupait le
                  regard en diagonale : deux masses de couleur asymétriques,
                  sans ligne dure qui traverse le texte. --}}
@@ -124,7 +124,7 @@
             </header>
 
             <div class="relative z-10 mx-auto max-w-3xl px-6 pb-24 pt-20 text-center sm:pb-32 sm:pt-28">
-                <h1 class="font-serif text-6xl font-semibold leading-[1.05] tracking-tight text-ink-50 sm:text-7xl lg:text-8xl">
+                <h1 class="font-serif text-5xl font-semibold leading-[1.05] tracking-tight text-ink-50 sm:text-7xl lg:text-8xl">
                     @foreach (explode(' ', 'Vos clips font la promo,') as $index => $word)
                         <span class="hero-word" style="--word-delay: {{ $index * 80 }}ms">{{ $word }}</span>{{ $loop->last ? '' : ' ' }}
                     @endforeach

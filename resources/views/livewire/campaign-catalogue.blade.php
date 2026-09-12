@@ -2,58 +2,72 @@
 
 <div class="space-y-6">
 
-    <div class="card p-4 sm:p-5">
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            <div class="lg:col-span-2">
+    {{-- Sous sm, les 3 filtres secondaires poussent les campagnes hors
+         écran avant même le premier résultat : repliés derrière un bouton,
+         ils restent à un tap tout en laissant voir des campagnes tout de
+         suite. À partir de sm, l'espace horizontal les rend gratuits à
+         garder ouverts. --}}
+    <div class="card p-4 sm:p-5" x-data="{ open: false }">
+        <div class="flex items-end gap-3">
+            <div class="flex-1">
                 <label for="search" class="text-xs font-semibold uppercase tracking-wide text-ink-400">Rechercher</label>
                 <input id="search" type="search" wire:model.live.debounce.300ms="search"
                        placeholder="Titre ou créateur" class="field mt-1.5 text-sm">
             </div>
 
-            <div>
-                <label for="platform" class="text-xs font-semibold uppercase tracking-wide text-ink-400">Plateforme</label>
-                <select id="platform" wire:model.live="platform" class="field mt-1.5 text-sm">
-                    <option value="">Toutes</option>
-                    @foreach ($platforms as $value => $label)
-                        <option value="{{ $value }}">{{ $label }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div>
-                <label for="creator" class="text-xs font-semibold uppercase tracking-wide text-ink-400">Créateur</label>
-                <select id="creator" wire:model.live="creator" class="field mt-1.5 text-sm">
-                    <option value="">Tous</option>
-                    @foreach ($creators as $id => $name)
-                        <option value="{{ $id }}">{{ $name }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div>
-                <label for="minRate" class="text-xs font-semibold uppercase tracking-wide text-ink-400">Cachet min.</label>
-                <div class="relative mt-1.5">
-                    <input id="minRate" type="number" step="0.10" min="0" wire:model.live.debounce.500ms="minRate"
-                           placeholder="0,50" class="field pe-16 text-sm">
-                    <span class="pointer-events-none absolute inset-y-0 end-0 flex items-center pe-3 text-xs text-ink-500">€/1000</span>
-                </div>
-            </div>
+            <button type="button" @click="open = !open" :aria-expanded="open.toString()"
+                    class="btn-ghost shrink-0 text-sm sm:hidden">
+                <span x-text="open ? 'Masquer' : 'Filtres'"></span>
+            </button>
         </div>
 
-        <div class="mt-4 flex flex-wrap items-center gap-4 border-t border-ink-700 pt-4">
-            <label class="flex items-center gap-2.5 text-sm text-ink-200">
-                <input type="checkbox" wire:model.live="onlyOpen" class="rounded border-ink-700 text-ink-100 focus:ring-brand-500">
-                Uniquement les campagnes ouvertes
-            </label>
+        <div x-show="open" x-cloak x-transition class="sm:!block">
+            <div class="mt-4 grid gap-4 sm:grid-cols-3">
+                <div>
+                    <label for="platform" class="text-xs font-semibold uppercase tracking-wide text-ink-400">Plateforme</label>
+                    <x-select id="platform" wire:model.live="platform" class="text-sm">
+                        <option value="">Toutes</option>
+                        @foreach ($platforms as $value => $label)
+                            <option value="{{ $value }}">{{ $label }}</option>
+                        @endforeach
+                    </x-select>
+                </div>
 
-            <button type="button" wire:click="resetFilters"
-                    class="text-sm font-medium text-ink-400 underline-offset-2 hover:text-ink-50 hover:underline">
-                Réinitialiser
-            </button>
+                <div>
+                    <label for="creator" class="text-xs font-semibold uppercase tracking-wide text-ink-400">Créateur</label>
+                    <x-select id="creator" wire:model.live="creator" class="text-sm">
+                        <option value="">Tous</option>
+                        @foreach ($creators as $id => $name)
+                            <option value="{{ $id }}">{{ $name }}</option>
+                        @endforeach
+                    </x-select>
+                </div>
 
-            <span class="ms-auto text-sm tabular text-ink-400" wire:loading.class="opacity-40">
-                {{ $campaigns->total() }} campagne{{ $campaigns->total() > 1 ? 's' : '' }}
-            </span>
+                <div>
+                    <label for="minRate" class="text-xs font-semibold uppercase tracking-wide text-ink-400">Cachet min.</label>
+                    <div class="relative mt-1.5">
+                        <input id="minRate" type="number" step="0.10" min="0" wire:model.live.debounce.500ms="minRate"
+                               placeholder="0,50" class="field pe-16 text-sm">
+                        <span class="pointer-events-none absolute inset-y-0 end-0 flex items-center pe-3 text-xs text-ink-500">€/1000</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 flex flex-wrap items-center gap-4 border-t border-ink-700 pt-4">
+                <label class="flex items-center gap-2.5 text-sm text-ink-200">
+                    <input type="checkbox" wire:model.live="onlyOpen" class="rounded border-ink-700 text-ink-100 focus:ring-brand-500">
+                    Uniquement les campagnes ouvertes
+                </label>
+
+                <button type="button" wire:click="resetFilters"
+                        class="text-sm font-medium text-ink-400 underline-offset-2 hover:text-ink-50 hover:underline">
+                    Réinitialiser
+                </button>
+
+                <span class="ms-auto text-sm tabular text-ink-400" wire:loading.class="opacity-40">
+                    {{ $campaigns->total() }} campagne{{ $campaigns->total() > 1 ? 's' : '' }}
+                </span>
+            </div>
         </div>
     </div>
 

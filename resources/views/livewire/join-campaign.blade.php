@@ -18,13 +18,13 @@
                 <label for="socialAccountId" class="text-xs font-semibold uppercase tracking-wide text-ink-400">
                     Compte utilisé pour publier
                 </label>
-                <select id="socialAccountId" wire:model="socialAccountId" class="field mt-1.5 text-sm">
+                <x-select id="socialAccountId" wire:model="socialAccountId" class="text-sm">
                     @foreach ($this->accounts as $account)
                         <option value="{{ $account->id }}">
                             {{ $account->platform->label() }}{{ $account->handle ? ' · @'.$account->handle : '' }}
                         </option>
                     @endforeach
-                </select>
+                </x-select>
                 <x-input-error class="mt-2" :messages="$errors->get('socialAccountId')" />
             </div>
 

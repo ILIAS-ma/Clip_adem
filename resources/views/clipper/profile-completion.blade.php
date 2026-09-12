@@ -35,7 +35,7 @@
 
                 <div>
                     <x-input-label for="country" value="Pays de résidence" />
-                    <select id="country" name="country" required class="field mt-1.5">
+                    <x-select id="country" name="country">
                         <option value="">Choisir…</option>
                         @foreach ([
                             'FR' => 'France', 'BE' => 'Belgique', 'CH' => 'Suisse', 'CA' => 'Canada',
@@ -44,7 +44,7 @@
                         ] as $code => $label)
                             <option value="{{ $code }}" @selected(old('country', $user->country) === $code)>{{ $label }}</option>
                         @endforeach
-                    </select>
+                    </x-select>
                     <p class="hint">Le pays du bénéficiaire conditionne les modes de versement disponibles.</p>
                     <x-input-error class="mt-2" :messages="$errors->get('country')" />
                 </div>
