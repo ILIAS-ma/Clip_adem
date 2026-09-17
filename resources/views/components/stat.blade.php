@@ -15,9 +15,15 @@
     };
 @endphp
 
-<div {{ $attributes->merge(['class' => 'card p-5 '.($highlight ? 'ring-2 ring-brand-500' : '')]) }}>
+{{--
+    `data-count-up` fait défiler le chiffre jusqu'à sa valeur. Le montant final
+    reste écrit dans le HTML : sans JavaScript, la carte affiche simplement le
+    bon nombre, et un lecteur d'écran n'entend jamais un total en train de
+    bouger.
+--}}
+<div {{ $attributes->merge(['class' => 'stat-card card p-5 '.($highlight ? 'ring-2 ring-brand-500' : '')]) }}>
     <p class="text-sm font-medium text-ink-300">{{ $label }}</p>
-    <p class="mt-1.5 font-display text-2xl font-bold tabular {{ $valueTone }}">{{ $value }}</p>
+    <p class="mt-1.5 font-display text-2xl font-bold tabular {{ $valueTone }}" data-count-up>{{ $value }}</p>
     @if ($hint)
         <p class="mt-1 text-xs text-ink-300">{{ $hint }}</p>
     @endif

@@ -260,3 +260,104 @@
         @apply border-b border-ink-800 py-2 align-top text-ink-300;
     }
 }
+
+/* =====================================================================
+   Transitions de navigation et animations d'ambiance.
+
+   Même principe que la révélation au scroll plus haut : rien ne dépend
+   de JavaScript pour que la page soit lisible, et tout s'efface sous
+   `prefers-reduced-motion`. Une animation qu'on ne peut pas refuser est
+   une animation de trop.
+   ===================================================================== */
+
+/* Balayage de navigation : un trait lime qui traverse le haut de l'écran.
+   Il informe sans rien retarder — un rideau plein écran, lui, ajoute son
+   temps à celui du chargement, et devient pénible au dixième clic. */
+.page-sweep {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    height: 2px;
+    width: 100%;
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    opacity: 0;
+    pointer-events: none;
+    background: linear-gradient(90deg, #5C831C, #93CE2E 55%, #BAE566);
+}
+
+/* La progression est volontairement asymptotique : on ne connaît pas la
+   durée réelle du chargement, donc la barre ralentit au lieu de mentir en
+   atteignant 100 % avant l'arrivée de la page. */
+.page-sweep.is-loading {
+    opacity: 1;
+    animation: page-sweep-grow 1.6s cubic-bezier(.15, .85, .25, 1) forwards;
+}
+
+.page-sweep.is-done {
+    opacity: 1;
+    animation: page-sweep-finish .3s ease-out forwards;
+}
+
+@keyframes page-sweep-grow {
+    0%   { transform: scaleX(0); }
+    45%  { transform: scaleX(.6); }
+    100% { transform: scaleX(.88); }
+}
+
+@keyframes page-sweep-finish {
+    from { transform: scaleX(.88); opacity: 1; }
+    to   { transform: scaleX(1);   opacity: 0; }
+}
+
+@keyframes page-enter {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+}
+
+@keyframes stat-enter {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    /* Courte — 280 ms. Au-delà, on ne perçoit plus une transition mais une
+       attente, et c'est le reproche le plus fréquent fait aux sites animés. */
+    .js main {
+        animation: page-enter .28s cubic-bezier(.2, .7, .3, 1) both;
+    }
+
+    /* Les cartes de statistiques arrivent en cascade : l'œil suit la ligne
+       au lieu de recevoir quatre chiffres d'un bloc. Le décalage reste sous
+       le quart de seconde au total. */
+    .js .stat-card {
+        animation: stat-enter .4s cubic-bezier(.2, .7, .3, 1) both;
+    }
+
+    .js .stat-card:nth-child(2) { animation-delay: .05s; }
+    .js .stat-card:nth-child(3) { animation-delay: .1s; }
+    .js .stat-card:nth-child(4) { animation-delay: .15s; }
+
+    .page-sweep { transition: opacity .2s ease; }
+}
+
+/* Sous `prefers-reduced-motion`, le balayage ne glisse pas mais reste
+   visible : c'est une information sur l'état du chargement, pas un
+   ornement — la supprimer retirerait un repère utile. */
+@media (prefers-reduced-motion: reduce) {
+    .page-sweep.is-loading { opacity: 1; transform: scaleX(1); }
+    .page-sweep.is-done    { opacity: 0; transform: scaleX(1); }
+}
+
+/* Petites touches. La bordure s'éclaire, rien ne bouge : une carte qui se
+   soulève au survol attire l'œil sur un élément qui n'est pas cliquable. */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .card {
+        transition: border-color .22s ease, box-shadow .22s ease;
+    }
+
+    .card:hover {
+        border-color: #33382F;
+    }
+}

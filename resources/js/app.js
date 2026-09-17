@@ -123,3 +123,208 @@ function initScrollReveal() {
 }
 
 document.addEventListener('DOMContentLoaded', initScrollReveal);
+
+/* =====================================================================
+   Balayage de navigation.
+
+   Livewire remplace le document sans rechargement : l'indicateur natif du
+   navigateur ne s'affiche pas, et rien ne dit que le clic a été pris en
+   compte. Ce trait comble ce silence — la seconde où l'on doute est celle
+   où l'on reclique.
+   ===================================================================== */
+
+let sweepBar = null;
+
+function sweep() {
+    if (! sweepBar) {
+        sweepBar = document.createElement('div');
+        sweepBar.className = 'page-sweep';
+        // Annoncé aux technologies d'assistance comme un état, pas comme un
+        // contenu : personne n'a besoin d'entendre « barre de progression »
+        // à chaque lien suivi.
+        sweepBar.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(sweepBar);
+    }
+
+    return sweepBar;
+}
+
+function startSweep() {
+    const bar = sweep();
+
+    bar.classList.remove('is-done');
+    // Force un reflow : sans lui, retirer puis remettre la classe dans le
+    // même cycle ne relance pas l'animation.
+    void bar.offsetWidth;
+    bar.classList.add('is-loading');
+}
+
+function finishSweep() {
+    if (! sweepBar) {
+        return;
+    }
+
+    sweepBar.classList.remove('is-loading');
+    void sweepBar.offsetWidth;
+    sweepBar.classList.add('is-done');
+}
+
+function initPageSweep() {
+    // Navigation Livewire (wire:navigate).
+    document.addEventListener('livewire:navigate', startSweep);
+    document.addEventListener('livewire:navigated', () => {
+        finishSweep();
+        replayPageEnter();
+        initCountUp();
+    });
+
+    // Navigation classique : on n'anime que ce qui va réellement changer de
+    // page. Un lien externe, un téléchargement, une ancre ou un clic avec
+    // Ctrl/Cmd (nouvel onglet) laisseraient la barre tourner dans le vide.
+    document.addEventListener('click', (event) => {
+        if (event.defaultPrevented || event.button !== 0) return;
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+        const link = event.target.closest('a');
+
+        if (! link || ! link.href) return;
+        if (link.target && link.target !== '_self') return;
+        if (link.hasAttribute('download')) return;
+        if (link.origin !== window.location.origin) return;
+        if (link.getAttribute('href')?.startsWith('#')) return;
+        if (link.pathname === window.location.pathname && link.search === window.location.search) return;
+
+        startSweep();
+    });
+
+    // Retour arrière depuis le cache du navigateur : la page est déjà là,
+    // la barre ne doit pas rester figée à l'écran.
+    window.addEventListener('pageshow', finishSweep);
+    window.addEventListener('beforeunload', startSweep);
+}
+
+/** Rejoue l'entrée du contenu après une navigation sans rechargement. */
+function replayPageEnter() {
+    const main = document.querySelector('main');
+
+    if (! main) return;
+
+    main.style.animation = 'none';
+    void main.offsetWidth;
+    main.style.animation = '';
+}
+
+/* =====================================================================
+   Chiffres qui défilent.
+
+   Le montant final est déjà écrit dans le HTML : on le lit, on l'anime,
+   puis on le restitue tel quel. Sans JavaScript — ou avec les animations
+   refusées — la carte affiche simplement le bon nombre.
+   ===================================================================== */
+
+/**
+ * Décompose « 1 234,56 € » en valeur, décimales et suffixe.
+ *
+ * Renvoie null pour tout ce qui n'est pas un nombre : le tiret cadratin des
+ * valeurs absentes ne doit surtout pas être animé depuis zéro.
+ */
+function parseFormattedNumber(text) {
+    // Les milliers sont des groupes de trois pr\u00e9c\u00e9d\u00e9s d'une espace, jamais
+    // \u00ab des chiffres et des espaces \u00bb en vrac : sinon l'espace qui s\u00e9pare le
+    // montant du symbole \u20ac est aval\u00e9e, et \u00ab 12 \u20ac \u00bb se rejoue en \u00ab 12\u20ac \u00bb.
+    const match = text.trim().match(/^(-?\d+(?:[\s\u00a0\u202f]\d{3})*)(?:,(\d+))?(\D*)$/);
+
+    if (! match) {
+        return null;
+    }
+
+    const entier = match[1].replace(/[\s\u00a0\u202f]/g, '');
+    const decimales = match[2] ?? '';
+
+    return {
+        value: parseFloat(decimales ? `${entier}.${decimales}` : entier),
+        decimals: decimales.length,
+        suffix: match[3] ?? '',
+    };
+}
+
+/** Remet un nombre au format du site : espace pour les milliers, virgule pour les décimales. */
+function formatNumber(value, decimals) {
+    const [entier, decimales] = value.toFixed(decimals).split('.');
+    const groupe = entier.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+    return decimales ? `${groupe},${decimales}` : groupe;
+}
+
+function animateNumber(element) {
+    if (element.dataset.countDone === '1') {
+        return;
+    }
+
+    const original = element.textContent;
+    const parsed = parseFormattedNumber(original);
+
+    element.dataset.countDone = '1';
+
+    // Rien à animer : ni un tiret, ni un zéro qui resterait zéro.
+    if (! parsed || parsed.value === 0) {
+        return;
+    }
+
+    const duration = 900;
+    const start = performance.now();
+
+    const step = (now) => {
+        const progress = Math.min((now - start) / duration, 1);
+        // Décélération : le chiffre se pose au lieu de s'arrêter net.
+        const eased = 1 - Math.pow(1 - progress, 3);
+
+        if (progress < 1) {
+            element.textContent = formatNumber(parsed.value * eased, parsed.decimals) + parsed.suffix;
+            requestAnimationFrame(step);
+        } else {
+            // On restitue la chaîne d'origine plutôt que de la reconstruire :
+            // aucun risque qu'un arrondi affiche un total faux.
+            element.textContent = original;
+        }
+    };
+
+    requestAnimationFrame(step);
+}
+
+function initCountUp() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return;
+    }
+
+    const numbers = document.querySelectorAll('[data-count-up]:not([data-count-done])');
+
+    if (! numbers.length) {
+        return;
+    }
+
+    if (! ('IntersectionObserver' in window)) {
+        numbers.forEach(animateNumber);
+
+        return;
+    }
+
+    const observer = new IntersectionObserver(
+        (entries, obs) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    animateNumber(entry.target);
+                    obs.unobserve(entry.target);
+                }
+            });
+        },
+        { threshold: 0.4 }
+    );
+
+    numbers.forEach((el) => observer.observe(el));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initPageSweep();
+    initCountUp();
+});
