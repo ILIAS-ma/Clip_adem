@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,6 +30,16 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->trustConfiguredProxies();
+
+        // Livewire embarque son propre Alpine et ne l'injecte que sur les
+        // pages qui rendent au moins un composant Livewire. Comme app.js
+        // démarre aussi son propre Alpine pour les pages qui n'en ont pas
+        // (menu mobile, sélecteurs personnalisés…), les deux se
+        // télescopaient sur une page avec Livewire : deux instances actives,
+        // et l'Alpine de Livewire perdait sa méthode `navigate`, cassant
+        // tout wire:navigate. Forcer l'injection partout garantit une seule
+        // instance, fournie par Livewire, sur chaque page.
+        Livewire::forceAssetInjection();
 
         // Un mass assignment silencieux sur un modèle de budget passerait
         // inaperçu jusqu'au jour où il fausserait un paiement.
