@@ -792,6 +792,41 @@ Le reste de la suite couvre la machine à états, la modération, les paiements
 test de fumée qui charge chaque page du back-office — les widgets sont des vues
 Blade, sans quoi une erreur de template ne se verrait qu'à l'œil nu.
 
+### Tests navigateur (Laravel Dusk)
+
+`php artisan test` ne charge jamais de JavaScript : un bouton qui dépend
+d'Alpine ou d'un `wire:navigate` cassé peut y passer indéfiniment vert. C'est
+d'ailleurs comme ça que la double instance d'Alpine (Livewire + le `import`
+manuel dans `app.js`) est passée inaperçue jusqu'ici — corrigée dans
+`AppServiceProvider::boot()` via `Livewire::forceAssetInjection()`.
+
+`tests/Browser/CampaignToEarningsFlowTest.php` fait tourner un vrai Chrome sur
+le parcours qui fait vivre le produit : un clippeur rejoint une campagne,
+publie un clip, un modérateur le valide depuis l'admin, puis les vues créditées
+apparaissent dans les gains du clippeur. Chaque étape prend une capture dans
+`tests/Browser/screenshots/`.
+
+Ce test tourne contre une base et une adresse dédiées, jamais celles du
+développement au quotidien :
+
+```bash
+# Une fois : base dédiée + copie d'environnement.
+mysql -e "CREATE DATABASE clip_dusk;"
+cp .env .env.dusk.local
+# puis, dans .env.dusk.local : DB_DATABASE=clip_dusk, APP_URL=http://127.0.0.1:8001,
+# et les cinq REQUIRE_* à false (ce test prouve le parcours campagne → argent,
+# pas l'e-mail ou le 2FA admin, qui ont leurs propres tests).
+
+php artisan migrate:fresh --env=dusk.local --force
+
+# Le serveur applicatif du test, sur le port choisi dans APP_URL — à laisser
+# tourner pendant l'exécution, dans un autre terminal.
+php artisan serve --port=8001 --env=dusk.local
+
+# Puis, dans le premier terminal :
+php artisan dusk
+```
+
 ## Avant d'ouvrir au public
 
 ```bash
