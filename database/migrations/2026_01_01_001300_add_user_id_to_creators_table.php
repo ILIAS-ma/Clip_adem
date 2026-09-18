@@ -25,7 +25,7 @@ return new class extends Migration
     {
         Schema::table('creators', function (Blueprint $table) {
             $table->dropForeign(['user_id']);
-            $table->dropUnique(['creators_user_id_unique']);
+            $table->dropUnique(['user_id']);
             $table->dropColumn('user_id');
         });
     }

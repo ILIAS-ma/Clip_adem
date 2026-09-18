@@ -70,8 +70,8 @@ return new class extends Migration
         Schema::dropIfExists('referral_commissions');
 
         Schema::table('users', function (Blueprint $table) {
-            $table->dropConstrainedForeignKey('referred_by');
-            $table->dropColumn(['referral_code', 'referred_at']);
+            $table->dropForeign(['referred_by']);
+            $table->dropColumn(['referral_code', 'referred_by', 'referred_at']);
         });
     }
 };
