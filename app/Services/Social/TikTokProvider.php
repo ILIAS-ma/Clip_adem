@@ -82,11 +82,18 @@ class TikTokProvider implements SocialProvider
      * aucun euro. `user.info.basic` refusée fait déjà échouer `connect()`, qui
      * ne peut alors pas lire l'`open_id`.
      *
+     * Mais on ne peut exiger que ce qu'on a demandé. Depuis que TIKTOK_SCOPES
+     * pilote la demande, une configuration réduite — le temps qu'une console
+     * approuve `video.list` — faisait refuser toutes les liaisons au motif
+     * d'une autorisation que l'écran de consentement n'avait jamais proposée.
+     * Le clippeur relançait indéfiniment « en laissant toutes les cases
+     * activées », sans qu'aucune case n'existe.
+     *
      * @return array<int, string>
      */
     public function requiredScopes(): array
     {
-        return ['video.list'];
+        return array_values(array_intersect(['video.list'], $this->requestedScopes()));
     }
 
     public function connect(string $code): ConnectedAccount
