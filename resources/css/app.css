@@ -196,6 +196,14 @@
         @apply btn border border-ink-700 bg-ink-900 text-ink-200 hover:border-ink-600 hover:bg-ink-800 hover:text-ink-50;
     }
 
+    /* Action destructive. Discrète au repos — elle ne doit pas rivaliser avec
+       l'action principale — mais franchement rouge au survol, pour que la
+       nature du geste soit lisible avant le clic, pas après. */
+    .btn-danger {
+        @apply btn border border-ink-700 bg-ink-900 text-ink-300
+               hover:border-red-500/60 hover:bg-red-500/10 hover:text-red-300;
+    }
+
     .chip {
         @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
     }

@@ -60,19 +60,53 @@
                                     </a>
                                 @elseif (! $account->is_active)
                                     <span class="chip-neutral">Délié</span>
-                                    <a href="{{ route('social.redirect', $account->platform->value) }}" class="btn-ghost">
+                                    <a href="{{ route('social.redirect', $account->platform->value) }}" class="btn-brand">
                                         Relier
                                     </a>
                                 @else
                                     <span class="chip-ok">Actif</span>
-                                    <form method="POST" action="{{ route('accounts.destroy', $account) }}"
-                                          onsubmit="return confirm('Délier ce compte ? Vos clips restent visibles, mais leurs vues cesseront d\'être relevées.');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-sm font-medium text-ink-400 underline-offset-2 hover:text-red-400 hover:underline">
+
+                                    {{--
+                                        Confirmation en deux temps plutôt qu'un
+                                        `confirm()` du navigateur : la boîte native
+                                        est brutale, illisible sur mobile, et son
+                                        texte ne peut pas rappeler la conséquence
+                                        exacte. Ici la question s'ouvre à la place
+                                        du bouton, et « Annuler » est le choix le
+                                        plus facile à atteindre.
+                                    --}}
+                                    <div x-data="{ confirming: false }" class="flex items-center gap-2">
+                                        <button type="button"
+                                                x-show="! confirming"
+                                                x-on:click="confirming = true"
+                                                x-transition.opacity.duration.150ms
+                                                class="btn-danger">
                                             Délier
                                         </button>
-                                    </form>
+
+                                        <div x-show="confirming"
+                                             x-cloak
+                                             x-transition.opacity.duration.150ms
+                                             class="flex items-center gap-2">
+                                            <span class="text-sm text-ink-300">
+                                                Les vues cesseront d’être relevées.
+                                            </span>
+
+                                            <button type="button"
+                                                    x-on:click="confirming = false"
+                                                    class="btn-ghost">
+                                                Annuler
+                                            </button>
+
+                                            <form method="POST" action="{{ route('accounts.destroy', $account) }}">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn-danger">
+                                                    Confirmer
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
                                 @endif
                             </div>
                         </li>
@@ -90,9 +124,10 @@
             </p>
 
             <div class="mt-5 grid gap-3 sm:grid-cols-3">
-                @foreach ($platforms as $platform)
+                @foreach ($platforms as $index => $platform)
                     <a href="{{ route('social.redirect', $platform->value) }}"
-                       class="group rounded-2xl border border-ink-700 p-5 transition hover:-translate-y-0.5 hover:border-brand-500 hover:shadow-card">
+                       data-reveal style="--reveal-delay: {{ $index * 90 }}ms"
+                       class="group rounded-2xl border border-ink-700 p-5 transition hover:-translate-y-0.5 hover:border-brand-500 hover:shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400">
                         <span class="font-display text-base font-bold text-ink-50">{{ $platform->label() }}</span>
 
                         {{-- La pastille reste utile quand on force l'affichage
