@@ -33,7 +33,10 @@ class CampaignForm
                         ->required()
                         ->createOptionForm([
                             TextInput::make('name')->label('Nom')->required(),
-                            TextInput::make('slug')->required(),
+                            TextInput::make('slug')
+                                ->label('Identifiant URL')
+                                ->required()
+                                ->dehydrateStateUsing(fn ($state) => Str::slug((string) $state)),
                         ])
                         ->createOptionUsing(fn (array $data) => Creator::create($data)->getKey()),
 
@@ -61,10 +64,24 @@ class CampaignForm
                             ? $set('slug', Str::slug((string) $state))
                             : null),
 
+                    /*
+                     * Cette valeur est la clé de route : `/campagnes/{slug}`.
+                     * Un caractère invalide — le cas vécu était une URL entière
+                     * collée ici — ne produit pas d'erreur de validation mais un
+                     * 404 chez le clippeur, à un endroit où personne ne pense à
+                     * regarder le slug. On normalise donc à la saisie, pour que
+                     * la correction soit visible avant l'enregistrement, et de
+                     * nouveau à l'écriture, pour les chemins qui ne passent pas
+                     * par le formulaire.
+                     */
                     TextInput::make('slug')
                         ->label('Identifiant URL')
                         ->required()
-                        ->unique(ignoreRecord: true),
+                        ->unique(ignoreRecord: true)
+                        ->live(onBlur: true)
+                        ->afterStateUpdated(fn ($state, $set) => $set('slug', Str::slug((string) $state)))
+                        ->dehydrateStateUsing(fn ($state) => Str::slug((string) $state))
+                        ->helperText('Apparaît dans l’adresse de la campagne : /campagnes/mon-identifiant'),
 
                     DateTimePicker::make('starts_at')
                         ->label('Début de diffusion')

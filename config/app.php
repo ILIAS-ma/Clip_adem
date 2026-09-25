@@ -83,9 +83,16 @@ return [
     | will be used by the PHP date and date-time functions. The timezone
     | is set to "UTC" by default as it is suitable for most use cases.
     |
+    | La valeur était figée à « UTC » et ignorait APP_TIMEZONE, que le
+    | .env.example annonce pourtant à Europe/Paris. Un administrateur saisissait
+    | « début de diffusion : 19h50 » en heure de Paris, l'application comparait
+    | en UTC, et la campagne restait fermée deux heures de plus — sans rien
+    | afficher qui explique pourquoi. Le décalage touchait aussi les heures du
+    | planificateur et toutes les dates montrées aux clippeurs.
+    |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'UTC'),
 
     /*
     |--------------------------------------------------------------------------
