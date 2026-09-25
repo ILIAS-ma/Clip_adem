@@ -81,7 +81,23 @@ class ClipSubmissionService
         // n'est qu'un premier filtre, pas remplacé par lui.
         $accountHandle = $participation->socialAccount->handle;
 
-        if ($parsed->handle && $accountHandle
+        /*
+         * On ne compare que deux identifiants de même nature.
+         *
+         * L'URL porte un nom d'utilisateur — « coolerkek0 ». Selon la portée
+         * accordée, la plateforme ne nous rend parfois que le nom affiché —
+         * « zebi land » — qui est un libellé libre, avec espaces et accents.
+         * Les confondre refusait la vidéo de son propre auteur en lui
+         * affirmant qu'elle venait d'un autre compte : le message accusait, et
+         * il avait tort.
+         *
+         * Quand la valeur stockée ne peut pas être un nom d'utilisateur, ce
+         * filtre n'a rien de comparable et se tait. La vérification qui compte
+         * reste entière : `ClipComplianceChecker::checkOwnership` compare
+         * l'identifiant renvoyé par l'API au premier relevé de vues, et lui ne
+         * se trompe pas.
+         */
+        if ($parsed->handle && $accountHandle && static::looksLikeUsername($accountHandle)
             && strcasecmp(ltrim($parsed->handle, '@'), ltrim($accountHandle, '@')) !== 0) {
             throw ClipSubmissionRefused::handleMismatch($parsed->handle, $accountHandle);
         }
@@ -122,5 +138,19 @@ class ClipSubmissionService
 
             throw $exception;
         }
+    }
+
+    /**
+     * La valeur stockée peut-elle être un nom d'utilisateur ?
+     *
+     * Les plateformes limitent les noms d'utilisateur aux lettres, chiffres,
+     * points, tirets et underscores. Un nom affiché contient au contraire des
+     * espaces, des accents, parfois des émojis. La distinction n'est pas
+     * cosmétique : c'est elle qui décide si l'on peut refuser une vidéo à
+     * quelqu'un en lui disant qu'elle n'est pas la sienne.
+     */
+    protected static function looksLikeUsername(string $handle): bool
+    {
+        return (bool) preg_match('/^@?[A-Za-z0-9._-]+$/', $handle);
     }
 }

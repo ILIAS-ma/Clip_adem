@@ -205,7 +205,21 @@ class TikTokProvider implements SocialProvider
          * On tente donc avec, puis sans. Perdre un indicateur de modération
          * vaut mieux qu'empêcher quelqu'un de lier son compte.
          */
-        $user = $this->readProfile($token['access_token'], 'open_id,display_name,follower_count');
+        /*
+         * `username` est le nom d'utilisateur — celui qui figure dans l'URL
+         * d'une vidéo. C'est le seul identifiant comparable à ce qu'un clippeur
+         * nous colle, mais il exige `user.info.profile`. Sans lui il ne reste
+         * que `display_name`, un libellé libre : le prendre pour un nom
+         * d'utilisateur faisait refuser à quelqu'un sa propre vidéo.
+         *
+         * D'où cette dégradation en trois temps, du plus complet au minimum
+         * vital : perdre un champ vaut toujours mieux qu'empêcher une liaison.
+         */
+        $user = $this->readProfile($token['access_token'], 'open_id,username,display_name,follower_count');
+
+        if ($user->failed() && $user->status() === 401) {
+            $user = $this->readProfile($token['access_token'], 'open_id,username,display_name');
+        }
 
         if ($user->failed() && $user->status() === 401) {
             $user = $this->readProfile($token['access_token'], 'open_id,display_name');
@@ -220,7 +234,9 @@ class TikTokProvider implements SocialProvider
         return new ConnectedAccount(
             platform: $this->platform(),
             externalAccountId: $token['open_id'] ?? $profile['open_id'],
-            handle: $profile['display_name'] ?? null,
+            // Le nom d'utilisateur d'abord : c'est lui qui figure dans l'URL
+            // d'une vidéo, donc le seul comparable à ce qu'un clippeur colle.
+            handle: $profile['username'] ?? $profile['display_name'] ?? null,
             accessToken: $token['access_token'],
             refreshToken: $token['refresh_token'] ?? $existing?->refresh_token,
             expiresAt: now()->addSeconds((int) ($token['expires_in'] ?? 86400)),
