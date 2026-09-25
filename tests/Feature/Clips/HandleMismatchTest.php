@@ -8,7 +8,7 @@ use App\Enums\Platform;
 use App\Enums\UserRole;
 use App\Exceptions\ClipSubmissionRefused;
 use App\Models\Campaign;
-use App\Models\Participation;
+use App\Models\CampaignParticipation;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Services\Clips\ClipSubmissionService;
@@ -59,7 +59,7 @@ class HandleMismatchTest extends TestCase
             'handle' => $handle,
         ]);
 
-        Participation::factory()->create([
+        CampaignParticipation::factory()->create([
             'user_id' => $this->clipper->getKey(),
             'campaign_id' => $this->campaign->getKey(),
             'social_account_id' => $account->getKey(),
@@ -70,8 +70,8 @@ class HandleMismatchTest extends TestCase
     protected function submit(string $url): void
     {
         app(ClipSubmissionService::class)->submit(
-            $this->clipper->fresh(),
             $this->campaign->fresh(),
+            $this->clipper->fresh(),
             $url,
         );
     }
