@@ -67,6 +67,14 @@
         <env name="TIKTOK_CLIENT_KEY" value=""/>
         <env name="TIKTOK_CLIENT_SECRET" value=""/>
         <env name="TIKTOK_REDIRECT_URI" value=""/>
+        <!--
+            Épinglé, et non vidé : la suite doit éprouver la configuration
+            visée, pas celle de la machine qui lance les tests. Une console qui
+            n'a pas encore approuvé `video.list` oblige à la retirer du `.env`
+            du serveur — sans cette ligne, ce réglage temporaire faisait
+            échouer un test qui n'a rien à voir avec lui.
+        -->
+        <env name="TIKTOK_SCOPES" value="user.info.basic,video.list"/>
         <env name="TIKTOK_SITE_VERIFICATION" value=""/>
         <env name="YOUTUBE_CLIENT_ID" value=""/>
         <env name="YOUTUBE_CLIENT_SECRET" value=""/>
