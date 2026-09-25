@@ -85,12 +85,19 @@ class DeadTokenTest extends TestCase
     #[Test]
     public function a_refused_token_marks_the_account_for_reconnection(): void
     {
-        // C'est exactement ce que renvoie TikTok quand le jeton n'a pas la
-        // portée demandée, ou qu'il n'est plus valide.
+        /*
+         * Un jeton réellement invalide — expiré, révoqué depuis l'application
+         * TikTok. Se reconnecter le répare, d'où le marquage.
+         *
+         * Ce test employait auparavant `scope_not_authorized`, qui rend le
+         * même 401 mais ne se répare pas ainsi : l'application n'a pas la
+         * portée, et le consentement redonnerait les mêmes droits. Les deux
+         * cas sont désormais distingués — voir MissingPermissionTest.
+         */
         $this->providerFailsWith(SocialProviderFailed::fetchFailed(
             Platform::TikTok,
             401,
-            '{"error":{"code":"scope_not_authorized"}}',
+            '{"error":{"code":"access_token_invalid"}}',
         ));
 
         app(ClipSyncService::class)->syncClip($this->clip);
@@ -98,7 +105,7 @@ class DeadTokenTest extends TestCase
         $this->account->refresh();
 
         $this->assertTrue($this->account->needs_reconnect);
-        $this->assertStringContainsString('scope_not_authorized', (string) $this->account->last_error);
+        $this->assertStringContainsString('access_token_invalid', (string) $this->account->last_error);
     }
 
     #[Test]
