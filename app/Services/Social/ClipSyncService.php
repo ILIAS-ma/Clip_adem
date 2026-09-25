@@ -36,6 +36,15 @@ use Illuminate\Support\Str;
  */
 class ClipSyncService
 {
+    /**
+     * Le dernier échec rencontré, pour que `refreshClip()` puisse le qualifier.
+     *
+     * `syncClipWithMetrics()` avale l'exception et rend `null` : quatre causes
+     * distinctes arrivaient donc au clippeur sous un seul message, dont un qui
+     * accusait sa vidéo d'avoir été supprimée alors qu'elle était en ligne.
+     */
+    protected ?SocialProviderFailed $lastFailure = null;
+
     public function __construct(
         protected SocialProviderManager $providers,
         protected CampaignBudgetService $budget,
@@ -192,8 +201,18 @@ class ClipSyncService
             return SyncOutcome::AccountUnusable;
         }
 
-        return $this->syncClipWithMetrics($clip) !== null
-            ? SyncOutcome::Updated
+        $this->lastFailure = null;
+
+        if ($this->syncClipWithMetrics($clip) !== null) {
+            return SyncOutcome::Updated;
+        }
+
+        // « Publication introuvable » et « nous n'avons pas la permission de
+        // regarder » se ressemblent de l'extérieur, et se confondaient ici. Le
+        // premier message accuse la vidéo du clippeur ; le second dit la
+        // vérité, et qu'il n'a rien à faire.
+        return $this->lastFailure?->isMissingPermission()
+            ? SyncOutcome::MissingPermission
             : SyncOutcome::Unreachable;
     }
 
@@ -269,7 +288,32 @@ class ClipSyncService
      */
     protected function noteAccountFailure(SocialAccount $account, \Throwable $exception): void
     {
+        if ($exception instanceof SocialProviderFailed) {
+            $this->lastFailure = $exception;
+        }
+
         if (! $exception instanceof SocialProviderFailed || ! $exception->isAuthFailure()) {
+            return;
+        }
+
+        /*
+         * Une portée que l'application n'a pas obtenue n'est pas un jeton mort.
+         * Marquer le compte « à reconnecter » enverrait le clippeur refaire un
+         * consentement qui lui redonnerait exactement les mêmes droits — et il
+         * recommencerait, en croyant s'y prendre mal. On enregistre la cause
+         * pour la modération, sans lui demander un geste inutile.
+         */
+        if ($exception->isMissingPermission()) {
+            $account->forceFill([
+                'last_error' => Str::limit($exception->getMessage(), 480),
+            ])->save();
+
+            Log::error('Portée manquante sur l’application : aucun relevé possible', [
+                'social_account_id' => $account->getKey(),
+                'platform' => $account->platform->value,
+                'granted' => $account->scopes,
+            ]);
+
             return;
         }
 

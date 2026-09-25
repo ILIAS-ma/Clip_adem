@@ -17,6 +17,7 @@ enum SyncOutcome: string
     case Cooldown = 'cooldown';
     case AccountUnusable = 'account_unusable';
     case Unreachable = 'unreachable';
+    case MissingPermission = 'missing_permission';
 
     public function succeeded(): bool
     {
@@ -40,6 +41,16 @@ enum SyncOutcome: string
 
             self::Unreachable => 'La plateforme n’a pas renvoyé cette publication. Elle a été '
                 .'supprimée, passée en privé, ou elle appartient à un autre compte que celui lié.',
+
+            /*
+             * Ne jamais dire ici « reconnectez votre compte » : le consentement
+             * redonnerait les mêmes droits. Ce n'est pas au clippeur d'agir, et
+             * le lui laisser croire lui ferait recommencer sans fin un geste
+             * qui ne peut pas aboutir.
+             */
+            self::MissingPermission => 'Nous n’avons pas encore l’autorisation de lire les vues '
+                .'sur cette plateforme. Vos vues existent bien : elles seront comptées dès que '
+                .'l’autorisation sera accordée, sans rien avoir à refaire de votre côté.',
         };
     }
 }

@@ -22,6 +22,22 @@ class SocialProviderFailed extends RuntimeException
         return in_array($this->status, [401, 403], true);
     }
 
+    /**
+     * Est-ce l'application qui n'a pas la permission, plutôt que le jeton qui
+     * est mort ?
+     *
+     * La distinction décide de ce qu'on demande au clippeur. Un jeton expiré se
+     * répare en se reconnectant. Une portée que l'application n'a jamais
+     * obtenue ne se répare pas ainsi : le consentement redonnerait exactement
+     * les mêmes droits, et l'on renverrait quelqu'un recommencer indéfiniment
+     * un geste qui ne peut pas aboutir.
+     */
+    public function isMissingPermission(): bool
+    {
+        return $this->isAuthFailure()
+            && str_contains(strtolower($this->getMessage()), 'scope_not_authorized');
+    }
+
     public static function notConfigured(Platform $platform): self
     {
         return new self(sprintf(
