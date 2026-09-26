@@ -329,10 +329,24 @@
     to   { opacity: 1; transform: none; }
 }
 
-/* L'entrée de page et la cascade des cartes sont passées à GSAP, qui les
-   enchaîne en une seule timeline : les laisser aussi en CSS ferait jouer deux
-   systèmes sur le même élément, avec un saut au raccord. */
 @media (prefers-reduced-motion: no-preference) {
+    /* Courte — 280 ms. Au-delà, on ne perçoit plus une transition mais une
+       attente, et c'est le reproche le plus fréquent fait aux sites animés. */
+    .js main {
+        animation: page-enter .28s cubic-bezier(.2, .7, .3, 1) both;
+    }
+
+    /* Les cartes de statistiques arrivent en cascade : l'œil suit la ligne
+       au lieu de recevoir quatre chiffres d'un bloc. Le décalage reste sous
+       le quart de seconde au total. */
+    .js .stat-card {
+        animation: stat-enter .4s cubic-bezier(.2, .7, .3, 1) both;
+    }
+
+    .js .stat-card:nth-child(2) { animation-delay: .05s; }
+    .js .stat-card:nth-child(3) { animation-delay: .1s; }
+    .js .stat-card:nth-child(4) { animation-delay: .15s; }
+
     .page-sweep { transition: opacity .2s ease; }
 }
 
@@ -433,7 +447,11 @@
     border-color: theme(colors.ink.600);
 }
 
-
+@media (prefers-reduced-motion: no-preference) {
+    .js .hero-balance {
+        animation: hero-enter .5s cubic-bezier(.2, .7, .3, 1) both;
+    }
+}
 
 @keyframes hero-enter {
     from { opacity: 0; transform: translateY(12px); }

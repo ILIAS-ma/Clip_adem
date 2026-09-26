@@ -1,27 +1,4 @@
 /**
- * Les animations sont chargées à la demande.
- *
- * GSAP et ScrollTrigger pèsent une quarantaine de kilo-octets compressés,
- * contre quatre pour tout le reste du script. Les inclure d'office les
- * ferait télécharger avant le premier affichage, sur des téléphones et des
- * réseaux qui n'ont rien demandé — et pour quelqu'un qui préfère moins de
- * mouvement, ils ne serviraient à rien du tout.
- *
- * En fragment séparé, la page s'affiche d'abord, les animations arrivent
- * ensuite. Rien ne dépend d'elles pour être lisible : le CSS laisse tout
- * visible tant que le script n'a pas pris la main.
- */
-async function armerAnimations() {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        return;
-    }
-
-    const { armerAnimations: armer } = await import('./animations');
-
-    armer();
-}
-
-/**
  * Alpine vient toujours de Livewire (voir AppServiceProvider::boot(),
  * Livewire::forceAssetInjection()), même sur une page sans composant
  * Livewire : importer et démarrer notre propre copie d'Alpine ici ferait
@@ -118,6 +95,37 @@ document.addEventListener('alpine:init', () => {
     }));
 });
 
+/**
+ * Révèle au scroll les éléments marqués [data-reveal] : un fade + léger
+ * déplacement plutôt qu'un chargement figé section par section. Ignoré si
+ * l'utilisateur préfère moins de mouvement, ou si l'élément est déjà visible
+ * au chargement (pas d'animation sur ce qui est à l'écran d'entrée).
+ */
+function initScrollReveal() {
+    const elements = document.querySelectorAll('[data-reveal]');
+    if (!elements.length) return;
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        elements.forEach((el) => el.classList.add('is-visible'));
+        return;
+    }
+
+    const observer = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        },
+        { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
+    );
+
+    elements.forEach((el) => observer.observe(el));
+}
+
+document.addEventListener('DOMContentLoaded', initScrollReveal);
 
 /* =====================================================================
    Balayage de navigation.
@@ -169,11 +177,15 @@ function initPageSweep() {
     document.addEventListener('livewire:navigate', startSweep);
     document.addEventListener('livewire:navigated', () => {
         finishSweep();
+        replayPageEnter();
+        initCountUp();
 
-        // Le nouveau document apporte ses propres éléments à animer, et les
-        // déclencheurs du précédent pointent dans le vide : tout est réarmé
-        // d'un bloc plutôt que rafistolé morceau par morceau.
-        armerAnimations();
+        // Le nouveau document apporte ses propres [data-reveal] : sans cette
+        // ligne, ils restaient invisibles — l'observateur précédent ne
+        // surveillait que les éléments du document remplaçé. Une page
+        // entièrement vide, précisément à cause de l'animation censée la
+        // rendre vivante.
+        initScrollReveal();
     });
 
     // Navigation classique : on n'anime que ce qui va réellement changer de
@@ -201,7 +213,131 @@ function initPageSweep() {
     window.addEventListener('beforeunload', startSweep);
 }
 
+/** Rejoue l'entrée du contenu après une navigation sans rechargement. */
+function replayPageEnter() {
+    const main = document.querySelector('main');
 
+    if (! main) return;
+
+    main.style.animation = 'none';
+    void main.offsetWidth;
+    main.style.animation = '';
+}
+
+/* =====================================================================
+   Chiffres qui défilent.
+
+   Le montant final est déjà écrit dans le HTML : on le lit, on l'anime,
+   puis on le restitue tel quel. Sans JavaScript — ou avec les animations
+   refusées — la carte affiche simplement le bon nombre.
+   ===================================================================== */
+
+/**
+ * Décompose « 1 234,56 € » en valeur, décimales et suffixe.
+ *
+ * Renvoie null pour tout ce qui n'est pas un nombre : le tiret cadratin des
+ * valeurs absentes ne doit surtout pas être animé depuis zéro.
+ */
+function parseFormattedNumber(text) {
+    // Les milliers sont des groupes de trois pr\u00e9c\u00e9d\u00e9s d'une espace, jamais
+    // \u00ab des chiffres et des espaces \u00bb en vrac : sinon l'espace qui s\u00e9pare le
+    // montant du symbole \u20ac est aval\u00e9e, et \u00ab 12 \u20ac \u00bb se rejoue en \u00ab 12\u20ac \u00bb.
+    const match = text.trim().match(/^(-?\d+(?:[\s\u00a0\u202f]\d{3})*)(?:,(\d+))?(\D*)$/);
+
+    if (! match) {
+        return null;
+    }
+
+    const entier = match[1].replace(/[\s\u00a0\u202f]/g, '');
+    const decimales = match[2] ?? '';
+
+    return {
+        value: parseFloat(decimales ? `${entier}.${decimales}` : entier),
+        decimals: decimales.length,
+        suffix: match[3] ?? '',
+    };
+}
+
+/** Remet un nombre au format du site : espace pour les milliers, virgule pour les décimales. */
+function formatNumber(value, decimals) {
+    const [entier, decimales] = value.toFixed(decimals).split('.');
+    const groupe = entier.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+    return decimales ? `${groupe},${decimales}` : groupe;
+}
+
+function animateNumber(element) {
+    if (element.dataset.countDone === '1') {
+        return;
+    }
+
+    const original = element.textContent;
+    const parsed = parseFormattedNumber(original);
+
+    element.dataset.countDone = '1';
+
+    // Rien à animer : ni un tiret, ni un zéro qui resterait zéro.
+    if (! parsed || parsed.value === 0) {
+        return;
+    }
+
+    const duration = 900;
+    const start = performance.now();
+
+    const step = (now) => {
+        const progress = Math.min((now - start) / duration, 1);
+        // Décélération : le chiffre se pose au lieu de s'arrêter net.
+        const eased = 1 - Math.pow(1 - progress, 3);
+
+        if (progress < 1) {
+            element.textContent = formatNumber(parsed.value * eased, parsed.decimals) + parsed.suffix;
+            requestAnimationFrame(step);
+        } else {
+            // On restitue la chaîne d'origine plutôt que de la reconstruire :
+            // aucun risque qu'un arrondi affiche un total faux.
+            element.textContent = original;
+        }
+    };
+
+    requestAnimationFrame(step);
+}
+
+function initCountUp() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return;
+    }
+
+    const numbers = document.querySelectorAll('[data-count-up]:not([data-count-done])');
+
+    if (! numbers.length) {
+        return;
+    }
+
+    if (! ('IntersectionObserver' in window)) {
+        numbers.forEach(animateNumber);
+
+        return;
+    }
+
+    const observer = new IntersectionObserver(
+        (entries, obs) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    animateNumber(entry.target);
+                    obs.unobserve(entry.target);
+                }
+            });
+        },
+        { threshold: 0.4 }
+    );
+
+    numbers.forEach((el) => observer.observe(el));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initPageSweep();
+    initCountUp();
+});
 
 /* =====================================================================
    La barre se détache dès qu'on quitte le haut de page.
@@ -235,8 +371,3 @@ document.addEventListener('DOMContentLoaded', initScrollAwareNav);
 // Après une navigation instantanée, la barre du nouveau document n'a pas
 // d'écouteur : elle resterait figée dans l'état de la page précédente.
 document.addEventListener('livewire:navigated', initScrollAwareNav);
-
-document.addEventListener('DOMContentLoaded', () => {
-    initPageSweep();
-    armerAnimations();
-});
