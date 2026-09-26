@@ -25,7 +25,7 @@
          x-transition:enter="transition ease-out duration-150"
          x-transition:enter-start="opacity-0 scale-95"
          x-transition:enter-end="opacity-100 scale-100"
-         class="absolute right-0 z-50 mt-2 w-80 origin-top-right rounded-xl border border-ink-700 bg-ink-900 shadow-lifted">
+         class="glass glass-edge absolute right-0 z-50 mt-2 w-80 origin-top-right overflow-hidden rounded-2xl shadow-lifted">
         <div class="flex items-center justify-between border-b border-ink-700 px-4 py-3">
             <span class="text-sm font-semibold text-ink-50">Notifications</span>
             @if ($unreadCount > 0)

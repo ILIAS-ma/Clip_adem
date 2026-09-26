@@ -32,7 +32,7 @@
 <nav x-data="{ open: false }"
      x-effect="document.body.classList.toggle('overflow-hidden', open)"
      @keydown.escape.window="open = false"
-     class="sticky top-0 z-30 border-b border-ink-700 bg-ink-900/85 backdrop-blur">
+     class="glass glass-edge sticky top-0 z-30 border-x-0 border-t-0 border-b border-b-ink-700">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 items-center justify-between gap-3">
 
@@ -101,7 +101,7 @@
                  x-transition:leave="transition ease-in duration-150"
                  x-transition:leave-start="opacity-100 translate-x-0"
                  x-transition:leave-end="opacity-0 translate-x-6"
-                 class="absolute inset-y-0 end-0 flex w-full flex-col overflow-y-auto border-s border-ink-700 bg-ink-900 shadow-lifted sm:max-w-sm">
+                 class="glass glass-panel absolute inset-y-0 end-0 flex w-full flex-col overflow-y-auto border-y-0 border-e-0 border-s border-s-ink-700 shadow-lifted sm:max-w-sm">
 
                 <div class="flex h-16 flex-none items-center justify-between border-b border-ink-700 px-4 sm:px-6">
                     <a href="{{ $home }}" class="flex items-center" @click="open = false">

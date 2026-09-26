@@ -525,3 +525,66 @@
 @media (prefers-reduced-motion: reduce) {
     .burger-line { transition: none; }
 }
+
+/* =====================================================================
+   Verre dépoli.
+
+   Sur iOS, le verre habille ce qui flotte AU-DESSUS du contenu — barre de
+   navigation, panneaux, feuilles modales — et jamais le contenu lui-même.
+   Ce n'est pas qu'une question de goût :
+
+    - `backdrop-filter` force le navigateur à recomposer la zone floutée à
+      chaque image. Sur une liste de vingt cartes, le défilement saccade,
+      et d'abord sur les téléphones — ceux de vos clippeurs.
+    - Un texte posé sur un fond translucide perd du contraste dès que le
+      contenu qui défile dessous change de luminosité. Sur une carte de
+      montant, c'est le chiffre qui devient illisible.
+
+   D'où la règle appliquée ici : le verre pour le mobilier, l'opaque pour
+   ce qu'on lit.
+   ===================================================================== */
+
+.glass {
+    background: rgb(16 18 16 / .72);
+    border: 1px solid rgb(244 246 241 / .07);
+
+    /* `saturate` avant `blur` : sans lui, le flou délave les couleurs qui
+       passent dessous et le verre vire au gris. C'est ce qui distingue un
+       vrai dépoli d'un simple voile. */
+    -webkit-backdrop-filter: saturate(170%) blur(18px);
+            backdrop-filter: saturate(170%) blur(18px);
+}
+
+/* Le liseré clair du bord supérieur : sur iOS c'est lui qui donne
+   l'épaisseur, l'impression d'une plaque et non d'un calque. */
+.glass-edge {
+    position: relative;
+}
+
+.glass-edge::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgb(244 246 241 / .16), transparent);
+    pointer-events: none;
+}
+
+/* Repli pour les navigateurs sans backdrop-filter — Firefox l'a longtemps
+   désactivé par défaut. Sans ce bloc, le fond devient franchement
+   translucide et le texte se lit par-dessus la page. */
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .glass {
+        background: rgb(16 18 16 / .97);
+    }
+}
+
+/* Le verre coûte cher à composer. Sur un écran tactile, on garde le
+   dépoli sur la barre seule — c'est la seule surface toujours visible. */
+@media (max-width: 640px) {
+    .glass-panel {
+        -webkit-backdrop-filter: none;
+                backdrop-filter: none;
+        background: theme(colors.ink.900);
+    }
+}
