@@ -40,12 +40,25 @@ class GlassSurfacesTest extends TestCase
     }
 
     #[Test]
-    public function the_navigation_bar_is_frosted(): void
+    public function the_navigation_bar_is_frosted_once_scrolled(): void
     {
+        /*
+         * Le dépoli n'apparaît plus d'emblée : en haut de page la barre se
+         * fond dans le contenu, au lieu de le couper en deux dès le premier
+         * pixel. Elle prend son verre en descendant.
+         */
         $this->actingAs($this->clipper())
             ->get(route('dashboard'))
             ->assertSuccessful()
-            ->assertSee('glass glass-edge sticky', escape: false);
+            ->assertSee('nav-bar', escape: false);
+
+        $css = file_get_contents(resource_path('css/app.css'));
+
+        $this->assertMatchesRegularExpression(
+            '/\.nav-bar\.is-scrolled\s*\{[^}]*backdrop-filter/s',
+            $css,
+            'La barre doit prendre son dépoli une fois défilée.',
+        );
     }
 
     #[Test]
