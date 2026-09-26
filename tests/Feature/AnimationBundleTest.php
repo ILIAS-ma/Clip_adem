@@ -64,12 +64,12 @@ class AnimationBundleTest extends TestCase
         // de quoi animer. Le test vérifie l'ordre, pas seulement la présence.
         $source = $this->app_js();
 
-        $debut = strpos($source, 'async function armerAnimations');
+        preg_match('/async function armerAnimations\(\).*?\}\n\}/s', $source, $fonction);
 
-        $this->assertNotFalse($debut, 'La fonction d’armement est introuvable.');
+        $this->assertNotEmpty($fonction, 'La fonction d’armement est introuvable.');
 
-        $garde = strpos($source, 'prefers-reduced-motion', $debut);
-        $chargement = strpos($source, "import('./animations')", $debut);
+        $garde = strpos($fonction[0], 'prefers-reduced-motion');
+        $chargement = strpos($fonction[0], "import('./animations')");
 
         $this->assertNotFalse($garde, 'Le mouvement réduit n’est pas pris en compte.');
         $this->assertLessThan(
