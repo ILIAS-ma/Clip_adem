@@ -116,7 +116,7 @@
                             @foreach ($clips as $clip)
                                 <li class="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
                                     <div class="min-w-0">
-                                        <a href="{{ route('clips.show', $clip) }}"
+                                        <a href="{{ route('clips.show', $clip) }}" wire:navigate
                                            class="block truncate font-semibold text-ink-50 underline-offset-2 hover:underline">
                                             {{ $clip->platform->label() }} · {{ $clip->external_post_id }}
                                         </a>

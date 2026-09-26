@@ -179,6 +179,13 @@ function initPageSweep() {
         finishSweep();
         replayPageEnter();
         initCountUp();
+
+        // Le nouveau document apporte ses propres [data-reveal] : sans cette
+        // ligne, ils restaient invisibles — l'observateur précédent ne
+        // surveillait que les éléments du document remplaçé. Une page
+        // entièrement vide, précisément à cause de l'animation censée la
+        // rendre vivante.
+        initScrollReveal();
     });
 
     // Navigation classique : on n'anime que ce qui va réellement changer de

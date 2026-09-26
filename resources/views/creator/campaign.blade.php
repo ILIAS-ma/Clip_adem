@@ -8,7 +8,7 @@
                 <h1 class="mt-1 font-display text-2xl font-bold text-ink-50">{{ $campaign->title }}</h1>
             </div>
 
-            <a href="{{ route('creator.dashboard') }}" class="btn-ghost">← Mes campagnes</a>
+            <a href="{{ route('creator.dashboard') }}" wire:navigate class="btn-ghost">← Mes campagnes</a>
         </div>
     </x-slot>
 

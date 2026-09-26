@@ -13,7 +13,7 @@
                     {{ Money::euros($clips->sum('earned_cents')) }} gagnés
                 </p>
             </div>
-            <a href="{{ route('campaigns.index') }}" class="btn-ghost">Rejoindre une campagne</a>
+            <a href="{{ route('campaigns.index') }}" wire:navigate class="btn-ghost">Rejoindre une campagne</a>
         </div>
     </x-slot>
 
@@ -60,7 +60,7 @@
             </div>
 
             @if (array_filter($filters))
-                <a href="{{ route('clips.index') }}" class="text-sm font-medium text-ink-300 underline-offset-2 hover:text-ink-50 hover:underline">
+                <a href="{{ route('clips.index') }}" wire:navigate class="text-sm font-medium text-ink-300 underline-offset-2 hover:text-ink-50 hover:underline">
                     Réinitialiser
                 </a>
             @endif
@@ -69,7 +69,7 @@
         @if ($clips->isEmpty() && array_filter($filters))
             <div class="card px-6 py-16 text-center">
                 <p class="font-display text-lg font-bold text-ink-50">Aucun clip pour ces filtres</p>
-                <a href="{{ route('clips.index') }}" class="btn-ghost mt-6">Réinitialiser les filtres</a>
+                <a href="{{ route('clips.index') }}" wire:navigate class="btn-ghost mt-6">Réinitialiser les filtres</a>
             </div>
         @elseif ($clips->isEmpty())
             <div class="card px-6 py-16 text-center">
@@ -78,12 +78,12 @@
                     Rejoignez une campagne, publiez votre clip sur votre compte, puis collez le lien
                     de la publication.
                 </p>
-                <a href="{{ route('campaigns.index') }}" class="btn-brand mt-6">Voir les campagnes</a>
+                <a href="{{ route('campaigns.index') }}" wire:navigate class="btn-brand mt-6">Voir les campagnes</a>
             </div>
         @else
             <div class="space-y-3">
                 @foreach ($clips as $clip)
-                    <a href="{{ route('clips.show', $clip) }}"
+                    <a href="{{ route('clips.show', $clip) }}" wire:navigate
                        class="flex items-center gap-4 card p-5 transition hover:-translate-y-0.5 hover:shadow-lifted">
                         <div class="h-16 w-12 flex-none overflow-hidden rounded-lg bg-ink-700">
                             @if ($clip->thumbnail_url)

@@ -146,7 +146,7 @@
 
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <x-responsive-nav-link :href="route('logout')"
+                            <x-responsive-nav-link :href="route('logout')" :navigate="false"
                                 onclick="event.preventDefault(); this.closest('form').submit();">
                                 Déconnexion
                             </x-responsive-nav-link>

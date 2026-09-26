@@ -32,7 +32,7 @@
                 </form>
 
                 <a href="{{ $clip->url }}" target="_blank" rel="noopener" class="btn-ghost">Voir la publication</a>
-                <a href="{{ route('clips.index') }}" class="btn-ghost">← Mes clips</a>
+                <a href="{{ route('clips.index') }}" wire:navigate class="btn-ghost">← Mes clips</a>
             </div>
         </div>
     </x-slot>

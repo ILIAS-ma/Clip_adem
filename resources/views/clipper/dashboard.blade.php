@@ -14,7 +14,7 @@
                 </p>
             </div>
 
-            <a href="{{ route('campaigns.index') }}" class="btn-primary">Voir les campagnes</a>
+            <a href="{{ route('campaigns.index') }}" wire:navigate class="btn-primary">Voir les campagnes</a>
         </div>
     </x-slot>
 
@@ -60,7 +60,7 @@
                     </div>
                 @else
                     <div class="mt-6 flex flex-wrap items-center gap-3">
-                        <a href="{{ route('earnings.index') }}" class="btn-brand">Demander un retrait</a>
+                        <a href="{{ route('earnings.index') }}" wire:navigate class="btn-brand">Demander un retrait</a>
                         <span class="text-sm text-ink-300">Vous avez atteint le minimum.</span>
                     </div>
                 @endif
@@ -154,7 +154,7 @@
                             et vos gains calculés — sans lui, vous ne pouvez pas rejoindre de campagne.
                         </p>
                     </div>
-                    <a href="{{ route('accounts.index') }}" class="btn-brand">Lier un compte</a>
+                    <a href="{{ route('accounts.index') }}" wire:navigate class="btn-brand">Lier un compte</a>
                 </div>
             </div>
         @endif
@@ -163,7 +163,7 @@
             <div class="flex items-center justify-between border-b border-ink-700 px-6 py-4">
                 <h2 class="font-display text-lg font-bold text-ink-50">Mes clips</h2>
                 @if ($clips->isNotEmpty())
-                    <a href="{{ route('clips.index') }}" class="text-sm font-semibold text-ink-300 underline-offset-2 hover:text-ink-50 hover:underline">
+                    <a href="{{ route('clips.index') }}" wire:navigate class="text-sm font-semibold text-ink-300 underline-offset-2 hover:text-ink-50 hover:underline">
                         Tout voir
                     </a>
                 @endif
@@ -180,7 +180,7 @@
                 <ul class="divide-y divide-ink-700">
                     @foreach ($clips->take(5) as $clip)
                         <li>
-                            <a href="{{ route('clips.show', $clip) }}"
+                            <a href="{{ route('clips.show', $clip) }}" wire:navigate
                                class="flex flex-wrap items-center justify-between gap-4 px-6 py-4 transition hover:bg-ink-800">
                                 <div class="min-w-0">
                                     <p class="font-semibold text-ink-50">{{ $clip->campaign?->title }}</p>
