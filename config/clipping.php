@@ -97,13 +97,34 @@ return [
     | Conformité au brief
     |--------------------------------------------------------------------------
     |
-    | Les contrôles produisent un rapport, jamais une validation : la décision
-    | reste manuelle.
+    | Les contrôles produisent un rapport. Ce rapport peut désormais valider
+    | seul — voir « Modération » juste en dessous — mais uniquement quand il
+    | est vert sur toute la ligne.
     |
     */
 
     'compliance' => [
         'min_duration_seconds' => 10,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Modération
+    |--------------------------------------------------------------------------
+    |
+    | Un clip conforme est approuvé sans attendre qu'un humain clique. Sur une
+    | plateforme tenue par une personne, la file d'attente devient sinon le
+    | goulot de tout le produit : le clippeur publie, ses vues montent, et il
+    | n'est pas payé parce que personne n'a ouvert l'administration.
+    |
+    | L'automatisation ne remplace aucun contrôle, elle les applique plus tôt :
+    | seule la certitude approuve, le moindre doute renvoie à un humain. Mettre
+    | à `false` remet toute la file en validation manuelle.
+    |
+    */
+
+    'moderation' => [
+        'auto_approve' => env('AUTO_APPROVE_CLIPS', true),
     ],
 
     /*
