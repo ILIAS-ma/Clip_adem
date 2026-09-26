@@ -104,9 +104,9 @@ class InstantNavigationTest extends TestCase
         $script = file_get_contents(resource_path('js/app.js'));
 
         $this->assertMatchesRegularExpression(
-            '#livewire:navigated.*initScrollReveal#s',
+            '#livewire:navigated.*armerAnimations#s',
             $script,
-            'La révélation au scroll doit être réarmée après une navigation.',
+            'Les animations doivent être réarmées après une navigation.',
         );
     }
 }
