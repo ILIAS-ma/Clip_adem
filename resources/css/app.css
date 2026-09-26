@@ -457,3 +457,71 @@
     from { opacity: 0; transform: translateY(12px); }
     to   { opacity: 1; transform: none; }
 }
+
+/* =====================================================================
+   Bouton du menu.
+
+   Trois traits qui se plient en croix, plutôt que deux icônes qui se
+   remplacent : on suit des yeux ce qui vient de se passer, et l'état du
+   menu se lit sans réfléchir.
+   ===================================================================== */
+
+.nav-burger {
+    position: relative;
+    display: flex;
+    height: 2.5rem;
+    width: 2.5rem;
+    flex: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    border-radius: theme(borderRadius.lg);
+    color: theme(colors.ink.200);
+    transition: background-color .2s ease, color .2s ease;
+}
+
+.nav-burger:hover {
+    background: theme(colors.ink.800);
+    color: theme(colors.ink.50);
+}
+
+.nav-burger:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px theme(colors.brand.400);
+}
+
+.burger-line {
+    display: block;
+    height: 2px;
+    width: 18px;
+    border-radius: 9999px;
+    background: currentColor;
+    transition: transform .25s cubic-bezier(.2, .7, .3, 1), opacity .18s ease;
+}
+
+.is-open-top    { transform: translateY(7px) rotate(45deg); }
+.is-open-mid    { opacity: 0; transform: scaleX(.4); }
+.is-open-bottom { transform: translateY(-7px) rotate(-45deg); }
+
+/* ---------------------------------------------------------------------
+   Entrées du menu, en cascade.
+   --------------------------------------------------------------------- */
+
+@keyframes nav-entry {
+    from { opacity: 0; transform: translateX(12px); }
+    to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .js .nav-entry {
+        animation: nav-entry .32s cubic-bezier(.2, .7, .3, 1) both;
+        animation-delay: var(--entry-delay, 0ms);
+    }
+}
+
+/* Le pliage du bouton disparaît aussi : sous mouvement réduit, l'icône
+   change d'état sans transition plutôt que de se déformer. */
+@media (prefers-reduced-motion: reduce) {
+    .burger-line { transition: none; }
+}

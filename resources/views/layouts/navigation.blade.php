@@ -20,152 +20,140 @@
     $home = auth()->user()->isCreator() ? route('creator.dashboard') : route('dashboard');
 @endphp
 
+{{--
+    Menu au bouton, à toutes les tailles.
+
+    Les huit liens s'étalaient en barre dès le grand écran. Une navigation
+    complète affichée en permanence oblige à la relire à chaque page, et elle
+    grandit avec le produit : chaque rubrique ajoutée serrait un peu plus les
+    autres. Au bouton, la barre garde ce qu'on consulte sans cliquer — le solde
+    et les notifications — et le reste s'ouvre quand on le demande.
+--}}
 <nav x-data="{ open: false }"
      x-effect="document.body.classList.toggle('overflow-hidden', open)"
+     @keydown.escape.window="open = false"
      class="sticky top-0 z-30 border-b border-ink-700 bg-ink-900/85 backdrop-blur">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="flex h-16 justify-between">
-            <div class="flex">
-                <a href="{{ $home }}" class="flex shrink-0 items-center">
-                    <x-brand-mark />
-                </a>
+        <div class="flex h-16 items-center justify-between gap-3">
 
-                <div class="hidden sm:ms-10 sm:flex sm:gap-8">
-                    @foreach ($links as $link)
-                        <x-nav-link :href="route($link['route'])" :active="request()->routeIs($link['pattern'])">
-                            {{ $link['label'] }}
-                        </x-nav-link>
-                    @endforeach
-                </div>
-            </div>
+            <a href="{{ $home }}" class="flex shrink-0 items-center">
+                <x-brand-mark />
+            </a>
 
-            <div class="hidden sm:flex sm:items-center sm:gap-4">
+            <div class="flex items-center gap-2 sm:gap-3">
                 @if (auth()->user()->isClipper())
-                    {{-- Le solde est l'information que le clippeur vient
-                         chercher : elle reste visible sur toutes les pages. --}}
+                    {{-- Le solde est l'information qu'on vient chercher : elle
+                         reste lisible sans ouvrir quoi que ce soit. --}}
                     <a href="{{ route('earnings.index') }}"
                        class="rounded-xl bg-brand-500/15 px-3 py-1.5 text-sm font-semibold tabular text-brand-300 transition hover:bg-brand-500/25">
                         {{ \App\Support\Money::euros(auth()->user()->availableBalanceCents()) }}
                     </a>
                 @elseif (auth()->user()->isCreator())
-                    <span class="chip-neutral">Espace créateur</span>
+                    <span class="hidden chip-neutral sm:inline-flex">Espace créateur</span>
                 @endif
 
                 <x-notifications-bell />
 
-                <x-dropdown align="right" width="48">
-                    <x-slot name="trigger">
-                        <button class="flex items-center gap-2 rounded-xl px-2 py-1.5 text-sm font-medium text-ink-300 transition hover:bg-ink-800 hover:text-ink-50">
-                            <x-avatar-badge :user="auth()->user()" />
-                            {{ auth()->user()->displayName() }}
-                            <svg class="h-4 w-4 fill-current" viewBox="0 0 20 20" aria-hidden="true">
-                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                            </svg>
-                        </button>
-                    </x-slot>
-
-                    <x-slot name="content">
-                        <x-dropdown-link :href="route('profile.edit')">Mon compte</x-dropdown-link>
-
-                        @if (auth()->user()->isClipper())
-                            <x-dropdown-link :href="route('payout-method.edit')">Moyen de paiement</x-dropdown-link>
-                        @endif
-
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <x-dropdown-link :href="route('logout')"
-                                onclick="event.preventDefault(); this.closest('form').submit();">
-                                Déconnexion
-                            </x-dropdown-link>
-                        </form>
-                    </x-slot>
-                </x-dropdown>
-            </div>
-
-            <div class="-me-2 flex items-center gap-1 sm:hidden">
-                <x-notifications-bell />
-
-                <button @click="open = ! open" class="rounded-lg p-2 text-ink-400 transition hover:bg-ink-800 hover:text-ink-100"
-                        :aria-expanded="open" aria-label="Menu">
-                    <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                        <path x-show="! open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        <path x-show="open" x-cloak stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                <button type="button"
+                        @click="open = ! open"
+                        class="nav-burger"
+                        :aria-expanded="open ? 'true' : 'false'"
+                        aria-label="Ouvrir le menu">
+                    {{-- Trois traits qui deviennent une croix : la même forme
+                         se transforme, plutôt que deux icônes qui se
+                         remplacent. On suit des yeux ce qui vient de se
+                         passer. --}}
+                    <span class="burger-line" :class="open && 'is-open-top'"></span>
+                    <span class="burger-line" :class="open && 'is-open-mid'"></span>
+                    <span class="burger-line" :class="open && 'is-open-bottom'"></span>
                 </button>
             </div>
         </div>
     </div>
 
-    {{-- Plein écran plutôt qu'un simple menu déroulant sous l'en-tête : sur
-         mobile, une courte liste flottant au milieu d'une page à moitié
-         visible se manque facilement du regard.
-
-         Téléporté dans <body> plutôt que laissé enfant de <nav> : ce dernier
-         a `backdrop-blur` (backdrop-filter), qui — comme `filter` ou
-         `transform` — transforme tout descendant `position:fixed` en élément
-         positionné relativement à LUI plutôt qu'au viewport. Le tiroir se
-         retrouvait ainsi contenu dans les 64px de hauteur du <nav>, au lieu
-         de couvrir l'écran entier. --}}
+    {{-- Téléporté dans <body> plutôt que laissé enfant de <nav> : ce dernier a
+         `backdrop-blur` (backdrop-filter), qui — comme `filter` ou `transform`
+         — transforme tout descendant `position:fixed` en élément positionné
+         relativement à LUI plutôt qu'au viewport. Le tiroir se retrouvait
+         contenu dans les 64 px de hauteur du <nav>, au lieu de couvrir
+         l'écran. --}}
     <template x-teleport="body">
-    <div x-show="open" x-cloak
-         x-transition:enter="transition-opacity ease-out duration-200"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="transition-opacity ease-in duration-150"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-40 flex flex-col overflow-y-auto bg-ink-900 sm:hidden">
-        <div class="flex h-16 flex-none items-center justify-between border-b border-ink-700 px-4">
-            <a href="{{ $home }}" class="flex items-center" @click="open = false">
-                <x-brand-mark />
-            </a>
-            <button @click="open = false"
-                    class="rounded-lg p-2 text-ink-400 transition hover:bg-ink-800 hover:text-ink-100"
-                    aria-label="Fermer le menu">
-                <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-        </div>
+        <div x-show="open" x-cloak class="fixed inset-0 z-40">
 
-        <div class="flex-1 py-2" @click="open = false">
-            @foreach ($links as $link)
-                <x-responsive-nav-link :href="route($link['route'])" :active="request()->routeIs($link['pattern'])">
-                    {{ $link['label'] }}
-                </x-responsive-nav-link>
-            @endforeach
-        </div>
+            <div x-show="open"
+                 x-transition:enter="transition-opacity ease-out duration-200"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition-opacity ease-in duration-150"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 @click="open = false"
+                 class="absolute inset-0 bg-ink-950/70 backdrop-blur-sm"></div>
 
-        <div class="flex-none border-t border-ink-700 py-4">
-            <div class="flex items-center justify-between px-4">
-                <div>
-                    <div class="font-semibold text-ink-100">{{ auth()->user()->displayName() }}</div>
-                    <div class="text-sm text-ink-400">{{ auth()->user()->email }}</div>
+            {{-- Plein écran sur mobile, panneau latéral au-delà : un voile
+                 entier pour huit liens laisse un grand vide sur un écran
+                 large, et l'on perd de vue la page qu'on était en train de
+                 lire. --}}
+            <div x-show="open"
+                 x-transition:enter="transition ease-out duration-250"
+                 x-transition:enter-start="opacity-0 translate-x-6"
+                 x-transition:enter-end="opacity-100 translate-x-0"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 translate-x-0"
+                 x-transition:leave-end="opacity-0 translate-x-6"
+                 class="absolute inset-y-0 end-0 flex w-full flex-col overflow-y-auto border-s border-ink-700 bg-ink-900 shadow-lifted sm:max-w-sm">
+
+                <div class="flex h-16 flex-none items-center justify-between border-b border-ink-700 px-4 sm:px-6">
+                    <a href="{{ $home }}" class="flex items-center" @click="open = false">
+                        <x-brand-mark />
+                    </a>
+                    <button type="button" @click="open = false"
+                            class="rounded-lg p-2 text-ink-400 transition hover:bg-ink-800 hover:text-ink-100"
+                            aria-label="Fermer le menu">
+                        <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
 
-                @if (auth()->user()->isClipper())
-                    <span class="chip-ok tabular">
-                        {{ \App\Support\Money::euros(auth()->user()->availableBalanceCents()) }}
-                    </span>
-                @endif
-            </div>
+                <div class="flex-1 py-3" @click="open = false">
+                    @foreach ($links as $index => $link)
+                        {{-- Les entrées arrivent en cascade : l'œil descend la
+                             liste au lieu de la recevoir d'un bloc. --}}
+                        <div class="nav-entry" style="--entry-delay: {{ $index * 35 }}ms">
+                            <x-responsive-nav-link :href="route($link['route'])" :active="request()->routeIs($link['pattern'])">
+                                {{ $link['label'] }}
+                            </x-responsive-nav-link>
+                        </div>
+                    @endforeach
+                </div>
 
-            <div class="mt-3" @click="open = false">
-                <x-responsive-nav-link :href="route('profile.edit')">Mon compte</x-responsive-nav-link>
+                <div class="flex-none border-t border-ink-700 py-4">
+                    <div class="flex items-center gap-3 px-4 sm:px-6">
+                        <x-avatar-badge :user="auth()->user()" />
+                        <div class="min-w-0">
+                            <div class="truncate font-semibold text-ink-100">{{ auth()->user()->displayName() }}</div>
+                            <div class="truncate text-sm text-ink-400">{{ auth()->user()->email }}</div>
+                        </div>
+                    </div>
 
-                @if (auth()->user()->isClipper())
-                    <x-responsive-nav-link :href="route('payout-method.edit')">Moyen de paiement</x-responsive-nav-link>
-                @endif
+                    <div class="mt-3" @click="open = false">
+                        <x-responsive-nav-link :href="route('profile.edit')">Mon compte</x-responsive-nav-link>
 
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <x-responsive-nav-link :href="route('logout')"
-                        onclick="event.preventDefault(); this.closest('form').submit();">
-                        Déconnexion
-                    </x-responsive-nav-link>
-                </form>
+                        @if (auth()->user()->isClipper())
+                            <x-responsive-nav-link :href="route('payout-method.edit')">Moyen de paiement</x-responsive-nav-link>
+                        @endif
+
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <x-responsive-nav-link :href="route('logout')"
+                                onclick="event.preventDefault(); this.closest('form').submit();">
+                                Déconnexion
+                            </x-responsive-nav-link>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
     </template>
 </nav>
