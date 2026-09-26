@@ -30,7 +30,10 @@
 
             <button type="submit" class="btn-brand w-full" wire:loading.attr="disabled">
                 <span wire:loading.remove wire:target="join">Rejoindre la campagne</span>
-                <span wire:loading wire:target="join">Envoi…</span>
+                <span wire:loading wire:target="join" class="inline-flex items-center gap-2">
+                    <x-loader size="sm" tone="dark" label="Envoi en cours" />
+                    Envoi…
+                </span>
             </button>
         </form>
     @endif

@@ -369,3 +369,91 @@
         border-color: #33382F;
     }
 }
+
+/* =====================================================================
+   Indicateurs de chargement.
+
+   Un dégradé conique masqué en anneau plutôt qu'une bordure : la bordure
+   donne un anneau d'épaisseur inégale aux petites tailles, très visible
+   sur un bouton de 16 px.
+   ===================================================================== */
+
+.loader {
+    display: inline-block;
+    border-radius: 9999px;
+    flex: none;
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
+            mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
+    animation: loader-spin .85s linear infinite;
+}
+
+.loader-brand { background: conic-gradient(from 0deg, transparent, theme(colors.brand.500)); }
+.loader-muted { background: conic-gradient(from 0deg, transparent, theme(colors.ink.300)); }
+
+/* Sur fond lime : du lime sur du lime est invisible. */
+.loader-dark  { background: conic-gradient(from 0deg, transparent, theme(colors.ink.950)); }
+
+@keyframes loader-spin { to { transform: rotate(1turn); } }
+
+/* Sous mouvement réduit, l'anneau ne tourne pas mais reste présent : il dit
+   qu'une attente est en cours, ce qui n'est pas un ornement. */
+@media (prefers-reduced-motion: reduce) {
+    .loader { animation: none; opacity: .65; }
+}
+
+/* ---------------------------------------------------------------------
+   Squelettes.
+
+   Pour une liste, dessiner la forme de ce qui arrive vaut mieux que faire
+   tourner quelque chose : la page ne saute pas quand le contenu se pose,
+   et l'attente paraît plus courte parce qu'elle est déjà occupée.
+   --------------------------------------------------------------------- */
+
+.skeleton {
+    position: relative;
+    overflow: hidden;
+    border-radius: 6px;
+    background: theme(colors.ink.700);
+}
+
+.skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgb(147 206 46 / .14), transparent);
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+    to { transform: translateX(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skeleton::after { animation: none; }
+}
+
+/* ---------------------------------------------------------------------
+   Bloc du solde.
+
+   Une seule pièce de la page porte une lueur, et c'est celle qu'on vient
+   consulter. Étendue aux autres cartes, elle ne désignerait plus rien.
+   --------------------------------------------------------------------- */
+
+.hero-balance {
+    background:
+        radial-gradient(120% 140% at 0% 0%, rgb(147 206 46 / .09), transparent 60%),
+        theme(colors.ink.800);
+    border-color: theme(colors.ink.600);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .js .hero-balance {
+        animation: hero-enter .5s cubic-bezier(.2, .7, .3, 1) both;
+    }
+}
+
+@keyframes hero-enter {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: none; }
+}

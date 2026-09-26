@@ -24,20 +24,59 @@
             <div class="alert-ok">{{ session('status') }}</div>
         @endif
 
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <x-stat label="Vues cumulées" :value="Money::views($views)"
-                    :hint="$unpaidViews > 0 ? Money::views($unpaidViews).' non rémunérées' : null" />
+        @php
+            $minimum = (int) config('clipping.payouts.minimum_cents');
+            $atteint = $minimum > 0 ? min(100, intdiv($balanceCents * 100, $minimum)) : 100;
+            $manque = max(0, $minimum - $balanceCents);
+        @endphp
 
-            <x-stat label="Gains validés" :value="Money::euros($earnedCents)"
-                    tone="money" hint="Définitivement acquis" />
+        {{--
+            Un seul chiffre domine : celui qu'on vient consulter.
 
-            <x-stat label="Solde retirable" :value="Money::euros($balanceCents)"
-                    tone="money" highlight
-                    :hint="'Retrait dès '.Money::euros(config('clipping.payouts.minimum_cents'))" />
+            Quatre cartes de même poids obligeaient à lire les quatre étiquettes
+            pour trouver la seule qui répond à « combien puis-je retirer ». Les
+            autres restent là — elles expliquent ce solde — mais en second plan.
+        --}}
+        <div class="grid gap-4 lg:grid-cols-5">
 
-            <x-stat label="Comptes liés" :value="$accountsCount"
-                    :tone="$accountsCount === 0 ? 'brand' : 'neutral'"
-                    :hint="$accountsCount === 0 ? 'Nécessaire pour participer' : null" />
+            <div class="hero-balance card relative overflow-hidden p-7 sm:p-8 lg:col-span-3">
+                <p class="text-sm font-medium text-ink-300">Solde retirable</p>
+
+                <p class="mt-2 font-display text-5xl font-extrabold tabular leading-none text-brand-400 sm:text-6xl"
+                   data-count-up>{{ Money::euros($balanceCents) }}</p>
+
+                @if ($manque > 0)
+                    <div class="mt-6 max-w-sm">
+                        {{-- La barre répond à « c'est encore loin ? », qu'un simple
+                             « minimum 20 € » laisse calculer de tête. --}}
+                        <div class="h-1.5 overflow-hidden rounded-full bg-ink-700">
+                            <div class="h-full rounded-full bg-brand-500 transition-all duration-700"
+                                 style="width: {{ $atteint }}%"></div>
+                        </div>
+                        <p class="mt-2 text-sm text-ink-300">
+                            Encore <span class="font-semibold tabular text-ink-100">{{ Money::euros($manque) }}</span>
+                            avant de pouvoir retirer.
+                        </p>
+                    </div>
+                @else
+                    <div class="mt-6 flex flex-wrap items-center gap-3">
+                        <a href="{{ route('earnings.index') }}" class="btn-brand">Demander un retrait</a>
+                        <span class="text-sm text-ink-300">Vous avez atteint le minimum.</span>
+                    </div>
+                @endif
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-3 lg:col-span-2 lg:grid-cols-1">
+                <x-stat label="Vues cumulées" :value="Money::views($views)"
+                        :hint="$unpaidViews > 0 ? Money::views($unpaidViews).' non rémunérées' : null" />
+
+                <x-stat label="Gains validés" :value="Money::euros($earnedCents)"
+                        tone="money" hint="Définitivement acquis" />
+
+                <x-stat label="Comptes liés" :value="$accountsCount"
+                        :tone="$accountsCount === 0 ? 'brand' : 'neutral'"
+                        :hint="$accountsCount === 0 ? 'Nécessaire pour participer' : null" />
+            </div>
         </div>
 
         <div class="grid gap-6 lg:grid-cols-3">

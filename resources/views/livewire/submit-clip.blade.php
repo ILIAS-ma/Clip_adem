@@ -13,7 +13,10 @@
 
         <button type="submit" class="btn-primary" wire:loading.attr="disabled">
             <span wire:loading.remove wire:target="submit">Soumettre le clip</span>
-            <span wire:loading wire:target="submit">Vérification…</span>
+            <span wire:loading wire:target="submit" class="inline-flex items-center gap-2">
+                <x-loader size="sm" tone="dark" label="Vérification en cours" />
+                Vérification…
+            </span>
         </button>
     </form>
 </div>
