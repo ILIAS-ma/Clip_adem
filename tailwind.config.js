@@ -38,11 +38,11 @@ export default {
                     300: '#9AA294',
                     400: '#6E766A',
                     500: '#4B5247',
-                    600: '#33382F',
-                    700: '#232722',   // bordures et surfaces surélevées
-                    800: '#181A17',   // cartes
-                    900: '#101210',   // fond des sections
-                    950: '#080908',   // fond de page
+                    600: '#3C4238',
+                    700: '#2C312A',   // bordures et surfaces surélevées
+                    800: '#1F231D',   // cartes
+                    900: '#171A16',   // fond des sections
+                    950: '#101310',   // fond de page
                 },
 
                 brand: {

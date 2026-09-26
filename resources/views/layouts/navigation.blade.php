@@ -32,7 +32,7 @@
 <nav x-data="{ open: false }"
      x-effect="document.body.classList.toggle('overflow-hidden', open)"
      @keydown.escape.window="open = false"
-     class="glass glass-edge sticky top-0 z-30 border-x-0 border-t-0 border-b border-b-ink-700">
+     class="nav-bar glass-edge sticky top-0 z-30 border-x-0 border-t-0 border-b">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 items-center justify-between gap-3">
 

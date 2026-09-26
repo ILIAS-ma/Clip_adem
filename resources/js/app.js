@@ -338,3 +338,36 @@ document.addEventListener('DOMContentLoaded', () => {
     initPageSweep();
     initCountUp();
 });
+
+/* =====================================================================
+   La barre se détache dès qu'on quitte le haut de page.
+
+   Un écouteur passif et une seule classe à basculer : le gestionnaire
+   tourne à chaque pixel de défilement, il ne doit rien lire qui force
+   un recalcul de mise en page. `scrollY` est mis en cache par le
+   navigateur, contrairement à `getBoundingClientRect()`.
+   ===================================================================== */
+
+function initScrollAwareNav() {
+    const bar = document.querySelector('.nav-bar');
+
+    if (! bar) {
+        return;
+    }
+
+    // Un seuil franc plutôt que zéro : sans lui, la barre clignote entre ses
+    // deux états au moindre rebond de défilement, sur les pavés tactiles
+    // comme au relâchement d'un doigt sur mobile.
+    const seuil = 12;
+
+    const appliquer = () => bar.classList.toggle('is-scrolled', window.scrollY > seuil);
+
+    appliquer();
+    window.addEventListener('scroll', appliquer, { passive: true });
+}
+
+document.addEventListener('DOMContentLoaded', initScrollAwareNav);
+
+// Après une navigation instantanée, la barre du nouveau document n'a pas
+// d'écouteur : elle resterait figée dans l'état de la page précédente.
+document.addEventListener('livewire:navigated', initScrollAwareNav);

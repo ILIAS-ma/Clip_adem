@@ -588,3 +588,64 @@
         background: theme(colors.ink.900);
     }
 }
+
+/* =====================================================================
+   Lumière d'ambiance.
+
+   Un aplat de noir uniforme paraît toujours plus dur qu'il ne l'est : rien
+   n'y accroche le regard, et l'œil lit « éteint » plutôt que « sombre ».
+   Une source diffuse en haut de page suffit à donner de la profondeur,
+   sans éclaircir les surfaces ni toucher aux contrastes du texte.
+
+   `fixed` et non `absolute` : la lueur appartient à la fenêtre, pas au
+   document. Elle ne doit pas défiler avec le contenu, sinon on la voit
+   passer et elle devient un élément — alors qu'elle doit rester un climat.
+   ===================================================================== */
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(70rem 40rem at 50% -12rem, rgb(147 206 46 / .07), transparent 70%),
+        radial-gradient(50rem 30rem at 92% 4%, rgb(147 206 46 / .04), transparent 70%);
+}
+
+/* =====================================================================
+   La barre réagit au défilement.
+
+   En haut de page elle se fond dans le contenu ; dès qu'on descend, elle
+   se détache et prend son dépoli. C'est l'inverse d'une barre toujours
+   opaque, qui coupe la page en deux dès le premier pixel.
+   ===================================================================== */
+
+.nav-bar {
+    transition:
+        background-color .35s ease,
+        border-color .35s ease,
+        box-shadow .35s ease,
+        backdrop-filter .35s ease;
+    background: transparent;
+    border-bottom-color: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+            backdrop-filter: none;
+}
+
+.nav-bar.is-scrolled {
+    background: rgb(16 19 16 / .72);
+    border-bottom-color: theme(colors.ink.700);
+    box-shadow: 0 1px 0 rgb(244 246 241 / .04), 0 12px 32px -24px rgb(0 0 0 / .9);
+    -webkit-backdrop-filter: saturate(170%) blur(18px);
+            backdrop-filter: saturate(170%) blur(18px);
+}
+
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .nav-bar.is-scrolled { background: rgb(16 19 16 / .97); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nav-bar { transition: none; }
+}
