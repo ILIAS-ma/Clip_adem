@@ -180,7 +180,14 @@ class ClipSyncTest extends TestCase
          * et il n'était pas payé parce que personne n'avait ouvert
          * l'administration.
          */
-        $campaign = $this->campaign();
+        /*
+         * Campagne sans hashtag obligatoire, volontairement : le fournisseur
+         * simulé en oublie un pour un clip sur cinq, choisi d'après son
+         * identifiant — que la factory tire au hasard. Avec un hashtag requis,
+         * ce test échouerait donc une fois sur cinq, au hasard, et bloquerait
+         * un déploiement sans que rien n'ait changé dans le code.
+         */
+        $campaign = $this->campaign(['required_hashtags' => []]);
         $clip = $this->clip($campaign, ['status' => ClipStatus::PendingReview]);
 
         $this->sync->syncPlatform(Platform::TikTok);
