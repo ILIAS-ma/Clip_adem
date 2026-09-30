@@ -23,6 +23,17 @@ $appUrl = rtrim((string) env('APP_URL', 'http://localhost'), '/');
  */
 $callback = fn (string $variable, string $path): string => env($variable) ?: $appUrl.$path;
 
+/*
+ * Quota journalier d'appels, en nombre entier ou absent.
+ *
+ * Une variable laissée vide dans un `.env` vaut la chaîne vide, pas `null` :
+ * `dailyQuota(): ?int` levait donc une TypeError, et le relèvement des vues
+ * s'arrêtait net — pour une ligne que `.env.example` livre vide par défaut.
+ */
+$quota = fn (string $variable, ?int $defaut = null): ?int => filled(env($variable))
+    ? (int) env($variable)
+    : $defaut;
+
 return [
 
     /*
@@ -78,7 +89,7 @@ return [
     'youtube' => [
         'client_id' => env('YOUTUBE_CLIENT_ID'),
         'client_secret' => env('YOUTUBE_CLIENT_SECRET'),
-        'daily_quota' => env('YOUTUBE_DAILY_QUOTA', 10_000),
+        'daily_quota' => $quota('YOUTUBE_DAILY_QUOTA', 10_000),
 
         'redirect' => $callback('YOUTUBE_REDIRECT_URI', '/oauth/youtube/callback'),
     ],
@@ -86,7 +97,7 @@ return [
     'tiktok' => [
         'client_key' => env('TIKTOK_CLIENT_KEY'),
         'client_secret' => env('TIKTOK_CLIENT_SECRET'),
-        'daily_quota' => env('TIKTOK_DAILY_QUOTA'),
+        'daily_quota' => $quota('TIKTOK_DAILY_QUOTA'),
 
         // Doit correspondre exactement aux portées activées dans la console —
         // un Sandbox a la sienne, souvent plus courte. En demander une que

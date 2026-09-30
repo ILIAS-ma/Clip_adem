@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(timeout 400 ssh -o BatchMode=yes clipadem ' *)",
+      "Bash(timeout 300 ssh -o BatchMode=yes clipadem \"sudo mysql clip -e \\\\\"SELECT id, handle, is_active, needs_reconnect, scopes, token_expires_at, LEFT\\(COALESCE\\(last_error,'—'\\),40\\) AS erreur FROM social_accounts\\\\\\\\G\\\\\" 2>&1 | tail -18\")",
+      "Bash(timeout 600 ssh -o BatchMode=yes clipadem \"cd /var/www/clipadem && php artisan clips:sync 2>&1 | tail -15\")",
+      "Bash(timeout 600 ssh -o BatchMode=yes clipadem \"cd /var/www/clipadem && php artisan clips:sync 2>&1 | head -12; echo '--- valeur en .env ---'; grep -E '^TIKTOK_DAILY_QUOTA' .env\")"
+    ]
+  }
+}
