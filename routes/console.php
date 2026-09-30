@@ -12,10 +12,26 @@ use Illuminate\Support\Facades\Schedule;
 |
 */
 
-// Relevé des vues. La cadence réelle par clip est dégressive et gérée dans
-// ClipSyncService : ce passage horaire ne fait que réveiller ceux qui sont dus.
+/*
+ * Relevé des vues.
+ *
+ * Ce passage ne relit pas tous les clips : `ClipSyncService::dueClips()` ne
+ * rend que ceux dont l'intervalle personnel est écoulé — 30 minutes les deux
+ * premiers jours, 3 heures la première semaine, puis une fois par jour.
+ *
+ * La fréquence du planificateur n'est donc pas la fréquence d'interrogation
+ * d'un clip : c'est seulement la finesse avec laquelle on repère qui est dû.
+ * Passer toutes les heures rendait le palier de 30 minutes fictif — un clip
+ * dans sa fenêtre la plus vive était relevé deux fois moins souvent
+ * qu'annoncé.
+ *
+ * Et comme le budget se distribue au premier arrivé, une heure de retard
+ * transforme « premier arrivé » en « premier relevé » : entre deux clippeurs
+ * d'une même campagne, c'est l'ordre de passage qui déciderait, pas leurs
+ * vues.
+ */
 Schedule::command('clips:sync')
-    ->hourly()
+    ->everyFiveMinutes()
     ->withoutOverlapping()
     ->runInBackground();
 
