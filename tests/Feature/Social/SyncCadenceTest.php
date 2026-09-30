@@ -2,40 +2,154 @@
 
 namespace Tests\Feature\Social;
 
-use Illuminate\Console\Scheduling\Event;
+use App\Enums\CampaignStatus;
+use App\Enums\ClipStatus;
+use App\Enums\Platform;
+use App\Enums\UserRole;
+use App\Models\Campaign;
+use App\Models\Clip;
+use App\Models\SocialAccount;
+use App\Models\User;
+use App\Services\Social\ClipSyncService;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
- * Le planificateur doit se réveiller au moins aussi souvent que la cadence
- * la plus courte qu'on annonce.
+ * Cadence de relevé.
  *
- * La configuration déclarait 30 minutes pour un clip de moins de deux jours —
- * sa fenêtre la plus vive. Le planificateur, lui, ne passait qu'une fois par
- * heure : ce palier n'a jamais existé, et rien ne le signalait. Les deux
- * réglages vivent dans des fichiers différents, chacun cohérent seul.
- *
- * L'enjeu n'est pas la fraîcheur d'un compteur. Le budget d'une campagne se
- * distribue au premier arrivé : quand plusieurs clippeurs travaillent sur la
- * même campagne, un retard de relevé transforme « premier arrivé » en
- * « premier relevé ». Ce n'est plus leurs vues qui décident, c'est l'ordre de
- * passage d'une tâche planifiée.
+ * Les vues d'un clip se font massivement dans les deux premiers jours : c'est
+ * là que le relevé doit être serré, et c'est là que le clippeur regarde son
+ * solde. Passé cette fenêtre, la courbe s'aplatit et interroger souvent ne
+ * rend que le même nombre en brûlant du quota.
  */
 class SyncCadenceTest extends TestCase
 {
-    /** L'expression cron de la tâche de relevé. */
+    use RefreshDatabase;
+
+    protected Campaign $campaign;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->campaign = Campaign::factory()
+            ->withRate(Platform::TikTok, ratePer1kCents: 100)
+            ->funded()
+            ->create([
+                'status' => CampaignStatus::Active,
+                'budget_total_cents' => 1_000_000,
+            ]);
+    }
+
+    protected function clip(int $ageHours, int $syncedMinutesAgo): Clip
+    {
+        $clipper = User::factory()->create(['role' => UserRole::Clipper]);
+        $account = SocialAccount::factory()->create([
+            'user_id' => $clipper->getKey(),
+            'platform' => Platform::TikTok,
+        ]);
+
+        return Clip::factory()->create([
+            'campaign_id' => $this->campaign->getKey(),
+            'user_id' => $clipper->getKey(),
+            'social_account_id' => $account->getKey(),
+            'platform' => Platform::TikTok,
+            'status' => ClipStatus::Approved,
+            'posted_at' => now()->subHours($ageHours),
+            'last_synced_at' => now()->subMinutes($syncedMinutesAgo),
+        ]);
+    }
+
+    protected function isDue(Clip $clip): bool
+    {
+        $service = app(ClipSyncService::class);
+        $method = new \ReflectionMethod($service, 'isDue');
+
+        return $method->invoke($service, $clip, now());
+    }
+
+    #[Test]
+    public function a_clip_from_this_morning_is_read_every_half_hour(): void
+    {
+        $this->assertFalse($this->isDue($this->clip(ageHours: 6, syncedMinutesAgo: 20)));
+        $this->assertTrue($this->isDue($this->clip(ageHours: 6, syncedMinutesAgo: 40)));
+    }
+
+    #[Test]
+    public function a_clip_from_last_week_keeps_the_slower_pace(): void
+    {
+        // Sa courbe est plate : le relever toutes les demi-heures rendrait le
+        // même nombre en consommant le quota des clips récents.
+        $this->assertFalse($this->isDue($this->clip(ageHours: 96, syncedMinutesAgo: 60)));
+        $this->assertTrue($this->isDue($this->clip(ageHours: 96, syncedMinutesAgo: 200)));
+    }
+
+    #[Test]
+    public function a_month_old_clip_is_read_once_a_day_at_most(): void
+    {
+        $this->assertFalse($this->isDue($this->clip(ageHours: 24 * 20, syncedMinutesAgo: 60 * 12)));
+        $this->assertTrue($this->isDue($this->clip(ageHours: 24 * 20, syncedMinutesAgo: 60 * 25)));
+    }
+
+    #[Test]
+    public function the_hot_pace_never_applies_to_a_clip_that_earns_nothing(): void
+    {
+        // Budget épuisé : les vues restent comptées, simplement moins souvent.
+        // Sans ce garde-fou, une campagne à sec brûlerait le quota des autres.
+        $this->campaign->forceFill(['spent_cents' => 1_000_000])->save();
+
+        $this->assertFalse($this->isDue($this->clip(ageHours: 6, syncedMinutesAgo: 60)));
+    }
+
+    #[Test]
+    public function the_most_recent_clips_are_served_first(): void
+    {
+        /*
+         * Si le quota s'épuise en cours de passage, ce sont les clips dont les
+         * vues bougent — et rapportent — qui doivent avoir été servis. Sans cet
+         * ordre, un mois d'archives figées pourrait consommer le quota avant
+         * que la publication d'hier soit relevée une seule fois.
+         */
+        $vieux = $this->clip(ageHours: 24 * 20, syncedMinutesAgo: 60 * 30);
+        $recent = $this->clip(ageHours: 2, syncedMinutesAgo: 60);
+        $moyen = $this->clip(ageHours: 96, syncedMinutesAgo: 60 * 5);
+
+        $ordre = app(ClipSyncService::class)->dueClips(Platform::TikTok)->pluck('id')->all();
+
+        $this->assertSame([$recent->id, $moyen->id, $vieux->id], $ordre);
+    }
+
+    #[Test]
+    public function a_clip_never_read_is_always_due(): void
+    {
+        $clip = $this->clip(ageHours: 500, syncedMinutesAgo: 0);
+        $clip->forceFill(['last_synced_at' => null])->save();
+
+        $this->assertTrue($this->isDue($clip->fresh()));
+    }
+
+    /* ------------------------------------------------------------------
+       Le planificateur doit se réveiller au moins aussi souvent que la
+       cadence la plus courte qu'on annonce. Les deux réglages vivent dans
+       des fichiers différents, chacun cohérent pris seul : la
+       configuration déclarait 30 minutes, le planificateur passait toutes
+       les heures, et ce palier n'a jamais existé.
+       ------------------------------------------------------------------ */
+
+    /** L'expression cron d'une tâche planifiée. */
     protected function expression(string $commande): string
     {
         $evenement = collect(app(Schedule::class)->events())
-            ->first(fn (Event $e) => str_contains($e->command ?? '', $commande));
+            ->first(fn ($e) => str_contains($e->command ?? '', $commande));
 
         $this->assertNotNull($evenement, "La tâche « {$commande} » n’est pas planifiée.");
 
         return $evenement->expression;
     }
 
-    /** Intervalle, en minutes, d'une expression cron du type « *\/5 * * * * ». */
+    /** Intervalle en minutes d'une expression du type « *\/5 * * * * ». */
     protected function intervalleEnMinutes(string $expression): int
     {
         $minutes = explode(' ', $expression)[0];
@@ -44,13 +158,19 @@ class SyncCadenceTest extends TestCase
             return (int) substr($minutes, 2);
         }
 
-        // « 0 * * * * » : une fois par heure, à la minute zéro.
         return $minutes === '*' ? 1 : 60;
     }
 
     #[Test]
     public function the_scheduler_keeps_up_with_the_shortest_declared_interval(): void
     {
+        /*
+         * L'enjeu n'est pas la fraîcheur d'un compteur. Le budget se distribue
+         * au premier arrivé : quand plusieurs clippeurs travaillent sur une
+         * même campagne, un retard de relevé transforme « premier arrivé » en
+         * « premier relevé ». Ce ne sont plus leurs vues qui décident, c'est
+         * l'ordre de passage d'une tâche planifiée.
+         */
         $planifie = $this->intervalleEnMinutes($this->expression('clips:sync'));
         $annonce = (int) config('clipping.sync.hot_interval_minutes');
 
@@ -65,30 +185,9 @@ class SyncCadenceTest extends TestCase
     #[Test]
     public function the_accounting_net_still_runs_once_a_day(): void
     {
-        /*
-         * L'inverse du test précédent : tout ne doit pas devenir fréquent.
-         * `budget:audit` relit l'intégralité du grand livre ; le faire tourner
-         * en boucle coûterait cher pour un contrôle dont la valeur est de
-         * passer régulièrement, pas souvent.
-         */
+        // L'inverse : tout ne doit pas devenir fréquent. `budget:audit` relit
+        // l'intégralité du grand livre, sa valeur est de passer régulièrement,
+        // pas souvent.
         $this->assertSame(60, $this->intervalleEnMinutes($this->expression('budget:audit')));
-    }
-
-    #[Test]
-    public function running_more_often_does_not_poll_a_clip_more_often(): void
-    {
-        /*
-         * La distinction qui rend le changement sans risque pour le quota : la
-         * fréquence du planificateur n'est pas la fréquence d'interrogation
-         * d'un clip. `dueClips()` ne rend que ceux dont l'intervalle personnel
-         * est écoulé — passer plus souvent affine seulement le repérage.
-         */
-        $source = file_get_contents(app_path('Services/Social/ClipSyncService.php'));
-
-        $this->assertMatchesRegularExpression(
-            '/protected function isDue\(/',
-            $source,
-            'La cadence par clip doit rester décidée dans le service, pas par le planificateur.',
-        );
     }
 }
