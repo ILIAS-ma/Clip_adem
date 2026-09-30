@@ -171,14 +171,46 @@ class ClipSyncTest extends TestCase
     }
 
     #[Test]
-    public function a_clip_awaiting_moderation_is_synced_but_not_paid(): void
+    public function a_compliant_clip_awaiting_moderation_is_approved_and_paid(): void
     {
+        /*
+         * Ce test décrivait l'inverse avant la validation automatique : le clip
+         * était relevé mais attendait qu'un humain clique. C'est précisément ce
+         * qu'on a voulu supprimer — le clippeur publiait, ses vues montaient,
+         * et il n'était pas payé parce que personne n'avait ouvert
+         * l'administration.
+         */
         $campaign = $this->campaign();
         $clip = $this->clip($campaign, ['status' => ClipStatus::PendingReview]);
 
         $this->sync->syncPlatform(Platform::TikTok);
 
         $clip->refresh();
+
+        $this->assertSame(ClipStatus::Approved, $clip->status);
+        $this->assertGreaterThan(0, $clip->views_total);
+        $this->assertGreaterThan(0, $clip->earned_cents, 'Un clip approuvé doit être payé dès ce relevé.');
+    }
+
+    #[Test]
+    public function a_clip_that_cannot_be_approved_is_synced_but_not_paid(): void
+    {
+        /*
+         * L'invariant que le test précédent protégeait, et qui reste entier :
+         * tant qu'un clip attend une décision, ses vues sont comptées mais pas
+         * payées. Arrêter aussi le relevé ferait perdre la courbe des premières
+         * heures, celle qui ne se rattrape jamais.
+         */
+        config(['clipping.moderation.auto_approve' => false]);
+
+        $campaign = $this->campaign();
+        $clip = $this->clip($campaign, ['status' => ClipStatus::PendingReview]);
+
+        $this->sync->syncPlatform(Platform::TikTok);
+
+        $clip->refresh();
+
+        $this->assertSame(ClipStatus::PendingReview, $clip->status);
         $this->assertGreaterThan(0, $clip->views_total);
         $this->assertSame(0, $clip->earned_cents);
     }
