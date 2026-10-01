@@ -1,33 +1,11 @@
-@php
-    // La barre s'adapte au rôle : un créateur n'a ni clips ni solde, lui montrer
-    // des liens morts vaudrait moins que rien.
-    $links = auth()->user()->isCreator()
-        ? [
-            ['route' => 'creator.dashboard',    'pattern' => 'creator.dashboard', 'label' => 'Mes campagnes'],
-            ['route' => 'creator.profile.edit', 'pattern' => 'creator.profile.*', 'label' => 'Ma fiche'],
-        ]
-        : [
-            ['route' => 'dashboard',       'pattern' => 'dashboard',   'label' => 'Tableau de bord'],
-            ['route' => 'campaigns.index', 'pattern' => 'campaigns.*', 'label' => 'Campagnes'],
-            ['route' => 'clips.index',     'pattern' => 'clips.*',     'label' => 'Mes clips'],
-            ['route' => 'accounts.index',  'pattern' => 'accounts.*',  'label' => 'Mes comptes'],
-            ['route' => 'earnings.index',  'pattern' => 'earnings.*',  'label' => 'Revenus'],
-            ['route' => 'referrals.index', 'pattern' => 'referrals.*', 'label' => 'Parrainage'],
-            ['route' => 'leaderboard.index', 'pattern' => 'leaderboard.*', 'label' => 'Classement'],
-            ['route' => 'achievements.index', 'pattern' => 'achievements.*', 'label' => 'Succès'],
-        ];
-
-    $home = auth()->user()->isCreator() ? route('creator.dashboard') : route('dashboard');
-@endphp
-
 {{--
-    Menu au bouton, à toutes les tailles.
+    Barre du haut.
 
-    Les huit liens s'étalaient en barre dès le grand écran. Une navigation
-    complète affichée en permanence oblige à la relire à chaque page, et elle
-    grandit avec le produit : chaque rubrique ajoutée serrait un peu plus les
-    autres. Au bouton, la barre garde ce qu'on consulte sans cliquer — le solde
-    et les notifications — et le reste s'ouvre quand on le demande.
+    Sur grand écran, la navigation vit dans la colonne latérale : il ne reste
+    ici que ce qu'on consulte sans cliquer — le solde et les notifications.
+
+    Sous `lg`, la colonne disparaît et le bouton reprend la main : une colonne
+    fixe mangerait la moitié d'un écran de téléphone.
 --}}
 <nav x-data="{ open: false }"
      x-effect="document.body.classList.toggle('overflow-hidden', open)"
@@ -36,7 +14,7 @@
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 items-center justify-between gap-3">
 
-            <a href="{{ $home }}" class="flex shrink-0 items-center">
+            <a href="{{ $navHome }}" class="flex shrink-0 items-center lg:hidden">
                 <x-brand-mark />
             </a>
 
@@ -56,7 +34,7 @@
 
                 <button type="button"
                         @click="open = ! open"
-                        class="nav-burger"
+                        class="nav-burger lg:hidden"
                         :aria-expanded="open ? 'true' : 'false'"
                         aria-label="Ouvrir le menu">
                     {{-- Trois traits qui deviennent une croix : la même forme
@@ -104,7 +82,7 @@
                  class="glass glass-panel absolute inset-y-0 end-0 flex w-full flex-col overflow-y-auto border-y-0 border-e-0 border-s border-s-ink-700 shadow-lifted sm:max-w-sm">
 
                 <div class="flex h-16 flex-none items-center justify-between border-b border-ink-700 px-4 sm:px-6">
-                    <a href="{{ $home }}" class="flex items-center" @click="open = false">
+                    <a href="{{ $navHome }}" class="flex items-center" @click="open = false">
                         <x-brand-mark />
                     </a>
                     <button type="button" @click="open = false"
@@ -117,7 +95,7 @@
                 </div>
 
                 <div class="flex-1 py-3" @click="open = false">
-                    @foreach ($links as $index => $link)
+                    @foreach ($navLinks as $index => $link)
                         {{-- Les entrées arrivent en cascade : l'œil descend la
                              liste au lieu de la recevoir d'un bloc. --}}
                         <div class="nav-entry" style="--entry-delay: {{ $index * 35 }}ms">

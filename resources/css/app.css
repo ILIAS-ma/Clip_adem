@@ -649,3 +649,102 @@ body::before {
 @media (prefers-reduced-motion: reduce) {
     .nav-bar { transition: none; }
 }
+
+/* =====================================================================
+   Colonne de navigation.
+
+   Largeur animée plutôt que deux colonnes qui se remplacent : l'œil suit
+   le repli, et le contenu de la page glisse au lieu de sauter.
+   ===================================================================== */
+
+.app-sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    height: 100dvh;
+    width: 15rem;
+    flex: none;
+    flex-direction: column;
+    gap: .25rem;
+    padding: .9rem .6rem;
+    border-inline-end: 1px solid theme(colors.ink.700);
+    background: theme(colors.ink.900);
+    transition: width .28s cubic-bezier(.2, .7, .3, 1);
+}
+
+.app-sidebar.is-mini { width: 4.25rem; }
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    height: 3.5rem;
+    padding-inline: .55rem;
+    margin-bottom: .4rem;
+    overflow: hidden;
+}
+
+.sidebar-nav { display: flex; flex-direction: column; gap: .15rem; overflow-y: auto; }
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    padding: .55rem .6rem;
+    border-radius: 10px;
+    font-size: .88rem;
+    font-weight: 500;
+    color: theme(colors.ink.300);
+    white-space: nowrap;
+    transition: background-color .18s ease, color .18s ease;
+}
+
+.sidebar-link svg { width: 18px; height: 18px; flex: none; }
+
+.sidebar-link:hover { background: theme(colors.ink.800); color: theme(colors.ink.50); }
+
+.sidebar-link:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px theme(colors.brand.400);
+}
+
+/* La rubrique courante : du lime, mais en fond discret plutôt qu'en texte
+   plein — le lime signifie « argent acquis » dans ce produit, et un libellé
+   de menu ne doit pas emprunter ce sens. */
+.sidebar-link.is-active {
+    background: rgb(147 206 46 / .13);
+    color: theme(colors.brand.300);
+    font-weight: 600;
+}
+
+.sidebar-toggle {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    margin-top: auto;
+    padding: .55rem .68rem;
+    border-radius: 10px;
+    font-size: .82rem;
+    color: theme(colors.ink.400);
+    white-space: nowrap;
+    transition: background-color .18s ease, color .18s ease;
+}
+
+.sidebar-toggle:hover { background: theme(colors.ink.800); color: theme(colors.ink.100); }
+.sidebar-toggle svg { width: 16px; height: 16px; flex: none; transition: transform .28s cubic-bezier(.2,.7,.3,1); }
+
+/* Repliée, la colonne ne garde que les icônes : le libellé disparaît, mais
+   l'infobulle le rend au survol — sinon huit pictogrammes se devinent. */
+.app-sidebar.is-mini .sidebar-link span,
+.app-sidebar.is-mini .sidebar-brand :where(span, p) {
+    display: none;
+}
+
+.app-sidebar.is-mini .sidebar-link,
+.app-sidebar.is-mini .sidebar-toggle {
+    justify-content: center;
+    padding-inline: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-sidebar, .sidebar-toggle svg { transition: none; }
+}

@@ -18,9 +18,17 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen">
-    <div class="min-h-screen">
-        <x-onboarding-suspended-notice />
+    @include('layouts.nav-links')
 
+    <x-onboarding-suspended-notice />
+
+    <div class="flex min-h-screen">
+        @include('layouts.sidebar')
+
+        {{-- `min-w-0` : sans lui, un tableau large pousse la colonne de contenu
+             au-delà de l'écran et c'est toute la page qui défile
+             latéralement, colonne de navigation comprise. --}}
+        <div class="flex min-w-0 flex-1 flex-col">
         @include('layouts.navigation')
 
         @php
@@ -58,6 +66,7 @@
         <main class="pb-16">
             {{ $slot }}
         </main>
+        </div>
     </div>
 </body>
 </html>
