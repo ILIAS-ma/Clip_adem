@@ -80,12 +80,23 @@ class SidebarTest extends TestCase
             ->assertSuccessful()
             ->getContent();
 
-        preg_match('#<aside[^>]*app-sidebar.*?</aside>#s', $html, $colonne);
+        /*
+         * Découpage par position plutôt que par expression régulière : la
+         * balise ouvrante porte un attribut Alpine qui contient une fonction
+         * fléchée, donc un `>`. Tout motif du type `<aside[^>]*>` s'y arrête et
+         * ne trouve jamais la colonne.
+         */
+        $debut = strpos($html, 'app-sidebar');
+        $this->assertNotFalse($debut, 'La colonne est introuvable.');
 
-        $this->assertNotEmpty($colonne, 'La colonne est introuvable.');
+        $fin = strpos($html, '</aside>', $debut);
+        $this->assertNotFalse($fin, 'La colonne n’est pas refermée.');
+
+        $colonne = substr($html, $debut, $fin - $debut);
+
         $this->assertGreaterThanOrEqual(
             8,
-            substr_count($colonne[0], '<path d="'),
+            substr_count($colonne, '<path d="'),
             'Chaque rubrique doit porter son icône.',
         );
     }
