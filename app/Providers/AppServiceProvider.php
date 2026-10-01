@@ -4,11 +4,13 @@ namespace App\Providers;
 
 use App\Contracts\CampaignBudgetService;
 use App\Services\Budget\DatabaseCampaignBudgetService;
+use App\View\Composers\NavigationComposer;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 
@@ -29,6 +31,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        /*
+         * La navigation est fournie aux deux vues qui l'affichent, sans
+         * qu'aucune ne la possède. Elle a d'abord vécu dans une vue incluse
+         * par les deux, et ne marchait pas : `@include` exécute la vue dans
+         * son propre contexte, les variables qu'elle définit ne remontent pas
+         * au parent.
+         */
+        View::composer(
+            ['layouts.sidebar', 'layouts.navigation'],
+            NavigationComposer::class,
+        );
+
         $this->trustConfiguredProxies();
 
         // Livewire embarque son propre Alpine et ne l'injecte que sur les
