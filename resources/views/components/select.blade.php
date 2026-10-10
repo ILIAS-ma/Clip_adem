@@ -28,7 +28,7 @@
             {{ $attributes->only('class')->merge(['class' => 'field mt-1.5 flex items-center justify-between gap-2 border px-3 py-2 text-left']) }}>
         <span x-text="currentLabel" class="truncate"></span>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" stroke="currentColor"
-             stroke-width="1.5" class="h-4 w-4 shrink-0 text-ink-600 transition-transform"
+             stroke-width="1.5" class="h-4 w-4 shrink-0 text-ink-400 transition-transform"
              :class="open && 'rotate-180'">
             <path stroke-linecap="round" stroke-linejoin="round" d="m6 8 4 4 4-4" />
         </svg>
@@ -42,15 +42,15 @@
     --}}
     <ul x-show="open" x-cloak x-transition.origin.top @click.outside="open = false"
         role="listbox" tabindex="-1"
-        class="absolute z-20 mt-1 max-h-64 w-max min-w-full max-w-xs overflow-auto rounded-xl border border-ink-300 bg-ink-100 p-1 shadow-lifted">
+        class="absolute z-20 mt-1 max-h-64 w-max min-w-full max-w-xs overflow-auto rounded-xl border border-ink-700 bg-ink-900 p-1 shadow-lifted">
         <template x-for="(opt, index) in options" :key="opt.value">
             <li role="option" :aria-selected="opt.value === selectedValue"
                 @click="select(opt.value)" @mouseenter="highlighted = index"
                 class="cursor-pointer whitespace-nowrap rounded-lg px-3 py-2 text-sm"
                 :class="{
-                    'bg-brand-500/15 text-brand-700': opt.value === selectedValue,
-                    'bg-ink-200 text-ink-950': opt.value !== selectedValue && highlighted === index,
-                    'text-ink-900': opt.value !== selectedValue && highlighted !== index,
+                    'bg-brand-500/15 text-brand-300': opt.value === selectedValue,
+                    'bg-ink-800 text-ink-50': opt.value !== selectedValue && highlighted === index,
+                    'text-ink-100': opt.value !== selectedValue && highlighted !== index,
                 }"
                 x-text="opt.label"></li>
         </template>

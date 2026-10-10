@@ -1,8 +1,8 @@
 <x-app-layout>
     <x-slot name="header">
         <span class="chip-wait">Étape 2 sur 2</span>
-        <h1 class="mt-3 font-display text-2xl font-bold text-ink-950">Complétez votre profil</h1>
-        <p class="mt-1 text-ink-700">Dernière étape avant de pouvoir rejoindre une campagne.</p>
+        <h1 class="mt-3 font-display text-2xl font-bold text-ink-50">Complétez votre profil</h1>
+        <p class="mt-1 text-ink-300">Dernière étape avant de pouvoir rejoindre une campagne.</p>
     </x-slot>
 
     <div class="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
@@ -49,11 +49,11 @@
                     <x-input-error class="mt-2" :messages="$errors->get('country')" />
                 </div>
 
-                <div class="border-t border-ink-300 pt-6">
+                <div class="border-t border-ink-700 pt-6">
                     <x-payout-method-fields :user="$user" />
                 </div>
 
-                <div class="border-t border-ink-300 pt-6">
+                <div class="border-t border-ink-700 pt-6">
                     <x-primary-button class="w-full sm:w-auto">Enregistrer et continuer</x-primary-button>
                 </div>
             </form>

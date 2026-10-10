@@ -35,15 +35,15 @@
 
     html {
         -webkit-tap-highlight-color: transparent;
-        color-scheme: light;
+        color-scheme: dark;
     }
 
     body {
-        @apply bg-ink-50 text-ink-800 antialiased;
+        @apply bg-ink-950 text-ink-100 antialiased;
     }
 
     h1, h2, h3 {
-        @apply font-display text-ink-950;
+        @apply font-display text-ink-50;
         text-wrap: balance;
     }
 
@@ -54,11 +54,11 @@
 
     /* Le lime sert aussi de couleur de focus : un seul accent, partout. */
     :focus-visible {
-        @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-ink-50;
+        @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-ink-950;
     }
 
     ::selection {
-        @apply bg-brand-500 text-white;
+        @apply bg-brand-500 text-ink-950;
     }
 }
 
@@ -161,19 +161,19 @@
        ink-900 exprès (encart en retrait sur un fond déjà clair) le précise en
        ligne plutôt que de dépendre de cette valeur par défaut. */
     .card {
-        @apply rounded-2xl border border-ink-200 bg-white shadow-card;
+        @apply rounded-2xl border border-ink-700 bg-ink-800 shadow-card;
     }
 
     .label {
-        @apply block text-sm font-medium text-ink-800;
+        @apply block text-sm font-medium text-ink-200;
     }
 
     .hint {
-        @apply mt-1.5 text-xs leading-relaxed text-ink-500;
+        @apply mt-1.5 text-xs leading-relaxed text-ink-300;
     }
 
     .field {
-        @apply block w-full rounded-xl border-ink-300 bg-white text-ink-950 shadow-sm
+        @apply block w-full rounded-xl border-ink-700 bg-ink-950 text-ink-50 shadow-sm
                placeholder:text-ink-500 focus:border-brand-500 focus:ring-brand-500;
     }
 
@@ -185,7 +185,7 @@
     /* L'action principale est toujours lime sur noir : sur fond sombre, c'est
        le seul contraste qui se voit du premier coup d'œil. */
     .btn-primary {
-        @apply btn bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700;
+        @apply btn bg-brand-500 text-ink-950 hover:bg-brand-400 active:bg-brand-600;
     }
 
     .btn-brand {
@@ -193,14 +193,14 @@
     }
 
     .btn-ghost {
-        @apply btn border border-ink-300 bg-white text-ink-800 hover:border-ink-400 hover:bg-ink-100 hover:text-ink-950;
+        @apply btn border border-ink-700 bg-ink-900 text-ink-200 hover:border-ink-600 hover:bg-ink-800 hover:text-ink-50;
     }
 
     /* Action destructive. Discrète au repos — elle ne doit pas rivaliser avec
        l'action principale — mais franchement rouge au survol, pour que la
        nature du geste soit lisible avant le clic, pas après. */
     .btn-danger {
-        @apply btn border border-ink-300 bg-white text-ink-600
+        @apply btn border border-ink-700 bg-ink-900 text-ink-300
                hover:border-red-500/60 hover:bg-red-500/10 hover:text-red-300;
     }
 
@@ -210,17 +210,17 @@
 
     /* États métier. La couleur porte le sens : lime = acquis, ambre = en
        attente, rouge = perdu. Jamais l'inverse, nulle part. */
-    .chip-ok      { @apply chip bg-money-100 text-money-700; }
-    .chip-wait    { @apply chip bg-amber-100 text-amber-800; }
-    .chip-danger  { @apply chip bg-rose-100 text-rose-800; }
-    .chip-neutral { @apply chip bg-ink-200 text-ink-700; }
+    .chip-ok      { @apply chip bg-brand-500/15 text-brand-300; }
+    .chip-wait    { @apply chip bg-amber-500/15 text-amber-300; }
+    .chip-danger  { @apply chip bg-red-500/15 text-red-300; }
+    .chip-neutral { @apply chip bg-ink-700 text-ink-300; }
 
     .alert {
         @apply rounded-xl border-l-4 p-4 text-sm;
     }
-    .alert-ok     { @apply alert border-money-500 bg-money-50 text-money-700; }
-    .alert-warn   { @apply alert border-amber-500 bg-amber-50 text-amber-800; }
-    .alert-danger { @apply alert border-rose-500 bg-rose-50 text-rose-800; }
+    .alert-ok     { @apply alert border-brand-500 bg-brand-500/10 text-brand-200; }
+    .alert-warn   { @apply alert border-amber-500 bg-amber-500/10 text-amber-200; }
+    .alert-danger { @apply alert border-red-500 bg-red-500/10 text-red-200; }
 }
 
 /* Pages légales : de la prose longue, lue en entier par des humains comme par
@@ -228,16 +228,16 @@
    classes répétées sur chaque balise. */
 @layer components {
     .legal h2 {
-        @apply font-display text-xl font-bold text-ink-950;
+        @apply font-display text-xl font-bold text-ink-50;
     }
 
     .legal h3 {
-        @apply mt-6 font-semibold text-ink-900;
+        @apply mt-6 font-semibold text-ink-100;
     }
 
     .legal p,
     .legal li {
-        @apply leading-relaxed text-ink-600;
+        @apply leading-relaxed text-ink-300;
     }
 
     .legal p + p {
@@ -249,11 +249,11 @@
     }
 
     .legal strong {
-        @apply font-semibold text-ink-900;
+        @apply font-semibold text-ink-100;
     }
 
     .legal a {
-        @apply text-brand-600 underline underline-offset-2;
+        @apply text-brand-400 underline underline-offset-2;
     }
 
     .legal table {
@@ -261,11 +261,11 @@
     }
 
     .legal th {
-        @apply border-b border-ink-200 py-2 font-semibold text-ink-900;
+        @apply border-b border-ink-700 py-2 font-semibold text-ink-100;
     }
 
     .legal td {
-        @apply border-b border-ink-100 py-2 align-top text-ink-600;
+        @apply border-b border-ink-800 py-2 align-top text-ink-300;
     }
 }
 
@@ -366,7 +366,7 @@
     }
 
     .card:hover {
-        border-color: theme(colors.ink.300);
+        border-color: #33382F;
     }
 }
 
@@ -388,10 +388,10 @@
 }
 
 .loader-brand { background: conic-gradient(from 0deg, transparent, theme(colors.brand.500)); }
-.loader-muted { background: conic-gradient(from 0deg, transparent, theme(colors.ink.500)); }
+.loader-muted { background: conic-gradient(from 0deg, transparent, theme(colors.ink.300)); }
 
 /* Sur fond lime : du lime sur du lime est invisible. */
-.loader-dark  { background: conic-gradient(from 0deg, transparent, #fff); }
+.loader-dark  { background: conic-gradient(from 0deg, transparent, theme(colors.ink.950)); }
 
 @keyframes loader-spin { to { transform: rotate(1turn); } }
 
@@ -413,7 +413,7 @@
     position: relative;
     overflow: hidden;
     border-radius: 6px;
-    background: theme(colors.ink.200);
+    background: theme(colors.ink.700);
 }
 
 .skeleton::after {
@@ -421,7 +421,7 @@
     position: absolute;
     inset: 0;
     transform: translateX(-100%);
-    background: linear-gradient(90deg, transparent, rgb(255 255 255 / .75), transparent);
+    background: linear-gradient(90deg, transparent, rgb(147 206 46 / .14), transparent);
     animation: skeleton-shimmer 1.5s ease-in-out infinite;
 }
 
@@ -442,9 +442,9 @@
 
 .hero-balance {
     background:
-        radial-gradient(120% 140% at 0% 0%, rgb(22 163 74 / .07), transparent 60%),
-        #fff;
-    border-color: theme(colors.ink.200);
+        radial-gradient(120% 140% at 0% 0%, rgb(147 206 46 / .09), transparent 60%),
+        theme(colors.ink.800);
+    border-color: theme(colors.ink.600);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -477,13 +477,13 @@
     justify-content: center;
     gap: 5px;
     border-radius: theme(borderRadius.lg);
-    color: theme(colors.ink.700);
+    color: theme(colors.ink.200);
     transition: background-color .2s ease, color .2s ease;
 }
 
 .nav-burger:hover {
-    background: theme(colors.ink.100);
-    color: theme(colors.ink.950);
+    background: theme(colors.ink.800);
+    color: theme(colors.ink.50);
 }
 
 .nav-burger:focus-visible {
@@ -545,8 +545,8 @@
    ===================================================================== */
 
 .glass {
-    background: rgb(255 255 255 / .72);
-    border: 1px solid rgb(28 25 23 / .08);
+    background: rgb(16 18 16 / .72);
+    border: 1px solid rgb(244 246 241 / .07);
 
     /* `saturate` avant `blur` : sans lui, le flou délave les couleurs qui
        passent dessous et le verre vire au gris. C'est ce qui distingue un
@@ -566,7 +566,7 @@
     position: absolute;
     inset: 0 0 auto 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgb(28 25 23 / .10), transparent);
+    background: linear-gradient(90deg, transparent, rgb(244 246 241 / .16), transparent);
     pointer-events: none;
 }
 
@@ -575,7 +575,7 @@
    translucide et le texte se lit par-dessus la page. */
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
     .glass {
-        background: rgb(255 255 255 / .97);
+        background: rgb(16 18 16 / .97);
     }
 }
 
@@ -585,7 +585,7 @@
     .glass-panel {
         -webkit-backdrop-filter: none;
                 backdrop-filter: none;
-        background: #fff;
+        background: theme(colors.ink.900);
     }
 }
 
@@ -609,8 +609,8 @@ body::before {
     z-index: -1;
     pointer-events: none;
     background:
-        radial-gradient(70rem 40rem at 50% -12rem, rgb(224 36 36 / .05), transparent 70%),
-        radial-gradient(50rem 30rem at 92% 4%, rgb(224 36 36 / .03), transparent 70%);
+        radial-gradient(70rem 40rem at 50% -12rem, rgb(147 206 46 / .07), transparent 70%),
+        radial-gradient(50rem 30rem at 92% 4%, rgb(147 206 46 / .04), transparent 70%);
 }
 
 /* =====================================================================
@@ -635,15 +635,15 @@ body::before {
 }
 
 .nav-bar.is-scrolled {
-    background: rgb(255 255 255 / .75);
-    border-bottom-color: theme(colors.ink.200);
-    box-shadow: 0 1px 0 rgb(28 25 23 / .04), 0 8px 24px -20px rgb(28 25 23 / .35);
+    background: rgb(16 19 16 / .72);
+    border-bottom-color: theme(colors.ink.700);
+    box-shadow: 0 1px 0 rgb(244 246 241 / .04), 0 12px 32px -24px rgb(0 0 0 / .9);
     -webkit-backdrop-filter: saturate(170%) blur(18px);
             backdrop-filter: saturate(170%) blur(18px);
 }
 
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-    .nav-bar.is-scrolled { background: rgb(255 255 255 / .97); }
+    .nav-bar.is-scrolled { background: rgb(16 19 16 / .97); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -667,8 +667,8 @@ body::before {
     flex-direction: column;
     gap: .25rem;
     padding: .9rem .6rem;
-    border-inline-end: 1px solid theme(colors.ink.200);
-    background: #fff;
+    border-inline-end: 1px solid theme(colors.ink.700);
+    background: theme(colors.ink.900);
     transition: width .28s cubic-bezier(.2, .7, .3, 1);
 }
 
@@ -693,14 +693,14 @@ body::before {
     border-radius: 10px;
     font-size: .88rem;
     font-weight: 500;
-    color: theme(colors.ink.600);
+    color: theme(colors.ink.300);
     white-space: nowrap;
     transition: background-color .18s ease, color .18s ease;
 }
 
 .sidebar-link svg { width: 18px; height: 18px; flex: none; }
 
-.sidebar-link:hover { background: theme(colors.ink.100); color: theme(colors.ink.950); }
+.sidebar-link:hover { background: theme(colors.ink.800); color: theme(colors.ink.50); }
 
 .sidebar-link:focus-visible {
     outline: none;
@@ -711,8 +711,8 @@ body::before {
    plein — le lime signifie « argent acquis » dans ce produit, et un libellé
    de menu ne doit pas emprunter ce sens. */
 .sidebar-link.is-active {
-    background: theme(colors.brand.50);
-    color: theme(colors.brand.700);
+    background: rgb(147 206 46 / .13);
+    color: theme(colors.brand.300);
     font-weight: 600;
 }
 
@@ -729,7 +729,7 @@ body::before {
     transition: background-color .18s ease, color .18s ease;
 }
 
-.sidebar-toggle:hover { background: theme(colors.ink.100); color: theme(colors.ink.900); }
+.sidebar-toggle:hover { background: theme(colors.ink.800); color: theme(colors.ink.100); }
 .sidebar-toggle svg { width: 16px; height: 16px; flex: none; transition: transform .28s cubic-bezier(.2,.7,.3,1); }
 
 /* Repliée, la colonne ne garde que les icônes : le libellé disparaît, mais

@@ -8,8 +8,8 @@
 
 @php
     $classes = $active
-        ? 'block w-full ps-4 pe-4 py-2.5 border-s-4 border-brand-500 text-start text-base font-semibold text-ink-950 bg-ink-200 transition'
-        : 'block w-full ps-4 pe-4 py-2.5 border-s-4 border-transparent text-start text-base font-medium text-ink-700 hover:bg-ink-200 hover:text-ink-950 transition';
+        ? 'block w-full ps-4 pe-4 py-2.5 border-s-4 border-brand-500 text-start text-base font-semibold text-ink-50 bg-ink-800 transition'
+        : 'block w-full ps-4 pe-4 py-2.5 border-s-4 border-transparent text-start text-base font-medium text-ink-300 hover:bg-ink-800 hover:text-ink-50 transition';
 @endphp
 
 <a {{ $attributes->merge(['class' => $classes]) }} @if ($navigate) wire:navigate @endif>{{ $slot }}</a>

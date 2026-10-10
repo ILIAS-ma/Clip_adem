@@ -19,7 +19,7 @@
         <img src="{{ $user->avatar_url }}" alt=""
              class="absolute inset-[18%] h-[64%] w-[64%] rounded-full object-cover">
     @else
-        <span class="absolute inset-[18%] flex h-[64%] w-[64%] items-center justify-center rounded-full bg-brand-500 text-[1em] font-bold text-ink-50">
+        <span class="absolute inset-[18%] flex h-[64%] w-[64%] items-center justify-center rounded-full bg-brand-500 text-[1em] font-bold text-ink-950">
             {{ mb_strtoupper(mb_substr($user->displayName(), 0, 1)) }}
         </span>
     @endif

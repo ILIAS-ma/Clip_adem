@@ -11,19 +11,19 @@
     faire : envoyer un clippeur télécharger un fichier de 80 Mo pour découvrir
     que ce n'était pas le bon son, c'est le perdre.
 --}}
-<div class="rounded-xl border border-ink-300 p-4">
+<div class="rounded-xl border border-ink-700 p-4">
     <div class="flex flex-wrap items-start justify-between gap-3">
         <div class="min-w-0">
             <p class="flex flex-wrap items-center gap-2">
-                <span class="chip bg-ink-200 text-ink-700">{{ $asset->kind->label() }}</span>
-                <span class="font-semibold text-ink-950">{{ $asset->label }}</span>
+                <span class="chip bg-ink-800 text-ink-300">{{ $asset->kind->label() }}</span>
+                <span class="font-semibold text-ink-50">{{ $asset->label }}</span>
                 @if ($asset->is_required)
                     <span class="chip-danger">Imposé</span>
                 @endif
             </p>
 
             @if ($asset->description)
-                <p class="mt-1.5 text-sm leading-relaxed text-ink-700">{{ $asset->description }}</p>
+                <p class="mt-1.5 text-sm leading-relaxed text-ink-300">{{ $asset->description }}</p>
             @endif
         </div>
 
@@ -35,7 +35,7 @@
                 @if ($asset->humanSize())
                     {{-- Le poids avant le clic : personne n'a envie de lancer
                          180 Mo en 4G sans le savoir. --}}
-                    <span class="ml-1 text-xs text-ink-600 tabular">{{ $asset->humanSize() }}</span>
+                    <span class="ml-1 text-xs text-ink-400 tabular">{{ $asset->humanSize() }}</span>
                 @endif
             </a>
         @endif
@@ -49,7 +49,7 @@
                     @break
 
                 @case (AssetKind::Video)
-                    <video controls preload="metadata" class="max-h-80 w-full rounded-lg bg-ink-100"
+                    <video controls preload="metadata" class="max-h-80 w-full rounded-lg bg-ink-900"
                            src="{{ $url }}"></video>
                     @break
 

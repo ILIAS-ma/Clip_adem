@@ -22,14 +22,14 @@
                 <label class="cursor-pointer rounded-xl border p-4 transition"
                        :class="method === @js($method->value)
                            ? 'border-brand-500 bg-brand-500/10'
-                           : 'border-ink-300 hover:border-ink-400'">
+                           : 'border-ink-700 hover:border-ink-600'">
                     <span class="flex items-center gap-2">
                         <input type="radio" name="payout_method" value="{{ $method->value }}"
                                x-model="method"
-                               class="h-4 w-4 border-ink-400 bg-ink-100 text-brand-500 focus:ring-brand-500" />
-                        <span class="font-semibold text-ink-950">{{ $method->label() }}</span>
+                               class="h-4 w-4 border-ink-600 bg-ink-900 text-brand-500 focus:ring-brand-500" />
+                        <span class="font-semibold text-ink-50">{{ $method->label() }}</span>
                     </span>
-                    <span class="mt-1.5 block pl-6 text-xs leading-relaxed text-ink-600">
+                    <span class="mt-1.5 block pl-6 text-xs leading-relaxed text-ink-400">
                         {{ $method->hint() }}
                     </span>
                 </label>

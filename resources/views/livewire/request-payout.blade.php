@@ -2,14 +2,14 @@
 
 <div>
     @if ($available < $minimum)
-        <div class="rounded-xl bg-ink-200 p-4 text-sm text-ink-800">
-            Il vous faut au moins <strong class="text-ink-950">{{ Money::euros($minimum) }}</strong>
+        <div class="rounded-xl bg-ink-800 p-4 text-sm text-ink-200">
+            Il vous faut au moins <strong class="text-ink-50">{{ Money::euros($minimum) }}</strong>
             de solde pour demander un retrait. Vous en avez {{ Money::euros($available) }}.
         </div>
     @else
         <form wire:submit="request" class="space-y-3">
             <div>
-                <label for="payout-amount" class="text-xs font-semibold uppercase tracking-wide text-ink-600">
+                <label for="payout-amount" class="text-xs font-semibold uppercase tracking-wide text-ink-400">
                     Montant
                 </label>
                 <div class="relative mt-1.5">

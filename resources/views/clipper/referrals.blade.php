@@ -2,8 +2,8 @@
 
 <x-app-layout>
     <x-slot name="header">
-        <h1 class="font-display text-2xl font-bold text-ink-950">Parrainage</h1>
-        <p class="mt-1 text-ink-700">
+        <h1 class="font-display text-2xl font-bold text-ink-50">Parrainage</h1>
+        <p class="mt-1 text-ink-300">
             Invitez d'autres clippeurs. Vous touchez {{ rtrim(rtrim(number_format($ratePercent, 1, ',', ' '), '0'), ',') }} %
             de ce qu'ils gagnent — sans que cela leur coûte quoi que ce soit.
         </p>
@@ -17,10 +17,10 @@
             <div class="relative p-6 sm:p-8">
                 <div class="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-brand-500/10 blur-3xl"></div>
 
-                <p class="text-xs font-semibold uppercase tracking-wide text-ink-600">Votre lien</p>
+                <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">Votre lien</p>
 
                 <div x-data="{ copied: false }" class="mt-3 flex flex-wrap items-center gap-3">
-                    <code class="min-w-0 flex-1 truncate rounded-xl border border-ink-300 bg-ink-100 px-4 py-3 text-sm text-brand-700">
+                    <code class="min-w-0 flex-1 truncate rounded-xl border border-ink-700 bg-ink-900 px-4 py-3 text-sm text-brand-300">
                         {{ $link }}
                     </code>
 
@@ -33,7 +33,7 @@
                 </div>
 
                 <p class="hint mt-3">
-                    Votre code : <span class="font-semibold tabular text-ink-900">{{ $code }}</span>.
+                    Votre code : <span class="font-semibold tabular text-ink-100">{{ $code }}</span>.
                     Il peut aussi se saisir à la main à l'inscription.
                 </p>
             </div>
@@ -62,35 +62,35 @@
 
         @if ($filleuls->isEmpty())
             <div class="card px-6 py-14 text-center">
-                <p class="font-display text-base font-bold text-ink-950">Aucun filleul pour l'instant</p>
-                <p class="mx-auto mt-2 max-w-md text-sm leading-relaxed text-ink-700">
+                <p class="font-display text-base font-bold text-ink-50">Aucun filleul pour l'instant</p>
+                <p class="mx-auto mt-2 max-w-md text-sm leading-relaxed text-ink-300">
                     Partagez votre lien dans votre bio, en story ou en commentaire. Chaque personne
                     qui s'inscrit avec est rattachée à vous définitivement.
                 </p>
             </div>
         @else
             <div class="card">
-                <div class="border-b border-ink-300 px-6 py-4">
-                    <h2 class="font-display text-lg font-bold text-ink-950">Mes filleuls</h2>
+                <div class="border-b border-ink-700 px-6 py-4">
+                    <h2 class="font-display text-lg font-bold text-ink-50">Mes filleuls</h2>
                 </div>
 
-                <ul class="divide-y divide-ink-300">
+                <ul class="divide-y divide-ink-700">
                     @foreach ($filleuls as $filleul)
                         <li class="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
                             <div class="min-w-0">
                                 {{-- Le pseudo, jamais l'e-mail : un parrain n'a
                                      pas à récupérer les contacts de ses filleuls. --}}
-                                <p class="truncate font-semibold text-ink-950">{{ $filleul->displayName() }}</p>
-                                <p class="mt-0.5 text-sm text-ink-600">
+                                <p class="truncate font-semibold text-ink-50">{{ $filleul->displayName() }}</p>
+                                <p class="mt-0.5 text-sm text-ink-400">
                                     inscrit le {{ $filleul->referred_at?->format('d/m/Y') }}
                                 </p>
                             </div>
 
                             <div class="text-right">
-                                <p class="font-display font-bold tabular text-brand-600">
+                                <p class="font-display font-bold tabular text-brand-400">
                                     {{ Money::euros((int) ($perReferred[$filleul->id] ?? 0)) }}
                                 </p>
-                                <p class="text-xs text-ink-600">vous ont rapporté</p>
+                                <p class="text-xs text-ink-400">vous ont rapporté</p>
                             </div>
                         </li>
                     @endforeach
@@ -100,25 +100,25 @@
 
         @if ($commissions->isNotEmpty())
             <div class="card">
-                <div class="border-b border-ink-300 px-6 py-4">
-                    <h2 class="font-display text-lg font-bold text-ink-950">Dernières commissions</h2>
+                <div class="border-b border-ink-700 px-6 py-4">
+                    <h2 class="font-display text-lg font-bold text-ink-50">Dernières commissions</h2>
                 </div>
 
-                <ul class="divide-y divide-ink-300">
+                <ul class="divide-y divide-ink-700">
                     @foreach ($commissions as $commission)
                         <li class="flex items-center justify-between gap-3 px-6 py-3 text-sm">
-                            <span class="text-ink-700">
+                            <span class="text-ink-300">
                                 {{ $commission->referred?->displayName() ?? 'Filleul supprimé' }}
                                 <span class="text-ink-500">· {{ $commission->created_at->format('d/m/Y') }}</span>
                             </span>
-                            <span class="font-semibold tabular {{ $commission->amount_cents < 0 ? 'text-red-400' : 'text-brand-600' }}">
+                            <span class="font-semibold tabular {{ $commission->amount_cents < 0 ? 'text-red-400' : 'text-brand-400' }}">
                                 {{ $commission->amount_cents < 0 ? '' : '+' }}{{ Money::euros($commission->amount_cents) }}
                             </span>
                         </li>
                     @endforeach
                 </ul>
 
-                <p class="border-t border-ink-300 px-6 py-3 text-xs text-ink-500">
+                <p class="border-t border-ink-700 px-6 py-3 text-xs text-ink-500">
                     Une ligne en rouge est une reprise : les vues d'un filleul ont été invalidées.
                 </p>
             </div>

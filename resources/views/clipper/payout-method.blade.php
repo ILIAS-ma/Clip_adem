@@ -2,8 +2,8 @@
     <x-slot name="header">
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
-                <h1 class="font-display text-2xl font-bold text-ink-950">Moyen de paiement</h1>
-                <p class="mt-1 text-ink-700">Où vos gains sont versés quand vous demandez un retrait.</p>
+                <h1 class="font-display text-2xl font-bold text-ink-50">Moyen de paiement</h1>
+                <p class="mt-1 text-ink-300">Où vos gains sont versés quand vous demandez un retrait.</p>
             </div>
 
             <a href="{{ route('earnings.index') }}" wire:navigate class="btn-ghost">← Mes revenus</a>
@@ -19,8 +19,8 @@
         @if ($user->hasPayoutDestination())
             <div class="card flex flex-wrap items-baseline justify-between gap-3 p-5">
                 <div>
-                    <p class="text-xs font-semibold uppercase tracking-wide text-ink-600">Destination actuelle</p>
-                    <p class="mt-1 font-display text-lg font-bold tabular text-ink-950">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">Destination actuelle</p>
+                    <p class="mt-1 font-display text-lg font-bold tabular text-ink-50">
                         {{ $user->payoutDestinationLabel() }}
                     </p>
                 </div>
@@ -43,7 +43,7 @@
 
                 <x-payout-method-fields :user="$user" />
 
-                <div class="border-t border-ink-300 pt-6">
+                <div class="border-t border-ink-700 pt-6">
                     <x-primary-button class="w-full sm:w-auto">Enregistrer</x-primary-button>
                 </div>
             </form>

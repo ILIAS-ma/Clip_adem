@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
-        <h1 class="font-display text-2xl font-bold text-ink-950">Ma fiche créateur</h1>
-        <p class="mt-1 text-ink-700">Ce que voient les clippeurs sur vos campagnes.</p>
+        <h1 class="font-display text-2xl font-bold text-ink-50">Ma fiche créateur</h1>
+        <p class="mt-1 text-ink-300">Ce que voient les clippeurs sur vos campagnes.</p>
     </x-slot>
 
     <div class="mx-auto max-w-2xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
@@ -24,7 +24,7 @@
 
                 @include('creator._form', ['creator' => $creator])
 
-                <div class="border-t border-ink-300 pt-6">
+                <div class="border-t border-ink-700 pt-6">
                     <x-primary-button>Enregistrer</x-primary-button>
                 </div>
             </form>

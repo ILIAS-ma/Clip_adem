@@ -2,8 +2,8 @@
 
 <x-guest-layout>
     <div class="mb-8">
-        <h2 class="font-display text-3xl font-bold text-ink-950">Créer un compte</h2>
-        <p class="mt-2 text-ink-800">Gratuit. Vous choisissez ce que vous faites sur la plateforme.</p>
+        <h2 class="font-display text-3xl font-bold text-ink-50">Créer un compte</h2>
+        <p class="mt-2 text-ink-200">Gratuit. Vous choisissez ce que vous faites sur la plateforme.</p>
     </div>
 
     <x-google-button :role="$role->value" label="S’inscrire avec Google" />
@@ -13,7 +13,7 @@
 
         @if ($parrain = request('parrain'))
             <input type="hidden" name="parrain" value="{{ $parrain }}" />
-            <p class="rounded-xl border border-brand-500/40 bg-brand-500/10 px-4 py-3 text-sm text-brand-700">
+            <p class="rounded-xl border border-brand-500/40 bg-brand-500/10 px-4 py-3 text-sm text-brand-200">
                 Vous avez été invité avec le code <span class="font-semibold tabular">{{ $parrain }}</span>.
             </p>
         @endif
@@ -39,11 +39,11 @@
                     <label class="cursor-pointer">
                         <input type="radio" name="role" value="{{ $option->value }}"
                                x-model="role" class="peer sr-only">
-                        <span class="block h-full rounded-2xl border-2 border-ink-300 p-4 transition
-                                     peer-checked:border-ink-300 peer-checked:bg-ink-200
+                        <span class="block h-full rounded-2xl border-2 border-ink-700 p-4 transition
+                                     peer-checked:border-ink-700 peer-checked:bg-ink-800
                                      peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500 peer-focus-visible:ring-offset-2">
-                            <span class="block font-display text-base font-bold text-ink-950">{{ $title }}</span>
-                            <span class="mt-1 block text-xs leading-relaxed text-ink-800">{{ $description }}</span>
+                            <span class="block font-display text-base font-bold text-ink-50">{{ $title }}</span>
+                            <span class="mt-1 block text-xs leading-relaxed text-ink-200">{{ $description }}</span>
                         </span>
                     </label>
                 @endforeach
@@ -115,9 +115,9 @@
         <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     @endonce
 
-    <p class="mt-8 text-center text-sm text-ink-800">
+    <p class="mt-8 text-center text-sm text-ink-200">
         Déjà inscrit ?
-        <a href="{{ route('login') }}" class="font-semibold text-ink-950 underline underline-offset-2">
+        <a href="{{ route('login') }}" class="font-semibold text-ink-50 underline underline-offset-2">
             Se connecter
         </a>
     </p>

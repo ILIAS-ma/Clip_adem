@@ -17,7 +17,7 @@
                             <th class="py-2 text-right font-medium">Vues (7j)</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-ink-300">
+                    <tbody class="divide-y divide-gray-100 dark:divide-ink-700">
                         @foreach ($clippers as $clipper)
                             <tr>
                                 <td class="py-2 text-gray-500 dark:text-gray-400 tabular-nums">

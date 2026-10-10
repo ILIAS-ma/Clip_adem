@@ -7,8 +7,8 @@
     <x-slot name="header">
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
-                <h1 class="font-display text-2xl font-bold text-ink-950">Mes clips</h1>
-                <p class="mt-1 text-ink-700">
+                <h1 class="font-display text-2xl font-bold text-ink-50">Mes clips</h1>
+                <p class="mt-1 text-ink-300">
                     {{ $clips->count() }} clip{{ $clips->count() > 1 ? 's' : '' }} ·
                     {{ Money::euros($clips->sum('earned_cents')) }} gagnés
                 </p>
@@ -60,7 +60,7 @@
             </div>
 
             @if (array_filter($filters))
-                <a href="{{ route('clips.index') }}" wire:navigate class="text-sm font-medium text-ink-700 underline-offset-2 hover:text-ink-950 hover:underline">
+                <a href="{{ route('clips.index') }}" wire:navigate class="text-sm font-medium text-ink-300 underline-offset-2 hover:text-ink-50 hover:underline">
                     Réinitialiser
                 </a>
             @endif
@@ -68,13 +68,13 @@
 
         @if ($clips->isEmpty() && array_filter($filters))
             <div class="card px-6 py-16 text-center">
-                <p class="font-display text-lg font-bold text-ink-950">Aucun clip pour ces filtres</p>
+                <p class="font-display text-lg font-bold text-ink-50">Aucun clip pour ces filtres</p>
                 <a href="{{ route('clips.index') }}" wire:navigate class="btn-ghost mt-6">Réinitialiser les filtres</a>
             </div>
         @elseif ($clips->isEmpty())
             <div class="card px-6 py-16 text-center">
-                <p class="font-display text-lg font-bold text-ink-950">Aucun clip soumis</p>
-                <p class="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-700">
+                <p class="font-display text-lg font-bold text-ink-50">Aucun clip soumis</p>
+                <p class="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-300">
                     Rejoignez une campagne, publiez votre clip sur votre compte, puis collez le lien
                     de la publication.
                 </p>
@@ -85,21 +85,21 @@
                 @foreach ($clips as $clip)
                     <a href="{{ route('clips.show', $clip) }}" wire:navigate
                        class="flex items-center gap-4 card p-5 transition hover:-translate-y-0.5 hover:shadow-lifted">
-                        <div class="h-16 w-12 flex-none overflow-hidden rounded-lg bg-ink-300">
+                        <div class="h-16 w-12 flex-none overflow-hidden rounded-lg bg-ink-700">
                             @if ($clip->thumbnail_url)
                                 <img src="{{ $clip->thumbnail_url }}" alt="" class="h-full w-full object-cover">
                             @else
-                                <div class="flex h-full w-full items-center justify-center text-[10px] font-semibold uppercase text-ink-600">
+                                <div class="flex h-full w-full items-center justify-center text-[10px] font-semibold uppercase text-ink-400">
                                     {{ $clip->platform->label() }}
                                 </div>
                             @endif
                         </div>
 
                         <div class="min-w-0 flex-1">
-                            <p class="truncate text-xs font-semibold uppercase tracking-wide text-ink-600">
+                            <p class="truncate text-xs font-semibold uppercase tracking-wide text-ink-400">
                                 {{ $clip->campaign?->creator?->name }}
                             </p>
-                            <p class="mt-0.5 truncate font-display text-base font-bold text-ink-950">
+                            <p class="mt-0.5 truncate font-display text-base font-bold text-ink-50">
                                 {{ $clip->campaign?->title }}
                             </p>
 
@@ -122,18 +122,18 @@
                         </div>
 
                         <div class="shrink-0 text-right">
-                            <p class="font-display text-lg font-bold tabular text-ink-950 sm:text-xl">
+                            <p class="font-display text-lg font-bold tabular text-ink-50 sm:text-xl">
                                 {{ Money::euros($clip->earned_cents) }}
                             </p>
-                            <p class="text-xs tabular text-ink-600">{{ Money::views($clip->views_total) }} vues</p>
+                            <p class="text-xs tabular text-ink-400">{{ Money::views($clip->views_total) }} vues</p>
 
                             @if (($pending[$clip->id] ?? 0) > 0)
                                 {{-- Estimation issue du moteur : plafonds et reliquat déjà appliqués. --}}
-                                <p class="mt-1 text-xs font-semibold tabular text-brand-600">
+                                <p class="mt-1 text-xs font-semibold tabular text-brand-400">
                                     + {{ Money::euros($pending[$clip->id]) }} en attente
                                 </p>
                             @elseif ($clip->unpaidViews() > 0)
-                                <p class="mt-1 text-xs tabular text-brand-700">
+                                <p class="mt-1 text-xs tabular text-brand-300">
                                     {{ Money::views($clip->unpaidViews()) }} vues non payées
                                 </p>
                             @endif

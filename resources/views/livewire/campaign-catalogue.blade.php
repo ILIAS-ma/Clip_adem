@@ -10,7 +10,7 @@
     <div class="card p-4 sm:p-5" x-data="{ open: false }">
         <div class="flex items-end gap-3">
             <div class="flex-1">
-                <label for="search" class="text-xs font-semibold uppercase tracking-wide text-ink-600">Rechercher</label>
+                <label for="search" class="text-xs font-semibold uppercase tracking-wide text-ink-400">Rechercher</label>
                 <input id="search" type="search" wire:model.live.debounce.300ms="search"
                        placeholder="Titre ou créateur" class="field mt-1.5 text-sm">
             </div>
@@ -24,7 +24,7 @@
         <div x-show="open" x-cloak x-transition class="sm:!block">
             <div class="mt-4 grid gap-4 sm:grid-cols-3">
                 <div>
-                    <label for="platform" class="text-xs font-semibold uppercase tracking-wide text-ink-600">Plateforme</label>
+                    <label for="platform" class="text-xs font-semibold uppercase tracking-wide text-ink-400">Plateforme</label>
                     <x-select id="platform" wire:model.live="platform" class="text-sm">
                         <option value="">Toutes</option>
                         @foreach ($platforms as $value => $label)
@@ -34,7 +34,7 @@
                 </div>
 
                 <div>
-                    <label for="creator" class="text-xs font-semibold uppercase tracking-wide text-ink-600">Créateur</label>
+                    <label for="creator" class="text-xs font-semibold uppercase tracking-wide text-ink-400">Créateur</label>
                     <x-select id="creator" wire:model.live="creator" class="text-sm">
                         <option value="">Tous</option>
                         @foreach ($creators as $id => $name)
@@ -44,7 +44,7 @@
                 </div>
 
                 <div>
-                    <label for="minRate" class="text-xs font-semibold uppercase tracking-wide text-ink-600">Cachet min.</label>
+                    <label for="minRate" class="text-xs font-semibold uppercase tracking-wide text-ink-400">Cachet min.</label>
                     <div class="relative mt-1.5">
                         <input id="minRate" type="number" step="0.10" min="0" wire:model.live.debounce.500ms="minRate"
                                placeholder="0,50" class="field pe-16 text-sm">
@@ -53,18 +53,18 @@
                 </div>
             </div>
 
-            <div class="mt-4 flex flex-wrap items-center gap-4 border-t border-ink-300 pt-4">
-                <label class="flex items-center gap-2.5 text-sm text-ink-800">
-                    <input type="checkbox" wire:model.live="onlyOpen" class="rounded border-ink-300 text-ink-900 focus:ring-brand-500">
+            <div class="mt-4 flex flex-wrap items-center gap-4 border-t border-ink-700 pt-4">
+                <label class="flex items-center gap-2.5 text-sm text-ink-200">
+                    <input type="checkbox" wire:model.live="onlyOpen" class="rounded border-ink-700 text-ink-100 focus:ring-brand-500">
                     Uniquement les campagnes ouvertes
                 </label>
 
                 <button type="button" wire:click="resetFilters"
-                        class="text-sm font-medium text-ink-600 underline-offset-2 hover:text-ink-950 hover:underline">
+                        class="text-sm font-medium text-ink-400 underline-offset-2 hover:text-ink-50 hover:underline">
                     Réinitialiser
                 </button>
 
-                <span class="ms-auto text-sm tabular text-ink-600" wire:loading.class="opacity-40">
+                <span class="ms-auto text-sm tabular text-ink-400" wire:loading.class="opacity-40">
                     {{ $campaigns->total() }} campagne{{ $campaigns->total() > 1 ? 's' : '' }}
                 </span>
             </div>
@@ -99,8 +99,8 @@
 
     @if ($campaigns->isEmpty())
         <div class="card px-6 py-16 text-center">
-            <p class="font-display text-lg font-bold text-ink-950">Aucune campagne ne correspond</p>
-            <p class="mx-auto mt-2 max-w-sm text-sm text-ink-700">
+            <p class="font-display text-lg font-bold text-ink-50">Aucune campagne ne correspond</p>
+            <p class="mx-auto mt-2 max-w-sm text-sm text-ink-300">
                 Élargissez vos filtres, ou décochez « uniquement les campagnes ouvertes ».
             </p>
         </div>
@@ -120,10 +120,10 @@
                    ])>
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0">
-                            <p class="text-xs font-semibold uppercase tracking-wide text-ink-600">
+                            <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">
                                 {{ $campaign->creator?->name }}
                             </p>
-                            <h2 class="mt-1 font-display text-lg font-bold leading-snug text-ink-950">
+                            <h2 class="mt-1 font-display text-lg font-bold leading-snug text-ink-50">
                                 {{ $campaign->title }}
                             </h2>
                         </div>
@@ -139,9 +139,9 @@
                     {{-- Le cachet est le premier critère de choix : il mérite
                          d'être lisible sans lire la carte entière. --}}
                     @if ($best)
-                        <p class="mt-4 font-display text-2xl font-bold tabular text-ink-950">
+                        <p class="mt-4 font-display text-2xl font-bold tabular text-ink-50">
                             {{ Money::rate($best) }}
-                            <span class="text-sm font-semibold text-ink-600">/ 1000 vues</span>
+                            <span class="text-sm font-semibold text-ink-400">/ 1000 vues</span>
                         </p>
                     @endif
 

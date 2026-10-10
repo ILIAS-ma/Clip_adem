@@ -1,7 +1,7 @@
 <section>
     <header>
-        <h2 class="font-display text-lg font-bold text-ink-950">Photo de profil</h2>
-        <p class="mt-1 text-sm text-ink-700">Visible dans le menu, le classement et les notifications.</p>
+        <h2 class="font-display text-lg font-bold text-ink-50">Photo de profil</h2>
+        <p class="mt-1 text-sm text-ink-300">Visible dans le menu, le classement et les notifications.</p>
     </header>
 
     <div class="mt-6 flex flex-col gap-6 sm:flex-row sm:items-center">
@@ -12,7 +12,7 @@
                 <form method="POST" action="{{ route('profile.avatar.update') }}" enctype="multipart/form-data" class="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
                     @csrf
                     <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp"
-                           class="block w-full max-w-xs text-sm text-ink-700 file:mr-3 file:rounded-lg file:border-0 file:bg-ink-300 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-ink-900 hover:file:bg-ink-400">
+                           class="block w-full max-w-xs text-sm text-ink-300 file:mr-3 file:rounded-lg file:border-0 file:bg-ink-700 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-ink-100 hover:file:bg-ink-600">
                     <x-primary-button>Enregistrer</x-primary-button>
                 </form>
 
@@ -20,7 +20,7 @@
                     <form method="POST" action="{{ route('profile.avatar.destroy') }}">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="text-sm font-medium text-ink-600 underline-offset-2 hover:text-red-400 hover:underline">
+                        <button type="submit" class="text-sm font-medium text-ink-400 underline-offset-2 hover:text-red-400 hover:underline">
                             Retirer
                         </button>
                     </form>
@@ -29,11 +29,11 @@
                 @if (session('status') === 'avatar-updated')
                     <p x-data="{ show: true }" x-show="show" x-transition
                        x-init="setTimeout(() => show = false, 2500)"
-                       class="text-sm font-medium text-brand-600">Enregistrée.</p>
+                       class="text-sm font-medium text-brand-400">Enregistrée.</p>
                 @elseif (session('status') === 'avatar-removed')
                     <p x-data="{ show: true }" x-show="show" x-transition
                        x-init="setTimeout(() => show = false, 2500)"
-                       class="text-sm font-medium text-ink-700">Retirée.</p>
+                       class="text-sm font-medium text-ink-300">Retirée.</p>
                 @endif
             </div>
 
