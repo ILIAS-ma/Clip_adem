@@ -292,7 +292,7 @@
     transform-origin: 0 50%;
     opacity: 0;
     pointer-events: none;
-    background: linear-gradient(90deg, #5C831C, #93CE2E 55%, #BAE566);
+    background: linear-gradient(90deg, rgb(200 200 200 / .5), #FFF 55%, rgb(204 63 69 / .9));
 }
 
 /* La progression est volontairement asymptotique : on ne connaît pas la
@@ -421,7 +421,7 @@
     position: absolute;
     inset: 0;
     transform: translateX(-100%);
-    background: linear-gradient(90deg, transparent, rgb(147 206 46 / .14), transparent);
+    background: linear-gradient(90deg, transparent, rgb(255 255 255 / .10), transparent);
     animation: skeleton-shimmer 1.5s ease-in-out infinite;
 }
 
@@ -442,7 +442,7 @@
 
 .hero-balance {
     background:
-        radial-gradient(120% 140% at 0% 0%, rgb(147 206 46 / .09), transparent 60%),
+        radial-gradient(120% 140% at 0% 0%, rgb(255 255 255 / .07), transparent 60%),
         theme(colors.ink.800);
     border-color: theme(colors.ink.600);
 }
@@ -609,8 +609,8 @@ body::before {
     z-index: -1;
     pointer-events: none;
     background:
-        radial-gradient(70rem 40rem at 50% -12rem, rgb(147 206 46 / .07), transparent 70%),
-        radial-gradient(50rem 30rem at 92% 4%, rgb(147 206 46 / .04), transparent 70%);
+        radial-gradient(70rem 40rem at 50% -12rem, rgb(255 255 255 / .05), transparent 70%),
+        radial-gradient(50rem 30rem at 92% 4%, rgb(255 255 255 / .03), transparent 70%);
 }
 
 /* =====================================================================
@@ -711,8 +711,8 @@ body::before {
    plein — le lime signifie « argent acquis » dans ce produit, et un libellé
    de menu ne doit pas emprunter ce sens. */
 .sidebar-link.is-active {
-    background: rgb(147 206 46 / .13);
-    color: theme(colors.brand.300);
+    background: rgb(255 255 255 / .06);
+    color: #FFF;
     font-weight: 600;
 }
 
@@ -760,8 +760,6 @@ body::before {
    ===================================================================== */
 
 .app-sidebar .sidebar-link.is-active {
-    background: rgb(204 63 69 / .12);
-    color: theme(colors.brand.300);
     box-shadow: inset 2px 0 0 theme(colors.brand.500);
 }
 
@@ -843,4 +841,61 @@ body::before {
 .btn-brand {
     position: relative;
     overflow: hidden;
+}
+
+/* =====================================================================
+   Le reflet qui glisse.
+
+   Sur le logo, le métal est brossé : la lumière ne s'y pose pas, elle le
+   traverse en bande. Un reflet lent qui parcourt la carte du solde
+   reprend ce geste — très lent, très pâle, parce qu'un éclat rapide ou
+   marqué sur un montant ferait clignotant publicitaire.
+
+   Réservé à cette carte seule : répété sur dix blocs, le procédé cesse
+   d'être une matière pour devenir un tic.
+   ===================================================================== */
+
+@media (prefers-reduced-motion: no-preference) {
+    .hero-balance {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-balance::after {
+        content: "";
+        position: absolute;
+        inset: -40% -60%;
+        pointer-events: none;
+        background: linear-gradient(
+            104deg,
+            transparent 42%,
+            rgb(255 255 255 / .055) 48%,
+            rgb(255 255 255 / .085) 50%,
+            rgb(255 255 255 / .055) 52%,
+            transparent 58%
+        );
+        transform: translateX(-60%);
+        animation: metal-sheen 7s cubic-bezier(.5, 0, .5, 1) infinite;
+    }
+}
+
+@keyframes metal-sheen {
+    /* La pause occupe les deux tiers du cycle : le reflet passe, puis se
+       fait oublier. Sans elle, le mouvement devient un battement. */
+    0%, 62%  { transform: translateX(-60%); }
+    88%, 100% { transform: translateX(60%); }
+}
+
+/* Le liséré supérieur des cartes s'éclaire au survol : la plaque bascule
+   vers la lumière. C'est le même geste, déclenché par l'intention plutôt
+   que par le temps. */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .card::before {
+        transition: opacity .3s ease;
+        opacity: .7;
+    }
+
+    .card:hover::before {
+        opacity: 1;
+    }
 }

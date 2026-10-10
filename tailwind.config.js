@@ -40,7 +40,7 @@ export default {
 
             colors: {
                 // Neutres très légèrement tirés vers le vert : posés à côté du
-                // lime, des gris parfaitement neutres paraissent sales.
+                // chrome, des gris parfaitement neutres paraissent sales.
                 /*
                  * Gris relevés au compte-gouttes sur le logo : ils y sont
                  * parfaitement neutres (R = G = B). Les tirer vers le bleu,
