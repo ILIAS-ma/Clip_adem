@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? config('app.name') }}</title>
 
-    <meta name="theme-color" content="#07080A">
+    <meta name="theme-color" content="#000000">
 
     <x-site-verification />
 

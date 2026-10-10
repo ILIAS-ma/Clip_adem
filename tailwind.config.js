@@ -41,33 +41,44 @@ export default {
             colors: {
                 // Neutres très légèrement tirés vers le vert : posés à côté du
                 // lime, des gris parfaitement neutres paraissent sales.
-                // Gris légèrement froids : à côté du chrome, des neutres parfaits
-                // paraîtraient jaunes.
+                /*
+                 * Gris relevés au compte-gouttes sur le logo : ils y sont
+                 * parfaitement neutres (R = G = B). Les tirer vers le bleu,
+                 * comme je l'avais fait, suffisait à ce que l'interface ne
+                 * colle plus au métal — l'œil ne sait pas nommer l'écart,
+                 * mais il le voit.
+                 */
                 ink: {
-                    50: '#F7F8FA',
-                    100: '#E6E9EE',
-                    200: '#C9CFD8',
-                    300: '#9BA4B2',
-                    400: '#6E7684',
-                    500: '#4E5663',
-                    600: '#363D48',
-                    700: '#262B33',   // bordures et surfaces surélevées
-                    800: '#191D23',   // cartes
-                    900: '#101318',   // fond des sections
-                    950: '#07080A',   // fond de page, presque noir
+                    50: '#F5F5F5',
+                    100: '#E8E8E8',
+                    200: '#C8C8C8',
+                    300: '#A0A0A0',
+                    400: '#777777',
+                    500: '#585858',
+                    600: '#3C3C3C',
+                    700: '#2A2A2A',   // bordures et surfaces surélevées
+                    800: '#1A1A1A',   // cartes
+                    900: '#101010',   // fond des sections
+                    950: '#000000',   // fond de page — le noir du logo, pur
                 },
 
+                /*
+                 * Rouge mesuré sur les arêtes du logo. Il est légèrement rosé
+                 * et nettement moins criard qu'un rouge pur : c'est ce qui le
+                 * fait lire comme une lueur sur du métal plutôt que comme un
+                 * avertissement.
+                 */
                 brand: {
-                    50: '#FFF1F1',
-                    100: '#FFDFDF',
-                    200: '#FFC2C2',
-                    300: '#FF9A9A',
-                    400: '#FF6B6B',   // la lueur des arêtes
-                    500: '#F02C2C',   // le rouge du logo
-                    600: '#D11A1A',
-                    700: '#A51414',
-                    800: '#7C1111',
-                    900: '#5C1010',
+                    50: '#FCEFF0',
+                    100: '#F8DADC',
+                    200: '#F0B5B9',
+                    300: '#E58890',
+                    400: '#D96068',
+                    500: '#CC3F45',   // la teinte relevée sur les arêtes
+                    600: '#B23239',
+                    700: '#93272E',
+                    800: '#741E24',
+                    900: '#57171C',
                 },
             },
 
@@ -76,7 +87,7 @@ export default {
                 lifted: '0 2px 6px rgb(0 0 0 / .55), 0 24px 48px -24px rgb(0 0 0 / 1)',
 
                 // Le halo du logo : un liseré net, puis une diffusion large.
-                glow: '0 0 0 1px rgb(240 44 44 / .35), 0 0 24px -4px rgb(240 44 44 / .45)',
+                glow: '0 0 0 1px rgb(204 63 69 / .35), 0 0 24px -4px rgb(204 63 69 / .45)',
             },
         },
     },

@@ -15,7 +15,7 @@
 <span {{ $attributes->merge(['class' => 'inline-flex items-center gap-2.5']) }}>
     @if ($logo)
         <img src="{{ asset('images/logo.png') }}?v={{ @filemtime(public_path('images/logo.png')) }}" alt="{{ config('app.name') }}"
-             class="{{ $imgClass }} brand-glow shrink-0" width="36" height="36" loading="eager" decoding="async">
+             class="{{ $imgClass }} shrink-0" width="36" height="36" loading="eager" decoding="async">
     @else
         {{-- Onde sonore stylisée : le sujet du produit, pas un logo générique. --}}
         <svg viewBox="0 0 28 20" class="{{ $svgClass }} shrink-0" fill="none" aria-hidden="true">
