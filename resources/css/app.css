@@ -58,7 +58,7 @@
     }
 
     ::selection {
-        @apply bg-brand-500 text-ink-950;
+        @apply bg-brand-500 text-white;
     }
 }
 
@@ -185,7 +185,7 @@
     /* L'action principale est toujours lime sur noir : sur fond sombre, c'est
        le seul contraste qui se voit du premier coup d'œil. */
     .btn-primary {
-        @apply btn bg-brand-500 text-ink-950 hover:bg-brand-400 active:bg-brand-600;
+        @apply btn bg-brand-500 text-white shadow-glow hover:bg-brand-400 active:bg-brand-600;
     }
 
     .btn-brand {
@@ -210,17 +210,17 @@
 
     /* États métier. La couleur porte le sens : lime = acquis, ambre = en
        attente, rouge = perdu. Jamais l'inverse, nulle part. */
-    .chip-ok      { @apply chip bg-brand-500/15 text-brand-300; }
+    .chip-ok      { @apply chip bg-ink-100/10 text-ink-100 ring-1 ring-ink-200/20; }
     .chip-wait    { @apply chip bg-amber-500/15 text-amber-300; }
-    .chip-danger  { @apply chip bg-red-500/15 text-red-300; }
+    .chip-danger  { @apply chip bg-rose-500/15 text-rose-300; }
     .chip-neutral { @apply chip bg-ink-700 text-ink-300; }
 
     .alert {
         @apply rounded-xl border-l-4 p-4 text-sm;
     }
-    .alert-ok     { @apply alert border-brand-500 bg-brand-500/10 text-brand-200; }
+    .alert-ok     { @apply alert border-ink-200 bg-ink-100/5 text-ink-100; }
     .alert-warn   { @apply alert border-amber-500 bg-amber-500/10 text-amber-200; }
-    .alert-danger { @apply alert border-red-500 bg-red-500/10 text-red-200; }
+    .alert-danger { @apply alert border-rose-500 bg-rose-500/10 text-rose-200; }
 }
 
 /* Pages légales : de la prose longue, lue en entier par des humains comme par
@@ -747,4 +747,42 @@ body::before {
 
 @media (prefers-reduced-motion: reduce) {
     .app-sidebar, .sidebar-toggle svg { transition: none; }
+}
+
+
+/* =====================================================================
+   La lueur du logo.
+
+   Sur le logo, le rouge n'est pas un aplat : il affleure sur les arêtes
+   du métal. Les surfaces du site le reprennent de la même façon — un
+   liseré net puis une diffusion large, jamais un fond rouge plein, qui
+   ferait « alerte » sur une interface où l'on manipule de l'argent.
+   ===================================================================== */
+
+.app-sidebar .sidebar-link.is-active {
+    background: rgb(240 44 44 / .10);
+    color: theme(colors.brand.300);
+    box-shadow: inset 2px 0 0 theme(colors.brand.500);
+}
+
+/* Le bloc du solde : la même lueur, en diagonale, comme une arête
+   éclairée par le haut. */
+.hero-balance {
+    background:
+        radial-gradient(120% 140% at 0% 0%, rgb(240 44 44 / .10), transparent 58%),
+        theme(colors.ink.800);
+    border-color: theme(colors.ink.600);
+}
+
+/* Reflet métallique sur le liseré supérieur des surfaces en verre : c'est
+   ce qui distingue du chrome d'un simple gris. */
+.glass-edge::before {
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgb(247 248 250 / .22) 35%,
+        rgb(240 44 44 / .22) 50%,
+        rgb(247 248 250 / .22) 65%,
+        transparent
+    );
 }
