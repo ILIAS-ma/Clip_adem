@@ -101,7 +101,7 @@ class CampaignToEarningsFlowTest extends DuskTestCase
         $clip->forceFill(['posted_at' => now()->subHours(48)])->save();
 
         // --- Le modérateur : valide le clip depuis l'admin ---------------
-        $this->browse(function (Browser $browser) use ($moderator, $clip) {
+        $this->browse(function (Browser $browser) use ($moderator) {
             $browser->loginAs($moderator)
                 ->visit('/admin/clips')
                 ->waitForText('En attente de validation')

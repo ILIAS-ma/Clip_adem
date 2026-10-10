@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Creator;
 
+use App\Enums\CreatorKind;
 use App\Http\Controllers\Controller;
 use App\Models\Creator;
 use Illuminate\Http\RedirectResponse;
@@ -66,19 +67,51 @@ class ProfileController extends Controller
     /** @return array<string, mixed> */
     protected function validated(Request $request, ?Creator $creator = null): array
     {
-        return $request->validate([
+        $regles = [
+            /*
+             * Facultative, et non « obligatoire » : une nature absente a une
+             * réponse évidente — on garde celle de la fiche, artiste pour une
+             * nouvelle. Exiger le champ ferait répondre « le champ kind est
+             * obligatoire » à quelqu'un qui ne voit nulle part de champ de ce
+             * nom. Valeur fantaisiste refusée, en revanche : la colonne est un
+             * enum, et `kind()->label()` tomberait sur une fiche enregistrée.
+             */
+            'kind' => ['nullable', Rule::enum(CreatorKind::class)],
             'name' => [
                 'required', 'string', 'min:2', 'max:255',
                 Rule::unique('creators', 'name')->ignore($creator?->getKey()),
             ],
             'bio' => ['nullable', 'string', 'max:2000'],
-            'spotify_url' => ['nullable', 'url', 'max:255'],
             'tiktok_handle' => ['nullable', 'string', 'max:64'],
             'instagram_handle' => ['nullable', 'string', 'max:64'],
             'youtube_handle' => ['nullable', 'string', 'max:64'],
-        ], [
-            'name.unique' => 'Un créateur porte déjà ce nom de scène.',
+        ];
+
+        /*
+         * Les champs des deux natures sont validés, pas seulement ceux de la
+         * nature choisie : le formulaire les envoie tous — c'est ainsi qu'un
+         * créateur devenu streamer ne perd pas son Spotify — et un champ
+         * accepté sans règle est un champ non validé.
+         */
+        foreach (CreatorKind::cases() as $kind) {
+            foreach ($kind->ownLinks() as $nom => $meta) {
+                $regles[$nom] = $meta['url']
+                    ? ['nullable', 'url', 'max:255']
+                    : ['nullable', 'string', 'max:64'];
+            }
+        }
+
+        $valide = $request->validate($regles, [
+            'name.unique' => 'Ce nom est déjà pris par un autre compte.',
         ]);
+
+        // Retirée plutôt que laissée nulle : sur une mise à jour, une nature
+        // vide ne doit pas écraser celle de la fiche.
+        if (blank($valide['kind'] ?? null)) {
+            unset($valide['kind']);
+        }
+
+        return $valide;
     }
 
     protected function uniqueSlug(string $name): string

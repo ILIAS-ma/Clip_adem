@@ -41,7 +41,9 @@ class NavigationComposer
                 [
                     'route' => 'creator.profile.edit',
                     'pattern' => 'creator.profile.*',
-                    'label' => 'Ma fiche',
+                    // Un streamer gère une chaîne, pas une fiche d'artiste :
+                    // le mot doit être le sien jusque dans la navigation.
+                    'label' => $user->creator?->isStreamer() ? 'Ma chaîne' : 'Ma fiche',
                     'icon' => 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
                 ],
             ]

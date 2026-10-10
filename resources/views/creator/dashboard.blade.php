@@ -4,7 +4,7 @@
     <x-slot name="header">
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
-                <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">Espace créateur</p>
+                <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">{{ $creator->kind()->spaceLabel() }}</p>
                 <h1 class="mt-1 font-display text-2xl font-bold text-ink-50">{{ $creator->name }}</h1>
             </div>
 

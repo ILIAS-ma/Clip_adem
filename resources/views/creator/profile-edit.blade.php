@@ -1,6 +1,8 @@
 <x-app-layout>
     <x-slot name="header">
-        <h1 class="font-display text-2xl font-bold text-ink-50">Ma fiche créateur</h1>
+        <h1 class="font-display text-2xl font-bold text-ink-50">
+            Ma fiche {{ $creator->isStreamer() ? 'streamer' : 'créateur' }}
+        </h1>
         <p class="mt-1 text-ink-300">Ce que voient les clippeurs sur vos campagnes.</p>
     </x-slot>
 

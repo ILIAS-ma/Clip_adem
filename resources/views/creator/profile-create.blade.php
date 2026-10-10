@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <span class="chip-wait">Étape 2 sur 2</span>
-        <h1 class="mt-3 font-display text-2xl font-bold text-ink-50">Créez votre fiche créateur</h1>
+        <h1 class="mt-3 font-display text-2xl font-bold text-ink-50">Créez votre fiche</h1>
         <p class="mt-1 text-ink-300">C'est à elle que seront rattachées vos campagnes et vos statistiques.</p>
     </x-slot>
 

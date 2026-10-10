@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CreatorKind;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,8 +11,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
-    'user_id', 'name', 'slug', 'bio', 'avatar_path', 'spotify_url',
+    'user_id', 'name', 'slug', 'kind', 'bio', 'avatar_path', 'spotify_url',
     'instagram_handle', 'tiktok_handle', 'youtube_handle',
+    'twitch_handle', 'kick_handle', 'vod_url',
     'internal_notes', 'is_active', 'created_by',
 ])]
 class Creator extends Model
@@ -21,8 +23,27 @@ class Creator extends Model
     protected function casts(): array
     {
         return [
+            'kind' => CreatorKind::class,
             'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Nature de la fiche, jamais nulle.
+     *
+     * Une fiche créée avant l'arrivée des streamers, ou par un code qui
+     * ignore la colonne, vaut artiste. Sans ce filet, l'espace créateur
+     * appellerait `->label()` sur `null` et tomberait sur une fiche
+     * parfaitement valable.
+     */
+    public function kind(): CreatorKind
+    {
+        return $this->kind ?? CreatorKind::Artist;
+    }
+
+    public function isStreamer(): bool
+    {
+        return $this->kind() === CreatorKind::Streamer;
     }
 
     public function campaigns(): HasMany

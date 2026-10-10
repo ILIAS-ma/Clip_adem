@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Creators\Tables;
 
+use App\Enums\CreatorKind;
 use App\Models\Creator;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -10,6 +11,7 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
@@ -26,11 +28,21 @@ class CreatorsTable
                     ->defaultImageUrl(fn () => 'https://ui-avatars.com/api/?name=?&background=random'),
 
                 TextColumn::make('name')
-                    ->label('Créateur')
+                    ->label('Nom')
                     ->searchable()
                     ->sortable()
                     ->weight('bold')
                     ->description(fn (Creator $record) => $record->tiktok_handle ? '@'.$record->tiktok_handle : null),
+
+                // Les deux populations ne se pilotent pas ensemble : un
+                // streamer s'évalue sur la circulation de ses moments, un
+                // artiste sur les écoutes que la campagne lui rapporte.
+                TextColumn::make('kind')
+                    ->label('Type')
+                    ->badge()
+                    ->state(fn (Creator $record) => $record->kind()->label())
+                    ->color(fn (Creator $record) => $record->isStreamer() ? 'info' : 'gray')
+                    ->sortable(),
 
                 TextColumn::make('campaigns_count')
                     ->label('Campagnes')
@@ -81,6 +93,9 @@ class CreatorsTable
             ])
             ->defaultSort('name')
             ->filters([
+                SelectFilter::make('kind')
+                    ->label('Type')
+                    ->options(CreatorKind::options()),
                 TernaryFilter::make('is_active')
                     ->label('Actif'),
                 TrashedFilter::make()

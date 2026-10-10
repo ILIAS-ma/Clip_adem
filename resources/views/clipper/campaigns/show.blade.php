@@ -4,8 +4,11 @@
     <x-slot name="header">
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
-                <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">
-                    {{ $campaign->creator?->name }}
+                <p class="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-ink-400">
+                    <span>{{ $campaign->creator?->name }}</span>
+                    @if ($campaign->creator?->isStreamer())
+                        <span class="chip-neutral normal-case tracking-normal">Streamer</span>
+                    @endif
                 </p>
                 <h1 class="mt-1 font-display text-2xl font-bold text-ink-50">{{ $campaign->title }}</h1>
             </div>
@@ -66,6 +69,43 @@
                     @endif
 
                 </div>
+
+                {{--
+                    Un streamer ne joint pas un extrait de trente secondes : il
+                    produit des heures de direct, et la source est la même d'une
+                    campagne à l'autre. Sans ce lien, le clippeur lit un brief
+                    qui parle de moments qu'il n'a aucun moyen de retrouver.
+                --}}
+                @if ($campaign->creator?->isStreamer() && $campaign->creator->vod_url)
+                    <div class="card p-6 sm:p-8">
+                        <h2 class="font-display text-lg font-bold text-ink-50">Où trouver la matière</h2>
+                        <p class="mt-1 text-sm text-ink-400">
+                            Les rediffusions de {{ $campaign->creator->name }}. C'est là que se
+                            prennent les moments à clipper.
+                        </p>
+
+                        <a href="{{ $campaign->creator->vod_url }}" target="_blank" rel="noopener"
+                           class="btn-ghost mt-5 inline-flex">
+                            Voir les rediffusions ↗
+                        </a>
+
+                        @if ($campaign->creator->twitch_handle || $campaign->creator->kick_handle)
+                            <p class="mt-4 flex flex-wrap items-center gap-2 text-sm text-ink-400">
+                                <span>En direct :</span>
+                                @if ($campaign->creator->twitch_handle)
+                                    <a href="https://twitch.tv/{{ $campaign->creator->twitch_handle }}"
+                                       target="_blank" rel="noopener"
+                                       class="font-semibold text-ink-100 underline underline-offset-2">Twitch</a>
+                                @endif
+                                @if ($campaign->creator->kick_handle)
+                                    <a href="https://kick.com/{{ $campaign->creator->kick_handle }}"
+                                       target="_blank" rel="noopener"
+                                       class="font-semibold text-ink-100 underline underline-offset-2">Kick</a>
+                                @endif
+                            </p>
+                        @endif
+                    </div>
+                @endif
 
                 @if ($campaign->assets->isNotEmpty())
                     <div class="card p-6 sm:p-8">

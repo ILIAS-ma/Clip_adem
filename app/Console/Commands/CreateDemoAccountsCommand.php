@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Contracts\CampaignBudgetService;
 use App\Enums\CampaignStatus;
 use App\Enums\ClipStatus;
+use App\Enums\CreatorKind;
 use App\Enums\ParticipationStatus;
 use App\Enums\PayoutStatus;
 use App\Enums\Platform;
@@ -22,7 +23,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
 
 /**
- * Quatre comptes de démonstration, un par rôle, prêts à la connexion.
+ * Cinq comptes de démonstration, prêts à la connexion.
  *
  * Chacun arrive sur un espace déjà rempli : un tableau de bord vide ne montre
  * que des états d'attente, et c'est précisément ce qu'on ne cherche pas à voir
@@ -32,9 +33,9 @@ use Illuminate\Support\Facades\Hash;
  */
 class CreateDemoAccountsCommand extends Command
 {
-    protected $signature = 'demo:accounts {--password=password : Mot de passe commun aux quatre comptes}';
+    protected $signature = 'demo:accounts {--password=password : Mot de passe commun aux comptes}';
 
-    protected $description = 'Crée quatre comptes de démonstration remplis, un par rôle.';
+    protected $description = 'Crée cinq comptes de démonstration remplis, un par rôle et par nature.';
 
     protected string $password;
 
@@ -48,6 +49,10 @@ class CreateDemoAccountsCommand extends Command
         $creator = $this->creator($admin);
         $campaign = $this->campaign($creator, $admin);
 
+        // Un streamer en plus de l'artiste : c'est la seule façon de voir côte
+        // à côte deux espaces que la nature de la fiche suffit à changer.
+        $this->streamerCampaign($this->streamer($admin), $admin);
+
         $this->clipper($campaign, $budget, $progression);
 
         $this->newLine();
@@ -59,6 +64,7 @@ class CreateDemoAccountsCommand extends Command
                 ['Modérateur', 'moderateur@clip.test', '/admin'],
                 ['Clippeur', 'clippeur@clip.test', '/dashboard'],
                 ['Créateur', 'createur@clip.test', '/createur'],
+                ['Streamer', 'streamer@clip.test', '/createur'],
             ],
         );
 
@@ -105,6 +111,93 @@ class CreateDemoAccountsCommand extends Command
                 'deleted_at' => null,
             ])->save();
         });
+    }
+
+    /**
+     * Le compte streamer.
+     *
+     * Même rôle que le créateur, même espace, mais une nature différente : ses
+     * libellés et ses champs changent, et sa campagne offre un lien de
+     * rediffusions là où celle de l'artiste joint un extrait.
+     */
+    protected function streamer(User $admin): Creator
+    {
+        $user = tap(User::withTrashed()->firstOrNew(['email' => 'streamer@clip.test']), function (User $user) {
+            $user->forceFill([
+                'name' => 'Kayz Live',
+                'password' => Hash::make($this->password),
+                'role' => UserRole::Creator,
+                'email_verified_at' => now(),
+                'is_banned' => false,
+                'deleted_at' => null,
+            ])->save();
+        });
+
+        return tap(Creator::withTrashed()->firstOrNew(['slug' => 'kayz']), function (Creator $creator) use ($user, $admin) {
+            $creator->forceFill([
+                'user_id' => $user->getKey(),
+                'kind' => CreatorKind::Streamer,
+                'name' => 'KAYZ',
+                'bio' => 'Direct tous les soirs : parties classées, réactions, et beaucoup de bêtises.',
+                'twitch_handle' => 'kayz',
+                'kick_handle' => 'kayz',
+                'vod_url' => 'https://www.twitch.tv/kayz/videos',
+                'tiktok_handle' => 'kayz.live',
+                'is_active' => true,
+                'created_by' => $admin->getKey(),
+                'deleted_at' => null,
+            ])->save();
+        });
+    }
+
+    protected function streamerCampaign(Creator $streamer, User $admin): Campaign
+    {
+        $campaign = tap(Campaign::withTrashed()->firstOrNew(['slug' => 'kayz-moments-du-mois']), function (Campaign $campaign) use ($streamer, $admin) {
+            $campaign->forceFill([
+                'creator_id' => $streamer->getKey(),
+                'title' => 'KAYZ — Les moments du mois',
+                'brief' => 'Prendre les moments forts des directs du mois dans les rediffusions.
+'
+                    .'Garder la webcam visible, sous-titrer, mentionner @kayz.live en légende. '
+                    .'Interdit : les passages où un spectateur est nommé.',
+                'required_hashtags' => ['#kayz', '#twitchfr'],
+                'status' => CampaignStatus::Active,
+                'budget_total_cents' => 300_000,   // 3 000 €
+                ...($campaign->exists ? [] : ['spent_cents' => 0]),
+                'min_views_per_clip' => 1_000,
+                'max_payout_per_clip_cents' => 40_000,
+                'starts_at' => now()->subWeek(),
+                'ends_at' => now()->addMonth(),
+                'requires_approval' => false,
+                'created_by' => $admin->getKey(),
+                'deleted_at' => null,
+            ])->save();
+        });
+
+        $campaign->rates()->updateOrCreate(
+            ['platform' => Platform::TikTok],
+            ['rate_per_1k_cents' => 120, 'is_enabled' => true],
+        );
+
+        $campaign->fundings()->firstOrCreate(
+            ['reference' => 'VIR-DEMO-KAYZ'],
+            [
+                'amount_cents' => $campaign->budget_total_cents,
+                'currency' => 'EUR',
+                'method' => 'transfer',
+                'note' => 'Encaissement de démonstration.',
+                'received_at' => now()->subWeeks(2),
+                'recorded_by' => $admin->getKey(),
+            ],
+        );
+
+        /*
+         * Aucune matière jointe, et c'est le propos : la source d'un streamer
+         * est son lien de rediffusions, le même d'une campagne à l'autre. Lui
+         * demander de téléverser des rushes reviendrait à lui demander de
+         * découper ses directs à la main.
+         */
+        return $campaign->fresh();
     }
 
     protected function campaign(Creator $creator, User $admin): Campaign

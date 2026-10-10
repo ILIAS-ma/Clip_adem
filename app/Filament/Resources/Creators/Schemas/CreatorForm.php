@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources\Creators\Schemas;
 
+use App\Enums\CreatorKind;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -15,11 +17,30 @@ class CreatorForm
     public static function configure(Schema $schema): Schema
     {
         return $schema->components([
+            /*
+             * La nature se choisit d'abord, et commande le reste du
+             * formulaire : demander son Spotify à un streamer ou ses
+             * rediffusions à un chanteur ne produit que des champs vides, et
+             * un champ vide dans un back-office se lit comme un oubli.
+             */
+            Section::make('Nature de la fiche')
+                ->schema([
+                    Select::make('kind')
+                        ->label('Type de compte')
+                        ->options(CreatorKind::options())
+                        ->default(CreatorKind::Artist->value)
+                        ->required()
+                        ->selectablePlaceholder(false)
+                        ->live()
+                        ->helperText('Un streamer fournit des rediffusions, un créateur un extrait. '
+                            .'Ce choix décide des champs ci-dessous et de l’espace que la personne verra.'),
+                ]),
+
             Section::make('Identité')
                 ->columns(2)
                 ->schema([
                     TextInput::make('name')
-                        ->label('Nom de scène')
+                        ->label(fn ($get) => static::kind($get)->nameLabel())
                         ->required()
                         ->maxLength(255)
                         ->live(onBlur: true)
@@ -49,10 +70,7 @@ class CreatorForm
             Section::make('Réseaux')
                 ->columns(2)
                 ->schema([
-                    TextInput::make('spotify_url')
-                        ->label('Spotify')
-                        ->url()
-                        ->prefixIcon('heroicon-o-musical-note'),
+                    ...static::ownLinks(),
 
                     TextInput::make('tiktok_handle')
                         ->label('TikTok')
@@ -70,8 +88,8 @@ class CreatorForm
             Section::make('Back-office')
                 ->schema([
                     Toggle::make('is_active')
-                        ->label('Créateur actif')
-                        ->helperText('Un créateur inactif n\'apparaît plus dans le sélecteur de création de campagne.')
+                        ->label(fn ($get) => static::kind($get)->label().' actif')
+                        ->helperText('Une fiche inactive n\'apparaît plus dans le sélecteur de création de campagne.')
                         ->default(true),
 
                     Textarea::make('internal_notes')
@@ -80,5 +98,42 @@ class CreatorForm
                         ->rows(3),
                 ]),
         ]);
+    }
+
+    /**
+     * Les champs propres aux natures, chacun visible sous la sienne.
+     *
+     * Un champ masqué n'est pas déshydraté : changer la nature d'une fiche
+     * laisse donc intactes les valeurs de l'autre nature, au lieu de les
+     * effacer au premier enregistrement. C'est ce qu'on veut pour un streamer
+     * qui sort un morceau, et l'inverse serait une perte de données
+     * silencieuse.
+     *
+     * @return list<TextInput>
+     */
+    protected static function ownLinks(): array
+    {
+        $champs = [];
+
+        foreach (CreatorKind::cases() as $kind) {
+            foreach ($kind->ownLinks() as $nom => $meta) {
+                $champ = TextInput::make($nom)
+                    ->label($meta['label'])
+                    ->placeholder($meta['placeholder'])
+                    ->visible(fn ($get) => static::kind($get) === $kind);
+
+                $champs[] = $meta['url']
+                    ? $champ->url()->maxLength(255)
+                    : $champ->prefix('@')->maxLength(64);
+            }
+        }
+
+        return $champs;
+    }
+
+    /** La nature en cours de saisie, avant même tout enregistrement. */
+    protected static function kind(callable $get): CreatorKind
+    {
+        return CreatorKind::tryFrom((string) $get('kind')) ?? CreatorKind::Artist;
     }
 }
