@@ -10,8 +10,8 @@ import forms from '@tailwindcss/forms';
  *
  * D'où la répartition :
  *   rouge  = marque, actions, élément actif
- *   noir   = tous les chiffres, quel que soit leur sens : sur fond clair,
- *            un montant coloré attire l'œil avant qu'on ait lu son étiquette
+ *   vert   = argent acquis — un montant en vert veut dire « ce gain vous
+ *            appartient », et ce sens est trop utile pour être sacrifié
  *   ambre  = attente
  *   rose   = erreur et perte, distinct du rouge de marque par sa saturation
  *
@@ -64,6 +64,17 @@ export default {
                     900: '#611414',
                 },
 
+                // Les gains gardent le vert : sur cette charte, le rouge est
+                // la marque, il ne peut pas dire à la fois « agissez » et
+                // « vous avez gagné ».
+                money: {
+                    50: '#F0FDF4',
+                    100: '#DCFCE7',
+                    300: '#86EFAC',
+                    500: '#16A34A',
+                    600: '#15803D',
+                    700: '#166534',
+                },
             },
 
             /*

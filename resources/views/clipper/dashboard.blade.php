@@ -91,13 +91,13 @@
                     </li>
                     <li class="flex items-baseline justify-between gap-3">
                         <span class="text-ink-700">Clip validé</span>
-                        <span class="font-semibold tabular text-ink-950">
+                        <span class="font-semibold tabular text-money-600">
                             +{{ number_format(config('clipping.progression.xp_per_approved_clip'), 0, ',', ' ') }}
                         </span>
                     </li>
                     <li class="flex items-baseline justify-between gap-3">
                         <span class="text-ink-700">Nouvelle campagne rejointe</span>
-                        <span class="font-semibold tabular text-ink-950">
+                        <span class="font-semibold tabular text-money-600">
                             +{{ number_format(config('clipping.progression.xp_per_campaign'), 0, ',', ' ') }}
                         </span>
                     </li>
