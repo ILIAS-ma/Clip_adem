@@ -42,7 +42,7 @@
             <div class="hero-balance card relative overflow-hidden p-7 sm:p-8 lg:col-span-3">
                 <p class="text-sm font-medium text-ink-700">Solde retirable</p>
 
-                <p class="mt-2 font-display text-5xl font-extrabold tabular leading-none text-ink-950 sm:text-6xl"
+                <p class="mt-2 font-display text-5xl font-extrabold tabular leading-none text-money-600 sm:text-6xl"
                    data-count-up>{{ Money::euros($balanceCents) }}</p>
 
                 @if ($manque > 0)

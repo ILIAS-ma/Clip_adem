@@ -367,7 +367,6 @@
 
     .card:hover {
         border-color: theme(colors.ink.300);
-        box-shadow: theme(boxShadow.lifted);
     }
 }
 

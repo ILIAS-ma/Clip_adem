@@ -77,24 +77,10 @@ export default {
                 },
             },
 
-            /*
-             * Trois couches plutôt qu'une.
-             *
-             * Une ombre unique paraît collée sous l'élément : la lumière réelle
-             * produit un contact net tout près, une pénombre moyenne, et une
-             * diffusion large et très pâle. C'est la superposition des trois
-             * qui donne l'épaisseur — et c'est ce qui manque à la plupart des
-             * interfaces claires, où une ombre trop dense vire tout de suite
-             * au sale.
-             *
-             * Teinte prise sur le neutre du thème (28 25 23) et non sur du
-             * noir pur : une ombre grise sur un fond légèrement chaud se voit
-             * immédiatement, elle tire au bleu.
-             */
             boxShadow: {
-                card: '0 1px 1px rgb(28 25 23 / .04), 0 2px 6px -1px rgb(28 25 23 / .05), 0 10px 20px -8px rgb(28 25 23 / .06)',
-                lifted: '0 1px 2px rgb(28 25 23 / .05), 0 8px 16px -4px rgb(28 25 23 / .08), 0 24px 44px -16px rgb(28 25 23 / .14)',
-                glow: '0 0 0 1px rgb(224 36 36 / .18), 0 2px 6px -1px rgb(224 36 36 / .14), 0 14px 28px -10px rgb(224 36 36 / .28)',
+                card: '0 1px 2px rgb(28 25 23 / .05), 0 1px 3px rgb(28 25 23 / .07)',
+                lifted: '0 4px 6px -2px rgb(28 25 23 / .06), 0 12px 24px -8px rgb(28 25 23 / .12)',
+                glow: '0 0 0 1px rgb(224 36 36 / .25), 0 8px 24px -8px rgb(224 36 36 / .35)',
             },
         },
     },
