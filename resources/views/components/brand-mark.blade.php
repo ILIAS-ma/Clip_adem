@@ -15,19 +15,19 @@
 <span {{ $attributes->merge(['class' => 'inline-flex items-center gap-2.5']) }}>
     @if ($logo)
         <img src="{{ asset('images/logo.png') }}" alt="{{ config('app.name') }}"
-             class="{{ $imgClass }} shrink-0" width="36" height="36" loading="eager" decoding="async">
+             class="{{ $imgClass }} brand-glow shrink-0" width="36" height="36" loading="eager" decoding="async">
     @else
         {{-- Onde sonore stylisée : le sujet du produit, pas un logo générique. --}}
         <svg viewBox="0 0 28 20" class="{{ $svgClass }} shrink-0" fill="none" aria-hidden="true">
             @foreach ([[2, 7], [7, 13], [12, 19], [17, 11], [22, 5]] as $i => [$x, $h])
                 <rect x="{{ $x }}" y="{{ (20 - $h) / 2 }}" width="3" height="{{ $h }}" rx="1.5"
-                      class="{{ $i === 2 ? 'fill-brand-500' : 'fill-ink-200' }}" />
+                      class="{{ $i === 2 ? 'fill-brand-500' : 'fill-white' }}" />
             @endforeach
         </svg>
     @endif
 
     @if ($withName)
-        <span class="font-display {{ $nameClass }} font-bold tracking-tight text-ink-50">
+        <span class="font-display {{ $nameClass }} font-bold tracking-tight text-white">
             {{ config('app.name') }}
         </span>
     @endif
