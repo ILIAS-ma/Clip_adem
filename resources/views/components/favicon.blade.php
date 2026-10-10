@@ -1,7 +1,7 @@
 {{-- Le logo fourni sert de favicon dès qu'il est déposé dans public/images. --}}
 @if (is_file(public_path('images/logo.png')))
-    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('images/logo.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}?v={{ @filemtime(public_path('images/logo.png')) }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/logo.png') }}?v={{ @filemtime(public_path('images/logo.png')) }}">
 @else
     <link rel="icon" href="data:image/svg+xml,{{ rawurlencode(
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'

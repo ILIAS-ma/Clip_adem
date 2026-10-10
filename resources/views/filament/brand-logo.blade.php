@@ -1,1 +1,1 @@
-<img src="{{ asset('images/logo.png') }}" alt="{{ config('app.name') }}" class="h-8 w-8 rounded-full">
+<img src="{{ asset('images/logo.png') }}?v={{ @filemtime(public_path('images/logo.png')) }}" alt="{{ config('app.name') }}" class="h-8 w-8 rounded-full">
