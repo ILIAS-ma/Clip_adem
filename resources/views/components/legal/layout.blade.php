@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $title }} — {{ config('app.name') }}</title>
-    <meta name="theme-color" content="#101210">
+    <meta name="theme-color" content="#000000">
 
     {{-- Ces pages sont lues par des humains, mais aussi par les vérificateurs
          de TikTok et de Google, qui n'ont ni session ni cookie : elles restent

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ config('app.name') }} — Gagnez de l'argent avec vos clips</title>
 
-    <meta name="theme-color" content="#101210">
+    <meta name="theme-color" content="#000000">
 
     {{-- Pose la classe avant le rendu : le CSS d'animation au scroll ne
          s'active que si elle est présente, pour ne jamais bloquer le
