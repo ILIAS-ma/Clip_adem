@@ -123,6 +123,28 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Vérification du numéro de téléphone
+    |--------------------------------------------------------------------------
+    |
+    | Un numéro vérifié est le seul identifiant coûteux à multiplier : une
+    | adresse jetable s'obtient en dix secondes, une ligne téléphonique non.
+    | C'est ce qui rend le bannissement d'un fraudeur réellement dissuasif.
+    |
+    | Chaque message envoyé coûte de l'argent : le délai entre deux envois
+    | n'est pas une politesse, c'est ce qui empêche un inconnu de faire
+    | pleuvoir des SMS — à nos frais — sur un numéro qu'il ne possède pas.
+    |
+    */
+
+    'phone' => [
+        'code_minutes' => 10,
+        'resend_seconds' => 60,
+        'max_attempts' => 5,
+        'require_for_payout' => env('REQUIRE_PHONE_FOR_PAYOUT', false),
+    ],
+
     'moderation' => [
         'auto_approve' => env('AUTO_APPROVE_CLIPS', true),
     ],

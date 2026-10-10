@@ -1,9 +1,10 @@
 <?php
 
+use App\Http\Controllers\Auth\PhoneVerificationController;
+use App\Http\Controllers\Clipper\AchievementController;
 use App\Http\Controllers\Clipper\CampaignController;
 use App\Http\Controllers\Clipper\ClipController;
 use App\Http\Controllers\Clipper\DashboardController;
-use App\Http\Controllers\Clipper\AchievementController;
 use App\Http\Controllers\Clipper\EarningsController;
 use App\Http\Controllers\Clipper\LeaderboardController;
 use App\Http\Controllers\Clipper\PayoutMethodController;
@@ -62,6 +63,24 @@ Route::post('/webhooks/paypal', PayPalWebhookController::class)
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'not.banned'])->group(function () {
+    /*
+     * Vérification du numéro de téléphone.
+     *
+     * Débitée sévèrement : chaque envoi coûte de l'argent, et sans cette
+     * limite un bouton « renvoyer » permettrait de faire pleuvoir des SMS —
+     * à nos frais — sur un numéro qu'on ne possède pas. Le service pose déjà
+     * un délai par compte ; celle-ci borne la route elle-même.
+     */
+    Route::get('/telephone', [PhoneVerificationController::class, 'edit'])->name('phone.verify');
+
+    Route::post('/telephone', [PhoneVerificationController::class, 'send'])
+        ->middleware('throttle:5,10')
+        ->name('phone.send');
+
+    Route::post('/telephone/confirmer', [PhoneVerificationController::class, 'confirm'])
+        ->middleware('throttle:10,10')
+        ->name('phone.confirm');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

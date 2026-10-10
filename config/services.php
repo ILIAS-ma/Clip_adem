@@ -120,6 +120,17 @@ return [
     | test ci-dessous (voir .env.example) valident toujours en local ; à
     | remplacer par les vraies clés du compte Cloudflare en production.
     */
+    /*
+    | Envoi de SMS. Sans ces identifiants, le pilote simulé écrit le code
+    | dans les journaux hors production — et lève une exception en
+    | production, pour ne jamais laisser croire qu'un code est parti.
+    */
+    'twilio' => [
+        'account_sid' => env('TWILIO_ACCOUNT_SID'),
+        'auth_token' => env('TWILIO_AUTH_TOKEN'),
+        'from' => env('TWILIO_FROM'),
+    ],
+
     'turnstile' => [
         'site_key' => env('TURNSTILE_SITE_KEY'),
         'secret_key' => env('TURNSTILE_SECRET_KEY'),

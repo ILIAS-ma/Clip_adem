@@ -39,6 +39,11 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     {
         return [
             'email_verified_at' => 'datetime',
+            'phone_verified_at' => 'datetime',
+            'phone_code_sent_at' => 'datetime',
+            // Jamais en clair : une fuite de la base donnerait sinon un
+            // accès immédiat à tout compte en cours de vérification.
+            'phone_code_hash' => 'hashed',
             'password' => 'hashed',
             'role' => UserRole::class,
             'is_banned' => 'boolean',
@@ -191,6 +196,12 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     public function referralCommissions(): HasMany
     {
         return $this->hasMany(ReferralCommission::class, 'referrer_id');
+    }
+
+    /** Le numéro de téléphone a-t-il été confirmé par code ? */
+    public function hasVerifiedPhone(): bool
+    {
+        return $this->phone !== null && $this->phone_verified_at !== null;
     }
 
     public function isStaff(): bool
