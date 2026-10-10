@@ -40,22 +40,33 @@ class ThemeContrastTest extends TestCase
     }
 
     #[Test]
-    public function the_page_ground_is_not_pure_black(): void
+    public function the_page_ground_is_the_darkest_step(): void
     {
         /*
-         * Le noir absolu n'existe pas dans une pièce éclairée : l'œil le lit
-         * comme un trou, pas comme une surface. C'est ce qui faisait trouver
-         * le site « beaucoup trop sombre » alors que les textes, eux, avaient
-         * un contraste suffisant.
+         * Le fond frôle le noir — #07080A — et c'est voulu : il reprend celui
+         * du logo, sur lequel le métal brossé et la lueur rouge se détachent.
+         *
+         * Ce test a d'abord imposé un plancher de luminance, à l'époque où le
+         * site était jugé « trop sombre ». Ce plancher défendait en réalité
+         * deux choses : qu'une carte se distingue du fond, et qu'un texte
+         * reste lisible dessus. Les deux ont leur propre test ci-dessous, et
+         * tiennent toujours. Ce qui reste ici est la seule contrainte
+         * structurelle : rien ne doit être plus sombre que le fond de page.
          */
-        $fond = $this->ink()[950] ?? null;
+        $ink = $this->ink();
+        $fond = $this->luminance($ink[950]);
 
-        $this->assertNotNull($fond, 'La nuance ink-950 est introuvable.');
-        $this->assertGreaterThan(
-            12,
-            $this->luminance($fond),
-            'Le fond de page est trop proche du noir pur.',
-        );
+        foreach ($ink as $niveau => $hex) {
+            if ($niveau === 950) {
+                continue;
+            }
+
+            $this->assertGreaterThan(
+                $fond,
+                $this->luminance($hex),
+                "La nuance ink-{$niveau} est plus sombre que le fond de page.",
+            );
+        }
     }
 
     #[Test]
