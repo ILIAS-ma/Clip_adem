@@ -18,7 +18,7 @@
                             <th class="py-2 text-right font-medium">Invalidés</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-ink-700">
+                    <tbody class="divide-y divide-gray-100 dark:divide-ink-300">
                         @foreach ($clippers as $clipper)
                             <tr>
                                 <td class="py-2">

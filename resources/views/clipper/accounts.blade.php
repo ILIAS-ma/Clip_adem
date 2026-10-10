@@ -2,8 +2,8 @@
 
 <x-app-layout>
     <x-slot name="header">
-        <h1 class="font-display text-2xl font-bold text-ink-50">Mes comptes réseaux</h1>
-        <p class="mt-1 text-ink-300">C'est par eux que vos vues sont relevées et vos gains calculés.</p>
+        <h1 class="font-display text-2xl font-bold text-ink-950">Mes comptes réseaux</h1>
+        <p class="mt-1 text-ink-700">C'est par eux que vos vues sont relevées et vos gains calculés.</p>
     </x-slot>
 
     <div class="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
@@ -18,22 +18,22 @@
 
         @if ($accounts->isNotEmpty())
             <div class="card">
-                <div class="border-b border-ink-700 px-6 py-4">
-                    <h2 class="font-display text-lg font-bold text-ink-50">Comptes liés</h2>
+                <div class="border-b border-ink-300 px-6 py-4">
+                    <h2 class="font-display text-lg font-bold text-ink-950">Comptes liés</h2>
                 </div>
 
-                <ul class="divide-y divide-ink-700">
+                <ul class="divide-y divide-ink-300">
                     @foreach ($accounts as $account)
                         <li class="flex flex-wrap items-center justify-between gap-4 px-6 py-5">
                             <div class="min-w-0">
-                                <p class="font-semibold text-ink-50">
+                                <p class="font-semibold text-ink-950">
                                     {{ $account->platform->label() }}
                                     @if ($account->handle)
-                                        <span class="text-ink-400">· &#64;{{ $account->handle }}</span>
+                                        <span class="text-ink-600">· &#64;{{ $account->handle }}</span>
                                     @endif
                                 </p>
 
-                                <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-400">
+                                <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-600">
                                     <span class="tabular">{{ $account->clips_count }} clip{{ $account->clips_count > 1 ? 's' : '' }}</span>
                                     @if ($account->followers_count !== null)
                                         <span aria-hidden="true">·</span>
@@ -88,7 +88,7 @@
                                              x-cloak
                                              x-transition.opacity.duration.150ms
                                              class="flex items-center gap-2">
-                                            <span class="text-sm text-ink-300">
+                                            <span class="text-sm text-ink-700">
                                                 Les vues cesseront d’être relevées.
                                             </span>
 
@@ -116,10 +116,10 @@
         @endif
 
         <div class="card p-6 sm:p-8">
-            <h2 class="font-display text-lg font-bold text-ink-50">
+            <h2 class="font-display text-lg font-bold text-ink-950">
                 {{ $accounts->isEmpty() ? 'Liez votre premier compte' : 'Lier un autre compte' }}
             </h2>
-            <p class="mt-1.5 text-sm text-ink-300">
+            <p class="mt-1.5 text-sm text-ink-700">
                 Vous ne pouvez rejoindre une campagne qu'avec un compte lié.
             </p>
 
@@ -127,8 +127,8 @@
                 @foreach ($platforms as $index => $platform)
                     <a href="{{ route('social.redirect', $platform->value) }}"
                        data-reveal style="--reveal-delay: {{ $index * 90 }}ms"
-                       class="group rounded-2xl border border-ink-700 p-5 transition hover:-translate-y-0.5 hover:border-brand-500 hover:shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400">
-                        <span class="font-display text-base font-bold text-ink-50">{{ $platform->label() }}</span>
+                       class="group rounded-2xl border border-ink-300 p-5 transition hover:-translate-y-0.5 hover:border-brand-500 hover:shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400">
+                        <span class="font-display text-base font-bold text-ink-950">{{ $platform->label() }}</span>
 
                         {{-- La pastille reste utile quand on force l'affichage
                              des plateformes simulées pour éprouver le parcours

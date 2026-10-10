@@ -23,7 +23,7 @@
                     {{-- Le solde est l'information qu'on vient chercher : elle
                          reste lisible sans ouvrir quoi que ce soit. --}}
                     <a href="{{ route('earnings.index') }}"
-                       class="rounded-xl bg-brand-500/15 px-3 py-1.5 text-sm font-semibold tabular text-brand-300 transition hover:bg-brand-500/25">
+                       class="rounded-xl bg-brand-500/15 px-3 py-1.5 text-sm font-semibold tabular text-brand-700 transition hover:bg-brand-500/25">
                         {{ \App\Support\Money::euros(auth()->user()->availableBalanceCents()) }}
                     </a>
                 @elseif (auth()->user()->isCreator())
@@ -66,7 +66,7 @@
                  x-transition:leave-start="opacity-100"
                  x-transition:leave-end="opacity-0"
                  @click="open = false"
-                 class="absolute inset-0 bg-ink-950/70 backdrop-blur-sm"></div>
+                 class="absolute inset-0 bg-ink-50/70 backdrop-blur-sm"></div>
 
             {{-- Plein écran sur mobile, panneau latéral au-delà : un voile
                  entier pour huit liens laisse un grand vide sur un écran
@@ -81,12 +81,12 @@
                  x-transition:leave-end="opacity-0 translate-x-6"
                  class="glass glass-panel absolute inset-y-0 end-0 flex w-full flex-col overflow-y-auto border-y-0 border-e-0 border-s border-s-ink-700 shadow-lifted sm:max-w-sm">
 
-                <div class="flex h-16 flex-none items-center justify-between border-b border-ink-700 px-4 sm:px-6">
+                <div class="flex h-16 flex-none items-center justify-between border-b border-ink-300 px-4 sm:px-6">
                     <a href="{{ $navHome }}" class="flex items-center" @click="open = false">
                         <x-brand-mark />
                     </a>
                     <button type="button" @click="open = false"
-                            class="rounded-lg p-2 text-ink-400 transition hover:bg-ink-800 hover:text-ink-100"
+                            class="rounded-lg p-2 text-ink-600 transition hover:bg-ink-200 hover:text-ink-900"
                             aria-label="Fermer le menu">
                         <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -106,12 +106,12 @@
                     @endforeach
                 </div>
 
-                <div class="flex-none border-t border-ink-700 py-4">
+                <div class="flex-none border-t border-ink-300 py-4">
                     <div class="flex items-center gap-3 px-4 sm:px-6">
                         <x-avatar-badge :user="auth()->user()" />
                         <div class="min-w-0">
-                            <div class="truncate font-semibold text-ink-100">{{ auth()->user()->displayName() }}</div>
-                            <div class="truncate text-sm text-ink-400">{{ auth()->user()->email }}</div>
+                            <div class="truncate font-semibold text-ink-900">{{ auth()->user()->displayName() }}</div>
+                            <div class="truncate text-sm text-ink-600">{{ auth()->user()->email }}</div>
                         </div>
                     </div>
 

@@ -18,7 +18,7 @@
                             <th class="py-2 text-right font-medium">CPM réel</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-ink-700">
+                    <tbody class="divide-y divide-gray-100 dark:divide-ink-300">
                         @foreach ($creators as $creator)
                             <tr>
                                 <td class="py-2">

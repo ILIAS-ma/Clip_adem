@@ -2,17 +2,17 @@
 
 <x-app-layout>
     <x-slot name="header">
-        <h1 class="font-display text-2xl font-bold text-ink-50">Mes revenus</h1>
-        <p class="mt-1 text-ink-300">
+        <h1 class="font-display text-2xl font-bold text-ink-950">Mes revenus</h1>
+        <p class="mt-1 text-ink-700">
             @if ($clipper->hasPayoutDestination())
                 Versements par {{ $clipper->payoutMethod()->label() }}
-                sur <span class="tabular text-ink-100">{{ $clipper->payoutDestinationLabel() }}</span>
+                sur <span class="tabular text-ink-900">{{ $clipper->payoutDestinationLabel() }}</span>
             @else
                 Aucune destination de paiement enregistrée
             @endif
             ·
             <a href="{{ route('payout-method.edit') }}" wire:navigate
-               class="font-semibold text-brand-400 underline underline-offset-2">Modifier</a>
+               class="font-semibold text-brand-600 underline underline-offset-2">Modifier</a>
         </p>
     </x-slot>
 
@@ -41,7 +41,7 @@
         <div class="grid gap-6 lg:grid-cols-3">
 
             <div class="card p-6">
-                <h2 class="font-display text-lg font-bold text-ink-50">Demander un retrait</h2>
+                <h2 class="font-display text-lg font-bold text-ink-950">Demander un retrait</h2>
 
                 @if ($clipper->hasPayoutDestination())
                     <div class="mt-4">
@@ -63,25 +63,25 @@
             </div>
 
             <div class="card lg:col-span-2">
-                <div class="border-b border-ink-700 px-6 py-4">
-                    <h2 class="font-display text-lg font-bold text-ink-50">Mes retraits</h2>
+                <div class="border-b border-ink-300 px-6 py-4">
+                    <h2 class="font-display text-lg font-bold text-ink-950">Mes retraits</h2>
                 </div>
 
                 @if ($payouts->isEmpty())
-                    <p class="px-6 py-10 text-center text-sm text-ink-300">Aucun retrait demandé.</p>
+                    <p class="px-6 py-10 text-center text-sm text-ink-700">Aucun retrait demandé.</p>
                 @else
-                    <ul class="divide-y divide-ink-700">
+                    <ul class="divide-y divide-ink-300">
                         @foreach ($payouts as $payout)
                             <li class="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
                                 <div>
-                                    <p class="font-display font-bold tabular text-ink-50">
+                                    <p class="font-display font-bold tabular text-ink-950">
                                         {{ Money::euros($payout->amount_cents) }}
                                     </p>
-                                    <p class="mt-0.5 text-sm text-ink-300">
+                                    <p class="mt-0.5 text-sm text-ink-700">
                                         {{ $payout->payoutMethod()->label() }}
                                         · {{ $payout->destinationLabel() }}
                                     </p>
-                                    <p class="mt-0.5 text-xs text-ink-400">
+                                    <p class="mt-0.5 text-xs text-ink-600">
                                         Demandé le {{ $payout->requested_at?->format('d/m/Y') }}
                                         @if ($payout->approved_at)
                                             · validé le {{ $payout->approved_at->format('d/m/Y') }}
@@ -106,7 +106,7 @@
                     </ul>
 
                     @if ($payouts->hasPages())
-                        <div class="border-t border-ink-700 px-6 py-4">
+                        <div class="border-t border-ink-300 px-6 py-4">
                             {{ $payouts->onEachSide(1)->links() }}
                         </div>
                     @endif
@@ -115,23 +115,23 @@
         </div>
 
         <div class="card">
-            <div class="border-b border-ink-700 px-6 py-4">
-                <h2 class="font-display text-lg font-bold text-ink-50">Historique des crédits</h2>
-                <p class="mt-0.5 text-sm text-ink-400">Chaque ligne correspond à des vues rémunérées.</p>
+            <div class="border-b border-ink-300 px-6 py-4">
+                <h2 class="font-display text-lg font-bold text-ink-950">Historique des crédits</h2>
+                <p class="mt-0.5 text-sm text-ink-600">Chaque ligne correspond à des vues rémunérées.</p>
             </div>
 
             @if ($transactions->isEmpty())
-                <p class="px-6 py-10 text-center text-sm text-ink-300">Aucun crédit pour le moment.</p>
+                <p class="px-6 py-10 text-center text-sm text-ink-700">Aucun crédit pour le moment.</p>
             @else
                 {{-- Sous sm : une ligne de tableau à 4 colonnes force chaque
                      cellule à casser sur plusieurs lignes. Une carte par
                      transaction reste lisible sans défiler horizontalement. --}}
-                <ul class="divide-y divide-ink-700 sm:hidden">
+                <ul class="divide-y divide-ink-300 sm:hidden">
                     @foreach ($transactions as $transaction)
                         <li class="flex items-start justify-between gap-3 px-6 py-3">
                             <div class="min-w-0">
-                                <p class="truncate text-ink-100">{{ $transaction->campaign?->title }}</p>
-                                <p class="mt-0.5 text-xs text-ink-400">
+                                <p class="truncate text-ink-900">{{ $transaction->campaign?->title }}</p>
+                                <p class="mt-0.5 text-xs text-ink-600">
                                     {{ $transaction->created_at->format('d/m/Y H:i') }}
                                     · {{ Money::views($transaction->views_delta) }} vues
                                 </p>
@@ -139,7 +139,7 @@
                             <p @class([
                                 'shrink-0 font-semibold tabular',
                                 'text-red-400' => $transaction->amount_cents < 0,
-                                'text-ink-50' => $transaction->amount_cents >= 0,
+                                'text-ink-950' => $transaction->amount_cents >= 0,
                             ])>{{ Money::euros($transaction->amount_cents) }}</p>
                         </li>
                     @endforeach
@@ -148,23 +148,23 @@
                 <div class="hidden overflow-x-auto sm:block">
                     <table class="w-full text-sm">
                         <thead>
-                            <tr class="text-xs uppercase tracking-wide text-ink-400">
+                            <tr class="text-xs uppercase tracking-wide text-ink-600">
                                 <th class="px-6 py-3 text-left font-semibold">Date</th>
                                 <th class="px-6 py-3 text-left font-semibold">Campagne</th>
                                 <th class="px-6 py-3 text-right font-semibold">Vues</th>
                                 <th class="px-6 py-3 text-right font-semibold">Montant</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-ink-700">
+                        <tbody class="divide-y divide-ink-300">
                             @foreach ($transactions as $transaction)
                                 <tr>
-                                    <td class="px-6 py-3 text-ink-400">{{ $transaction->created_at->format('d/m/Y H:i') }}</td>
-                                    <td class="px-6 py-3 text-ink-100">{{ $transaction->campaign?->title }}</td>
-                                    <td class="px-6 py-3 text-right tabular text-ink-300">{{ Money::views($transaction->views_delta) }}</td>
+                                    <td class="px-6 py-3 text-ink-600">{{ $transaction->created_at->format('d/m/Y H:i') }}</td>
+                                    <td class="px-6 py-3 text-ink-900">{{ $transaction->campaign?->title }}</td>
+                                    <td class="px-6 py-3 text-right tabular text-ink-700">{{ Money::views($transaction->views_delta) }}</td>
                                     <td @class([
                                         'px-6 py-3 text-right font-semibold tabular',
                                         'text-red-400' => $transaction->amount_cents < 0,
-                                        'text-ink-50' => $transaction->amount_cents >= 0,
+                                        'text-ink-950' => $transaction->amount_cents >= 0,
                                     ])>{{ Money::euros($transaction->amount_cents) }}</td>
                                 </tr>
                             @endforeach

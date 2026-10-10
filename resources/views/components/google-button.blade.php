@@ -3,9 +3,9 @@
 @if (filled(config('services.google.client_id')))
     <div class="space-y-4">
         <a href="{{ route('google.redirect', array_filter(['profil' => $role])) }}"
-           class="flex w-full items-center justify-center gap-3 rounded-xl border border-ink-700 bg-ink-800
-                  px-4 py-3 font-semibold text-ink-50 transition
-                  hover:border-ink-600 hover:bg-ink-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
+           class="flex w-full items-center justify-center gap-3 rounded-xl border border-ink-300 bg-ink-200
+                  px-4 py-3 font-semibold text-ink-950 transition
+                  hover:border-ink-400 hover:bg-ink-300 focus:outline-none focus:ring-2 focus:ring-brand-500">
             {{-- Logo officiel en SVG inline : un appel réseau vers Google pour
                  une image de 20 px ralentirait la page de connexion. --}}
             <svg class="h-5 w-5" viewBox="0 0 48 48" aria-hidden="true">
@@ -18,9 +18,9 @@
         </a>
 
         <div class="flex items-center gap-3">
-            <span class="h-px flex-1 bg-ink-700"></span>
+            <span class="h-px flex-1 bg-ink-300"></span>
             <span class="text-xs uppercase tracking-wide text-ink-500">ou</span>
-            <span class="h-px flex-1 bg-ink-700"></span>
+            <span class="h-px flex-1 bg-ink-300"></span>
         </div>
     </div>
 @endif

@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? config('app.name') }}</title>
 
-    <meta name="theme-color" content="#080908">
+    <meta name="theme-color" content="#FAFAF9">
 
     <x-site-verification />
 
@@ -54,7 +54,7 @@
         @endif
 
         @isset($header)
-            <header class="border-b border-ink-700 bg-ink-900">
+            <header class="border-b border-ink-300 bg-ink-100">
                 <div class="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
                     {{ $header }}
                 </div>

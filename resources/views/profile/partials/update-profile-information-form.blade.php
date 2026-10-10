@@ -1,7 +1,7 @@
 <section>
     <header>
-        <h2 class="font-display text-lg font-bold text-ink-50">Informations du compte</h2>
-        <p class="mt-1 text-sm text-ink-300">
+        <h2 class="font-display text-lg font-bold text-ink-950">Informations du compte</h2>
+        <p class="mt-1 text-sm text-ink-700">
             Votre nom réel sert aux versements ; votre pseudo est ce que voient les autres.
         </p>
     </header>
@@ -31,13 +31,13 @@
         @if ($user->isClipper())
             {{-- Le moyen de paiement a sa propre page : il se change plus
                  souvent que le reste, et une erreur y coûte un virement. --}}
-            <div class="rounded-xl border border-ink-700 p-4">
-                <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">Moyen de paiement</p>
-                <p class="mt-1 font-display font-bold tabular text-ink-50">
+            <div class="rounded-xl border border-ink-300 p-4">
+                <p class="text-xs font-semibold uppercase tracking-wide text-ink-600">Moyen de paiement</p>
+                <p class="mt-1 font-display font-bold tabular text-ink-950">
                     {{ $user->payoutDestinationLabel() ?? 'Aucune destination enregistrée' }}
                 </p>
                 <a href="{{ route('payout-method.edit') }}" wire:navigate
-                   class="mt-2 inline-block text-sm font-semibold text-brand-400 underline underline-offset-2">
+                   class="mt-2 inline-block text-sm font-semibold text-brand-600 underline underline-offset-2">
                     Modifier
                 </a>
             </div>
@@ -58,20 +58,20 @@
                 </div>
 
                 @if (session('status') === 'verification-link-sent')
-                    <p class="mt-2 text-sm font-medium text-brand-400">
+                    <p class="mt-2 text-sm font-medium text-brand-600">
                         Un nouveau lien vient d'être envoyé.
                     </p>
                 @endif
             @endif
         </div>
 
-        <div class="flex items-center gap-4 border-t border-ink-700 pt-5">
+        <div class="flex items-center gap-4 border-t border-ink-300 pt-5">
             <x-primary-button>Enregistrer</x-primary-button>
 
             @if (session('status') === 'profile-updated')
                 <p x-data="{ show: true }" x-show="show" x-transition
                    x-init="setTimeout(() => show = false, 2500)"
-                   class="text-sm font-medium text-brand-400">Enregistré.</p>
+                   class="text-sm font-medium text-brand-600">Enregistré.</p>
             @endif
         </div>
     </form>

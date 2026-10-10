@@ -9,7 +9,7 @@
 
 <div {{ $attributes->merge(['class' => 'w-full']) }}>
     @if ($label)
-        <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">{{ $label }}</p>
+        <p class="text-xs font-semibold uppercase tracking-wide text-ink-600">{{ $label }}</p>
     @endif
 
     <div class="mt-3 flex h-24 items-end gap-[3px]">
@@ -22,7 +22,7 @@
                 {{-- Infobulle en CSS : survoler une barre doit dire quel jour
                      et combien, sinon le graphique n'est qu'une décoration. --}}
                 <span class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 hidden -translate-x-1/2
-                             whitespace-nowrap rounded bg-ink-800 px-2 py-1 text-xs text-ink-100 shadow-lg
+                             whitespace-nowrap rounded bg-ink-200 px-2 py-1 text-xs text-ink-900 shadow-lg
                              group-hover:block">
                     {{ \Illuminate\Support\Carbon::parse($day)->format('d/m') }} ·
                     <span class="tabular">{{ number_format($value, 0, ',', ' ') }}{{ $unit }}</span>

@@ -7,11 +7,18 @@
 ])
 
 @php
-    // La couleur du chiffre porte son sens : vert = acquis, ambre = en attente.
+    /*
+     * La couleur du chiffre porte son sens.
+     *
+     * Sur la charte sombre, le lime disait à la fois « marque » et « argent
+     * acquis », et les deux tons pointaient donc la même couleur. Depuis que
+     * la marque est rouge, les confondre afficherait les gains en rouge — la
+     * couleur que tout le monde lit comme une perte.
+     */
     $valueTone = match ($tone) {
-        'money' => 'text-brand-400',
-        'brand' => 'text-brand-400',
-        default => 'text-ink-50',
+        'money' => 'text-money-600',
+        'brand' => 'text-brand-600',
+        default => 'text-ink-950',
     };
 @endphp
 
@@ -22,9 +29,9 @@
     bouger.
 --}}
 <div {{ $attributes->merge(['class' => 'stat-card card p-5 '.($highlight ? 'ring-2 ring-brand-500' : '')]) }}>
-    <p class="text-sm font-medium text-ink-300">{{ $label }}</p>
+    <p class="text-sm font-medium text-ink-700">{{ $label }}</p>
     <p class="mt-1.5 font-display text-2xl font-bold tabular {{ $valueTone }}" data-count-up>{{ $value }}</p>
     @if ($hint)
-        <p class="mt-1 text-xs text-ink-300">{{ $hint }}</p>
+        <p class="mt-1 text-xs text-ink-700">{{ $hint }}</p>
     @endif
 </div>

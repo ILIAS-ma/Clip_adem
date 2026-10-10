@@ -18,17 +18,17 @@
 
 <div {{ $attributes }}>
     <div class="flex items-baseline justify-between gap-2 text-sm">
-        <span class="font-semibold tabular {{ $remaining <= 0 ? 'text-red-400' : 'text-ink-50' }}">
+        <span class="font-semibold tabular {{ $remaining <= 0 ? 'text-red-400' : 'text-ink-950' }}">
             {{ $remaining <= 0 ? 'Budget épuisé' : Money::euros($remaining).' restants' }}
         </span>
-        <span class="tabular text-ink-400">sur {{ Money::euros($campaign->budget_total_cents) }}</span>
+        <span class="tabular text-ink-600">sur {{ Money::euros($campaign->budget_total_cents) }}</span>
     </div>
 
-    <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-ink-700"
+    <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-ink-300"
          role="progressbar" aria-valuenow="{{ $consumed }}" aria-valuemin="0" aria-valuemax="100"
          aria-label="Budget consommé">
         <div class="h-full rounded-full {{ $tone }} transition-all duration-500" style="width: {{ $consumed }}%"></div>
     </div>
 
-    <p class="mt-1.5 text-xs text-ink-400">{{ $consumed }} % consommé</p>
+    <p class="mt-1.5 text-xs text-ink-600">{{ $consumed }} % consommé</p>
 </div>
