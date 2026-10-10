@@ -210,7 +210,7 @@
 
     /* États métier. La couleur porte le sens : lime = acquis, ambre = en
        attente, rouge = perdu. Jamais l'inverse, nulle part. */
-    .chip-ok      { @apply chip bg-money-100 text-money-700; }
+    .chip-ok      { @apply chip bg-ink-900 text-white; }
     .chip-wait    { @apply chip bg-amber-100 text-amber-800; }
     .chip-danger  { @apply chip bg-rose-100 text-rose-800; }
     .chip-neutral { @apply chip bg-ink-200 text-ink-700; }
@@ -218,7 +218,7 @@
     .alert {
         @apply rounded-xl border-l-4 p-4 text-sm;
     }
-    .alert-ok     { @apply alert border-money-500 bg-money-50 text-money-700; }
+    .alert-ok     { @apply alert border-ink-900 bg-ink-100 text-ink-900; }
     .alert-warn   { @apply alert border-amber-500 bg-amber-50 text-amber-800; }
     .alert-danger { @apply alert border-rose-500 bg-rose-50 text-rose-800; }
 }
@@ -443,7 +443,7 @@
 
 .hero-balance {
     background:
-        radial-gradient(120% 140% at 0% 0%, rgb(22 163 74 / .07), transparent 60%),
+        radial-gradient(120% 140% at 0% 0%, rgb(28 25 23 / .05), transparent 60%),
         #fff;
     border-color: theme(colors.ink.200);
 }

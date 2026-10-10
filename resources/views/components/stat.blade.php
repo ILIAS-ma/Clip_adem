@@ -19,13 +19,13 @@
      */
     $valueTone = 'text-ink-950';
 
-    // Le sens migre sur la précision du bas : un liseré et une teinte
-    // discrète, là où le regard arrive après avoir lu le chiffre.
-    $hintTone = match ($tone) {
-        'money' => 'text-money-700',
-        'brand' => 'text-brand-700',
-        default => 'text-ink-500',
-    };
+    /*
+     * Plus de teinte sémantique sur la carte : ni le chiffre, ni sa
+     * précision. Le `tone` reçu reste accepté pour ne pas casser les appels
+     * existants, mais il ne peint plus rien — la distinction passe
+     * désormais par le texte lui-même, pas par la couleur.
+     */
+    $hintTone = 'text-ink-500';
 @endphp
 
 {{--
