@@ -240,7 +240,7 @@ index f1acdd4..aeacef0 100644
    return dir;
  }
 diff --git a/server.js b/server.js
-index f4392d9..148c6c6 100644
+index f4392d9..36c4489 100644
 --- a/server.js
 +++ b/server.js
 @@ -2,7 +2,7 @@ import http from 'node:http';
@@ -252,7 +252,33 @@ index f4392d9..148c6c6 100644
  import {
    isConfigured,
    getUsers,
-@@ -301,7 +301,22 @@ function openFolder(dir) {
+@@ -272,6 +272,25 @@ function listMedia(dir, folder) {
+     .sort((a, b) => new Date(b.modifiedAt) - new Date(a.modifiedAt));
+ }
+ 
++/**
++ * En-tete de telechargement qui accepte n'importe quel nom.
++ *
++ * Les videos envoyees par les clippeurs gardent leur nom d'origine : un
++ * accent faisait lever Node (« Invalid character in header content »), donc
++ * une erreur 500 au clic sur Telecharger, et un emoji arrivait tronque. On
++ * donne un nom ASCII de repli, puis le vrai nom en UTF-8 (RFC 6266), que
++ * tous les navigateurs actuels preferent.
++ */
++function contentDisposition(name) {
++  const ascii = name
++    .normalize('NFD')
++    .replace(/\p{Diacritic}/gu, '')
++    .replace(/[^\x20-\x7e]/g, '_')
++    .replace(/["\x5c]/g, '_');
++  const utf8 = encodeURIComponent(name).replace(/['()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
++  return `attachment; filename="${ascii}"; filename*=UTF-8''${utf8}`;
++}
++
+ /** Sert une video avec support des requetes Range, indispensable pour la navigation. */
+ function streamVideo(req, res, file) {
+   const size = fs.statSync(file).size;
+@@ -301,7 +320,22 @@ function openFolder(dir) {
    spawn(cmd, [dir], { detached: true, stdio: 'ignore', shell: process.platform === 'win32' }).unref();
  }
  
@@ -276,7 +302,16 @@ index f4392d9..148c6c6 100644
    const url = new URL(req.url, `http://localhost:${PORT}`);
  
    try {
-@@ -611,7 +626,7 @@ const server = http.createServer(async (req, res) => {
+@@ -415,7 +449,7 @@ const server = http.createServer(async (req, res) => {
+       res.writeHead(200, {
+         'Content-Type': 'video/mp4',
+         'Content-Length': fs.statSync(file).size,
+-        'Content-Disposition': `attachment; filename="${path.basename(file)}"`,
++        'Content-Disposition': contentDisposition(path.basename(file)),
+       });
+       return fs.createReadStream(file).pipe(res);
+     }
+@@ -611,7 +645,7 @@ const server = http.createServer(async (req, res) => {
      const status = err instanceof TwitchError || err instanceof kick.KickError ? err.status || 500 : 500;
      sendJson(res, status, { error: err.message });
    }
