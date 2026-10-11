@@ -61,6 +61,14 @@ class NavigationComposer
                     'icon' => 'M3 10v4a1 1 0 001 1h3l5 4V5L7 9H4a1 1 0 00-1 1zm13.5-3a5 5 0 010 10M19 4a9 9 0 010 16',
                 ],
                 [
+                    // Avant « Mes clips » : on cherche le moment avant de le
+                    // publier, l'ordre du menu suit celui du travail.
+                    'route' => 'discovery.index',
+                    'pattern' => 'discovery.*',
+                    'label' => 'Découverte',
+                    'icon' => 'M11 19a8 8 0 100-16 8 8 0 000 16zm10 2l-4.35-4.35M11 8v6m-3-3h6',
+                ],
+                [
                     'route' => 'clips.index',
                     'pattern' => 'clips.*',
                     'label' => 'Mes clips',

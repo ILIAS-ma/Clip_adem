@@ -5,6 +5,7 @@ use App\Http\Controllers\Clipper\AchievementController;
 use App\Http\Controllers\Clipper\CampaignController;
 use App\Http\Controllers\Clipper\ClipController;
 use App\Http\Controllers\Clipper\DashboardController;
+use App\Http\Controllers\Clipper\DiscoveryController;
 use App\Http\Controllers\Clipper\EarningsController;
 use App\Http\Controllers\Clipper\LeaderboardController;
 use App\Http\Controllers\Clipper\PayoutMethodController;
@@ -140,6 +141,19 @@ Route::middleware(['auth', 'not.banned', 'role:clipper'])->group(function () use
 
         Route::get('/campagnes', [CampaignController::class, 'index'])->name('campaigns.index');
         Route::get('/campagnes/{campaign:slug}', [CampaignController::class, 'show'])->name('campaigns.show');
+
+        /*
+         * Découverte : trouver le moment à clipper. Réservée aux clippeurs —
+         * c'est le seul rôle que ça concerne : un créateur n'a rien à y
+         * chercher, et un administrateur travaille depuis le back-office.
+         *
+         * Chaque recherche consomme le quota Twitch de la plateforme, partagé
+         * par tout le monde. Le débit protège ce quota d'un clic répété, pas
+         * le serveur.
+         */
+        Route::get('/decouverte', DiscoveryController::class)
+            ->middleware('throttle:30,1')
+            ->name('discovery.index');
 
         Route::get('/mes-clips', [ClipController::class, 'index'])->name('clips.index');
         Route::get('/mes-clips/{clip}', [ClipController::class, 'show'])->name('clips.show');

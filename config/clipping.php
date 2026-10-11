@@ -150,6 +150,22 @@ return [
     ],
 
     /*
+    | Découverte de clips à reprendre.
+    |
+    | Le quota Twitch est partagé par tous les clippeurs : la mise en cache
+    | n'est pas une optimisation, c'est ce qui empêche dix personnes cherchant
+    | le même streamer d'épuiser le quota de la plateforme en une minute.
+    */
+    'discovery' => [
+        'cache_minutes' => 15,
+        'max_channels' => 5,
+        'limit' => 60,
+        // Format TikTok et Shorts. Au-delà il faut couper, donc choisir, donc
+        // perdre le moment qui faisait le clip.
+        'max_duration' => 60,
+    ],
+
+    /*
     |--------------------------------------------------------------------------
     | Synchronisation des vues
     |--------------------------------------------------------------------------

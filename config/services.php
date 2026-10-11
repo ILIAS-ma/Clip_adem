@@ -109,6 +109,17 @@ return [
         'site_verification' => env('TIKTOK_SITE_VERIFICATION'),
     ],
 
+    /*
+    | Twitch. Console https://dev.twitch.tv/console/apps, type « Application
+    | Integration », client confidentiel. Le flux utilisé est
+    | `client_credentials` : ces clés servent à lire les clips publics, jamais
+    | à connecter un compte — aucune URL de redirection n'est donc nécessaire.
+    */
+    'twitch' => [
+        'client_id' => env('TWITCH_CLIENT_ID'),
+        'client_secret' => env('TWITCH_CLIENT_SECRET'),
+    ],
+
     'instagram' => [
         'app_id' => env('INSTAGRAM_APP_ID'),
         'app_secret' => env('INSTAGRAM_APP_SECRET'),
