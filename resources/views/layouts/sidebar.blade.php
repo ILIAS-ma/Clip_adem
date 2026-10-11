@@ -48,6 +48,62 @@
         @endforeach
     </nav>
 
+    {{--
+        Le bloc du compte.
+
+        Il n'existait que dans le tiroir mobile : sur grand écran, où la
+        colonne remplace le bouton, on ne pouvait ni ouvrir son profil, ni
+        changer son moyen de paiement, ni se déconnecter. Trois liens
+        atteignables uniquement en réduisant la fenêtre.
+    --}}
+    <div class="sidebar-footer">
+        <div class="sidebar-identity">
+            <x-avatar-badge :user="auth()->user()" />
+            <span class="min-w-0">
+                <span class="block truncate font-semibold text-ink-100">{{ auth()->user()->displayName() }}</span>
+                <span class="block truncate text-xs text-ink-400">{{ auth()->user()->email }}</span>
+            </span>
+        </div>
+
+        @php $surCompte = request()->routeIs('profile.*') || request()->routeIs('phone.*'); @endphp
+
+        <a href="{{ route('profile.edit') }}" wire:navigate
+           @class(['sidebar-link', 'is-active' => $surCompte])
+           x-bind:title="mini ? 'Mon compte' : null"
+           @if ($surCompte) aria-current="page" @endif>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span>Mon compte</span>
+        </a>
+
+        @if (auth()->user()->isClipper())
+            <a href="{{ route('payout-method.edit') }}" wire:navigate
+               @class(['sidebar-link', 'is-active' => request()->routeIs('payout-method.*')])
+               x-bind:title="mini ? 'Moyen de paiement' : null">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M3 8a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm0 3h18" />
+                </svg>
+                <span>Moyen de paiement</span>
+            </a>
+        @endif
+
+        {{-- Un POST, pas un lien : une déconnexion déclenchable par une image
+             distante serait un GET qui change l'état de la session. --}}
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="sidebar-link" x-bind:title="mini ? 'Déconnexion' : null">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M15 17l5-5-5-5m5 5H9m3 7H6a2 2 0 01-2-2V7a2 2 0 012-2h6" />
+                </svg>
+                <span>Déconnexion</span>
+            </button>
+        </form>
+    </div>
+
     <button type="button" @click="mini = ! mini" class="sidebar-toggle"
             x-bind:aria-label="mini ? 'Déplier la navigation' : 'Replier la navigation'">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"

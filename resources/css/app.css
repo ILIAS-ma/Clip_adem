@@ -716,6 +716,35 @@ body::before {
     font-weight: 600;
 }
 
+/* Le bloc du compte, collé en bas : c'est lui qui pousse la colonne, et le
+   bouton de repli le suit sans reprendre la marge automatique — deux marges
+   `auto` se partageraient l'espace libre et laisseraient un trou entre les
+   deux. */
+.sidebar-footer {
+    margin-top: auto;
+    padding-top: .45rem;
+    border-top: 1px solid theme(colors.ink.700);
+}
+
+.sidebar-footer + .sidebar-toggle { margin-top: 0; }
+
+.sidebar-identity {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .5rem .6rem .6rem;
+    font-size: .8rem;
+    line-height: 1.25;
+    overflow: hidden;
+}
+
+/* Le bouton de déconnexion porte `.sidebar-link` comme les ancres : il doit
+   occuper la ligne entière, ce qu'un <button> ne fait pas de lui-même. */
+button.sidebar-link {
+    width: 100%;
+    text-align: start;
+}
+
 .sidebar-toggle {
     display: flex;
     align-items: center;
@@ -738,6 +767,17 @@ body::before {
 .app-sidebar.is-mini .sidebar-brand :where(span, p) {
     display: none;
 }
+
+/* Repliée, l'identité s'efface : un nom coupé à quatre caractères ne dit
+   rien, et l'avatar reste au-dessus des trois icônes du compte. */
+.app-sidebar.is-mini .sidebar-identity {
+    justify-content: center;
+    padding-inline: 0;
+}
+
+/* Le dernier enfant est le bloc nom + adresse ; l'avatar, lui, est le
+   premier et reste. */
+.app-sidebar.is-mini .sidebar-identity > span:last-child { display: none; }
 
 .app-sidebar.is-mini .sidebar-link,
 .app-sidebar.is-mini .sidebar-toggle {

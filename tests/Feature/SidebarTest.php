@@ -37,6 +37,27 @@ class SidebarTest extends TestCase
         ]);
     }
 
+    /**
+     * Le contenu de la colonne seule.
+     *
+     * Découpage par position plutôt que par expression régulière : la balise
+     * ouvrante porte un attribut Alpine qui contient une fonction fléchée,
+     * donc un `>`. Tout motif du type `<aside[^>]*>` s'y arrête et ne trouve
+     * jamais la colonne.
+     */
+    protected function colonne(string $url): string
+    {
+        $html = $this->get($url)->assertSuccessful()->getContent();
+
+        $debut = strpos($html, 'app-sidebar');
+        $this->assertNotFalse($debut, 'La colonne est introuvable.');
+
+        $fin = strpos($html, '</aside>', $debut);
+        $this->assertNotFalse($fin, 'La colonne n’est pas refermée.');
+
+        return substr($html, $debut, $fin - $debut);
+    }
+
     #[Test]
     public function every_section_appears_in_the_sidebar(): void
     {
@@ -75,24 +96,9 @@ class SidebarTest extends TestCase
     {
         // Colonne repliée, l'icône est tout ce qui reste. Une rubrique sans
         // icône y deviendrait un carré vide.
-        $html = $this->actingAs($this->clipper())
-            ->get(route('dashboard'))
-            ->assertSuccessful()
-            ->getContent();
+        $this->actingAs($this->clipper());
 
-        /*
-         * Découpage par position plutôt que par expression régulière : la
-         * balise ouvrante porte un attribut Alpine qui contient une fonction
-         * fléchée, donc un `>`. Tout motif du type `<aside[^>]*>` s'y arrête et
-         * ne trouve jamais la colonne.
-         */
-        $debut = strpos($html, 'app-sidebar');
-        $this->assertNotFalse($debut, 'La colonne est introuvable.');
-
-        $fin = strpos($html, '</aside>', $debut);
-        $this->assertNotFalse($fin, 'La colonne n’est pas refermée.');
-
-        $colonne = substr($html, $debut, $fin - $debut);
+        $colonne = $this->colonne(route('dashboard'));
 
         $this->assertGreaterThanOrEqual(
             8,
@@ -141,6 +147,51 @@ class SidebarTest extends TestCase
     }
 
     #[Test]
+    public function the_account_block_lives_in_the_sidebar_too(): void
+    {
+        /*
+         * Profil, moyen de paiement et déconnexion n'existaient que dans le
+         * tiroir mobile. Le tiroir est bien rendu sur toutes les tailles
+         * d'écran — il est seulement masqué en CSS au-delà de `lg` — donc
+         * chercher ces liens « quelque part dans la page » ne prouvait rien :
+         * c'est ce que faisait le test précédent, et il passait pendant qu'un
+         * utilisateur sur grand écran ne pouvait pas se déconnecter.
+         *
+         * D'où la recherche dans la colonne seule.
+         */
+        $this->actingAs($this->clipper());
+
+        $colonne = $this->colonne(route('dashboard'));
+
+        foreach (['profile.edit', 'payout-method.edit', 'logout'] as $route) {
+            $this->assertStringContainsString(
+                route($route, absolute: false),
+                $colonne,
+                "« {$route} » doit être atteignable sans réduire la fenêtre.",
+            );
+        }
+    }
+
+    #[Test]
+    public function a_creator_sees_no_payout_method(): void
+    {
+        // Un créateur n'est jamais payé par la plateforme : il la paie.
+        $creator = User::factory()->create([
+            'role' => UserRole::Creator,
+            'email_verified_at' => now(),
+        ]);
+
+        Creator::factory()->create(['user_id' => $creator->getKey(), 'is_active' => true]);
+
+        $this->actingAs($creator);
+
+        $colonne = $this->colonne(route('creator.dashboard'));
+
+        $this->assertStringContainsString(route('profile.edit', absolute: false), $colonne);
+        $this->assertStringNotContainsString(route('payout-method.edit', absolute: false), $colonne);
+    }
+
+    #[Test]
     public function logging_out_is_still_reachable(): void
     {
         // Elle vivait dans le menu déroulant, puis dans le tiroir. À chaque
@@ -150,5 +201,20 @@ class SidebarTest extends TestCase
             ->get(route('dashboard'))
             ->assertSuccessful()
             ->assertSee(route('logout', absolute: false), escape: false);
+    }
+
+    #[Test]
+    public function the_phone_page_is_reachable_from_the_profile(): void
+    {
+        /*
+         * La page de vérification existait sans qu'aucun lien n'y mène :
+         * atteignable seulement en tapant l'adresse. Un dispositif qu'on ne
+         * trouve pas ne protège rien.
+         */
+        $this->actingAs($this->clipper())
+            ->get(route('profile.edit'))
+            ->assertSuccessful()
+            ->assertSee(route('phone.verify', absolute: false), escape: false)
+            ->assertSee('Vérifier mon numéro');
     }
 }
