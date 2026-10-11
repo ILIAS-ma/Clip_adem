@@ -243,7 +243,6 @@ return [
         'rate_per_1k_cents' => 'tarif aux 1000 vues',
         'min_views_per_clip' => 'vues minimales par clip',
         'max_payout_per_clip_cents' => 'plafond par clip',
-        'max_payout_per_clipper_cents' => 'plafond par clippeur',
         'starts_at' => 'date de début',
         'ends_at' => 'date de fin',
 

@@ -208,13 +208,6 @@
                             </div>
                         @endif
 
-                        @if ($campaign->max_payout_per_clipper_cents)
-                            <div class="flex justify-between gap-2">
-                                <dt class="text-ink-400">Plafond par clippeur</dt>
-                                <dd class="tabular text-ink-100">{{ Money::euros($campaign->max_payout_per_clipper_cents) }}</dd>
-                            </div>
-                        @endif
-
                         @if ($campaign->ends_at)
                             <div class="flex justify-between gap-2 border-t border-ink-700 pt-3">
                                 <dt class="text-ink-400">Fin</dt>

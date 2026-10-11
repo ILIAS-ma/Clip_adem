@@ -15,8 +15,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
     'creator_id', 'title', 'slug', 'brief', 'required_hashtags',
-    'status', 'currency', 'budget_total_cents', 'target_views', 'min_views_per_clip',
-    'max_payout_per_clip_cents', 'max_payout_per_clipper_cents',
+    'status', 'currency', 'budget_total_cents', 'min_views_per_clip',
+    'max_payout_per_clip_cents',
     'starts_at', 'ends_at', 'requires_approval', 'created_by',
 ])]
 class Campaign extends Model
@@ -30,10 +30,8 @@ class Campaign extends Model
             'required_hashtags' => 'array',
             'budget_total_cents' => 'integer',
             'spent_cents' => 'integer',
-            'target_views' => 'integer',
             'min_views_per_clip' => 'integer',
             'max_payout_per_clip_cents' => 'integer',
-            'max_payout_per_clipper_cents' => 'integer',
             'requires_approval' => 'boolean',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',

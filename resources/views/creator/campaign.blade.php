@@ -110,13 +110,6 @@
                             </div>
                         @endforeach
 
-                        @if ($campaign->target_views)
-                            <div class="flex justify-between gap-2 border-t border-ink-700 pt-3">
-                                <dt class="text-ink-400">Objectif de vues</dt>
-                                <dd class="tabular text-ink-100">{{ Money::views($campaign->target_views) }}</dd>
-                            </div>
-                        @endif
-
                         @if ($campaign->starts_at)
                             <div class="flex justify-between gap-2">
                                 <dt class="text-ink-400">Début</dt>

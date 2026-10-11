@@ -103,12 +103,6 @@ class CampaignForm
                         ->minValue(0.01)
                         ->helperText('Plafond absolu : la campagne bascule en « Épuisée » dès qu\'il est atteint.'),
 
-                    TextInput::make('target_views')
-                        ->label('Objectif de vues')
-                        ->numeric()
-                        ->minValue(0)
-                        ->helperText('Indicatif, sert au reporting.'),
-
                     Repeater::make('rates')
                         ->label('Taux par plateforme')
                         ->relationship()
@@ -151,9 +145,6 @@ class CampaignForm
                         ->label('Plafond par clip')
                         ->placeholder('Aucun'),
 
-                    static::money('max_payout_per_clipper_cents')
-                        ->label('Plafond par clippeur')
-                        ->placeholder('Aucun'),
                 ]),
 
             Section::make('Brief')

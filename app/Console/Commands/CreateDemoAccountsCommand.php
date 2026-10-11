@@ -218,7 +218,6 @@ class CreateDemoAccountsCommand extends Command
                 // d'idempotence empêche de les rejouer pour recoller.
                 ...($campaign->exists ? [] : ['spent_cents' => 0]),
 
-                'target_views' => 8_000_000,
                 'min_views_per_clip' => 1_000,
                 'max_payout_per_clip_cents' => 60_000,
                 'starts_at' => now()->subWeeks(2),

@@ -217,20 +217,31 @@ class CampaignBudgetServiceTest extends TestCase
     }
 
     #[Test]
-    public function it_enforces_the_per_clipper_cap_across_their_clips(): void
+    public function nothing_caps_a_clipper_across_their_clips(): void
     {
-        $campaign = $this->campaign(['max_payout_per_clipper_cents' => 1_500]);
+        /*
+         * Il n'y a plus de plafond par clippeur, et ce test garde cette
+         * absence.
+         *
+         * Il contredisait la règle du produit — le budget part au premier
+         * arrivé — et il arrêtait en premier celui qui fait les vues : le
+         * second clip d'un bon clippeur était rogné alors que le budget de la
+         * campagne était intact. Le plafond par clip reste, lui : il borne un
+         * accident de comptage, pas une réussite.
+         */
+        $campaign = $this->campaign();
 
         $first = $this->clip($campaign);
         $second = $this->clip($campaign, ['user_id' => $first->user_id]);
 
-        $this->budget->creditViews($first, 10_000, 'clip:1:snapshot:1');   // 10 €
+        $this->budget->creditViews($first, 10_000, 'clip:1:snapshot:1');
         $result = $this->budget->creditViews($second, 10_000, 'clip:2:snapshot:1');
 
-        // Le second clip ne touche que les 5 € restants sous le plafond.
-        $this->assertSame(CreditOutcome::Capped, $result->outcome);
-        $this->assertSame(500, $result->creditedCents);
-        $this->assertSame(1_500, $campaign->fresh()->spent_cents);
+        // Les deux clips sont payés plein tarif : seul le budget de la
+        // campagne peut encore les arrêter.
+        $this->assertSame(CreditOutcome::Credited, $result->outcome);
+        $this->assertSame(1_000, $result->creditedCents);
+        $this->assertSame(2_000, $campaign->fresh()->spent_cents);
     }
 
     #[Test]

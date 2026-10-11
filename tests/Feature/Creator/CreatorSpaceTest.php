@@ -211,17 +211,35 @@ class CreatorSpaceTest extends TestCase
     // ------------------------------------------------------------------
 
     #[Test]
-    public function the_dashboard_shows_the_real_cost_per_thousand_views(): void
+    public function the_dashboard_no_longer_shows_a_cost_per_thousand_views(): void
     {
+        /*
+         * Retiré de l'espace créateur, et ce test garde ce retrait.
+         *
+         * Le ratio invitait à juger la campagne sur un chiffre que la
+         * plateforme ne garantit pas : un seul clip viral le fait paraître
+         * excellent la semaine même où le budget s'épuise, et un démarrage
+         * lent le fait paraître désastreux avant que quoi que ce soit ait eu
+         * le temps de tourner. Le créateur en tirait des conclusions que les
+         * chiffres ne portaient pas.
+         *
+         * Il reste calculé, et reste visible côté back-office : là, il est lu
+         * par quelqu'un qui compare plusieurs créateurs et sait ce qu'il
+         * regarde.
+         */
         $user = $this->creatorUser();
-        $this->campaignWithClip($user->creator, views: 200_000); // 200 € pour 200 000 vues
+        $this->campaignWithClip($user->creator, views: 200_000);
 
         $this->actingAs($user)
             ->get('/createur')
             ->assertSuccessful()
-            ->assertSee('Coût pour 1000 vues')
-            // 20 000 centimes pour 200 000 vues = 100 centimes / 1000 vues.
-            ->assertSee('1,00 €');
+            ->assertDontSee('Coût pour 1000 vues')
+            // Les deux chiffres qui restent, eux, doivent être là.
+            ->assertSee('Vues')
+            ->assertSee('Dépensé');
+
+        // Toujours disponible pour l'administration.
+        $this->assertSame(100, $user->fresh()->creator->realCostPer1kCents());
     }
 
     #[Test]

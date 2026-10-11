@@ -41,7 +41,12 @@
                 {{ $headline }}
             </p>
 
-            <div class="mt-6 grid gap-6 border-t border-ink-700 pt-6 sm:grid-cols-3">
+            {{-- Deux chiffres, pas trois : le coût pour 1000 vues a été retiré.
+                 Il invitait le créateur à juger sa campagne sur un ratio que
+                 la plateforme ne garantit pas, et qu'un seul clip viral
+                 suffit à faire paraître excellent la semaine où le budget
+                 s'épuise. --}}
+            <div class="mt-6 grid gap-6 border-t border-ink-700 pt-6 sm:grid-cols-2">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">Vues</p>
                     <p class="mt-1 font-display text-2xl font-bold tabular text-brand-400">
@@ -63,15 +68,6 @@
                     </p>
                 </div>
 
-                <div>
-                    <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">Coût pour 1000 vues</p>
-                    <p class="mt-1 font-display text-2xl font-bold tabular text-ink-50">
-                        {{ $summary['real_cpm_cents'] === null ? '—' : Money::euros($summary['real_cpm_cents']) }}
-                    </p>
-                    <p class="mt-1 text-xs leading-relaxed text-ink-400">
-                        Ce que vous payez réellement. Plus c'est bas, mieux la campagne tourne.
-                    </p>
-                </div>
             </div>
         </div>
 

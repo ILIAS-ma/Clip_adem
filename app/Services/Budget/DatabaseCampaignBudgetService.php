@@ -303,7 +303,8 @@ class DatabaseCampaignBudgetService implements CampaignBudgetService
         // faveur du budget. Aucun flottant n'entre dans un calcul d'argent.
         $gross = intdiv($deltaViews * $rate, 1000);
 
-        // Plafonnement en cascade. Les lectures ci-dessous sont sûres : tous
+        // Plafonnement en cascade — deux bornes désormais, le budget restant
+        // et le plafond par clip. Les lectures ci-dessous sont sûres : tous
         // les crédits de cette campagne sont sérialisés par le verrou posé sur
         // sa ligne, donc aucun autre processus ne peut modifier ces totaux
         // entre ce calcul et l'écriture.
@@ -323,14 +324,13 @@ class DatabaseCampaignBudgetService implements CampaignBudgetService
             $caps[] = max(0, $clipCap - $clip->earned_cents);
         }
 
-        if ($campaign->max_payout_per_clipper_cents !== null) {
-            $clipperEarned = (int) Clip::where('campaign_id', $campaign->getKey())
-                ->where('user_id', $clip->user_id)
-                ->sum('earned_cents');
-
-            $caps[] = max(0, $campaign->max_payout_per_clipper_cents - $clipperEarned);
-        }
-
+        /*
+         * Il n'y a plus de plafond par clippeur, et c'est volontaire : il
+         * contredisait la règle du produit — le budget part au premier
+         * arrivé. Le brider par personne revenait à arrêter en premier celui
+         * qui fait les vues. Le plafond par clip reste : lui borne un
+         * accident, pas une réussite.
+         */
         $payable = min($caps);
 
         if ($payable <= 0) {

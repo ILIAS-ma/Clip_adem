@@ -77,7 +77,6 @@ class DatabaseSeeder extends Seeder
                 'required_hashtags' => ['#nayra', '#nouveausingle'],
                 'status' => CampaignStatus::Active,
                 'budget_total_cents' => 150_000, // 1 500 €
-                'target_views' => 3_000_000,
                 'min_views_per_clip' => 1_000,
                 'max_payout_per_clip_cents' => 20_000,
                 'starts_at' => now()->subWeek(),
