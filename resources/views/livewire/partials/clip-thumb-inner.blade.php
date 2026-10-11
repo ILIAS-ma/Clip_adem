@@ -14,9 +14,9 @@
     <img src="{{ $clip['thumbnail'] }}" alt="" loading="lazy">
 @endif
 
-<span class="clip-badge is-duration">{{ $clip['duration_label'] }}</span>
-<span class="clip-badge is-views">{{ \App\Support\Money::views($clip['views']) }} vues</span>
+<span class="badge dur">{{ $clip['duration_label'] }}</span>
+<span class="badge views">{{ \App\Support\Money::views($clip['views']) }} vues</span>
 
 @if (isset($cachet) && $cachet)
-    <span class="clip-badge is-rate">{{ \App\Support\Money::euros($cachet) }} / 1000</span>
+    <span class="badge rate">{{ \App\Support\Money::euros($cachet) }} / 1000</span>
 @endif

@@ -156,7 +156,7 @@ Route::middleware(['auth', 'not.banned', 'role:clipper'])->group(function () use
         Route::get('/campagnes/{campaign:slug}', [CampaignController::class, 'show'])->name('campaigns.show');
 
         /*
-         * Découverte : trouver le moment à clipper. Réservée aux clippeurs —
+         * Mode créateur : trouver le moment à clipper. Réservé aux clippeurs —
          * c'est le seul rôle que ça concerne : un créateur n'a rien à y
          * chercher, et un administrateur travaille depuis le back-office.
          *
@@ -164,9 +164,13 @@ Route::middleware(['auth', 'not.banned', 'role:clipper'])->group(function () use
          * par tout le monde. Le débit protège ce quota d'un clic répété, pas
          * le serveur.
          */
-        Route::get('/decouverte', DiscoveryController::class)
+        Route::get('/mode-createur', DiscoveryController::class)
             ->middleware('throttle:30,1')
             ->name('discovery.index');
+
+        // Ancienne adresse, conservée : elle a circulé en interne, et un 404
+        // sur un lien partagé coûte plus qu'une ligne de redirection.
+        Route::redirect('/decouverte', '/mode-createur');
 
         Route::get('/mes-clips', [ClipController::class, 'index'])->name('clips.index');
         Route::get('/mes-clips/{clip}', [ClipController::class, 'show'])->name('clips.show');

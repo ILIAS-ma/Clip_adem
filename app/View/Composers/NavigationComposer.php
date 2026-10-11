@@ -65,7 +65,7 @@ class NavigationComposer
                     // publier, l'ordre du menu suit celui du travail.
                     'route' => 'discovery.index',
                     'pattern' => 'discovery.*',
-                    'label' => 'Découverte',
+                    'label' => 'Mode créateur',
                     'icon' => 'M11 19a8 8 0 100-16 8 8 0 000 16zm10 2l-4.35-4.35M11 8v6m-3-3h6',
                 ],
                 [

@@ -93,7 +93,7 @@ class ClipDiscoveryTest extends TestCase
         $this->actingAs($this->clipper())
             ->get(route('discovery.index'))
             ->assertSuccessful()
-            ->assertSee('Trouver le moment à clipper');
+            ->assertSee('Mode créateur');
     }
 
     #[Test]
@@ -103,7 +103,57 @@ class ClipDiscoveryTest extends TestCase
             ->get(route('dashboard'))
             ->assertSuccessful()
             ->assertSee(route('discovery.index', absolute: false), escape: false)
-            ->assertSee('Découverte');
+            ->assertSee('Mode créateur');
+    }
+
+    #[Test]
+    public function the_mode_takes_the_screen_with_its_own_shell(): void
+    {
+        /*
+         * Un mode prend l'écran : sa propre grille, sa propre feuille de
+         * style claire, sa propre barre. Rendre cette page dans le gabarit du
+         * site donnerait deux colonnes latérales côte à côte, chacune
+         * annonçant une navigation différente.
+         *
+         * D'où le contrôle sur la coquille elle-même — et sur la porte de
+         * sortie, qu'un mode sans issue visible fait chercher à tâtons.
+         */
+        $html = $this->actingAs($this->clipper())
+            ->get(route('discovery.index'))
+            ->assertSuccessful()
+            ->getContent();
+
+        $this->assertStringContainsString('class="app"', $html);
+        $this->assertStringContainsString('class="sidebar"', $html);
+        $this->assertStringContainsString('studio', $html, 'La feuille du mode doit être chargée.');
+
+        // La coquille du site n'a rien à faire ici.
+        $this->assertStringNotContainsString('app-sidebar', $html);
+        $this->assertStringNotContainsString('nav-burger', $html);
+
+        $this->assertStringContainsString('Quitter le mode', $html);
+        $this->assertStringContainsString(route('dashboard', absolute: false), $html);
+    }
+
+    #[Test]
+    public function the_mode_links_nowhere_outside_the_platform(): void
+    {
+        // Aucun renvoi vers un dépôt, aucun téléchargement : l'outil de
+        // montage ne se distribue pas depuis cet écran.
+        $this->actingAs($this->clipper())
+            ->get(route('discovery.index'))
+            ->assertSuccessful()
+            ->assertDontSee('github.com', escape: false);
+    }
+
+    #[Test]
+    public function the_old_address_still_leads_there(): void
+    {
+        // L'adresse a circulé : un 404 sur un lien partagé coûte plus qu'une
+        // ligne de redirection.
+        $this->actingAs($this->clipper())
+            ->get('/decouverte')
+            ->assertRedirect('/mode-createur');
     }
 
     #[Test]
