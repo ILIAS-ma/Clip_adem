@@ -376,4 +376,28 @@ class HonestDeliveryTest extends TestCase
 
         parent::tearDown();
     }
+
+    #[Test]
+    public function the_profile_does_not_nag_about_email_while_the_control_is_suspended(): void
+    {
+        // Un avertissement sans objet et un lien qui ne mène à rien, puisque
+        // aucun e-mail ne part : retirés tant que le contrôle est suspendu.
+        config(['clipping.onboarding.require_email_verification' => false]);
+
+        $this->actingAs($this->utilisateur(['email_verified_at' => null]))
+            ->get(route('profile.edit'))
+            ->assertSuccessful()
+            ->assertDontSee('pas encore confirmée');
+    }
+
+    #[Test]
+    public function the_profile_still_asks_when_the_control_is_on(): void
+    {
+        config(['clipping.onboarding.require_email_verification' => true]);
+
+        $this->actingAs($this->utilisateur(['email_verified_at' => null]))
+            ->get(route('profile.edit'))
+            ->assertSuccessful()
+            ->assertSee('pas encore confirmée');
+    }
 }

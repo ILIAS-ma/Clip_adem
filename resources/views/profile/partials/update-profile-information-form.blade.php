@@ -49,7 +49,12 @@
                           :value="old('email', $user->email)" required autocomplete="username" />
             <x-input-error class="mt-2" :messages="$errors->get('email')" />
 
-            @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
+            {{-- Seulement si la confirmation est exigée : suspendue, elle
+                 affichait un avertissement sans objet et un lien qui ne
+                 mène à rien, puisqu'aucun e-mail ne part. --}}
+            @if (config('clipping.onboarding.require_email_verification')
+                && $user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail
+                && ! $user->hasVerifiedEmail())
                 <div class="alert-warn mt-3">
                     <p>Cette adresse n'est pas encore confirmée.</p>
                     <button form="send-verification" class="mt-1 font-semibold underline underline-offset-2">

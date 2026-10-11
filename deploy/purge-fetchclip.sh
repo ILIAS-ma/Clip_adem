@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Efface les fichiers de travail de FetchClip plus vieux que sept jours.
+# Efface les fichiers de travail de FetchClip trop anciens.
 #
 # Chaque clippeur télécharge des sources et produit des montages dans son
 # espace, et rien ne les efface jamais. Une cinquantaine de clippeurs à une
@@ -8,13 +8,19 @@
 # gigaoctets par semaine, sans fin. Le disque est partagé avec la base et les
 # journaux — le remplir n'arrête pas l'outil, il arrête le site.
 #
-# Sept jours laissent le temps de monter et de publier ; au-delà, un clip a
-# été posté ou ne le sera pas.
 
 set -euo pipefail
 
 RACINE=/var/www/fetchclip/espaces
-JOURS=7
+
+# Trente jours en temps normal : de quoi revenir sur un clip, le remonter
+# autrement, le republier. Sept seulement si le disque passe 75 % — le
+# disque est partagé avec la base, et le remplir n'arrête pas l'outil, il
+# arrête le site.
+JOURS=30
+if [ "$(df -P "$RACINE" | awk 'NR==2 {gsub("%","",$5); print $5}')" -ge 75 ]; then
+    JOURS=7
+fi
 
 [ -d "$RACINE" ] || exit 0
 
@@ -32,4 +38,4 @@ find "$RACINE" -type f \( -name '.tmp-*' -o -name '*.part' -o -name '*.lock' \) 
 
 apres="$(du -sm "$RACINE" | cut -f1)"
 
-echo "$(date '+%F %T')  purge FetchClip : ${avant} Mo -> ${apres} Mo"
+echo "$(date '+%F %T')  purge FetchClip (> ${JOURS} j) : ${avant} Mo -> ${apres} Mo"
