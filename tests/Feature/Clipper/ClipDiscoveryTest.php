@@ -196,6 +196,131 @@ class ClipDiscoveryTest extends TestCase
     }
 
     #[Test]
+    public function a_filter_never_costs_a_network_call(): void
+    {
+        /*
+         * Le quota Twitch est celui de la plateforme entière. Retrier ou
+         * tamiser doit porter sur ce qui a déjà été rapporté : si changer un
+         * tri relançait la recherche, dix clics coûteraient dix séries
+         * d'appels à tout le monde.
+         *
+         * D'où le contrôle : `results` ne bouge pas quand les filtres
+         * changent, seul l'affichage change.
+         */
+        $this->actingAs($this->clipper());
+
+        $composant = Livewire::test(ClipDiscovery::class)
+            ->set('channels', 'kayz')
+            ->call('search');
+
+        $brut = $composant->get('results');
+
+        $composant->set('sort', 'duree')->set('minViews', 5_000)->set('hideKept', true);
+
+        $this->assertSame($brut, $composant->get('results'));
+    }
+
+    #[Test]
+    public function the_minimum_views_filter_applies(): void
+    {
+        $this->actingAs($this->clipper());
+
+        $composant = Livewire::test(ClipDiscovery::class)
+            ->set('channels', 'kayz')
+            ->call('search')
+            ->set('minViews', 30_000);
+
+        foreach ($composant->viewData('affichables') as $clip) {
+            $this->assertGreaterThanOrEqual(30_000, $clip['views']);
+        }
+    }
+
+    #[Test]
+    public function sorting_by_duration_puts_the_longest_first(): void
+    {
+        $this->actingAs($this->clipper());
+
+        $clips = Livewire::test(ClipDiscovery::class)
+            ->set('channels', 'kayz')
+            ->set('onlyShort', false)
+            ->call('search')
+            ->set('sort', 'duree')
+            ->viewData('affichables');
+
+        $durees = array_column($clips, 'duration');
+        $attendu = $durees;
+        rsort($attendu);
+
+        $this->assertSame($attendu, $durees);
+    }
+
+    #[Test]
+    public function the_paid_scope_keeps_only_funded_channels(): void
+    {
+        // La portée qui compte : ne montrer que ce qui rapporte.
+        $this->campagneStreamer('kayz');
+
+        $this->actingAs($this->clipper());
+
+        $clips = Livewire::test(ClipDiscovery::class)
+            ->set('channels', 'kayz, unstreamersanscampagne')
+            ->call('search')
+            ->set('scope', 'payes')
+            ->viewData('affichables');
+
+        $this->assertNotEmpty($clips);
+
+        foreach ($clips as $clip) {
+            $this->assertSame('kayz', $clip['login']);
+        }
+    }
+
+    #[Test]
+    public function hiding_the_kept_ones_removes_them_from_the_results(): void
+    {
+        $this->actingAs($this->clipper());
+
+        $composant = Livewire::test(ClipDiscovery::class)
+            ->set('channels', 'kayz')
+            ->call('search');
+
+        $id = $composant->get('results')[0]['id'];
+
+        $composant->call('keep', $id)->set('hideKept', true);
+
+        $this->assertNotContains(
+            $id,
+            array_column($composant->viewData('affichables'), 'id'),
+        );
+    }
+
+    #[Test]
+    public function keeping_everything_only_takes_what_is_shown(): void
+    {
+        /*
+         * Le clippeur a filtré pour choisir : le bouton doit porter sur ce
+         * qu'il voit. Agir sur les soixante résultats bruts lui remplirait la
+         * sélection de clips qu'il venait d'écarter.
+         */
+        $this->actingAs($this->clipper());
+
+        $composant = Livewire::test(ClipDiscovery::class)
+            ->set('channels', 'kayz')
+            ->call('search')
+            ->set('minViews', 40_000);
+
+        $montres = count($composant->viewData('affichables'));
+        $trouves = count($composant->get('results'));
+
+        $this->assertGreaterThan(0, $montres);
+        $this->assertLessThan($trouves, $montres, 'Le filtre doit écarter quelque chose.');
+
+        $composant->call('keepAll');
+
+        $this->assertSame($montres, ClipBookmark::count());
+    }
+
+    #[Test]
     public function a_selection_never_leaks_to_another_clipper(): void
     {
         /*

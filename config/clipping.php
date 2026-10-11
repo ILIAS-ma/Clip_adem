@@ -18,7 +18,20 @@ return [
     */
 
     'onboarding' => [
-        'require_email_verification' => env('REQUIRE_EMAIL_VERIFICATION', true),
+        /*
+         * Confirmation de l'adresse e-mail : suspendue.
+         *
+         * Le numéro de téléphone a pris ce rôle, et il le remplit mieux :
+         * une adresse jetable s'obtient en dix secondes, une ligne
+         * téléphonique non. Garder les deux ajoutait une étape qui ne
+         * filtrait rien — et, sans prestataire de messagerie, elle enfermait
+         * les nouveaux comptes devant un lien qui ne pouvait pas partir.
+         *
+         * Le code reste en place, rien n'est supprimé : passer cette ligne à
+         * true rétablit le contrôle, et les comptes créés entre-temps se
+         * verront simplement redemander de confirmer.
+         */
+        'require_email_verification' => env('REQUIRE_EMAIL_VERIFICATION', false),
         'require_complete_profile' => env('REQUIRE_COMPLETE_PROFILE', true),
 
         /*

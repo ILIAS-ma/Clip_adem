@@ -91,9 +91,25 @@ class PhoneVerificationController extends Controller
 
     public function confirm(Request $request): RedirectResponse
     {
+        /*
+         * Le code arrive en six champs — une case par chiffre — ou en un
+         * seul. Les deux formes sont acceptées, et c'est ce qui permet au
+         * formulaire de fonctionner sans JavaScript : la version précédente
+         * recopiait les six cases dans un champ caché par Alpine, et
+         * désactivait le bouton tant que ce champ n'était pas rempli. Alpine
+         * ne démarrant pas sur cet écran, le bouton restait inerte — la base
+         * de production montrait zéro tentative pour un code demandé, preuve
+         * que rien n'était jamais soumis.
+         */
+        $brut = $request->input('code');
+
+        $request->merge(['code' => is_array($brut)
+            ? implode('', array_map(fn ($c) => trim((string) $c), $brut))
+            : trim((string) $brut)]);
+
         $valide = $request->validate([
             'code' => ['required', 'string', 'size:'.PhoneVerification::LONGUEUR],
-        ]);
+        ], [], ['code' => 'code de vérification']);
 
         if (! $this->verification->verifier($request->user(), $valide['code'])) {
             // Message unique quelle que soit la cause — code faux, expiré, ou

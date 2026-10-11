@@ -41,6 +41,26 @@ class ClipDiscovery extends Component
     #[Url(as: 'courts', except: true)]
     public bool $onlyShort = true;
 
+    /*
+     * Les filtres ci-dessous ne touchent pas au réseau : ils retrient et
+     * tamisent les résultats déjà rapportés. C'est pour cela qu'ils vivent
+     * dans une ligne distincte à l'écran — changer un tri ne doit pas
+     * dépenser le quota Twitch de toute la plateforme.
+     */
+
+    /** « payes » ne garde que les chaînes qui ont une campagne ouverte. */
+    #[Url(as: 'portee', except: 'tous')]
+    public string $scope = 'tous';
+
+    #[Url(as: 'vuesmin', except: 0)]
+    public int $minViews = 0;
+
+    #[Url(as: 'tri', except: 'vues')]
+    public string $sort = 'vues';
+
+    #[Url(as: 'masquer', except: false)]
+    public bool $hideKept = false;
+
     /** Résultats de la dernière recherche, pour ne pas la rejouer à chaque rendu. */
     public array $results = [];
 
@@ -50,6 +70,18 @@ class ClipDiscovery extends Component
 
     /** Identifiant du clip ouvert dans le lecteur, s'il y en a un. */
     public ?string $playing = null;
+
+    /** Les tris proposés, et ce sur quoi ils portent. */
+    public const TRIS = [
+        'vues' => 'Vues',
+        'date' => 'Date',
+        'duree' => 'Durée',
+    ];
+
+    public function setScope(string $scope): void
+    {
+        $this->scope = $scope === 'payes' ? 'payes' : 'tous';
+    }
 
     public function mount(): void
     {
@@ -107,6 +139,7 @@ class ClipDiscovery extends Component
             'views' => $clip->views,
             'duration' => $clip->duration,
             'duration_label' => $clip->dureeLisible(),
+            'posted_at' => $clip->createdAt?->format('Y-m-d H:i:s'),
             'thumbnail' => $clip->thumbnail
                 // Twitch sert un gabarit à trous dans ses vignettes récentes.
                 ? str_replace(['%{width}', '%{height}'], ['480', '272'], $clip->thumbnail)
@@ -158,6 +191,21 @@ class ClipDiscovery extends Component
                 'campaign_id' => $campagne?->getKey(),
             ],
         );
+    }
+
+    /**
+     * Met de côté tout ce qui est affiché.
+     *
+     * Sur ce qui est affiché, pas sur tout ce qui a été trouvé : le clippeur
+     * a filtré pour choisir, le bouton doit porter sur ce qu'il voit. Agir
+     * sur les soixante résultats bruts lui remplirait la sélection de clips
+     * qu'il venait justement d'écarter.
+     */
+    public function keepAll(): void
+    {
+        foreach ($this->affichables($this->campagnesParChaine()) as $clip) {
+            $this->keep($clip['id']);
+        }
     }
 
     public function forget(int $bookmark): void
@@ -230,6 +278,51 @@ class ClipDiscovery extends Component
         )->values();
     }
 
+    /**
+     * Les résultats tels qu'ils s'affichent : tamisés et retriés.
+     *
+     * Jamais en modifiant `$results`, qui garde ce que le diffuseur a
+     * réellement rendu : relâcher un filtre doit faire réapparaître les
+     * clips, pas obliger à relancer une recherche — et donc à repayer un
+     * appel réseau.
+     *
+     * @param  Collection<string, Campaign>  $campagnes
+     */
+    protected function affichables(Collection $campagnes): array
+    {
+        $clips = array_filter($this->results, function (array $clip) use ($campagnes) {
+            if ($this->scope === 'payes' && ! $campagnes->has($clip['login'])) {
+                return false;
+            }
+
+            if ($this->minViews > 0 && $clip['views'] < $this->minViews) {
+                return false;
+            }
+
+            if ($this->hideKept && in_array($clip['id'], $this->dejaPris(), true)) {
+                return false;
+            }
+
+            return true;
+        });
+
+        $clips = array_values($clips);
+
+        usort($clips, match ($this->sort) {
+            'date' => fn ($a, $b) => strcmp((string) $b['posted_at'], (string) $a['posted_at']),
+            'duree' => fn ($a, $b) => $b['duration'] <=> $a['duration'],
+            default => fn ($a, $b) => $b['views'] <=> $a['views'],
+        });
+
+        return $clips;
+    }
+
+    /** @return list<string> */
+    protected function dejaPris(): array
+    {
+        return once(fn () => ClipBookmark::forUser(auth()->user())->pluck('external_id')->all());
+    }
+
     public function render()
     {
         $campagnes = $this->campagnesParChaine();
@@ -263,9 +356,13 @@ class ClipDiscovery extends Component
                 ->latest()
                 ->get(),
 
-            'dejaPris' => ClipBookmark::forUser(auth()->user())
-                ->pluck('external_id')
-                ->all(),
+            'dejaPris' => $this->dejaPris(),
+
+            // Le nombre total sert à dire ce qu'un filtre a écarté : « 12 sur
+            // 60 » se lit, « 12 » laisse croire que la recherche a échoué.
+            'affichables' => $this->affichables($campagnes),
+            'trouves' => count($this->results),
+            'tris' => self::TRIS,
         ]);
     }
 }

@@ -791,6 +791,180 @@ button.sidebar-link {
 
 
 /* =====================================================================
+   Le panneau de recherche, reprise de FetchClip.
+
+   Deux étages : la ligne qui déclenche la recherche, puis la ligne des
+   filtres, séparée d'un filet. La distinction est utile — les premiers
+   champs coûtent un appel réseau, les seconds se contentent de trier ce
+   qui est déjà là. Les mélanger laisse croire que changer un tri
+   relance la recherche.
+   ===================================================================== */
+
+.search-card {
+    display: flex;
+    flex-direction: column;
+    gap: .85rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid theme(colors.ink.700);
+    border-radius: 14px;
+    background: theme(colors.ink.900);
+}
+
+.search-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+}
+
+.search-row .grow { flex: 1 1 14rem; min-width: 0; }
+
+/* Sélecteur de portée : deux boutons dans un même creux, pas deux
+   boutons côte à côte. La forme dit qu'ils s'excluent. */
+.scope-switch {
+    display: inline-flex;
+    gap: 2px;
+    padding: 2px;
+    border: 1px solid theme(colors.ink.700);
+    border-radius: 10px;
+    background: theme(colors.ink.950);
+}
+
+.scope {
+    padding: .35rem .75rem;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: theme(colors.ink.400);
+    font-size: .78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color .16s ease, color .16s ease;
+}
+
+.scope:hover { color: theme(colors.ink.100); }
+
+.scope.is-active {
+    background: theme(colors.ink.800);
+    color: #FFF;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / .08);
+}
+
+.filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .75rem;
+    padding-top: .8rem;
+    border-top: 1px solid theme(colors.ink.800);
+}
+
+.filter-label {
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: theme(colors.ink.500);
+}
+
+.mini-field {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .76rem;
+    color: theme(colors.ink.400);
+}
+
+.mini-field :where(input, select) {
+    padding: .25rem .45rem;
+    border: 1px solid theme(colors.ink.700);
+    border-radius: 7px;
+    background: theme(colors.ink.950);
+    color: theme(colors.ink.50);
+    font-size: .76rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.mini-field input[type="number"] { width: 5rem; }
+
+.mini-field :where(input, select):focus {
+    outline: none;
+    border-color: rgb(255 255 255 / .4);
+}
+
+/* Interrupteur plutôt que case à cocher : un filtre qu'on bascule
+   souvent gagne à ressembler à un interrupteur, et la zone cliquable
+   passe de 13 à 36 pixels. */
+.switch {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .76rem;
+    color: theme(colors.ink.300);
+    cursor: pointer;
+}
+
+.switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+
+.switch .track {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    flex: none;
+    border-radius: 999px;
+    background: theme(colors.ink.700);
+    transition: background-color .18s ease;
+}
+
+.switch .track::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    background: theme(colors.ink.300);
+    transition: transform .18s cubic-bezier(.2, .7, .3, 1), background-color .18s ease;
+}
+
+.switch input:checked + .track { background: rgb(255 255 255 / .9); }
+.switch input:checked + .track::after { transform: translateX(16px); background: #000; }
+
+.switch input:focus-visible + .track {
+    box-shadow: 0 0 0 3px rgb(255 255 255 / .18);
+}
+
+/* Barre de résultats : le compte à gauche, les actions de masse à
+   droite. Elle n'apparaît qu'une fois qu'il y a de quoi agir. */
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .6rem .9rem;
+    border: 1px solid theme(colors.ink.700);
+    border-radius: 12px;
+    background: theme(colors.ink.900);
+}
+
+.toolbar .summary {
+    font-size: .8rem;
+    color: theme(colors.ink.300);
+    font-variant-numeric: tabular-nums;
+}
+
+.toolbar .summary strong { color: theme(colors.ink.50); font-weight: 700; }
+
+.toolbar .actions { display: flex; flex-wrap: wrap; gap: .4rem; }
+
+@media (prefers-reduced-motion: reduce) {
+    .switch .track, .switch .track::after { transition: none; }
+}
+
+
+/* =====================================================================
    Les cartes de clips, reprises de FetchClip.
 
    Une grille de vignettes 16:9 plutôt qu'une liste de lignes : on choisit
@@ -995,10 +1169,10 @@ button.sidebar-link {
 }
 
 /* Une case remplie se distingue d'une case vide : sinon la ligne entière
-   se relit à chaque chiffre pour savoir où l'on en est. La classe vient
-   d'Alpine, car `:placeholder-shown` ne dit rien d'un champ sans
-   placeholder. */
-.otp-case.is-filled { border-color: rgb(255 255 255 / .35); }
+   se relit à chaque chiffre pour savoir où l'on en est. En CSS seul, sans
+   dépendre d'une classe posée par JavaScript — le champ porte un
+   placeholder vide pour que `:placeholder-shown` ait un sens. */
+.otp-case:not(:placeholder-shown) { border-color: rgb(255 255 255 / .35); }
 
 
 /* =====================================================================

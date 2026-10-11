@@ -94,55 +94,61 @@
              champ du numéro reste accessible dessous, pour corriger un
              chiffre sans repartir de zéro. --}}
         @if ($attenteCode)
-            <div class="card p-6 sm:p-7"
-                 x-data="{
-                     chiffres: ['', '', '', '', '', ''],
-                     get code() { return this.chiffres.join(''); },
-                     saisir(i, e) {
-                         const v = e.target.value.replace(/\D/g, '');
-                         // Un collage de six chiffres remplit toute la ligne :
-                         // le code arrive du SMS en un bloc, pas chiffre par
-                         // chiffre.
-                         if (v.length > 1) {
-                             v.split('').slice(0, 6 - i).forEach((c, k) => this.chiffres[i + k] = c);
-                             this.$refs.cases.children[Math.min(5, i + v.length)]?.focus();
-                             return;
-                         }
-                         this.chiffres[i] = v;
-                         if (v) this.$refs.cases.children[i + 1]?.focus();
-                     },
-                     retour(i, e) {
-                         // Reculer sur une case déjà vide, sinon on reste
-                         // bloqué à effacer le même chiffre.
-                         if (e.key === 'Backspace' && !this.chiffres[i] && i > 0) {
-                             this.$refs.cases.children[i - 1]?.focus();
-                         }
-                     },
-                 }">
+            <div class="card p-6 sm:p-7">
                 <h2 class="font-display text-lg font-bold text-ink-50">Le code reçu</h2>
                 <p class="mt-1 text-sm text-ink-400">
                     Envoyé au <span class="font-semibold tabular text-ink-200">{{ PhoneNumber::masque($user->phone) }}</span>.
                     Il expire au bout de {{ config('clipping.phone.code_minutes') }} minutes.
                 </p>
 
-                <form method="POST" action="{{ route('phone.confirm') }}" class="mt-6">
+                {{--
+                    Six champs réels, un par chiffre, assemblés côté serveur.
+
+                    La version précédente recopiait les cases dans un champ
+                    caché par Alpine et désactivait le bouton tant qu'il
+                    n'était pas rempli : Alpine ne démarrant pas sur cet
+                    écran, le bouton restait inerte. La base montrait zéro
+                    tentative pour un code demandé — rien n'avait jamais été
+                    soumis, et le message « code incorrect » n'y était pour
+                    rien.
+
+                    Désormais le formulaire part sans JavaScript. Alpine
+                    n'ajoute que le confort : avancer d'une case, reculer sur
+                    une case vide, accepter un collage de six chiffres.
+                --}}
+                <form method="POST" action="{{ route('phone.confirm') }}" class="mt-6"
+                      x-data="{
+                          avancer(e) {
+                              const cases = [...$el.querySelectorAll('.otp-case')];
+                              const i = cases.indexOf(e.target);
+                              const v = e.target.value.replace(/\D/g, '');
+
+                              if (v.length > 1) {
+                                  v.split('').slice(0, cases.length - i)
+                                      .forEach((c, k) => cases[i + k].value = c);
+                                  cases[Math.min(cases.length - 1, i + v.length)].focus();
+                                  return;
+                              }
+
+                              e.target.value = v;
+                              if (v) cases[i + 1]?.focus();
+                          },
+                          reculer(e) {
+                              if (e.key !== 'Backspace' || e.target.value) return;
+
+                              const cases = [...$el.querySelectorAll('.otp-case')];
+                              cases[cases.indexOf(e.target) - 1]?.focus();
+                          },
+                      }"
+                      x-on:input="avancer($event)"
+                      x-on:keydown="reculer($event)">
                     @csrf
 
-                    {{-- Le champ réellement soumis. Les six cases ne sont
-                         qu'une façade : un seul `name` évite d'avoir à
-                         recoller les morceaux côté serveur. --}}
-                    <input type="hidden" name="code" :value="code">
-
-                    <div class="flex justify-between gap-2" x-ref="cases" role="group"
-                         aria-label="Code à six chiffres">
+                    <div class="flex justify-between gap-2" role="group" aria-label="Code à six chiffres">
                         @for ($i = 0; $i < 6; $i++)
-                            <input type="text" inputmode="numeric" maxlength="6"
+                            <input type="text" name="code[]" inputmode="numeric" maxlength="6"
+                                   class="otp-case" placeholder=" "
                                    @if ($i === 0) autocomplete="one-time-code" autofocus @endif
-                                   class="otp-case"
-                                   x-bind:class="chiffres[{{ $i }}] && 'is-filled'"
-                                   x-model="chiffres[{{ $i }}]"
-                                   x-on:input="saisir({{ $i }}, $event)"
-                                   x-on:keydown="retour({{ $i }}, $event)"
                                    aria-label="Chiffre {{ $i + 1 }}">
                         @endfor
                     </div>
@@ -151,10 +157,7 @@
                         <p class="mt-3 text-sm text-rose-300">{{ $message }}</p>
                     @enderror
 
-                    <button type="submit" class="btn-brand mt-6 w-full"
-                            x-bind:disabled="code.length !== 6">
-                        Confirmer
-                    </button>
+                    <button type="submit" class="btn-brand mt-6 w-full">Confirmer</button>
                 </form>
             </div>
         @endif

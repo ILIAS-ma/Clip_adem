@@ -2,46 +2,83 @@
 
 <div class="space-y-6">
 
-    {{-- Les filtres sur une seule ligne, comme dans FetchClip : trois
-         décisions — la chaîne, la période, le format court — et le bouton au
-         bout. Un panneau à déplier pour trois champs coûte un clic de plus à
-         chaque recherche. --}}
-    <div class="card p-5 sm:p-6">
-        <form wire:submit="search" class="space-y-4">
-            <div class="grid gap-3 lg:grid-cols-[1fr_7rem_auto_auto] lg:items-end">
-                <div>
-                    <label class="label" for="channels">Chaînes</label>
-                    <input id="channels" type="text" wire:model="channels" class="input mt-1.5"
-                           placeholder="squeezie, gotaga">
-                </div>
+    {{--
+        Le panneau de recherche, à deux étages comme dans FetchClip.
 
-                <div>
-                    <label class="label" for="period">Période</label>
-                    <select id="period" wire:model="period" class="input mt-1.5">
-                        @foreach ($periodes as $p)
-                            <option value="{{ $p }}">{{ $p }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <label class="flex items-center gap-2.5 pb-2.5 text-sm text-ink-200 lg:pb-3">
-                    <input type="checkbox" wire:model="onlyShort"
-                           class="rounded border-ink-600 bg-ink-900 text-ink-50 focus:ring-ink-400">
-                    <span class="whitespace-nowrap">≤ {{ config('clipping.discovery.max_duration') }} s</span>
-                </label>
-
-                <button type="submit" class="btn-brand lg:mb-0.5">
-                    <span wire:loading.remove wire:target="search">Chercher</span>
-                    <span wire:loading wire:target="search">Recherche…</span>
+        En haut, ce qui coûte un appel réseau : les chaînes, la période, le
+        format. En bas, derrière un filet, ce qui ne fait que retrier ce qui
+        est déjà là. La séparation n'est pas décorative — elle dit lesquels de
+        ces réglages dépensent le quota Twitch de la plateforme, partagé par
+        tous les clippeurs.
+    --}}
+    <form wire:submit="search" class="search-card">
+        <div class="search-row">
+            <div class="scope-switch" role="group" aria-label="Portée">
+                <button type="button" wire:click="setScope('tous')"
+                        @class(['scope', 'is-active' => $scope === 'tous'])>
+                    Toutes les chaînes
+                </button>
+                <button type="button" wire:click="setScope('payes')"
+                        @class(['scope', 'is-active' => $scope === 'payes'])>
+                    Payées seulement
                 </button>
             </div>
 
-            <p class="hint">
-                Séparées par des virgules, {{ config('clipping.discovery.max_channels') }} au maximum.
-                Pré-rempli avec les streamers qui ont une campagne ouverte.
-            </p>
-        </form>
-    </div>
+            <label class="grow">
+                <span class="sr-only">Chaînes à explorer</span>
+                <input type="text" wire:model="channels" class="input"
+                       placeholder="squeezie, kamet0, gotaga" autocomplete="off">
+            </label>
+
+            <label>
+                <span class="sr-only">Période</span>
+                <select wire:model="period" class="input w-auto">
+                    @foreach ($periodes as $p)
+                        <option value="{{ $p }}">{{ $p }}</option>
+                    @endforeach
+                </select>
+            </label>
+
+            <button type="submit" class="btn-brand">
+                <span wire:loading.remove wire:target="search">Chercher</span>
+                <span wire:loading wire:target="search">Recherche…</span>
+            </button>
+        </div>
+
+        <div class="filter-row">
+            <span class="filter-label">Filtres</span>
+
+            <label class="mini-field">
+                Vues min
+                <input type="number" min="0" step="100" wire:model.live="minViews">
+            </label>
+
+            <label class="mini-field">
+                Tri
+                <select wire:model.live="sort">
+                    @foreach ($tris as $cle => $libelle)
+                        <option value="{{ $cle }}">{{ $libelle }}</option>
+                    @endforeach
+                </select>
+            </label>
+
+            <label class="switch">
+                <input type="checkbox" wire:model.live="onlyShort">
+                <span class="track"></span>
+                <span>&le; {{ config('clipping.discovery.max_duration') }} s</span>
+            </label>
+
+            <label class="switch">
+                <input type="checkbox" wire:model.live="hideKept">
+                <span class="track"></span>
+                <span>Masquer ceux de côté</span>
+            </label>
+
+            <span class="ms-auto text-xs text-ink-500">
+                {{ config('clipping.discovery.max_channels') }} chaînes au maximum, séparées par des virgules
+            </span>
+        </div>
+    </form>
 
     @if ($error !== '')
         <div class="alert-warn">{{ $error }}</div>
@@ -88,24 +125,47 @@
 
     <div wire:loading.remove wire:target="search">
         @if ($searched && $error === '')
-            <div class="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-                <h2 class="font-display text-lg font-bold text-ink-50">
-                    {{ count($results) }} clip{{ count($results) > 1 ? 's' : '' }}
-                </h2>
-                <p class="text-sm text-ink-400">Les plus vus d'abord.</p>
+            <div class="toolbar mb-3">
+                <p class="summary">
+                    <strong>{{ count($affichables) }}</strong>
+                    clip{{ count($affichables) > 1 ? 's' : '' }}
+                    @if (count($affichables) !== $trouves)
+                        {{-- Dire ce qu'un filtre a écarté : « 12 » tout seul
+                             laisse croire que la recherche a échoué. --}}
+                        <span class="text-ink-500">sur {{ $trouves }} trouvés</span>
+                    @endif
+                </p>
+
+                <div class="actions">
+                    @if ($affichables !== [])
+                        <button type="button" wire:click="keepAll" class="btn-ghost text-xs">
+                            <span wire:loading.remove wire:target="keepAll">Tout mettre de côté</span>
+                            <span wire:loading wire:target="keepAll">…</span>
+                        </button>
+                    @endif
+                </div>
             </div>
 
-            @if ($results === [])
+            @if ($affichables === [])
                 <div class="card px-6 py-14 text-center">
-                    <p class="font-display text-base font-bold text-ink-50">Rien sur cette période</p>
-                    <p class="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-300">
-                        Élargissez la période, ou décochez la limite de durée : les meilleurs
-                        moments dépassent souvent la minute.
-                    </p>
+                    @if ($trouves > 0)
+                        <p class="font-display text-base font-bold text-ink-50">Tout est filtré</p>
+                        <p class="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-300">
+                            {{ $trouves }} clip{{ $trouves > 1 ? 's ont' : ' a' }} été trouvé{{ $trouves > 1 ? 's' : '' }},
+                            mais les filtres les écartent tous. Baissez les vues minimales,
+                            ou repassez la portée sur toutes les chaînes.
+                        </p>
+                    @else
+                        <p class="font-display text-base font-bold text-ink-50">Rien sur cette période</p>
+                        <p class="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-300">
+                            Élargissez la période, ou coupez la limite de durée : les meilleurs
+                            moments dépassent souvent la minute.
+                        </p>
+                    @endif
                 </div>
             @else
                 <div class="clip-grid">
-                    @foreach ($results as $clip)
+                    @foreach ($affichables as $clip)
                         @php
                             $campagne = $campagnes->get($clip['login']);
                             $cachet = $campagne?->rateFor($tiktok);

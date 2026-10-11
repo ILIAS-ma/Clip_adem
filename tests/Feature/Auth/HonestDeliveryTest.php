@@ -199,6 +199,118 @@ class HonestDeliveryTest extends TestCase
     }
 
     #[Test]
+    public function the_six_boxes_are_submitted_as_the_form_sends_them(): void
+    {
+        /*
+         * La panne vécue, et la seule qui compte ici : le formulaire
+         * recopiait les six cases dans un champ caché par Alpine, et
+         * désactivait le bouton tant que ce champ n'était pas rempli. Alpine
+         * ne démarrant pas sur cet écran, le bouton restait inerte.
+         *
+         * La base de production le disait sans ambiguïté : zéro tentative
+         * pour un code demandé. Rien n'avait jamais été soumis — le message
+         * « code incorrect » n'y était pour rien, et chercher du côté du
+         * code lui-même ne menait nulle part.
+         *
+         * D'où ce test : le navigateur envoie six champs, et c'est cette
+         * forme-là qui doit marcher. Sans JavaScript du tout.
+         */
+        $this->piloteSms(simule: true);
+
+        $user = $this->utilisateur(['email_verified_at' => now()]);
+
+        $this->actingAs($user)
+            ->post(route('phone.send'), ['phone' => '0612345678', 'phone_country' => 'FR']);
+
+        $code = session('codeSimule');
+
+        $this->actingAs($user->fresh())
+            ->post(route('phone.confirm'), ['code' => str_split($code)])
+            ->assertSessionHasNoErrors();
+
+        $this->assertTrue($user->fresh()->hasVerifiedPhone());
+    }
+
+    #[Test]
+    public function an_incomplete_code_is_refused_without_counting_as_an_attempt(): void
+    {
+        // Une case oubliée n'est pas une tentative de devinette : la
+        // compter rapprocherait du blocage quelqu'un qui n'a rien deviné.
+        $this->piloteSms(simule: true);
+
+        $user = $this->utilisateur(['email_verified_at' => now()]);
+
+        $this->actingAs($user)
+            ->post(route('phone.send'), ['phone' => '0612345678', 'phone_country' => 'FR']);
+
+        $this->actingAs($user->fresh())
+            ->post(route('phone.confirm'), ['code' => ['1', '2', '3', '', '', '']])
+            ->assertSessionHasErrors('code');
+
+        $this->assertSame(0, $user->fresh()->phone_code_attempts);
+    }
+
+    #[Test]
+    public function the_form_can_be_submitted_without_javascript(): void
+    {
+        /*
+         * L'invariant qui avait cédé, vérifié sur le balisage lui-même.
+         *
+         * Les tests côté serveur postaient le code directement : ils
+         * passaient tous pendant que l'écran ne soumettait jamais rien. Ce
+         * qu'ils ne voyaient pas, c'était le formulaire — un champ caché
+         * rempli par Alpine, et un bouton désactivé tant qu'il restait vide.
+         *
+         * Trois propriétés suffisent à garantir qu'un navigateur peut
+         * soumettre sans JavaScript, et ce sont elles qu'on garde : des
+         * champs réellement nommés, un bouton jamais désactivé, et aucune
+         * valeur qui dépende d'une liaison dynamique.
+         */
+        $this->piloteSms(simule: true);
+
+        $user = $this->utilisateur(['email_verified_at' => now()]);
+
+        $this->actingAs($user)
+            ->post(route('phone.send'), ['phone' => '0612345678', 'phone_country' => 'FR']);
+
+        $html = $this->actingAs($user->fresh())
+            ->get(route('phone.verify'))
+            ->assertSuccessful()
+            ->getContent();
+
+        $formulaire = $this->formulaireDuCode($html);
+
+        $this->assertSame(
+            6,
+            substr_count($formulaire, 'name="code[]"'),
+            'Les six cases doivent être des champs nommés, pas une façade.',
+        );
+
+        $this->assertStringNotContainsString('disabled', $formulaire,
+            'Un bouton désactivé par une liaison dynamique est inerte sans JavaScript.');
+
+        $this->assertStringNotContainsString(':value=', $formulaire,
+            'La valeur soumise ne doit dépendre d’aucune liaison dynamique.');
+
+        $this->assertStringNotContainsString('x-model', $formulaire,
+            'Les cases ne doivent pas tenir leur valeur d’un état JavaScript.');
+    }
+
+    /** Le formulaire de saisie du code, isolé du reste de la page. */
+    protected function formulaireDuCode(string $html): string
+    {
+        $debut = strpos($html, route('phone.confirm'));
+
+        $this->assertNotFalse($debut, 'Le formulaire du code est introuvable.');
+
+        $fin = strpos($html, '</form>', $debut);
+
+        $this->assertNotFalse($fin, 'Le formulaire du code n’est pas refermé.');
+
+        return substr($html, $debut, $fin - $debut);
+    }
+
+    #[Test]
     public function the_screen_warns_before_one_even_types_a_number(): void
     {
         // Dit avant la saisie, pas après : on ne doit pas entrer son numéro
