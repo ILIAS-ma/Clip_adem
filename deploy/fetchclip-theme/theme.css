@@ -299,3 +299,32 @@ body.ca-entre .main > .tab-panel { animation: ca-descend .5s cubic-bezier(.2, .7
 
     body.ca-entre :where(.sidebar, .search-card, .main > .tab-panel) { animation: none; }
 }
+
+/* ═════════════ session expirée ═════════════ */
+
+/* En haut, au-dessus de tout : c'est la seule information qui compte à
+   cet instant, puisque plus aucune action ne passera. Le rouge du logo
+   en liseré, pas en aplat — ce n'est pas une panne, c'est une
+   reconnexion à faire. */
+.ca-session {
+    position: fixed;
+    top: 14px;
+    left: 50%;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    max-width: min(620px, calc(100vw - 32px));
+    padding: 10px 12px 10px 16px;
+    border: 1px solid var(--accent);
+    border-radius: var(--r);
+    background: var(--white);
+    box-shadow: var(--lift-3), 0 0 24px rgba(204, 63, 69, .2);
+    font-size: 12.5px;
+    color: var(--text);
+    transform: translateX(-50%);
+    animation: ca-descend .4s cubic-bezier(.2, .7, .3, 1) both;
+}
+
+.ca-session strong { font-weight: 600; }
+.ca-session .btn { flex: none; }

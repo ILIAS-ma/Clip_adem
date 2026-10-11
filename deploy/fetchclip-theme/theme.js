@@ -199,8 +199,68 @@
         // `finally` plutôt que `then` : une requête en échec doit aussi
         // faire disparaître la barre, sans quoi elle reste à 90 % et l'écran
         // paraît figé alors que l'erreur est déjà affichée.
-        return fetchOrigine.apply(this, arguments).finally(finir);
+        return fetchOrigine.apply(this, arguments)
+            .then(function (reponse) {
+                if (reponse.status === 401) sessionExpiree();
+
+                return reponse;
+            })
+            .finally(finir);
     };
+
+    /* ─────────────── la session ─────────────── */
+
+    /*
+     * Nginx vérifie la session par une sous-requête dont la réponse ne
+     * revient jamais au navigateur : le cookie de session n'était donc
+     * jamais renouvelé pendant qu'on travaillait ici. Deux heures après la
+     * dernière page du site, on était déconnecté en plein montage.
+     *
+     * On appelle donc une route du site toutes les dix minutes : sa réponse,
+     * elle, arrive au navigateur avec un cookie neuf. Tant que l'onglet est
+     * ouvert, la session tient.
+     */
+    function entretenir() {
+        fetchOrigine('/_studio-ping', { credentials: 'same-origin' })
+            .then(function (r) {
+                // Déjà expirée : mieux vaut le dire maintenant que lors du
+                // prochain clic, au milieu d'un montage.
+                if (r.status === 401 || r.redirected) sessionExpiree();
+            })
+            .catch(function () { /* réseau coupé : on réessaiera */ });
+    }
+
+    setInterval(entretenir, 10 * 60 * 1000);
+
+    // Un onglet en arrière-plan voit ses minuteurs ralentis par le
+    // navigateur : on rattrape au retour plutôt que d'attendre le suivant.
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') entretenir();
+    });
+
+    /*
+     * Session expirée : on le dit, une fois, et on propose d'y remédier.
+     *
+     * Pas de redirection automatique : elle effacerait l'écran sans
+     * prévenir, et ce qui était en cours de réglage avec lui. Un bandeau
+     * laisse le choix du moment.
+     */
+    var bandeauAffiche = false;
+
+    function sessionExpiree() {
+        if (bandeauAffiche) return;
+        bandeauAffiche = true;
+
+        var bandeau = document.createElement('div');
+        bandeau.className = 'ca-session';
+        bandeau.setAttribute('role', 'alert');
+        bandeau.innerHTML =
+            '<span><strong>Session expirée.</strong> Les actions ne passent plus ' +
+            'tant que tu ne t’es pas reconnecté.</span>' +
+            '<a href="/connexion-studio" class="btn primary sm">Se reconnecter</a>';
+
+        document.body.appendChild(bandeau);
+    }
 
     /* ─────────────── les erreurs, remontées ─────────────── */
 

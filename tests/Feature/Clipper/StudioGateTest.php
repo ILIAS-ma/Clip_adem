@@ -90,4 +90,50 @@ class StudioGateTest extends TestCase
             ->get('/_studio-auth')
             ->assertUnauthorized();
     }
+
+    #[Test]
+    public function the_gate_tells_the_tool_who_is_working(): void
+    {
+        // L'identite decide de l'espace de travail : elle doit venir d'ici,
+        // jamais du navigateur.
+        $user = $this->clipper();
+
+        $this->actingAs($user)
+            ->get('/_studio-auth')
+            ->assertNoContent()
+            ->assertHeader('X-Clipper-Id', 'c'.$user->getKey());
+    }
+
+    #[Test]
+    public function the_ping_keeps_a_clipper_session_alive(): void
+    {
+        /*
+         * Sa reponse arrive au navigateur avec un cookie neuf : c'est ce qui
+         * empeche la deconnexion en plein montage, la sous-requete de Nginx
+         * ne renouvelant jamais rien.
+         */
+        $this->actingAs($this->clipper())
+            ->get('/_studio-ping')
+            ->assertNoContent();
+    }
+
+    #[Test]
+    public function the_ping_does_not_keep_a_guest_alive(): void
+    {
+        // Sans session, le ping ne doit rien prolonger : le navigateur suit
+        // la redirection, et l'outil sait alors afficher « session expirée ».
+        // N'importe quelle redirection suffit : c'est `redirected` que le
+        // script regarde, pas sa destination.
+        $this->get('/_studio-ping')->assertRedirect();
+    }
+
+    #[Test]
+    public function reconnecting_leads_back_to_the_tool(): void
+    {
+        // Sans cela, on revenait sur le tableau de bord en ayant perdu de vue
+        // ce qu'on faisait.
+        $this->get('/connexion-studio')->assertRedirect(route('login'));
+
+        $this->assertSame(url('/fetchclip'), session('url.intended'));
+    }
 }

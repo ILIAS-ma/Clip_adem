@@ -107,6 +107,36 @@ Route::get('/_studio-auth', function () {
 })->name('studio.auth');
 
 /*
+ * Garder la session vivante pendant qu'on travaille dans FetchClip.
+ *
+ * Nginx vérifie la session par une sous-requête dont la réponse — cookie
+ * compris — ne revient jamais au navigateur. Le cookie n'était donc jamais
+ * renouvelé : deux heures après la dernière page du site, on était
+ * déconnecté en plein montage, et l'outil continuait de tourner sur des
+ * réponses vides. Le symptôme était « undefined » partout, jamais
+ * « reconnecte-toi ».
+ *
+ * Cette route, elle, répond directement au navigateur : son cookie
+ * renouvelé arrive. L'outil l'appelle à intervalle régulier.
+ */
+Route::get('/_studio-ping', fn () => response()->noContent())
+    ->middleware(['auth', 'throttle:30,1'])
+    ->name('studio.ping');
+
+/*
+ * Retour vers l'outil après une reconnexion.
+ *
+ * Sans elle, une session expirée ramenait à l'écran de connexion puis au
+ * tableau de bord, et il fallait retrouver le chemin de l'outil — en ayant
+ * perdu de vue ce qu'on faisait.
+ */
+Route::get('/connexion-studio', function () {
+    session()->put('url.intended', url('/fetchclip'));
+
+    return redirect()->route('login');
+})->name('studio.login');
+
+/*
  * Les erreurs du navigateur, remontées dans nos journaux.
  *
  * FetchClip tourne entièrement côté client : une exception y reste dans une
