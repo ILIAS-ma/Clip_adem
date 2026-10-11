@@ -86,6 +86,39 @@
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
+        {{--
+            Le numéro est demandé ici, pas plus tard.
+
+            C'est le seul identifiant qu'on ne multiplie pas à volonté : une
+            adresse jetable s'obtient en dix secondes, une ligne téléphonique
+            non. Le réclamer après coup reviendrait à laisser entrer dix
+            comptes avant de poser la question.
+        --}}
+        <div>
+            <x-input-label for="phone" value="Numéro de téléphone" />
+
+            <div class="mt-1.5 grid gap-3 sm:grid-cols-[8.5rem_1fr]">
+                <select id="phone_country" name="phone_country" class="field">
+                    @foreach (App\Support\PhoneNumber::INDICATIFS as $code => $indicatif)
+                        <option value="{{ $code }}" @selected(old('phone_country', 'FR') === $code)>
+                            {{ $code }} · +{{ $indicatif }}
+                        </option>
+                    @endforeach
+                </select>
+
+                <x-text-input id="phone" type="tel" name="phone" inputmode="tel"
+                              :value="old('phone')" required autocomplete="tel"
+                              placeholder="06 12 34 56 78" />
+            </div>
+
+            <p class="hint">
+                Un code de confirmation y sera envoyé. Il ne sert qu'à confirmer que ce compte
+                est tenu par une personne : ni démarchage, ni transmission à un tiers.
+            </p>
+            <x-input-error :messages="$errors->get('phone')" class="mt-2" />
+            <x-input-error :messages="$errors->get('phone_country')" class="mt-2" />
+        </div>
+
         <div>
             <x-input-label for="password" value="Mot de passe" />
             <x-text-input id="password" class="mt-1.5" type="password" name="password"

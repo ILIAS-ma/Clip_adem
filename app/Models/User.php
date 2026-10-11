@@ -23,7 +23,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use SensitiveParameter;
 
-#[Fillable(['name', 'pseudo', 'country', 'email', 'password', 'role', 'paypal_email'])]
+#[Fillable(['name', 'pseudo', 'country', 'email', 'phone', 'password', 'role', 'paypal_email'])]
 #[Hidden(['password', 'remember_token', 'app_authentication_secret', 'app_authentication_recovery_codes', 'iban'])]
 class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery, MustVerifyEmail
 {

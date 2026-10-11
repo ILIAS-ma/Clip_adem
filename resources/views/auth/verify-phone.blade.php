@@ -53,9 +53,14 @@
 
                     <div>
                         <label class="label" for="phone">Numéro</label>
+                        {{-- Pré-rempli avec le numéro donné à l'inscription : il
+                             n'y a plus qu'à cliquer. Le retaper serait une
+                             occasion de se tromper d'un chiffre, et le code
+                             partirait alors vers un inconnu. --}}
                         <input id="phone" name="phone" type="tel" inputmode="tel"
                                autocomplete="tel" class="input mt-1.5"
-                               placeholder="06 12 34 56 78" value="{{ old('phone') }}" required>
+                               placeholder="06 12 34 56 78"
+                               value="{{ old('phone', $user->hasVerifiedPhone() ? '' : $user->phone) }}" required>
                     </div>
                 </div>
 

@@ -27,6 +27,8 @@ class RegistrationTest extends TestCase
             'first_name' => 'Robot',
             'last_name' => 'Anonyme',
             'email' => 'robot@example.com',
+            'phone' => '0610000001',
+            'phone_country' => 'FR',
             'password' => 'motdepasse-solide',
             'password_confirmation' => 'motdepasse-solide',
         ])->assertSessionHasErrors('cf-turnstile-response');
@@ -45,6 +47,8 @@ class RegistrationTest extends TestCase
             'first_name' => 'Sans',
             'last_name' => 'Captcha',
             'email' => 'sans-captcha@example.com',
+            'phone' => '0610000002',
+            'phone_country' => 'FR',
             'password' => 'motdepasse-solide',
             'password_confirmation' => 'motdepasse-solide',
         ]);
@@ -60,6 +64,8 @@ class RegistrationTest extends TestCase
             'first_name' => 'Robot',
             'last_name' => 'Anonyme',
             'email' => 'piege@example.com',
+            'phone' => '0610000003',
+            'phone_country' => 'FR',
             'password' => 'motdepasse-solide',
             'password_confirmation' => 'motdepasse-solide',
             'website' => 'https://spam.example',
@@ -75,6 +81,8 @@ class RegistrationTest extends TestCase
             'first_name' => 'Test',
             'last_name' => 'User',
             'email' => 'test@example.com',
+            'phone' => '0610000004',
+            'phone_country' => 'FR',
             'password' => 'password',
             'password_confirmation' => 'password',
         ]);

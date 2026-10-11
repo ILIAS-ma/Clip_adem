@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureAccountIsNotBanned;
 use App\Http\Middleware\EnsureCreatorProfileExists;
+use App\Http\Middleware\EnsurePhoneIsVerified;
 use App\Http\Middleware\EnsureProfileIsComplete;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\SecurityHeaders;
@@ -43,6 +44,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'role' => EnsureRole::class,
+            'phone.verified' => EnsurePhoneIsVerified::class,
             'profile.completed' => EnsureProfileIsComplete::class,
             'creator.profile' => EnsureCreatorProfileExists::class,
             'not.banned' => EnsureAccountIsNotBanned::class,

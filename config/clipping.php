@@ -20,6 +20,17 @@ return [
     'onboarding' => [
         'require_email_verification' => env('REQUIRE_EMAIL_VERIFICATION', true),
         'require_complete_profile' => env('REQUIRE_COMPLETE_PROFILE', true),
+
+        /*
+         * Numéro confirmé pour accéder à son espace.
+         *
+         * Par défaut suspendu, et pour une raison concrète : sans prestataire
+         * SMS configuré, le code n'est écrit que dans les journaux. Activer ce
+         * contrôle avant Twilio enfermerait dehors tout le monde, y compris
+         * l'administrateur, sans autre issue que de lire un fichier de log sur
+         * le serveur. À passer à true le jour où les SMS partent réellement.
+         */
+        'require_phone_verification' => env('REQUIRE_PHONE_VERIFICATION', false),
         'require_admin_2fa' => env('REQUIRE_ADMIN_2FA', true),
 
         // Une fiche créateur créée depuis l'inscription publique naît inactive

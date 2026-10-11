@@ -147,6 +147,8 @@ class ReferralTest extends TestCase
             'first_name' => 'Lina',
             'last_name' => 'Dupont',
             'email' => 'lina@exemple.test',
+            'phone' => '0610000008',
+            'phone_country' => 'FR',
             'password' => 'motdepasse-solide',
             'password_confirmation' => 'motdepasse-solide',
             'parrain' => $code,

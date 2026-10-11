@@ -35,6 +35,8 @@ class ClipperAccessTest extends TestCase
             'first_name' => 'Lina',
             'last_name' => 'Dupont',
             'email' => 'lina@example.test',
+            'phone' => '0610000005',
+            'phone_country' => 'FR',
             'password' => 'motdepasse-solide',
             'password_confirmation' => 'motdepasse-solide',
         ])->assertRedirect();

@@ -31,6 +31,19 @@ use Illuminate\Support\Facades\Route;
  */
 $onboardingGuards = static fn (): array => array_values(array_filter([
     config('clipping.onboarding.require_email_verification') ? 'verified' : null,
+
+    /*
+     * Toujours montée, contrairement aux autres : c'est le middleware qui lit
+     * le réglage, à chaque requête. Filtrer ici figerait le choix pour toute
+     * la durée du processus.
+     *
+     * Placée avant la complétion du profil : le numéro est ce qui distingue
+     * une personne d'un compte jetable, et demander une adresse PayPal à
+     * quelqu'un dont on ne sait rien revient à préparer un versement vers un
+     * compte qu'on ne pourra pas rattacher.
+     */
+    'phone.verified',
+
     config('clipping.onboarding.require_complete_profile') ? 'profile.completed' : null,
 ]));
 
@@ -200,6 +213,9 @@ Route::middleware(['auth', 'not.banned', 'role:clipper'])->group(function () use
 Route::middleware(array_merge(
     ['auth', 'not.banned', 'role:creator'],
     config('clipping.onboarding.require_email_verification') ? ['verified'] : [],
+    // Un créateur finance des campagnes : savoir le joindre compte autant que
+    // pour un clippeur, et davantage le jour où un encaissement est contesté.
+    ['phone.verified'],
 ))
     ->prefix('createur')
     ->name('creator.')

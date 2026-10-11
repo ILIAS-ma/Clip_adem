@@ -219,11 +219,19 @@ return [
         'role' => 'rôle',
         'avatar' => 'photo de profil',
 
+        'phone' => 'numéro de téléphone',
+        'phone_country' => 'pays du numéro',
+        // Le code à usage unique. « Le champ code est obligatoire » laisse
+        // croire à un code promotionnel.
+        'code' => 'code de vérification',
+
         'payout_method' => 'moyen de paiement',
         'paypal_email' => 'adresse PayPal',
         'iban' => 'IBAN',
         'bic' => 'BIC',
         'account_holder' => 'titulaire du compte',
+
+        'kind' => 'type de compte',
 
         'title' => 'titre',
         'brief' => 'brief',

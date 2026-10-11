@@ -80,7 +80,13 @@ class PhoneVerificationController extends Controller
             return back()->withErrors(['code' => 'Code incorrect ou expiré. Demandez-en un nouveau.']);
         }
 
-        return redirect()->route('profile.edit')
+        /*
+         * Retour là où la personne allait. La garde a retenu la page demandée
+         * avant de rediriger ici : sans cela, un lien de campagne partagé
+         * perdrait sa destination à la première vérification, et l'on
+         * atterrirait sur son profil sans savoir pourquoi.
+         */
+        return redirect()->intended(route('profile.edit'))
             ->with('status', 'Votre numéro est vérifié.');
     }
 }
