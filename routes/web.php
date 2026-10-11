@@ -74,6 +74,32 @@ Route::post('/webhooks/paypal', PayPalWebhookController::class)
 
 /*
 |--------------------------------------------------------------------------
+| Garde d'accès de FetchClip
+|--------------------------------------------------------------------------
+|
+| FetchClip tourne comme service Node à côté du site, sur 127.0.0.1:3000, et
+| n'a aucune authentification : il a été écrit pour une seule machine, la
+| sienne. Nginx lui en pose une devant, en interrogeant cette route avant
+| chaque requête (`auth_request`).
+|
+| Elle répond 204 ou 401, jamais une redirection : `auth_request` traite tout
+| ce qui n'est pas 2xx comme un refus, et une redirection vers l'écran de
+| connexion serait comprise comme une panne.
+|
+| Hors des groupes `auth` : le middleware redirigerait un visiteur anonyme au
+| lieu de le refuser.
+|
+*/
+Route::get('/_studio-auth', function () {
+    $user = auth()->user();
+
+    abort_unless($user && $user->isClipper() && ! $user->is_banned, 401);
+
+    return response()->noContent();
+})->name('studio.auth');
+
+/*
+|--------------------------------------------------------------------------
 | Commun aux comptes connectés
 |--------------------------------------------------------------------------
 */
