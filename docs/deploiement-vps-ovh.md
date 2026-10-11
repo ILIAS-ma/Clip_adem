@@ -288,7 +288,7 @@ cessent de monter et plus personne n'est payé.**
 
 ```ini
 [Unit]
-Description=Clip Adem — file d'attente
+Description=Echo Clip — file d'attente
 After=network.target mysql.service
 
 [Service]

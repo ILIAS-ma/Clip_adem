@@ -1,4 +1,4 @@
-# Clip Adem
+# Echo Clip
 
 Plateforme de clipping : un administrateur crée des campagnes de promotion pour
 des créateurs avec un budget total et un taux de rémunération par plateforme.
@@ -254,7 +254,7 @@ un hashtag correct ne dit rien du respect réel du brief.
 
 ### Brancher les vraies plateformes
 
-TikTok publie **deux** guides Login Kit, aux règles opposées. Clip Adem est une
+TikTok publie **deux** guides Login Kit, aux règles opposées. Echo Clip est une
 application web serveur : c'est le guide **Web** qui s'applique, et il faut
 enregistrer une application de type Web.
 

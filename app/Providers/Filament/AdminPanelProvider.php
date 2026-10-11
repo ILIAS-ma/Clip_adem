@@ -35,7 +35,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->brandName('Clip Adem')
+            ->brandName(config('app.name'))
             ->login()
             ->profile(isSimple: false)
             /*
@@ -47,7 +47,7 @@ class AdminPanelProvider extends PanelProvider
             ->multiFactorAuthentication(
                 AppAuthentication::make()
                     ->recoverable()
-                    ->brandName('Clip Adem'),
+                    ->brandName(config('app.name')),
                 // Suspendable depuis config/clipping.php pour parcourir le
                 // back-office sans application TOTP sous la main. Le dispositif
                 // reste installé et utilisable — un administrateur peut
