@@ -308,6 +308,85 @@
         rapporter(r && r.message ? r.message : String(r), 'promesse', r && r.stack);
     });
 
+    /* ─────────────── le fichier arrive sur le PC ─────────────── */
+
+    /*
+     * FetchClip a été écrit pour tourner sur la machine du clippeur : son
+     * bouton « Télécharger » range le clip dans un dossier du disque, et
+     * « Ouvrir le dossier » ouvre l'explorateur. Ici l'outil tourne sur le
+     * serveur — le clip arrivait dans un dossier du serveur, l'explorateur
+     * s'ouvrait sur le serveur, et rien n'atteignait jamais le PC. Pour le
+     * clippeur, le téléchargement « ne marchait pas ».
+     *
+     * On rétablit donc le geste d'origine : dès que le serveur a fini — un
+     * clip récupéré, un montage rendu, une série ou un lot terminés — le
+     * fichier part dans les téléchargements du navigateur.
+     */
+    function enregistrer(dossier, nom) {
+        if (!nom) return;
+        var lien = document.createElement('a');
+        lien.href = '/api/file?folder=' + dossier + '&name=' + encodeURIComponent(nom);
+        lien.download = nom;
+        lien.style.display = 'none';
+        document.body.appendChild(lien);
+        lien.click();
+        lien.remove();
+    }
+
+    // Une tâche est suivie par des relevés répétés : ses fichiers ne
+    // partent qu'une fois, au premier relevé qui la dit terminée.
+    var dejaEnvoyes = {};
+
+    function envoyerUneFois(cle, dossier, nom) {
+        if (dejaEnvoyes[cle]) return;
+        dejaEnvoyes[cle] = true;
+        enregistrer(dossier, nom);
+    }
+
+    var fetchSansFichiers = window.fetch;
+
+    window.fetch = function (entree, options) {
+        var adresse = typeof entree === 'string' ? entree : (entree && entree.url) || '';
+        var methode = ((options && options.method) || 'GET').toUpperCase();
+
+        // Ouvrir un dossier du serveur ne montre rien à personne.
+        if (adresse.indexOf('/api/open-folder') === 0) {
+            return Promise.resolve(new Response('{"ok":true}', {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' },
+            }));
+        }
+
+        var promesse = fetchSansFichiers.apply(this, arguments);
+
+        var suivie = (methode === 'POST' && (adresse === '/api/download' || adresse === '/api/render'))
+            || adresse.indexOf('/api/series/status') === 0
+            || adresse.indexOf('/api/batch/status') === 0;
+
+        if (suivie) {
+            promesse.then(function (reponse) {
+                if (!reponse.ok) return;
+
+                reponse.clone().json().then(function (d) {
+                    if (adresse === '/api/download' && d.file) {
+                        enregistrer('clips', String(d.file).split(/[\\/]/).pop());
+                    } else if (adresse === '/api/render' && d.name) {
+                        enregistrer('montages', d.name);
+                    } else if (d.job && d.job.state === 'termine') {
+                        (d.job.results || []).forEach(function (r) {
+                            envoyerUneFois(d.job.id + r.name, 'montages', r.name);
+                        });
+                        (d.job.items || []).forEach(function (i) {
+                            if (i.state === 'terminé') envoyerUneFois(d.job.id + i.name, 'montages', i.name);
+                        });
+                    }
+                }).catch(function () {});
+            }).catch(function () {});
+        }
+
+        return promesse;
+    };
+
     /* ─────────────── l'enchaînement ─────────────── */
 
     /*

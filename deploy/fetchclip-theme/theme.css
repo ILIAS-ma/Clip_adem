@@ -328,3 +328,7 @@ body.ca-entre .main > .tab-panel { animation: ca-descend .5s cubic-bezier(.2, .7
 
 .ca-session strong { font-weight: 600; }
 .ca-session .btn { flex: none; }
+
+/* « Ouvrir le dossier » ouvrait l'explorateur du serveur : invisible pour
+   le clippeur. Les fichiers arrivent dans ses téléchargements (theme.js). */
+#open-folder, #open-fonds, #result-open, #open-sources { display: none !important; }
