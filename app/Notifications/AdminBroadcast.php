@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Support\MailDelivery;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -28,7 +29,9 @@ class AdminBroadcast extends Notification implements ShouldQueue
     /** @return array<int, string> */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        // Sans prestataire d'envoi, l'e-mail ne partirait que vers le journal
+        // du serveur : le message arrive alors par la messagerie seule.
+        return MailDelivery::isActive() ? ['mail', 'database'] : ['database'];
     }
 
     /** @return array<string, mixed> */

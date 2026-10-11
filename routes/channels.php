@@ -20,3 +20,8 @@ Broadcast::channel('conversation.{conversation}', function (User $user, Conversa
 });
 
 Broadcast::channel('staff.inbox', fn (User $user) => $user->isStaff());
+
+// Les notifications du back-office : Filament s'y abonne de lui-même dès
+// que la diffusion est configurée. Sans cette déclaration, chaque page de
+// l'admin essuyait un refus 403 dans la console.
+Broadcast::channel('App.Models.User.{id}', fn (User $user, int $id) => $user->getKey() === $id);

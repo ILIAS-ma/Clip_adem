@@ -68,3 +68,9 @@ Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=3')
     ->everyMinute()
     ->withoutOverlapping()
     ->runInBackground();
+
+// La messagerie ne garde que trois mois d'historique : chaque message part
+// trois mois après son envoi (voir PurgeMessagesCommand).
+Schedule::command('messages:purge')
+    ->dailyAt('04:30')
+    ->withoutOverlapping();

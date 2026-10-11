@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use App\Events\MessagePosted;
 use App\Filament\Actions\PasswordResetLinkAction;
 use App\Filament\Pages\Messagerie;
+use App\Filament\Pages\SendBroadcast;
 use App\Filament\Resources\Clippers\Pages\ListClippers;
 use App\Livewire\Messages;
 use App\Models\Conversation;
@@ -215,6 +216,79 @@ class MessagingTest extends TestCase
 
         $this->assertTrue($boite($this->staff()));
         $this->assertFalse($boite($proprietaire));
+    }
+
+    #[Test]
+    public function a_group_announcement_lands_in_each_chat(): void
+    {
+        /*
+         * La page d'annonce n'envoyait que des e-mails : le site n'en
+         * envoyant pas, rien n'arrivait. Elle écrit maintenant dans le fil de
+         * chacun — et ne vise plus les seules adresses confirmées, qui sont
+         * presque inexistantes tant que la confirmation est suspendue.
+         */
+        Event::fake([MessagePosted::class]);
+        config(['mail.default' => 'log']);
+
+        $a = $this->clipper(['email_verified_at' => null]);
+        $b = $this->clipper();
+        $banni = $this->clipper(['is_banned' => true]);
+        $createur = User::factory()->create(['role' => UserRole::Creator]);
+
+        Livewire::actingAs($this->staff())
+            ->test(SendBroadcast::class)
+            ->set('data.audience', 'clippers')
+            ->set('data.subject', 'Nouvelle campagne')
+            ->set('data.body', 'Elle ouvre demain.')
+            ->set('data.action_label', 'Voir')
+            ->set('data.action_url', 'https://echoclip.fr/campagnes')
+            ->call('send')
+            ->assertHasNoErrors();
+
+        foreach ([$a, $b] as $clipper) {
+            $message = Conversation::for($clipper)->messages()->sole();
+            $this->assertTrue($message->from_staff);
+            $this->assertSame("Nouvelle campagne\n\nElle ouvre demain.\n\nVoir : https://echoclip.fr/campagnes", $message->body);
+            $this->assertSame(1, $clipper->notifications()->count());
+        }
+
+        $this->assertSame(0, Conversation::for($banni)->messages()->count());
+        $this->assertSame(0, Conversation::for($createur)->messages()->count());
+        Event::assertDispatchedTimes(MessagePosted::class, 2);
+    }
+
+    #[Test]
+    public function messages_older_than_three_months_are_erased(): void
+    {
+        $clipper = $this->clipper();
+        $ancien = $this->clipper();
+
+        $conversation = Conversation::for($clipper);
+        $vieux = $conversation->post($clipper, 'Il y a quatre mois');
+        $vieux->forceFill(['created_at' => now()->subMonths(4)])->save();
+        $conversation->post($clipper, 'Hier');
+
+        $fil = Conversation::for($ancien);
+        $fil->post($ancien, 'Très vieux')->forceFill(['created_at' => now()->subDays(91)])->save();
+
+        $this->artisan('messages:purge')->assertSuccessful();
+
+        $this->assertSame(['Hier'], $conversation->messages()->pluck('body')->all());
+
+        // Un fil vidé quitte la boîte de réception de l'équipe.
+        $this->assertNull($fil->fresh()->last_message_at);
+        $this->assertNotNull($conversation->fresh()->last_message_at);
+    }
+
+    #[Test]
+    public function the_purge_refuses_a_zero_duration(): void
+    {
+        $clipper = $this->clipper();
+        Conversation::for($clipper)->post($clipper, 'À garder');
+
+        $this->artisan('messages:purge', ['--days' => 0])->assertFailed();
+
+        $this->assertSame(1, \App\Models\Message::count());
     }
 
     #[Test]
