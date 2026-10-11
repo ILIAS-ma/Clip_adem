@@ -43,32 +43,6 @@ class DashboardController extends Controller
             'accountsCount' => $clipper->socialAccounts()->count(),
             'needsReconnect' => $clipper->socialAccounts()->where('needs_reconnect', true)->count(),
 
-            /*
-             * Le rail du tableau de bord : trois listes classées, lues d'un
-             * coup d'œil. Elles répondent à des questions différentes de
-             * celles des cartes — « où aller maintenant », « qu'est-ce qui
-             * marche chez moi », « suis-je en état de participer » — et c'est
-             * pour cela qu'elles ne se mélangent pas au reste.
-             */
-            'liveCampaigns' => Campaign::where('status', CampaignStatus::Active)
-                ->where(fn ($q) => $q->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
-                ->with(['creator', 'rates'])
-                ->withCount('clips')
-                ->get()
-                // Classées sur le meilleur cachet, pas sur la date : le
-                // clippeur choisit où aller, et c'est le tarif qui décide.
-                ->sortByDesc(fn (Campaign $c) => $c->rates->max('rate_per_1k_cents') ?? 0)
-                ->take(6)
-                ->values(),
-
-            // Sur les vues rémunérées, jamais les vues brutes : c'est ce qui
-            // a réellement rapporté, donc ce qu'il faut refaire.
-            'topClips' => $clips->sortByDesc(fn (Clip $clip) => $clip->paid_views)
-                ->take(5)
-                ->values(),
-
-            'accounts' => $clipper->socialAccounts()->get(),
-
             // Calendrier : campagnes déjà actives mais dont la diffusion n'a
             // pas commencé, pour anticiper plutôt que découvrir une campagne
             // déjà à moitié consommée par d'autres.

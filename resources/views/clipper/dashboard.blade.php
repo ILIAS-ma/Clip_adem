@@ -101,17 +101,6 @@
             </div>
         </div>
 
-        {{--
-            Deux colonnes, comme dans FetchClip : le détail à gauche, un rail
-            de listes classées à droite. Le rail répond à des questions que
-            les cartes ne posent pas — « où aller maintenant », « qu'est-ce
-            qui marche chez moi » — et il tient trois fois plus de lignes dans
-            la même hauteur, ce qui est tout l'intérêt d'un classement.
-        --}}
-        <div class="grid gap-7 lg:grid-cols-[1fr_17rem] lg:items-start">
-
-            <div class="min-w-0 space-y-7">
-
         <div class="grid gap-6 lg:grid-cols-3">
             <x-level-card class="lg:col-span-2" :progression="$progression" />
 
@@ -237,105 +226,5 @@
             @endif
         </div>
 
-            </div>
-
-            {{-- Le rail. --}}
-            <aside class="space-y-7">
-
-                <section class="side-block">
-                    <div class="side-head">
-                        <span class="side-title"><span class="live-pulse"></span> Ouvertes maintenant</span>
-                    </div>
-
-                    <div class="side-list">
-                        @forelse ($liveCampaigns as $rang => $campagne)
-                            @php $cachet = $campagne->rates->max('rate_per_1k_cents'); @endphp
-
-                            <a href="{{ route('campaigns.show', $campagne) }}" wire:navigate class="side-item">
-                                <span class="rank">{{ $rang + 1 }}</span>
-                                <span class="who">
-                                    <span class="cname">{{ $campagne->title }}</span>
-                                    <span class="cmeta">{{ $campagne->creator?->name }}</span>
-                                </span>
-                                {{-- Le cachet, pas le budget : c'est ce que le
-                                     clippeur compare d'une campagne à l'autre. --}}
-                                <span class="count">{{ $cachet ? Money::euros($cachet) : '—' }}</span>
-                            </a>
-                        @empty
-                            <span class="side-item is-empty">Aucune campagne ouverte.</span>
-                        @endforelse
-                    </div>
-
-                    <p class="side-note">Classées sur le meilleur cachet aux 1000 vues.</p>
-                </section>
-
-                <section class="side-block">
-                    <div class="side-head">
-                        <span class="side-title">Mes meilleurs clips</span>
-                    </div>
-
-                    <div class="side-list">
-                        @forelse ($topClips as $rang => $clip)
-                            <a href="{{ route('clips.show', $clip) }}" wire:navigate class="side-item">
-                                <span class="rank">{{ $rang + 1 }}</span>
-                                <span class="who">
-                                    <span class="cname">{{ $clip->campaign?->title ?? 'Clip' }}</span>
-                                    <span class="cmeta">{{ Money::views($clip->paid_views) }} vues payées</span>
-                                </span>
-                                <span class="count">{{ Money::euros($clip->earned_cents) }}</span>
-                            </a>
-                        @empty
-                            <span class="side-item is-empty">Rien encore publié.</span>
-                        @endforelse
-                    </div>
-
-                    {{-- Sur les vues rémunérées, jamais les vues brutes : c'est
-                         ce qui a réellement rapporté, donc ce qu'il faut
-                         refaire. --}}
-                    <p class="side-note">Sur les vues réellement rémunérées.</p>
-                </section>
-
-                <section class="side-block">
-                    <div class="side-head">
-                        <span class="side-title">Mes comptes</span>
-                        <a href="{{ route('accounts.index') }}" wire:navigate
-                           class="text-xs font-semibold text-ink-400 hover:text-ink-100">Gérer</a>
-                    </div>
-
-                    <div class="side-list">
-                        @forelse ($accounts as $compte)
-                            <span class="side-item">
-                                <span class="who">
-                                    <span class="cname">{{ '@'.$compte->handle }}</span>
-                                    <span class="cmeta">{{ $compte->platform->label() }}</span>
-                                </span>
-                                @if ($compte->needs_reconnect)
-                                    <span class="pill is-bad">à reconnecter</span>
-                                @endif
-                            </span>
-                        @empty
-                            <span class="side-item is-empty">Aucun compte lié.</span>
-                        @endforelse
-                    </div>
-                </section>
-
-                <section class="side-block">
-                    <div class="side-head">
-                        <span class="side-title">Trouver un clip</span>
-                    </div>
-
-                    {{-- Adresse brute et sans wire:navigate : la page
-                         n'appartient pas à Laravel, c'est FetchClip servi par
-                         Nginx depuis son propre service. --}}
-                    <a href="/fetchclip" class="side-item">
-                        <span class="who">
-                            <span class="cname">FetchClip</span>
-                            <span class="cmeta">Repérer · Couper · Publier</span>
-                        </span>
-                        <span class="count">→</span>
-                    </a>
-                </section>
-            </aside>
-        </div>
     </div>
 </x-app-layout>
