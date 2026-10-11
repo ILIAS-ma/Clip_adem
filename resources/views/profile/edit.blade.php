@@ -13,9 +13,16 @@
             @include('profile.partials.update-profile-information-form')
         </div>
 
-        <div class="card p-6 sm:p-8">
-            @include('profile.partials.phone-summary')
-        </div>
+        {{-- Proposé seulement si un SMS peut partir, ou si la vérification est
+             exigée. Sinon le bloc invite à une action qui échoue : avec une
+             cinquantaine de clippeurs, chacun l'essaierait, et chacun
+             conclurait que le site est cassé. --}}
+        @if (app(App\Services\Sms\SmsManager::class)->isConfigured()
+            || config('clipping.onboarding.require_phone_verification'))
+            <div class="card p-6 sm:p-8">
+                @include('profile.partials.phone-summary')
+            </div>
+        @endif
 
         <div class="card p-6 sm:p-8">
             @include('profile.partials.update-password-form')

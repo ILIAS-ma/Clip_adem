@@ -18,9 +18,20 @@ class SyncClipViewsCommand extends Command
 
     public function handle(ClipSyncService $sync, SocialProviderManager $providers): int
     {
+        /*
+         * Seulement les plateformes réellement utilisables. En production,
+         * YouTube et Instagram n'ont pas de clés : les parcourir faisait
+         * lever la commande à chaque passage, toutes les cinq minutes. TikTok
+         * passant en premier il était relevé quand même — mais un simple
+         * changement d'ordre aurait arrêté le relevé, donc les paiements, de
+         * tous les clippeurs.
+         */
         $platforms = $this->option('platform')
             ? [Platform::from($this->option('platform'))]
-            : Platform::cases();
+            : array_values(array_filter(
+                Platform::cases(),
+                fn (Platform $p) => $providers->isAvailable($p),
+            ));
 
         $rows = [];
 

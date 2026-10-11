@@ -28,7 +28,10 @@ class PhoneVerificationController extends Controller
 
             // L'écran doit pouvoir le dire avant tout envoi, pour qu'on ne
             // saisisse pas un numéro en croyant qu'un SMS va partir.
-            'simule' => $this->sms->driver()->isSimulated(),
+            // Demandé au gestionnaire et non au pilote : en production sans
+            // prestataire, obtenir le pilote lève — la page entière aurait
+            // rendu une erreur au lieu de dire que les SMS ne partent pas.
+            'simule' => ! $this->sms->isConfigured(),
         ]);
     }
 

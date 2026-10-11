@@ -211,11 +211,33 @@ class SidebarTest extends TestCase
          * atteignable seulement en tapant l'adresse. Un dispositif qu'on ne
          * trouve pas ne protège rien.
          */
+        config([
+            'services.twilio.account_sid' => 'AC-test',
+            'services.twilio.auth_token' => 'jeton',
+            'services.twilio.from' => '+33600000000',
+        ]);
+
         $this->actingAs($this->clipper())
             ->get(route('profile.edit'))
             ->assertSuccessful()
             ->assertSee(route('phone.verify', absolute: false), escape: false)
             ->assertSee('Vérifier mon numéro');
+    }
+
+    #[Test]
+    public function the_phone_block_is_hidden_when_no_sms_can_leave(): void
+    {
+        // Sinon il invite à une action qui échoue — et cinquante clippeurs
+        // l'essaieraient chacun, pour conclure que le site est cassé.
+        config([
+            'services.twilio.account_sid' => null,
+            'clipping.onboarding.require_phone_verification' => false,
+        ]);
+
+        $this->actingAs($this->clipper())
+            ->get(route('profile.edit'))
+            ->assertSuccessful()
+            ->assertDontSee('Vérifier mon numéro');
     }
 
     #[Test]
