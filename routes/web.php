@@ -93,7 +93,15 @@ Route::get('/_studio-auth', function () {
 
     abort_unless($user && $user->isClipper() && ! $user->is_banned, 401);
 
-    return response()->noContent();
+    /*
+     * L'identité repart dans un en-tête, que Nginx relaie à l'outil : c'est
+     * elle qui décide de l'espace de travail où ses fichiers atterrissent.
+     *
+     * Elle vient d'ici et non du navigateur, et c'est tout l'intérêt : un
+     * en-tête que le client pourrait poser lui-même laisserait n'importe
+     * qui lire l'espace de n'importe qui en changeant un chiffre.
+     */
+    return response()->noContent()->header('X-Clipper-Id', 'c'.$user->getKey());
 })->name('studio.auth');
 
 /*
