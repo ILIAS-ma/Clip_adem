@@ -202,6 +202,52 @@
         return fetchOrigine.apply(this, arguments).finally(finir);
     };
 
+    /* ─────────────── les erreurs, remontées ─────────────── */
+
+    /*
+     * L'outil tourne entièrement dans le navigateur : une exception y
+     * reste dans une console que personne ne regarde, et ce qui nous
+     * parvient est « ça ne marche pas ». On les renvoie au serveur, où
+     * elles rejoignent les journaux du site.
+     *
+     * Les deux évènements comptent : `error` pour ce qui casse dans un
+     * gestionnaire, `unhandledrejection` pour une promesse rejetée sans
+     * `catch` — et c'est souvent celle-là, puisque tout l'outil est fait
+     * d'appels asynchrones.
+     */
+    var dejaVues = {};
+
+    function rapporter(message, source, trace) {
+        // Une boucle d'erreurs enverrait mille requêtes par seconde : on ne
+        // signale chaque message qu'une fois par chargement de page.
+        var cle = String(message).slice(0, 120);
+
+        if (dejaVues[cle]) return;
+        dejaVues[cle] = true;
+
+        var corps = new FormData();
+        corps.append('message', String(message || '').slice(0, 300));
+        corps.append('source', String(source || '').slice(0, 200));
+        corps.append('trace', String(trace || '').slice(0, 1500));
+
+        // `fetchOrigine` et non `fetch` : passer par notre enveloppe ferait
+        // monter la barre de progression pour un envoi invisible.
+        fetchOrigine('/_studio-log', {
+            method: 'POST',
+            body: corps,
+        }).catch(function () { /* le rapport d'erreur ne doit pas en créer une */ });
+    }
+
+    window.addEventListener('error', function (e) {
+        rapporter(e.message, e.filename + ':' + e.lineno, e.error && e.error.stack);
+    });
+
+    window.addEventListener('unhandledrejection', function (e) {
+        var r = e.reason;
+
+        rapporter(r && r.message ? r.message : String(r), 'promesse', r && r.stack);
+    });
+
     /* ─────────────── l'enchaînement ─────────────── */
 
     /*

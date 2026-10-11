@@ -42,6 +42,15 @@ return Application::configure(basePath: dirname(__DIR__))
             users: fn ($request) => $request->user()->role->homeRoute(),
         );
 
+        /*
+         * Le rapport d'erreur vient de FetchClip, dont la page n'est pas
+         * rendue par Laravel : elle ne porte aucun jeton CSRF, et il n'y a
+         * rien à protéger — la route n'écrit qu'une ligne de journal, elle
+         * est réservée aux clippeurs connectés et débitée à vingt par
+         * minute.
+         */
+        $middleware->validateCsrfTokens(except: ['_studio-log']);
+
         $middleware->alias([
             'role' => EnsureRole::class,
             'phone.verified' => EnsurePhoneIsVerified::class,

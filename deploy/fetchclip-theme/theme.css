@@ -134,11 +134,18 @@
 
 .plat[data-platform="kick"] { display: none; }
 
-/* L'onglet « Série » est retiré : il découpe une vidéo longue déposée à
-   la main en plusieurs verticales, et rien ne permet de déposer un
-   fichier depuis un navigateur sur un serveur partagé. Un onglet qui ne
+/* Deux onglets retirés.
+
+   « Série » découpe une vidéo longue déposée à la main dans un dossier,
+   et rien ne permet de déposer un fichier depuis un navigateur sur un
+   serveur partagé.
+
+   « Publication » prépare des légendes à coller, mais l'envoi reste
+   manuel : publier depuis la plateforme demande la portée video.publish
+   de TikTok, qui est une seconde demande d'approbation. Un onglet qui ne
    peut rien faire se clique quand même, puis déçoit. */
-.tab[data-tab="series"] { display: none; }
+.tab[data-tab="series"],
+.tab[data-tab="publish"] { display: none; }
 
 /* Le sélecteur n'a plus qu'un choix : il devient un libellé, pas un
    contrôle. Laisser une case à cocher qui ne coche rien laisse croire à

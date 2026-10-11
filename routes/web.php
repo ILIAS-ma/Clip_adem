@@ -17,6 +17,8 @@ use App\Http\Controllers\Creator\ProfileController as CreatorProfileController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PayPalWebhookController;
 use App\Http\Controllers\ProfileController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -103,6 +105,30 @@ Route::get('/_studio-auth', function () {
      */
     return response()->noContent()->header('X-Clipper-Id', 'c'.$user->getKey());
 })->name('studio.auth');
+
+/*
+ * Les erreurs du navigateur, remontées dans nos journaux.
+ *
+ * FetchClip tourne entièrement côté client : une exception y reste dans une
+ * console que nous ne voyons pas, et le symptôme qui nous parvient est « ça
+ * ne marche pas ». Diagnostiquer revenait à deviner, puis à faire deviner la
+ * personne en face.
+ *
+ * Débitée, et volontairement pauvre : trois champs, tronqués. Un journal
+ * qu'on peut remplir depuis l'extérieur est un journal qu'on peut noyer.
+ */
+Route::post('/_studio-log', function (Request $request) {
+    abort_unless(auth()->user()?->isClipper(), 404);
+
+    Log::warning('Erreur dans le mode créateur', [
+        'user_id' => auth()->id(),
+        'message' => mb_substr((string) $request->input('message'), 0, 300),
+        'source' => mb_substr((string) $request->input('source'), 0, 200),
+        'trace' => mb_substr((string) $request->input('trace'), 0, 1500),
+    ]);
+
+    return response()->noContent();
+})->middleware(['auth', 'throttle:20,1'])->name('studio.log');
 
 /*
 |--------------------------------------------------------------------------
