@@ -8,6 +8,7 @@ use App\Http\Controllers\Clipper\DashboardController;
 use App\Http\Controllers\Clipper\DiscoveryController;
 use App\Http\Controllers\Clipper\EarningsController;
 use App\Http\Controllers\Clipper\LeaderboardController;
+use App\Http\Controllers\Clipper\MediaController;
 use App\Http\Controllers\Clipper\PayoutMethodController;
 use App\Http\Controllers\Clipper\ProfileCompletionController;
 use App\Http\Controllers\Clipper\ReferralController;
@@ -171,6 +172,18 @@ Route::middleware(['auth', 'not.banned', 'role:clipper'])->group(function () use
         // Ancienne adresse, conservée : elle a circulé en interne, et un 404
         // sur un lien partagé coûte plus qu'une ligne de redirection.
         Route::redirect('/decouverte', '/mode-createur');
+
+        /*
+         * Les fichiers de travail. Le disque est privé : rien n'est servi
+         * par le serveur web, tout passe par ici. C'est ce qui empêche
+         * qu'une adresse devinée donne accès au travail d'un autre — les
+         * noms de fichiers contiennent le titre du clip.
+         */
+        Route::get('/mode-createur/fichiers/{asset}', [MediaController::class, 'download'])
+            ->name('media.download');
+
+        Route::delete('/mode-createur/fichiers/{asset}', [MediaController::class, 'destroy'])
+            ->name('media.destroy');
 
         Route::get('/mes-clips', [ClipController::class, 'index'])->name('clips.index');
         Route::get('/mes-clips/{clip}', [ClipController::class, 'show'])->name('clips.show');

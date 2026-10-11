@@ -30,6 +30,14 @@ use Illuminate\Support\Facades\Schedule;
  * d'une même campagne, c'est l'ordre de passage qui déciderait, pas leurs
  * vues.
  */
+/*
+ * Purge des fichiers de travail. Chaque nuit, parce que le disque est
+ * partagé avec MySQL et les journaux : un espace qui ne se vide jamais finit
+ * par arrêter le site entier, et la panne ressemblera à une base de données
+ * qui refuse d'écrire, pas à un problème de stockage.
+ */
+Schedule::command('media:purge')->dailyAt('04:10');
+
 Schedule::command('clips:sync')
     ->everyFiveMinutes()
     ->withoutOverlapping()

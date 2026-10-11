@@ -174,6 +174,33 @@ return [
     ],
 
     /*
+    | Traitement vidéo : téléchargement et montage vertical.
+    |
+    | Les deux garde-fous qui comptent ne sont pas des réglages de confort.
+    |
+    | Le quota protège le disque, partagé avec MySQL et les journaux : un
+    | espace qui ne se vide jamais finit par arrêter le site entier, pas
+    | seulement l'outil. La purge fait le reste du travail.
+    |
+    | Le nombre de fils de ffmpeg protège le site : la machine a quatre cœurs
+    | et sert aussi les pages. Deux fils laissent de quoi répondre pendant un
+    | rendu ; quatre rendent l'interface inutilisable le temps du calcul.
+    */
+    'media' => [
+        'quota_mo' => env('MEDIA_QUOTA_MO', 2048),
+        'purge_days' => env('MEDIA_PURGE_DAYS', 7),
+        'download_timeout' => 240,
+        'render_timeout' => 900,
+        'render_threads' => 2,
+        'max_source_mo' => 200,
+
+        // Laisser vide : déduit du PATH.
+        'yt_dlp_path' => env('YTDLP_PATH'),
+        'ffmpeg_path' => env('FFMPEG_PATH'),
+        'ffprobe_path' => env('FFPROBE_PATH'),
+    ],
+
+    /*
     | Découverte de clips à reprendre.
     |
     | Le quota Twitch est partagé par tous les clippeurs : la mise en cache

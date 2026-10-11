@@ -6,9 +6,12 @@ use App\Enums\CampaignStatus;
 use App\Enums\CreatorKind;
 use App\Enums\Platform;
 use App\Exceptions\ClipSearchFailed;
+use App\Jobs\DownloadSourceClip;
 use App\Models\Campaign;
 use App\Models\ClipBookmark;
+use App\Models\MediaAsset;
 use App\Services\Discovery\ClipFinderManager;
+use App\Services\Media\Workspace;
 use App\Support\Discovery\ClipSearch;
 use App\Support\Discovery\FoundClip;
 use Illuminate\Support\Collection;
@@ -208,6 +211,77 @@ class ClipDiscovery extends Component
         }
     }
 
+    /**
+     * Met un clip en file de téléchargement.
+     *
+     * En file et non tout de suite : un clip met cinq à trente secondes à
+     * arriver, et une requête qui attend ça occupe un processus PHP pendant
+     * tout ce temps. Quatre clippeurs simultanés suffiraient à ce que le site
+     * ne réponde plus.
+     */
+    public function download(int $bookmark): void
+    {
+        $garde = ClipBookmark::forUser(auth()->user())->find($bookmark);
+
+        if ($garde === null) {
+            return;
+        }
+
+        $espace = Workspace::for(auth()->user());
+
+        if ($espace->resteOctets() <= 0) {
+            $this->error = 'Votre espace est plein. Supprimez des fichiers avant d’en télécharger d’autres.';
+
+            return;
+        }
+
+        /*
+         * Une seule ligne par clip repéré : recliquer ne relance rien tant
+         * que le fichier est là ou en route. Sans cette garde, un clic répété
+         * ferait autant de téléchargements du même clip, chacun comptant dans
+         * le quota.
+         */
+        $existant = MediaAsset::forUser(auth()->user())
+            ->where('clip_bookmark_id', $garde->getKey())
+            ->whereIn('status', [MediaAsset::EN_ATTENTE, MediaAsset::EN_COURS, MediaAsset::PRET])
+            ->first();
+
+        if ($existant !== null) {
+            return;
+        }
+
+        $asset = MediaAsset::create([
+            'user_id' => auth()->id(),
+            'kind' => MediaAsset::SOURCE,
+            'clip_bookmark_id' => $garde->getKey(),
+            'label' => $garde->title,
+            'status' => MediaAsset::EN_ATTENTE,
+        ]);
+
+        DownloadSourceClip::dispatch($asset);
+    }
+
+    /** Relance un téléchargement qui a échoué. */
+    public function retryDownload(int $asset): void
+    {
+        $ligne = MediaAsset::forUser(auth()->user())
+            ->where('kind', MediaAsset::SOURCE)
+            ->find($asset);
+
+        if ($ligne === null || ! $ligne->aEchoue()) {
+            return;
+        }
+
+        $ligne->update(['status' => MediaAsset::EN_ATTENTE, 'error' => null]);
+
+        DownloadSourceClip::dispatch($ligne);
+    }
+
+    public function deleteFile(int $asset): void
+    {
+        MediaAsset::forUser(auth()->user())->find($asset)?->supprimerAvecFichier();
+    }
+
     public function forget(int $bookmark): void
     {
         // Portée par l'utilisateur, jamais par l'identifiant seul : sans ce
@@ -351,10 +425,23 @@ class ClipDiscovery extends Component
             'lecturePossible' => ! app(ClipFinderManager::class)->driver()->isSimulated(),
 
             'selection' => ClipBookmark::forUser(auth()->user())
-                ->with('campaign')
+                ->with(['campaign', 'medias'])
                 ->orderByRaw('taken_at is not null')
                 ->latest()
                 ->get(),
+
+            /*
+             * Les fichiers du clippeur, et l'état de son espace. Affichés
+             * même vides : c'est là qu'on vient voir si un téléchargement a
+             * abouti, et un bloc absent se lit comme une fonctionnalité
+             * manquante.
+             */
+            'fichiers' => MediaAsset::forUser(auth()->user())
+                ->sources()
+                ->latest()
+                ->get(),
+
+            'espace' => Workspace::for(auth()->user()),
 
             'dejaPris' => $this->dejaPris(),
 

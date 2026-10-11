@@ -225,6 +225,87 @@
         @endif
     </div>
 
+    {{--
+        Mes fichiers.
+
+        Rafraichi toutes les cinq secondes, et seulement s'il y a un travail en
+        cours : un sondage permanent sur une page ouverte toute la journee
+        couterait une requete toutes les cinq secondes pour rien.
+    --}}
+    <div class="stack"
+         @if ($fichiers->contains(fn ($f) => $f->enTravail())) wire:poll.5s @endif>
+
+        <div class="toolbar">
+            <p class="summary">
+                <strong>Mes fichiers</strong>
+                {{ $fichiers->count() }} source{{ $fichiers->count() > 1 ? 's' : '' }} ·
+                {{ number_format($espace->occupeOctets() / 1024 / 1024, 0, ',', ' ') }}
+                sur {{ config('clipping.media.quota_mo') }} Mo
+            </p>
+
+            <div class="actions">
+                <span class="pill {{ $espace->resteOctets() > 0 ? '' : 'bad' }}">
+                    {{ number_format($espace->resteOctets() / 1024 / 1024, 0, ',', ' ') }} Mo libres
+                </span>
+                <span class="pill">effaces apres {{ config('clipping.media.purge_days') }} jours</span>
+            </div>
+        </div>
+
+        @if ($fichiers->isEmpty())
+            <div class="surface empty">
+                <strong>Aucun fichier</strong>
+                Depuis votre selection, cliquez « Recuperer le mp4 » : le serveur le telecharge
+                en arriere-plan, puis vous le reprenez ici pour le monter.
+            </div>
+        @else
+            <div class="surface">
+                <table style="width: 100%; border-collapse: collapse">
+                    <tbody>
+                        @foreach ($fichiers as $fichier)
+                            <tr style="border-top: 1px solid var(--line)">
+                                <td style="padding: 10px 14px">
+                                    <div style="font-weight: 550; font-size: 13px">{{ $fichier->label }}</div>
+                                    <div class="meta">
+                                        @if ($fichier->estPret())
+                                            {{ $fichier->tailleLisible() }}
+                                            @if ($fichier->duration_seconds)
+                                                · {{ $fichier->dureeLisible() }}
+                                            @endif
+                                            · expire le {{ $fichier->expires_at?->format('d/m') }}
+                                        @elseif ($fichier->aEchoue())
+                                            <span style="color: var(--err)">{{ $fichier->error }}</span>
+                                        @else
+                                            {{ $fichier->libelleStatut() }}...
+                                        @endif
+                                    </div>
+                                </td>
+
+                                <td style="padding: 10px 14px; text-align: right; white-space: nowrap">
+                                    @if ($fichier->estPret())
+                                        <a href="{{ route('media.download', $fichier) }}" class="btn ghost sm">
+                                            Telecharger
+                                        </a>
+                                    @elseif ($fichier->aEchoue())
+                                        <button type="button" wire:click="retryDownload({{ $fichier->id }})"
+                                                class="btn ghost sm">Reessayer</button>
+                                    @endif
+
+                                    <button type="button" wire:click="deleteFile({{ $fichier->id }})"
+                                            class="icon-btn" style="display: inline-grid; vertical-align: middle"
+                                            aria-label="Supprimer">
+                                        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true">
+                                            <path d="M3 5h10M6.5 5V3.5h3V5M4.5 5l.6 8h5.8l.6-8" />
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </div>
+
     {{-- La sélection. Par clippeur, et visible de lui seul : dans un système
          où le budget part au premier arrivé, lire la liste de repérage d'un
          concurrent serait un avantage qu'aucun règlement ne rattrape. --}}
@@ -273,6 +354,40 @@
                                     {{ $garde->campaign->title }}
                                 </a>
                             @endif
+
+                            @php $fichier = $garde->media(); @endphp
+
+                            {{-- L'etat du fichier avant les actions : savoir si
+                                 le mp4 est la decide de ce qu'on fait ensuite. --}}
+                            @if ($fichier?->aEchoue())
+                                <p class="hint" style="color: var(--err)">{{ $fichier->error }}</p>
+                            @elseif ($fichier?->enTravail())
+                                <p class="hint">Telechargement {{ mb_strtolower($fichier->libelleStatut()) }}...</p>
+                            @elseif ($fichier?->estPret())
+                                <p class="hint">Fichier pret · {{ $fichier->tailleLisible() }}</p>
+                            @endif
+
+                            <div class="card-actions">
+                                @if ($fichier?->estPret())
+                                    <a href="{{ route('media.download', $fichier) }}" class="btn primary">
+                                        Telecharger
+                                    </a>
+                                @elseif ($fichier?->aEchoue())
+                                    <button type="button" wire:click="retryDownload({{ $fichier->id }})"
+                                            class="btn ghost">
+                                        Reessayer
+                                    </button>
+                                @elseif ($fichier?->enTravail())
+                                    {{-- Desactive plutot que masque : le bouton garde
+                                         sa place, la carte ne saute pas. --}}
+                                    <span class="btn ghost" aria-disabled="true">En cours...</span>
+                                @else
+                                    <button type="button" wire:click="download({{ $garde->id }})"
+                                            class="btn ghost">
+                                        Recuperer le mp4
+                                    </button>
+                                @endif
+                            </div>
 
                             <div class="card-actions">
                                 @if ($garde->isTaken())

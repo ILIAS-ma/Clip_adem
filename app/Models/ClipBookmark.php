@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Un clip repéré, mis de côté par un clippeur.
@@ -38,6 +39,24 @@ class ClipBookmark extends Model
     public function campaign(): BelongsTo
     {
         return $this->belongsTo(Campaign::class);
+    }
+
+    /**
+     * Les fichiers tirés de ce clip repéré.
+     *
+     * Au pluriel bien qu'il n'y en ait normalement qu'un : un téléchargement
+     * en échec laisse sa ligne, et le suivant en crée une autre. Le plus
+     * récent fait foi.
+     */
+    public function medias(): HasMany
+    {
+        return $this->hasMany(MediaAsset::class)->latest();
+    }
+
+    /** Le fichier source utilisable, s'il y en a un. */
+    public function media(): ?MediaAsset
+    {
+        return $this->medias->firstWhere('kind', MediaAsset::SOURCE);
     }
 
     public function scopeForUser(Builder $query, User $user): Builder
