@@ -31,13 +31,8 @@ class SocialAccountLinker
             ->where('external_account_id', $connected->externalAccountId)
             ->first();
 
-        // Un compte déjà rattaché à quelqu'un d'autre ne change pas de main :
-        // ce serait le moyen le plus simple de récupérer les gains d'un tiers.
         if ($existing && $existing->user_id !== $clipper->getKey()) {
-            throw new SocialProviderFailed(sprintf(
-                'Ce compte %s est déjà lié à un autre profil.',
-                $connected->platform->label(),
-            ));
+            $this->assertCanChangeHands($existing, $connected->platform);
         }
 
         $account = $existing ?? new SocialAccount([
@@ -66,6 +61,46 @@ class SocialAccountLinker
         ])->save();
 
         return $account;
+    }
+
+    /**
+     * Un compte lié ailleurs peut-il passer sur ce profil ?
+     *
+     * La personne qui arrive ici vient de prouver par OAuth qu'elle détient
+     * ce compte TikTok : le refus ne la protège pas d'un vol. Il protège de
+     * deux choses précises, et seulement de celles-là.
+     *
+     * Un compte encore actif sur un autre profil ne bouge pas : sinon deux
+     * profils se disputeraient le même compte, et les vues de l'un
+     * partiraient au gré des reconnexions.
+     *
+     * Un compte délié par un profil banni ne bouge pas non plus : c'est le
+     * moyen le plus simple de contourner un bannissement — nouveau profil,
+     * même compte, mêmes clips qui recommencent à rapporter.
+     *
+     * Le reste passe. Avant, un compte délié restait rattaché à son ancien
+     * profil pour toujours : un TikTok essayé une fois sur un profil de test
+     * ne pouvait plus jamais servir ailleurs, et le message ne disait pas
+     * quoi faire.
+     */
+    protected function assertCanChangeHands(SocialAccount $existing, Platform $platform): void
+    {
+        $previous = $existing->user()->withTrashed()->first();
+
+        if ($previous?->is_banned) {
+            throw new SocialProviderFailed(sprintf(
+                'Ce compte %s est rattaché à un profil suspendu et ne peut pas être relié.',
+                $platform->label(),
+            ));
+        }
+
+        if ($existing->is_active && $previous !== null && ! $previous->trashed()) {
+            throw new SocialProviderFailed(sprintf(
+                'Ce compte %s est déjà relié à un autre profil. Déliez-le depuis cet autre '
+                .'profil (Mes comptes), ou demandez à un administrateur de le libérer.',
+                $platform->label(),
+            ));
+        }
     }
 
     /**

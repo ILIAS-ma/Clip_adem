@@ -105,7 +105,7 @@ class SocialAccountLinkingTest extends TestCase
         $linker->link($this->clipper(), $connected);
 
         $this->expectException(SocialProviderFailed::class);
-        $this->expectExceptionMessage('déjà lié à un autre profil');
+        $this->expectExceptionMessage('déjà relié à un autre profil');
 
         $linker->link($this->clipper(), $connected);
     }

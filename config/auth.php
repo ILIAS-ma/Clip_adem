@@ -41,6 +41,17 @@ return [
         'web' => [
             'driver' => 'session',
             'provider' => 'users',
+
+            /*
+             * « Se souvenir de moi » vaut trente jours, en minutes.
+             *
+             * La session ordinaire dure deux heures : assez pour une visite,
+             * pas pour un clippeur qui revient chaque soir relever ses vues.
+             * Le délai par défaut de Laravel court sur des années ; trente
+             * jours couvrent l'usage sans laisser un ordinateur partagé ouvert
+             * indéfiniment.
+             */
+            'remember' => (int) env('AUTH_REMEMBER_MINUTES', 43200),
         ],
     ],
 

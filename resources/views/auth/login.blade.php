@@ -37,10 +37,13 @@
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
+        {{-- Cochée d'office : un clippeur revient chaque jour relever ses vues,
+             et se reconnecter à chaque visite est la friction qui fait
+             abandonner. On la décoche sur un ordinateur partagé. --}}
         <label for="remember_me" class="flex items-center gap-2.5">
-            <input id="remember_me" type="checkbox" name="remember"
+            <input id="remember_me" type="checkbox" name="remember" checked
                    class="rounded border-ink-700 text-ink-100 focus:ring-brand-500">
-            <span class="text-sm text-ink-200">Rester connecté</span>
+            <span class="text-sm text-ink-200">Rester connecté 30 jours</span>
         </label>
 
         <x-primary-button class="w-full">Se connecter</x-primary-button>

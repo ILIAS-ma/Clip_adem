@@ -70,7 +70,7 @@ class SidebarTest extends TestCase
 
         foreach ([
             'dashboard', 'campaigns.index', 'clips.index', 'accounts.index',
-            'earnings.index', 'referrals.index', 'leaderboard.index', 'achievements.index',
+            'earnings.index', 'leaderboard.index', 'achievements.index',
         ] as $route) {
             $this->assertStringContainsString(route($route, absolute: false), $html);
         }
@@ -120,7 +120,7 @@ class SidebarTest extends TestCase
             ->assertSuccessful()
             ->getContent();
 
-        foreach (['clips.index', 'referrals.index', 'achievements.index'] as $route) {
+        foreach (['clips.index', 'leaderboard.index', 'achievements.index'] as $route) {
             $this->assertGreaterThanOrEqual(
                 2,
                 substr_count($html, route($route, absolute: false)),
@@ -216,5 +216,19 @@ class SidebarTest extends TestCase
             ->assertSuccessful()
             ->assertSee(route('phone.verify', absolute: false), escape: false)
             ->assertSee('Vérifier mon numéro');
+    }
+
+    #[Test]
+    public function the_referral_tab_is_gone_but_the_page_still_works(): void
+    {
+        // Retiré de la navigation à la demande ; la page reste joignable
+        // pour les liens de parrainage déjà partagés.
+        $this->actingAs($this->clipper());
+
+        $html = $this->get(route('dashboard'))->assertSuccessful()->getContent();
+
+        $this->assertStringNotContainsString(route('referrals.index', absolute: false).'"', $html);
+
+        $this->get(route('referrals.index'))->assertSuccessful();
     }
 }

@@ -45,7 +45,7 @@ class NavigationTest extends TestCase
 
         foreach ([
             'dashboard', 'campaigns.index', 'clips.index', 'accounts.index',
-            'earnings.index', 'referrals.index', 'leaderboard.index', 'achievements.index',
+            'earnings.index', 'leaderboard.index', 'achievements.index',
         ] as $route) {
             $response->assertSee(route($route, absolute: false), escape: false);
         }

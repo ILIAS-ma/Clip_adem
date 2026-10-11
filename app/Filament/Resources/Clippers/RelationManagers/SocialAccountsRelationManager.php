@@ -4,6 +4,9 @@ namespace App\Filament\Resources\Clippers\RelationManagers;
 
 use App\Enums\Platform;
 use App\Models\SocialAccount;
+use App\Services\Social\SocialAccountLinker;
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -61,6 +64,36 @@ class SocialAccountsRelationManager extends RelationManager
                     ->color(fn (SocialAccount $record) => $record->is_active ? 'success' : 'danger'),
             ])
             ->headerActions([])
-            ->recordActions([]);
+            ->recordActions([
+                /*
+                 * Libère un compte resté sur un profil dont le clippeur n'a
+                 * plus l'accès — un profil de test, un mot de passe perdu.
+                 * Sans ce bouton, le compte restait bloqué : il fallait se
+                 * connecter à l'ancien profil pour le délier.
+                 *
+                 * Les clips déjà publiés restent à leur auteur, avec leurs
+                 * gains : délier ne rend que la possibilité de relier le
+                 * compte ailleurs.
+                 */
+                Action::make('unlink')
+                    ->label('Délier')
+                    ->icon('heroicon-o-link-slash')
+                    ->color('danger')
+                    ->visible(fn (SocialAccount $record) => $record->is_active)
+                    ->requiresConfirmation()
+                    ->modalHeading(fn (SocialAccount $record) => 'Délier @'.$record->handle.' ?')
+                    ->modalDescription('Le compte pourra être relié à un autre profil. Les clips déjà '
+                        .'publiés restent à ce clippeur, avec leurs gains ; le relevé des vues '
+                        .'s’arrête tant que le compte n’est pas relié à nouveau.')
+                    ->modalSubmitActionLabel('Délier')
+                    ->action(function (SocialAccount $record) {
+                        app(SocialAccountLinker::class)->unlink($record);
+
+                        Notification::make()
+                            ->title('@'.$record->handle.' est délié.')
+                            ->success()
+                            ->send();
+                    }),
+            ]);
     }
 }

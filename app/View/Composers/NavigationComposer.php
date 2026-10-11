@@ -96,12 +96,6 @@ class NavigationComposer
                     'icon' => 'M3 8a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm13 4a2 2 0 11-4 0 2 2 0 014 0z',
                 ],
                 [
-                    'route' => 'referrals.index',
-                    'pattern' => 'referrals.*',
-                    'label' => 'Parrainage',
-                    'icon' => 'M15 11a3 3 0 11-6 0 3 3 0 016 0zm-9 9a6 6 0 0112 0M18 8h4m-2-2v4',
-                ],
-                [
                     'route' => 'leaderboard.index',
                     'pattern' => 'leaderboard.*',
                     'label' => 'Classement',
