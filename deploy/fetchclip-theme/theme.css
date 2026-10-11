@@ -70,11 +70,14 @@
 }
 
 /* Le vrai logo à la place du monogramme.
+   Le `?v=` est à incrémenter si le fichier change : la feuille est
+   revalidée à chaque visite, mais l'image, elle, reste en cache — sans
+   ce jeton, un nouveau logo ne serait jamais relu.
    Le « F » reste dans le document — on ne touche pas à son HTML — mais il
    est rendu transparent : le retirer demanderait de modifier son dépôt,
    et un `font-size: 0` casserait l'alignement de la boîte. */
 .logo {
-    background: #000 url("/images/logo.png") center / 82% no-repeat;
+    background: #000 url("/images/logo.png?v=640") center / 82% no-repeat;
     color: transparent;
     border: 1px solid var(--line);
 }
@@ -200,7 +203,7 @@ body.ca-fige { overflow: hidden; }
     width: 76px;
     height: 76px;
     border-radius: 20px;
-    background: #000 url("/images/logo.png") center / contain no-repeat;
+    background: #000 url("/images/logo.png?v=640") center / contain no-repeat;
     /* Le monogramme de repli reste dans le document, invisible : si
        l'image ne charge pas, la boîte garde sa place et le voile ne
        s'effondre pas sur lui-même. */
