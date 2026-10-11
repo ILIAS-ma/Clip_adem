@@ -99,7 +99,12 @@
                         {{-- Les entrées arrivent en cascade : l'œil descend la
                              liste au lieu de la recevoir d'un bloc. --}}
                         <div class="nav-entry" style="--entry-delay: {{ $index * 35 }}ms">
-                            <x-responsive-nav-link :href="route($link['route'])" :active="request()->routeIs($link['pattern'])">
+                            <x-responsive-nav-link
+                                :href="$link['url'] ?? route($link['route'])"
+                                :navigate="$link['navigate'] ?? true"
+                                :active="isset($link['url'])
+                                    ? request()->is(ltrim($link['pattern'], '/').'*')
+                                    : request()->routeIs($link['pattern'])">
                                 {{ $link['label'] }}
                             </x-responsive-nav-link>
                         </div>

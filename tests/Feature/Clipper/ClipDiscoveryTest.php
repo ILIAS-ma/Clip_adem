@@ -97,13 +97,22 @@ class ClipDiscoveryTest extends TestCase
     }
 
     #[Test]
-    public function the_tab_appears_in_the_clipper_navigation(): void
+    public function the_tab_leads_to_fetchclip(): void
     {
-        $this->actingAs($this->clipper())
+        /*
+         * L'entrée mène à FetchClip, servi tel quel par Nginx depuis son
+         * service Node, et non à une page Laravel. Le test porte sur
+         * l'adresse brute : la version précédente vérifiait la route de
+         * l'ancienne page, qui existe toujours — elle passait donc sans rien
+         * garantir du lien réellement affiché.
+         */
+        $html = $this->actingAs($this->clipper())
             ->get(route('dashboard'))
             ->assertSuccessful()
-            ->assertSee(route('discovery.index', absolute: false), escape: false)
-            ->assertSee('Mode créateur');
+            ->assertSee('Mode créateur')
+            ->getContent();
+
+        $this->assertStringContainsString('href="/fetchclip"', $html);
     }
 
     #[Test]

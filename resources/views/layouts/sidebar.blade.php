@@ -33,9 +33,16 @@
 
     <nav class="sidebar-nav">
         @foreach ($navLinks as $link)
-            @php $actif = request()->routeIs($link['pattern']); @endphp
+            @php
+                // Une entrée porte soit un nom de route, soit une adresse
+                // brute : le mode créateur n'appartient pas à Laravel.
+                $cible = $link['url'] ?? route($link['route']);
+                $actif = isset($link['url'])
+                    ? request()->is(ltrim($link['pattern'], '/').'*')
+                    : request()->routeIs($link['pattern']);
+            @endphp
 
-            <a href="{{ route($link['route']) }}" wire:navigate
+            <a href="{{ $cible }}" @if ($link['navigate'] ?? true) wire:navigate @endif
                @class(['sidebar-link', 'is-active' => $actif])
                x-bind:title="mini ? @js($link['label']) : null"
                @if ($actif) aria-current="page" @endif>

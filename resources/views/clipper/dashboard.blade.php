@@ -324,10 +324,13 @@
                         <span class="side-title">Trouver un clip</span>
                     </div>
 
-                    <a href="{{ route('discovery.index') }}" wire:navigate class="side-item">
+                    {{-- Adresse brute et sans wire:navigate : la page
+                         n'appartient pas à Laravel, c'est FetchClip servi par
+                         Nginx depuis son propre service. --}}
+                    <a href="/fetchclip" class="side-item">
                         <span class="who">
-                            <span class="cname">Découverte</span>
-                            <span class="cmeta">Les clips qui rapportent</span>
+                            <span class="cname">Mode créateur</span>
+                            <span class="cmeta">Repérer · Couper · Publier</span>
                         </span>
                         <span class="count">→</span>
                     </a>

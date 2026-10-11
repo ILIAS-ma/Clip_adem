@@ -192,11 +192,15 @@ class DashboardRailTest extends TestCase
     }
 
     #[Test]
-    public function the_rail_leads_to_discovery(): void
+    public function the_rail_leads_to_the_creator_mode(): void
     {
-        $this->actingAs($this->clipper())
+        // Une seule porte d'entrée vers l'outil : la colonne et le rail
+        // mènent au même endroit.
+        $html = $this->actingAs($this->clipper())
             ->get(route('dashboard'))
             ->assertSuccessful()
-            ->assertSee(route('discovery.index', absolute: false), escape: false);
+            ->getContent();
+
+        $this->assertStringContainsString('href="/fetchclip"', $html);
     }
 }
