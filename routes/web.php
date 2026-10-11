@@ -197,6 +197,16 @@ Route::middleware(['auth', 'not.banned'])->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{notification}/lue', [NotificationController::class, 'read'])->name('notifications.read');
     Route::post('/notifications/tout-lire', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+
+    // Le fil avec l'équipe. L'équipe, elle, répond depuis le back-office :
+    // elle n'a pas de fil à elle.
+    Route::get('/messages', function () {
+        if (auth()->user()->isStaff()) {
+            return redirect('/admin/messagerie');
+        }
+
+        return view('messages.index');
+    })->name('messages.index');
 });
 
 /*

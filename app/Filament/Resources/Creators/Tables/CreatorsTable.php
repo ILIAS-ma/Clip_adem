@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Creators\Tables;
 
 use App\Enums\CreatorKind;
+use App\Filament\Actions\PasswordResetLinkAction;
 use App\Models\Creator;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -103,6 +104,7 @@ class CreatorsTable
             ])
             ->recordActions([
                 EditAction::make(),
+                PasswordResetLinkAction::make(fn (Creator $record) => $record->user),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

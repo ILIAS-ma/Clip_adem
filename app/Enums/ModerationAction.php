@@ -18,6 +18,7 @@ enum ModerationAction: string
     case ClipperUnbanned = 'clipper_unbanned';
     case PayoutApproved = 'payout_approved';
     case PayoutCancelled = 'payout_cancelled';
+    case PasswordResetLinkIssued = 'password_reset_link_issued';
 
     public function label(): string
     {
@@ -32,6 +33,7 @@ enum ModerationAction: string
             self::ClipperUnbanned => 'Clippeur débanni',
             self::PayoutApproved => 'Retrait validé',
             self::PayoutCancelled => 'Retrait annulé',
+            self::PasswordResetLinkIssued => 'Lien de réinitialisation créé',
         };
     }
 
@@ -39,7 +41,7 @@ enum ModerationAction: string
     {
         return match ($this) {
             self::ClipApproved, self::ClipperUnbanned, self::PayoutApproved, self::CampaignFunded => 'success',
-            self::ClipRejected, self::PayoutCancelled, self::ClipDisappeared => 'warning',
+            self::ClipRejected, self::PayoutCancelled, self::ClipDisappeared, self::PasswordResetLinkIssued => 'warning',
             self::ClipInvalidated, self::ClipperBanned, self::ClipNotOwned => 'danger',
         };
     }

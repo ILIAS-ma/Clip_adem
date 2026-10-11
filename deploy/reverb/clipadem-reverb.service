@@ -1,0 +1,18 @@
+[Unit]
+Description=Echo Clip - messagerie en direct (Reverb)
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+Restart=always
+RestartSec=5
+WorkingDirectory=/var/www/clipadem
+ExecStart=/usr/bin/php artisan reverb:start --host=127.0.0.1 --port=8080
+
+# Une connexion WebSocket par onglet ouvert : la limite par défaut de
+# 1024 descripteurs suffit à peine à quelques centaines de visiteurs.
+LimitNOFILE=10000
+
+[Install]
+WantedBy=multi-user.target

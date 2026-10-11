@@ -2,6 +2,7 @@
 
 namespace App\View\Composers;
 
+use App\Models\Message;
 use Illuminate\View\View;
 
 /**
@@ -108,6 +109,23 @@ class NavigationComposer
                     'icon' => 'M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.2l5.9-.9L12 3z',
                 ],
             ];
+
+        /*
+         * Le fil avec l'équipe, pour tous les profils. Le badge compte ce que
+         * l'équipe a écrit et qui n'a pas été lu : c'est par lui qu'on
+         * apprend qu'une réponse est arrivée, faute d'e-mail.
+         */
+        $links[] = [
+            'route' => 'messages.index',
+            'pattern' => 'messages.*',
+            'label' => 'Messages',
+            'icon' => 'M8 10h8M8 14h5m-9 6l2.5-3H18a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v14z',
+            'badge' => Message::query()
+                ->where('from_staff', true)
+                ->whereNull('read_at')
+                ->whereHas('conversation', fn ($q) => $q->where('user_id', $user->getKey()))
+                ->count(),
+        ];
 
         $view->with(['navHome' => $home, 'navLinks' => $links]);
     }

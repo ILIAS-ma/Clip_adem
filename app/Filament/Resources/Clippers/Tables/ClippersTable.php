@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Clippers\Tables;
 
+use App\Filament\Actions\PasswordResetLinkAction;
 use App\Models\User;
 use App\Services\Clippers\ClipperProgressionService;
 use App\Services\Moderation\ClipModerationService;
@@ -91,6 +92,7 @@ class ClippersTable
                 ViewAction::make(),
                 static::banAction(),
                 static::unbanAction(),
+                PasswordResetLinkAction::make(fn (User $record) => $record),
             ]);
     }
 

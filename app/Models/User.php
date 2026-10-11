@@ -82,6 +82,12 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         return $this->hasOne(Creator::class);
     }
 
+    /** Le fil de messagerie avec l'équipe. */
+    public function conversation(): HasOne
+    {
+        return $this->hasOne(Conversation::class);
+    }
+
     /** Nom affiché publiquement : le pseudo s'il existe, le prénom sinon. */
     public function displayName(): string
     {

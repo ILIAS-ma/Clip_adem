@@ -1,3 +1,5 @@
+import './echo';
+
 /**
  * Alpine vient toujours de Livewire (voir AppServiceProvider::boot(),
  * Livewire::forceAssetInjection()), même sur une page sans composant
