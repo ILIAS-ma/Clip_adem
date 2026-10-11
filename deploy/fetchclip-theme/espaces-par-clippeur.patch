@@ -111,7 +111,7 @@ index d718a64..606d2f4 100644
  export function loadEnv() {
    const file = path.join(ROOT, '.env');
 diff --git a/lib/render.js b/lib/render.js
-index 4e2d8d1..f27391b 100644
+index 4e2d8d1..a130233 100644
 --- a/lib/render.js
 +++ b/lib/render.js
 @@ -3,7 +3,7 @@ import os from 'node:os';
@@ -132,6 +132,91 @@ index 4e2d8d1..f27391b 100644
    fs.mkdirSync(dir, { recursive: true });
    return dir;
  }
+@@ -136,16 +136,62 @@ function runFfmpeg(binary, args, cwd) {
+ 
+ // --- polices ---
+ 
++/*
++ * Chaque police est cherchée à plusieurs emplacements, pas à un chemin
++ * fixe : sur un serveur Linux, C:\Windows\Fonts n'existe pas, et le
++ * montage s'arrêtait sur « Police introuvable » sans dire pourquoi.
++ *
++ * Le premier chemin présent gagne. L'ordre place les polices Microsoft
++ * d'abord — ce sont celles que le rendu attend — puis leurs équivalents
++ * libres aux mêmes métriques, puis DejaVu, présent partout.
++ */
+ export const FONTS = {
+-  impact: { label: 'Impact (style meme)', file: 'C:\\Windows\\Fonts\\impact.ttf' },
+-  arialbd: { label: 'Arial Gras', file: 'C:\\Windows\\Fonts\\arialbd.ttf' },
+-  segoeuib: { label: 'Segoe UI Gras', file: 'C:\\Windows\\Fonts\\segoeuib.ttf' },
+-  verdanab: { label: 'Verdana Gras', file: 'C:\\Windows\\Fonts\\verdanab.ttf' },
++  impact: {
++    label: 'Impact (style meme)',
++    files: [
++      'C:\\Windows\\Fonts\\impact.ttf',
++      '/usr/share/fonts/truetype/msttcorefonts/Impact.ttf',
++      '/usr/share/fonts/truetype/liberation/LiberationSansNarrow-Bold.ttf',
++      '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
++    ],
++  },
++  arialbd: {
++    label: 'Arial Gras',
++    files: [
++      'C:\\Windows\\Fonts\\arialbd.ttf',
++      '/usr/share/fonts/truetype/msttcorefonts/Arial_Bold.ttf',
++      '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
++      '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
++    ],
++  },
++  segoeuib: {
++    label: 'Sans Gras',
++    files: [
++      'C:\\Windows\\Fonts\\segoeuib.ttf',
++      '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
++      '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
++    ],
++  },
++  verdanab: {
++    label: 'Verdana Gras',
++    files: [
++      'C:\\Windows\\Fonts\\verdanab.ttf',
++      '/usr/share/fonts/truetype/msttcorefonts/Verdana_Bold.ttf',
++      '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
++    ],
++  },
+ };
+ 
++/** Le premier fichier réellement présent, ou null. */
++export function fichierDePolice(id) {
++  const police = FONTS[id] || FONTS.impact;
++
++  return police.files.find((f) => fs.existsSync(f)) || null;
++}
++
+ export function availableFonts() {
+   return Object.entries(FONTS)
+-    .filter(([, font]) => fs.existsSync(font.file))
++    .filter(([id]) => fichierDePolice(id) !== null)
+     .map(([id, font]) => ({ id, label: font.label }));
+ }
+ 
+@@ -309,8 +355,14 @@ export async function renderClip({
+   const partial = `${outputPath}.part`;
+ 
+   try {
+-    const fontFile = (FONTS[font] || FONTS.impact).file;
+-    if (!fs.existsSync(fontFile)) throw new Error(`Police introuvable : ${fontFile}`);
++    const fontFile = fichierDePolice(font);
++
++    // Message utile plutot que le chemin manquant : savoir qu'il faut
++    // installer des polices sur le serveur est actionnable, « Police
++    // introuvable : C:\Windows\Fonts\impact.ttf » ne l'est pas.
++    if (!fontFile) {
++      throw new Error('Aucune police disponible sur le serveur. Installez ttf-mscorefonts-installer ou fonts-dejavu-core.');
++    }
+     fs.copyFileSync(fontFile, path.join(work, 'font.ttf'));
+ 
+     let backgroundPath = null;
 diff --git a/lib/series.js b/lib/series.js
 index f1acdd4..aeacef0 100644
 --- a/lib/series.js

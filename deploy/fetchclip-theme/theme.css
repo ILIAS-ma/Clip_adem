@@ -134,6 +134,12 @@
 
 .plat[data-platform="kick"] { display: none; }
 
+/* L'onglet « Série » est retiré : il découpe une vidéo longue déposée à
+   la main en plusieurs verticales, et rien ne permet de déposer un
+   fichier depuis un navigateur sur un serveur partagé. Un onglet qui ne
+   peut rien faire se clique quand même, puis déçoit. */
+.tab[data-tab="series"] { display: none; }
+
 /* Le sélecteur n'a plus qu'un choix : il devient un libellé, pas un
    contrôle. Laisser une case à cocher qui ne coche rien laisse croire à
    une panne. */
