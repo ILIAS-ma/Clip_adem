@@ -136,7 +136,7 @@ class ClipDiscoveryTest extends TestCase
             ->call('search')
             ->assertSet('error', '')
             ->assertSee('1,50 €')
-            ->assertDontSee('Aucune campagne ouverte pour cette chaîne');
+            ->assertDontSee('Aucune campagne ouverte');
     }
 
     #[Test]
@@ -147,7 +147,7 @@ class ClipDiscoveryTest extends TestCase
         Livewire::test(ClipDiscovery::class)
             ->set('channels', 'unstreamerquelconque')
             ->call('search')
-            ->assertSee('Aucune campagne ouverte pour cette chaîne');
+            ->assertSee('Aucune campagne ouverte');
     }
 
     #[Test]

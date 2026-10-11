@@ -6,6 +6,7 @@ use App\Exceptions\SmsFailed;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Auth\PhoneVerification;
+use App\Services\Sms\SmsManager;
 use App\Support\PhoneNumber;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,10 @@ use Illuminate\View\View;
 
 class PhoneVerificationController extends Controller
 {
-    public function __construct(protected PhoneVerification $verification) {}
+    public function __construct(
+        protected PhoneVerification $verification,
+        protected SmsManager $sms,
+    ) {}
 
     public function edit(Request $request): View
     {
@@ -21,6 +25,10 @@ class PhoneVerificationController extends Controller
             'user' => $request->user(),
             'delai' => $this->verification->delaiRestant($request->user()),
             'pays' => PhoneNumber::INDICATIFS,
+
+            // L'écran doit pouvoir le dire avant tout envoi, pour qu'on ne
+            // saisisse pas un numéro en croyant qu'un SMS va partir.
+            'simule' => $this->sms->driver()->isSimulated(),
         ]);
     }
 
@@ -53,7 +61,7 @@ class PhoneVerificationController extends Controller
         }
 
         try {
-            $this->verification->envoyer($request->user(), $valide['phone'], $valide['phone_country']);
+            $envoi = $this->verification->envoyer($request->user(), $valide['phone'], $valide['phone_country']);
         } catch (SmsFailed $e) {
             report($e);
 
@@ -62,6 +70,19 @@ class PhoneVerificationController extends Controller
                 : 'L’envoi de SMS n’est pas disponible. Contactez-nous.']);
         } catch (\RuntimeException $e) {
             return back()->withErrors(['phone' => $e->getMessage()]);
+        }
+
+        /*
+         * Deux messages, parce que ce sont deux situations différentes. Dire
+         * « un code vient de vous être envoyé par SMS » quand rien n'est
+         * parti laisse la personne guetter son téléphone, puis conclure que
+         * le site est cassé — alors que c'est nous qui n'avons pas de
+         * prestataire. Le code est alors affiché : sans lui, la vérification
+         * serait infranchissable.
+         */
+        if ($envoi->estSimule()) {
+            return redirect()->route('phone.verify')
+                ->with('codeSimule', $envoi->codeSimule);
         }
 
         return redirect()->route('phone.verify')

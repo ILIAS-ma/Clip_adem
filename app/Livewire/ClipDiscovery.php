@@ -48,6 +48,9 @@ class ClipDiscovery extends Component
 
     public bool $searched = false;
 
+    /** Identifiant du clip ouvert dans le lecteur, s'il y en a un. */
+    public ?string $playing = null;
+
     public function mount(): void
     {
         /*
@@ -90,6 +93,10 @@ class ClipDiscovery extends Component
             return;
         }
 
+        // Une nouvelle recherche referme le lecteur : il montrerait un clip
+        // qui n'est plus dans la liste.
+        $this->playing = null;
+
         $this->results = array_map(fn (FoundClip $clip) => [
             'id' => $clip->id,
             'url' => $clip->url,
@@ -105,6 +112,23 @@ class ClipDiscovery extends Component
                 ? str_replace(['%{width}', '%{height}'], ['480', '272'], $clip->thumbnail)
                 : null,
         ], $clips);
+    }
+
+    /**
+     * Ouvre le clip dans le lecteur Twitch intégré.
+     *
+     * Regarder sans quitter la page change la façon de travailler : on passe
+     * dix clips en revue d'affilée au lieu d'ouvrir dix onglets, puis de les
+     * refermer en ayant perdu la liste.
+     */
+    public function play(string $id): void
+    {
+        $this->playing = collect($this->results)->firstWhere('id', $id) ? $id : null;
+    }
+
+    public function closePlayer(): void
+    {
+        $this->playing = null;
     }
 
     /** Met un clip de côté, pour soi seul. */
@@ -221,6 +245,17 @@ class ClipDiscovery extends Component
              */
             'campagnes' => $campagnes,
             'tiktok' => Platform::TikTok,
+
+            /*
+             * Twitch exige que le domaine parent soit déclaré dans l'URL
+             * d'intégration, et qu'il corresponde à celui qui affiche la
+             * page — sinon le lecteur refuse de démarrer sans rien dire.
+             */
+            'parent' => parse_url((string) config('app.url'), PHP_URL_HOST) ?: 'localhost',
+
+            // Les identifiants du pilote simulé ne correspondent à aucun clip
+            // réel : proposer un lecteur rendrait un cadre noir.
+            'lecturePossible' => ! app(ClipFinderManager::class)->driver()->isSimulated(),
 
             'selection' => ClipBookmark::forUser(auth()->user())
                 ->with('campaign')

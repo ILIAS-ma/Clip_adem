@@ -5,6 +5,7 @@ namespace App\Services\Auth;
 use App\Exceptions\SmsFailed;
 use App\Models\User;
 use App\Services\Sms\SmsManager;
+use App\Support\CodeEnvoye;
 use App\Support\PhoneNumber;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -44,11 +45,9 @@ class PhoneVerification
     /**
      * Envoie un code au numéro donné.
      *
-     * @return string Le numéro normalisé.
-     *
      * @throws \RuntimeException|SmsFailed
      */
-    public function envoyer(User $user, string $numero, ?string $pays = null): string
+    public function envoyer(User $user, string $numero, ?string $pays = null): CodeEnvoye
     {
         $normalise = PhoneNumber::normalise($numero, $pays ?? $user->country ?? 'FR');
 
@@ -75,7 +74,9 @@ class PhoneVerification
             'phone_code_attempts' => 0,
         ])->save();
 
-        $this->sms->driver()->send($normalise, sprintf(
+        $pilote = $this->sms->driver();
+
+        $pilote->send($normalise, sprintf(
             '%s : votre code de vérification est %s. Il expire dans %d minutes.',
             config('app.name'),
             $code,
@@ -85,9 +86,16 @@ class PhoneVerification
         Log::info('Code de vérification envoyé', [
             'user_id' => $user->getKey(),
             'phone' => PhoneNumber::masque($normalise),
+            'pilote' => $pilote->name(),
         ]);
 
-        return $normalise;
+        /*
+         * Le code remonte uniquement si le pilote n'a rien envoyé. Annoncer
+         * « un code vient de vous être envoyé par SMS » alors qu'il n'est
+         * écrit que dans storage/logs laisse la personne attendre un message
+         * qui n'existe pas — et nous ne le saurions pas.
+         */
+        return new CodeEnvoye($normalise, $pilote->isSimulated() ? $code : null);
     }
 
     /** Le code proposé est-il le bon ? Marque le numéro vérifié si oui. */
