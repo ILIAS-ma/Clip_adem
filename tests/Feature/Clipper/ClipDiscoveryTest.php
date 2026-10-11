@@ -157,47 +157,133 @@ class ClipDiscoveryTest extends TestCase
     }
 
     #[Test]
-    public function the_channels_are_prefilled_with_streamers_who_pay(): void
+    public function the_rail_ranks_live_streamers_by_audience(): void
     {
         /*
-         * La vraie première question du clippeur est « je cherche quoi ? ».
-         * Un champ vide le renvoie sur Twitch, où rien ne lui dit quelles
-         * chaînes rapportent.
+         * Le point de départ du travail, et la raison d'être du rail : on
+         * regarde qui diffuse maintenant, par audience, et on clique. C'est
+         * là que les clips se font, parce que c'est là qu'il y a des
+         * spectateurs pour les faire.
+         *
+         * La version précédente proposait à la place les chaînes qui avaient
+         * une campagne chez nous — une poignée, là où la plateforme en compte
+         * des milliers. Ce n'était pas le même produit.
          */
-        $this->campagneStreamer('kayz');
-
         $this->actingAs($this->clipper());
 
-        Livewire::test(ClipDiscovery::class)
-            ->assertSet('channels', 'kayz');
+        $lives = Livewire::test(ClipDiscovery::class)->viewData('lives');
+
+        $this->assertNotEmpty($lives);
+
+        $audiences = array_map(fn ($l) => $l->viewers, $lives);
+        $attendu = $audiences;
+        rsort($attendu);
+
+        $this->assertSame($attendu, $audiences, 'Les directs se lisent par audience décroissante.');
     }
 
     #[Test]
-    public function a_clip_from_a_funded_channel_shows_its_rate(): void
+    public function clicking_a_live_streamer_loads_their_clips(): void
     {
-        // C'est tout l'intérêt par rapport à l'outil générique : savoir, avant
-        // de télécharger, que ce moment-là est payé et combien.
-        $this->campagneStreamer('kayz', cachet: 150);
-
+        // Un rail dont les lignes ne font rien est décoratif : c'est pour ça
+        // qu'il vit dans le composant et non dans le gabarit.
         $this->actingAs($this->clipper());
 
-        Livewire::test(ClipDiscovery::class)
+        $composant = Livewire::test(ClipDiscovery::class);
+        $login = $composant->viewData('lives')[0]->login;
+
+        $composant->call('pick', $login)
+            ->assertSet('channels', $login)
+            ->assertSet('scope', 'mes')
+            ->assertSet('searched', true);
+
+        $clips = $composant->get('results');
+
+        $this->assertNotEmpty($clips);
+
+        foreach ($clips as $clip) {
+            $this->assertSame($login, $clip['login']);
+        }
+    }
+
+    #[Test]
+    public function the_whole_site_scope_needs_no_channel(): void
+    {
+        /*
+         * « Tout le site » n'est pas un filtre mais une autre opération :
+         * Twitch n'expose aucun classement global de clips, il se reconstitue
+         * en balayant les plus grosses catégories. Exiger un pseudo pour
+         * cette portée n'aurait aucun sens.
+         */
+        $this->actingAs($this->clipper());
+
+        $composant = Livewire::test(ClipDiscovery::class)
+            ->set('channels', '')
+            ->call('setScope', 'tout')
+            ->call('search');
+
+        $composant->assertSet('error', '');
+
+        $this->assertNotEmpty($composant->get('results'));
+    }
+
+    #[Test]
+    public function changing_scope_clears_the_previous_results(): void
+    {
+        // Les deux portées ne rendent pas la même chose : garder les
+        // résultats laisserait croire que le basculement n'a rien fait.
+        $this->actingAs($this->clipper());
+
+        $composant = Livewire::test(ClipDiscovery::class)
             ->set('channels', 'kayz')
-            ->call('search')
-            ->assertSet('error', '')
-            ->assertSee('1,50 €')
-            ->assertDontSee('Aucune campagne ouverte');
+            ->call('search');
+
+        $this->assertNotEmpty($composant->get('results'));
+
+        $composant->call('setScope', 'tout')
+            ->assertSet('results', [])
+            ->assertSet('searched', false);
     }
 
     #[Test]
-    public function a_clip_from_an_unfunded_channel_says_so(): void
+    public function a_visited_channel_is_remembered(): void
     {
+        // On revient toujours aux mêmes chaînes : les retaper à chaque fois
+        // est le genre de friction qui fait abandonner un outil.
         $this->actingAs($this->clipper());
 
-        Livewire::test(ClipDiscovery::class)
-            ->set('channels', 'unstreamerquelconque')
-            ->call('search')
-            ->assertSee('Aucune campagne ouverte');
+        $composant = Livewire::test(ClipDiscovery::class)
+            ->set('channels', 'kayz')
+            ->call('search');
+
+        $this->assertContains('kayz', $composant->viewData('favoris'));
+    }
+
+    #[Test]
+    public function the_screen_survives_a_broken_live_ranking(): void
+    {
+        /*
+         * Le rail est un confort, la recherche est le métier. Sans ce filet,
+         * Twitch indisponible rendait la page entière inaccessible — pour un
+         * classement dont on peut se passer.
+         */
+        $faux = $this->createMock(ClipFinder::class);
+        $faux->method('liveStreams')->willThrowException(ClipSearchFailed::refused(503, ''));
+        $faux->method('search')->willReturn([]);
+        $faux->method('isSimulated')->willReturn(false);
+        $faux->method('name')->willReturn('test');
+
+        $manager = $this->createMock(ClipFinderManager::class);
+        $manager->method('driver')->willReturn($faux);
+        $manager->method('isUsable')->willReturn(true);
+        $manager->method('isConfigured')->willReturn(true);
+
+        $this->app->instance(ClipFinderManager::class, $manager);
+
+        $this->actingAs($this->clipper())
+            ->get(route('discovery.index'))
+            ->assertSuccessful()
+            ->assertSee('Aucun direct trouvé.');
     }
 
     #[Test]
@@ -302,27 +388,6 @@ class ClipDiscoveryTest extends TestCase
         rsort($attendu);
 
         $this->assertSame($attendu, $durees);
-    }
-
-    #[Test]
-    public function the_paid_scope_keeps_only_funded_channels(): void
-    {
-        // La portée qui compte : ne montrer que ce qui rapporte.
-        $this->campagneStreamer('kayz');
-
-        $this->actingAs($this->clipper());
-
-        $clips = Livewire::test(ClipDiscovery::class)
-            ->set('channels', 'kayz, unstreamersanscampagne')
-            ->call('search')
-            ->set('scope', 'payes')
-            ->viewData('affichables');
-
-        $this->assertNotEmpty($clips);
-
-        foreach ($clips as $clip) {
-            $this->assertSame('kayz', $clip['login']);
-        }
     }
 
     #[Test]

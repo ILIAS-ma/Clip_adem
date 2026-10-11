@@ -4,7 +4,6 @@ namespace App\Livewire;
 
 use App\Enums\CampaignStatus;
 use App\Enums\CreatorKind;
-use App\Enums\Platform;
 use App\Exceptions\ClipSearchFailed;
 use App\Jobs\DownloadSourceClip;
 use App\Models\Campaign;
@@ -14,6 +13,7 @@ use App\Services\Discovery\ClipFinderManager;
 use App\Services\Media\Workspace;
 use App\Support\Discovery\ClipSearch;
 use App\Support\Discovery\FoundClip;
+use App\Support\Discovery\LiveStream;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -51,9 +51,16 @@ class ClipDiscovery extends Component
      * dépenser le quota Twitch de toute la plateforme.
      */
 
-    /** « payes » ne garde que les chaînes qui ont une campagne ouverte. */
-    #[Url(as: 'portee', except: 'tous')]
-    public string $scope = 'tous';
+    /**
+     * « mes » : les clips des chaînes saisies. « tout » : les plus vus de
+     * toute la plateforme, sans nommer personne.
+     *
+     * Ce n'est pas un filtre d'affichage mais deux opérations distinctes :
+     * Twitch n'expose aucun classement global de clips, « tout » se
+     * reconstitue en balayant les plus grosses catégories du moment.
+     */
+    #[Url(as: 'portee', except: 'mes')]
+    public string $scope = 'mes';
 
     #[Url(as: 'vuesmin', except: 0)]
     public int $minViews = 0;
@@ -74,6 +81,12 @@ class ClipDiscovery extends Component
     /** Identifiant du clip ouvert dans le lecteur, s'il y en a un. */
     public ?string $playing = null;
 
+    /** Le pilote invente-t-il ses résultats ? Passé par la page. */
+    public bool $simule = false;
+
+    /** La recherche a-t-elle de quoi fonctionner ? */
+    public bool $utilisable = true;
+
     /** Les tris proposés, et ce sur quoi ils portent. */
     public const TRIS = [
         'vues' => 'Vues',
@@ -81,22 +94,77 @@ class ClipDiscovery extends Component
         'duree' => 'Durée',
     ];
 
+    /** Langue des directs du rail. Vide = le monde entier. */
+    #[Url(as: 'langue', except: 'fr')]
+    public string $liveLanguage = 'fr';
+
     public function setScope(string $scope): void
     {
-        $this->scope = $scope === 'payes' ? 'payes' : 'tous';
+        $this->scope = $scope === 'tout' ? 'tout' : 'mes';
+
+        // Changer de portée change l'opération, donc les résultats affichés
+        // ne correspondent plus : les garder laisserait croire que le
+        // basculement n'a rien fait.
+        $this->results = [];
+        $this->searched = false;
     }
 
-    public function mount(): void
+    /** Charge les clips d'une chaîne depuis le rail, en un clic. */
+    public function pick(string $login): void
     {
-        /*
-         * Pré-remplissage avec les streamers qui ont une campagne ouverte :
-         * c'est la réponse à « je cherche quoi ? », qui est la vraie première
-         * question. Un champ vide renvoie le clippeur sur Twitch, où rien ne
-         * lui dit quelles chaînes rapportent.
-         */
-        if ($this->channels === '') {
-            $this->channels = $this->streamersAvecCampagne()->implode(', ');
+        $this->channels = $login;
+        $this->scope = 'mes';
+        $this->search();
+    }
+
+    /**
+     * Les chaînes récemment explorées.
+     *
+     * En session plutôt qu'en base : c'est une commodité de navigation, pas
+     * une donnée du produit. Une table pour ça demanderait une migration, une
+     * purge et une politique de conservation, pour une liste que personne ne
+     * réclamera si elle disparaît.
+     *
+     * @return list<string>
+     */
+    public function favoris(): array
+    {
+        return array_values((array) session('decouverte.favoris', []));
+    }
+
+    /** Retient une chaîne visitée, les huit dernières. */
+    protected function retenir(array $chaines): void
+    {
+        if ($chaines === []) {
+            return;
         }
+
+        $liste = collect($chaines)
+            ->merge($this->favoris())
+            ->map(fn ($c) => mb_strtolower((string) $c))
+            ->filter()
+            ->unique()
+            ->take(8)
+            ->values()
+            ->all();
+
+        session(['decouverte.favoris' => $liste]);
+    }
+
+    public function mount(bool $simule = false, bool $utilisable = true): void
+    {
+        $this->simule = $simule;
+        $this->utilisable = $utilisable;
+
+        /*
+         * Aucun pré-remplissage, et plus de couplage aux campagnes.
+         *
+         * La réponse à « je cherche quoi ? » est le rail des directs : on
+         * regarde qui diffuse maintenant, par audience, et on clique. Mettre
+         * des noms dans le champ à la place revenait à décider pour le
+         * clippeur, et à ne lui montrer qu'une poignée de chaînes là où la
+         * plateforme en compte des milliers.
+         */
     }
 
     public function search(): void
@@ -113,15 +181,21 @@ class ClipDiscovery extends Component
             return;
         }
 
+        $criteres = new ClipSearch(
+            channels: $this->chaines(),
+            period: array_key_exists($this->period, ClipSearch::PERIODES) ? $this->period : '7j',
+            limit: (int) config('clipping.discovery.limit', 60),
+            maxDuration: $this->onlyShort
+                ? (int) config('clipping.discovery.max_duration', 60)
+                : 0,
+        );
+
         try {
-            $clips = $finder->driver()->search(new ClipSearch(
-                channels: $this->chaines(),
-                period: array_key_exists($this->period, ClipSearch::PERIODES) ? $this->period : '7j',
-                limit: (int) config('clipping.discovery.limit', 60),
-                maxDuration: $this->onlyShort
-                    ? (int) config('clipping.discovery.max_duration', 60)
-                    : 0,
-            ));
+            $pilote = $finder->driver();
+
+            $clips = $this->scope === 'tout'
+                ? $pilote->globalClips($criteres)
+                : $pilote->search($criteres);
         } catch (ClipSearchFailed $e) {
             $this->error = $e->getMessage();
 
@@ -131,6 +205,10 @@ class ClipDiscovery extends Component
         // Une nouvelle recherche referme le lecteur : il montrerait un clip
         // qui n'est plus dans la liste.
         $this->playing = null;
+
+        if ($this->scope === 'mes' && $clips !== []) {
+            $this->retenir($criteres->channels);
+        }
 
         $this->results = array_map(fn (FoundClip $clip) => [
             'id' => $clip->id,
@@ -143,6 +221,8 @@ class ClipDiscovery extends Component
             'duration' => $clip->duration,
             'duration_label' => $clip->dureeLisible(),
             'posted_at' => $clip->createdAt?->format('Y-m-d H:i:s'),
+            'language' => $clip->language,
+            'game' => $clip->game,
             'thumbnail' => $clip->thumbnail
                 // Twitch sert un gabarit à trous dans ses vignettes récentes.
                 ? str_replace(['%{width}', '%{height}'], ['480', '272'], $clip->thumbnail)
@@ -206,7 +286,7 @@ class ClipDiscovery extends Component
      */
     public function keepAll(): void
     {
-        foreach ($this->affichables($this->campagnesParChaine()) as $clip) {
+        foreach ($this->affichables() as $clip) {
             $this->keep($clip['id']);
         }
     }
@@ -344,12 +424,28 @@ class ClipDiscovery extends Component
             }));
     }
 
-    /** @return Collection<int, string> */
-    protected function streamersAvecCampagne(): Collection
+    /**
+     * Les directs du rail, ou rien si le diffuseur ne répond pas.
+     *
+     * Une panne du classement ne doit pas emporter l'écran : le rail est un
+     * confort, la recherche est le métier. Sans ce filet, Twitch indisponible
+     * rendait la page entière inaccessible.
+     *
+     * @return list<LiveStream>
+     */
+    protected function lives(): array
     {
-        return $this->campagnesParChaine()->keys()->take(
-            (int) config('clipping.discovery.max_channels', 5)
-        )->values();
+        $finder = app(ClipFinderManager::class);
+
+        if (! $finder->isUsable()) {
+            return [];
+        }
+
+        try {
+            return $finder->driver()->liveStreams($this->liveLanguage, 12);
+        } catch (ClipSearchFailed) {
+            return [];
+        }
     }
 
     /**
@@ -359,16 +455,10 @@ class ClipDiscovery extends Component
      * réellement rendu : relâcher un filtre doit faire réapparaître les
      * clips, pas obliger à relancer une recherche — et donc à repayer un
      * appel réseau.
-     *
-     * @param  Collection<string, Campaign>  $campagnes
      */
-    protected function affichables(Collection $campagnes): array
+    protected function affichables(): array
     {
-        $clips = array_filter($this->results, function (array $clip) use ($campagnes) {
-            if ($this->scope === 'payes' && ! $campagnes->has($clip['login'])) {
-                return false;
-            }
-
+        $clips = array_filter($this->results, function (array $clip) {
             if ($this->minViews > 0 && $clip['views'] < $this->minViews) {
                 return false;
             }
@@ -399,19 +489,23 @@ class ClipDiscovery extends Component
 
     public function render()
     {
-        $campagnes = $this->campagnesParChaine();
+        $finder = app(ClipFinderManager::class);
 
         return view('livewire.clip-discovery', [
-            'finder' => app(ClipFinderManager::class),
+            'finder' => $finder,
             'periodes' => array_keys(ClipSearch::PERIODES),
 
             /*
-             * Le rapprochement est fait au rendu, pas à la recherche : une
-             * campagne peut s'épuiser entre les deux, et afficher un cachet
-             * qui n'est plus servi ferait monter un clip pour rien.
+             * Le classement des directs : c'est la réponse à « je cherche
+             * quoi ? ». On regarde qui diffuse maintenant, par audience, et
+             * on clique — un champ vide renverrait le clippeur sur Twitch.
+             *
+             * Une panne ici ne doit pas emporter l'écran : le rail est un
+             * confort, la recherche est le métier.
              */
-            'campagnes' => $campagnes,
-            'tiktok' => Platform::TikTok,
+            'lives' => $this->lives(),
+            'favoris' => $this->favoris(),
+            'langues' => ['fr' => 'FR', 'en' => 'EN', 'es' => 'ES', 'de' => 'DE', '' => 'Monde'],
 
             /*
              * Twitch exige que le domaine parent soit déclaré dans l'URL
@@ -447,7 +541,7 @@ class ClipDiscovery extends Component
 
             // Le nombre total sert à dire ce qu'un filtre a écarté : « 12 sur
             // 60 » se lit, « 12 » laisse croire que la recherche a échoué.
-            'affichables' => $this->affichables($campagnes),
+            'affichables' => $this->affichables(),
             'trouves' => count($this->results),
             'tris' => self::TRIS,
         ]);

@@ -849,3 +849,77 @@ details.panel > summary::after { order: 9; }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* ═════════════ compléments du rail ═════════════ */
+
+/* Le petit sélecteur des en-têtes de bloc : il doit tenir dans une ligne
+   de 10,5 px sans la faire grandir. */
+.mini {
+    padding: 2px 5px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-xs);
+    background: var(--white);
+    color: var(--muted);
+    font: inherit;
+    font-size: 10.5px;
+}
+
+.mini:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-wash);
+}
+
+/* Pastilles des chaînes retenues : une ligne qui se replie, pas une liste
+   verticale — huit pseudos tiennent en trois lignes. */
+.chips { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 4px; }
+
+.chip {
+    padding: 3px 9px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: var(--white);
+    color: var(--muted);
+    font: inherit;
+    font-size: 11px;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+}
+
+.chip:hover { background: var(--sunken); color: var(--text); }
+
+.steps { display: flex; flex-direction: column; gap: 9px; margin: 0; padding: 0; list-style: none; }
+.steps li { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; line-height: 1.45; color: var(--muted); }
+
+.steps span {
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    flex: none;
+    border-radius: 5px;
+    background: var(--fill);
+    color: var(--dim);
+    font-size: 10px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ═════════════ tableau des fichiers ═════════════ */
+
+.files { width: 100%; border-collapse: collapse; }
+.files tr { border-top: 1px solid var(--line); }
+.files tr:first-child { border-top: 0; }
+.files td { padding: 10px 14px; vertical-align: middle; }
+.files td.right { text-align: right; white-space: nowrap; }
+.files .fname { font-size: 13px; font-weight: 550; }
+.files .icon-btn { display: inline-grid; vertical-align: middle; margin-left: 4px; }
+
+/* La langue du clip, en haut à gauche de la vignette : discrète, parce
+   qu'elle sert à écarter d'un coup d'œil, pas à être lue. */
+.badge.flag {
+    left: 7px;
+    top: 7px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, .72);
+}

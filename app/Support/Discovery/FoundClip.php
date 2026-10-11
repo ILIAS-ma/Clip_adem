@@ -20,6 +20,8 @@ class FoundClip
         public readonly string $broadcasterLogin,
         public readonly ?string $creator,
         public readonly ?string $game,
+        /** Code de langue de la diffusion, pour le badge de la vignette. */
+        public readonly ?string $language,
         public readonly int $views,
         /** Durée en secondes, telle que la donne la plateforme. */
         public readonly int $duration,

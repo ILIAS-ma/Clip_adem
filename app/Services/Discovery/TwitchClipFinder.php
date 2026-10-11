@@ -6,6 +6,7 @@ use App\Contracts\ClipFinder;
 use App\Exceptions\ClipSearchFailed;
 use App\Support\Discovery\ClipSearch;
 use App\Support\Discovery\FoundClip;
+use App\Support\Discovery\LiveStream;
 use DateTimeImmutable;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
@@ -62,6 +63,130 @@ class TwitchClipFinder implements ClipFinder
         );
     }
 
+    /**
+     * Les clips les plus vus de toute la plateforme.
+     *
+     * Twitch n'expose aucun classement global de clips : il faut le
+     * reconstituer en balayant les plus grosses catégories du moment, dont
+     * les clips couvrent toutes les chaînes qui y diffusent. Huit catégories
+     * suffisent — au-delà, on descend dans des jeux dont les clips font cent
+     * vues, et chaque catégorie de plus coûte un appel.
+     *
+     * Mis en cache comme le reste, et c'est ce qui rend l'opération tenable :
+     * le balayage est le même pour tous les clippeurs à un instant donné, donc
+     * huit appels par quart d'heure pour le site entier.
+     */
+    public function globalClips(ClipSearch $criteria): array
+    {
+        return Cache::remember(
+            'decouverte:global:'.md5($criteria->period.'|'.$criteria->limit.'|'.$criteria->maxDuration),
+            now()->addMinutes((int) config('clipping.discovery.cache_minutes', 15)),
+            fn () => $this->balayerLesCategories($criteria),
+        );
+    }
+
+    /** @return list<LiveStream> */
+    public function liveStreams(string $language = 'fr', int $first = 20): array
+    {
+        /*
+         * Cache court : une audience de direct bouge en permanence, et un
+         * classement d'il y a un quart d'heure met en tête quelqu'un qui a
+         * coupé. Deux minutes suffisent à absorber la rafale de clippeurs qui
+         * ouvrent l'écran en même temps.
+         */
+        return Cache::remember(
+            'decouverte:lives:'.$language.':'.$first,
+            now()->addMinutes(2),
+            function () use ($language, $first) {
+                $reponse = $this->helix('/streams', array_filter([
+                    'language' => $language !== '' ? $language : null,
+                    'first' => min(100, max(1, $first)),
+                    'type' => 'live',
+                ]));
+
+                return array_map(fn (array $s) => new LiveStream(
+                    login: (string) ($s['user_login'] ?? ''),
+                    name: (string) ($s['user_name'] ?? $s['user_login'] ?? ''),
+                    viewers: (int) ($s['viewer_count'] ?? 0),
+                    game: $s['game_name'] ?? null,
+                    title: $s['title'] ?? null,
+                    language: $s['language'] ?? null,
+                ), $reponse['data'] ?? []);
+            },
+        );
+    }
+
+    /** @return list<LiveStream> */
+    public function searchChannels(string $query, int $first = 8): array
+    {
+        $query = trim($query);
+
+        if ($query === '') {
+            return [];
+        }
+
+        return Cache::remember(
+            'decouverte:chaines:'.md5(mb_strtolower($query)).':'.$first,
+            now()->addMinutes(10),
+            function () use ($query, $first) {
+                $reponse = $this->helix('/search/channels', [
+                    'query' => $query,
+                    'first' => min(20, max(1, $first)),
+                ]);
+
+                return array_map(fn (array $c) => new LiveStream(
+                    login: (string) ($c['broadcaster_login'] ?? ''),
+                    name: (string) ($c['display_name'] ?? ''),
+                    // La recherche ne donne pas d'audience : seulement si la
+                    // chaîne est en direct. Zéro vaut « on ne sait pas ».
+                    viewers: 0,
+                    game: $c['game_name'] ?? null,
+                    title: $c['title'] ?? null,
+                    language: $c['broadcaster_language'] ?? null,
+                ), $reponse['data'] ?? []);
+            },
+        );
+    }
+
+    /**
+     * Le balayage des grosses catégories.
+     *
+     * @return list<FoundClip>
+     */
+    protected function balayerLesCategories(ClipSearch $criteria): array
+    {
+        $jeux = $this->helix('/games/top', ['first' => 8])['data'] ?? [];
+
+        if ($jeux === []) {
+            return [];
+        }
+
+        $parJeu = (int) ceil($criteria->limit / count($jeux));
+        $clips = [];
+
+        foreach ($jeux as $jeu) {
+            foreach ($this->clipsPage(['game_id' => (string) $jeu['id']], $criteria, $parJeu) as $brut) {
+                $clip = $this->toFoundClip(
+                    $brut,
+                    mb_strtolower((string) ($brut['broadcaster_name'] ?? '')),
+                    $jeu['name'] ?? null,
+                );
+
+                if ($criteria->maxDuration > 0 && ! $clip->estCourt($criteria->maxDuration)) {
+                    continue;
+                }
+
+                $clips[$clip->id] = $clip;
+            }
+        }
+
+        $clips = array_values($clips);
+
+        usort($clips, fn (FoundClip $a, FoundClip $b) => $b->views <=> $a->views);
+
+        return array_slice($clips, 0, $criteria->limit);
+    }
+
     /** @return list<FoundClip> */
     protected function fetch(ClipSearch $criteria): array
     {
@@ -83,7 +208,7 @@ class TwitchClipFinder implements ClipFinder
         $clips = [];
 
         foreach ($users as $user) {
-            foreach ($this->clipsOf($user['id'], $criteria, $parChaine) as $brut) {
+            foreach ($this->clipsPage(['broadcaster_id' => $user['id']], $criteria, $parChaine) as $brut) {
                 $clip = $this->toFoundClip($brut, $user['login']);
 
                 if ($criteria->maxDuration > 0 && ! $clip->estCourt($criteria->maxDuration)) {
@@ -132,13 +257,19 @@ class TwitchClipFinder implements ClipFinder
     }
 
     /**
-     * Clips d'une chaîne, en paginant jusqu'à `$limite`.
+     * Une page de clips, d'une chaîne ou d'une catégorie.
+     *
+     * La cible est passée telle quelle — `broadcaster_id` ou `game_id` — parce
+     * que les deux recherches ne diffèrent que par ce paramètre. Les dupliquer
+     * aurait fait deux méthodes qui divergent dès la première correction de
+     * pagination.
      *
      * Twitch rend cent clips au plus par page et les trie déjà par vues.
      *
+     * @param  array<string, string>  $cible
      * @return list<array<string, mixed>>
      */
-    protected function clipsOf(string $broadcasterId, ClipSearch $criteria, int $limite): array
+    protected function clipsPage(array $cible, ClipSearch $criteria, int $limite): array
     {
         $clips = [];
         $curseur = null;
@@ -148,7 +279,7 @@ class TwitchClipFinder implements ClipFinder
 
         while (count($clips) < $limite && $pages < 5) {
             $reponse = $this->helix('/clips', array_filter([
-                'broadcaster_id' => $broadcasterId,
+                ...$cible,
                 'started_at' => $debut?->toIso8601ZuluString(),
                 'ended_at' => $debut ? $criteria->fin()->toIso8601ZuluString() : null,
                 'first' => min(100, $limite - count($clips)),
@@ -170,7 +301,7 @@ class TwitchClipFinder implements ClipFinder
     }
 
     /** @param  array<string, mixed>  $brut */
-    protected function toFoundClip(array $brut, string $login): FoundClip
+    protected function toFoundClip(array $brut, string $login, ?string $jeu = null): FoundClip
     {
         return new FoundClip(
             id: (string) ($brut['id'] ?? ''),
@@ -179,7 +310,8 @@ class TwitchClipFinder implements ClipFinder
             broadcaster: (string) ($brut['broadcaster_name'] ?? $login),
             broadcasterLogin: $login,
             creator: $brut['creator_name'] ?? null,
-            game: null,
+            game: $jeu,
+            language: $brut['language'] ?? null,
             views: (int) ($brut['view_count'] ?? 0),
             // Twitch rend une durée décimale (« 28.5 ») : on arrondit au
             // supérieur, parce qu'un clip de 60,4 s ne tient pas dans un

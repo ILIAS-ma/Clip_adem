@@ -19,6 +19,10 @@ class ClipSearch
         '7j' => 7,
         '30j' => 30,
         '90j' => 90,
+        // Sans borne : Twitch rend alors les clips les plus vus de toute
+        // l'histoire de la chaîne, ce qui est souvent ce qu'on cherche sur
+        // une chaîne qu'on découvre.
+        'tout' => null,
     ];
 
     /**
@@ -30,6 +34,15 @@ class ClipSearch
         public readonly int $limit = 60,
         /** 0 = pas de limite de durée. */
         public readonly int $maxDuration = 60,
+
+        /** Identifiant de catégorie Twitch, ou null. */
+        public readonly ?string $gameId = null,
+
+        /** Code de langue à deux lettres, ou chaîne vide pour toutes. */
+        public readonly string $language = '',
+
+        /** Vues minimum, appliquées par le diffuseur quand c'est possible. */
+        public readonly int $minViews = 0,
     ) {}
 
     /** Début de la fenêtre, ou null pour « depuis toujours ». */
@@ -60,6 +73,8 @@ class ClipSearch
             $this->period,
             $this->limit,
             $this->maxDuration,
+            $this->gameId ?? '',
+            $this->language,
             CarbonImmutable::now()->format('Y-m-d-H'),
         ]));
     }
