@@ -1,0 +1,214 @@
+/* ═══════════════════════════════════════════════════════════
+   FetchClip aux couleurs de Clip Adem.
+
+   Ce fichier ne vit pas dans le dépôt de FetchClip : Nginx l'injecte
+   après sa feuille, et le dépôt reste donc intact — `git pull` continue
+   de fonctionner sans conflit.
+
+   Presque tout passe par la redéfinition de ses jetons : son CSS les
+   utilise partout, donc changer `:root` suffit pour l'essentiel. Ne
+   restent que les quelques endroits où il écrit `#fff` ou `#000` en dur,
+   repris un par un en dessous.
+
+   Palette relevée sur le logo : le noir du fond, le chrome des surfaces,
+   le rouge qui n'affleure que sur les arêtes.
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+    /* Surfaces, du fond vers le premier plan. */
+    --white: #121214;
+    --page: #000000;
+    --sunken: #16161a;
+    --sunken-2: #1c1c21;
+    --rail: #09090b;
+
+    /* Texte, du plus fort au plus discret. */
+    --text: #F5F5F5;
+    --muted: #A3A3A8;
+    --dim: #7C7C83;
+    --faint: #5A5A61;
+
+    --line: #26262b;
+    --line-strong: #35353c;
+    --fill: #1c1c21;
+    --fill-hover: #24242a;
+
+    /* Le rouge du logo. Il sert aux actions et aux valeurs actives, à
+       rien d'autre : un rouge décoratif sur une interface où l'on
+       manipule de l'argent se lit comme une alerte. */
+    --accent: #CC3F45;
+    --accent-hover: #B5353B;
+    --accent-wash: rgba(204, 63, 69, .14);
+
+    --violet: #8B6CF7;
+    --kick: #27C258;
+
+    --ok: #6EE7A0;
+    --ok-wash: rgba(110, 231, 160, .12);
+    --warn: #F0C274;
+    --warn-wash: rgba(240, 194, 116, .12);
+    --err: #F08A86;
+    --err-wash: rgba(240, 138, 134, .12);
+
+    /* Sur fond noir, une ombre claire ne se voit pas : on remonte le noir
+       et on ajoute un liseré clair, qui est ce qui détache réellement une
+       surface. */
+    --lift: 0 1px 2px rgba(0, 0, 0, .5);
+    --lift-2: 0 2px 6px rgba(0, 0, 0, .55), 0 10px 24px rgba(0, 0, 0, .45);
+    --lift-3: 0 8px 24px rgba(0, 0, 0, .6), 0 30px 64px rgba(0, 0, 0, .55);
+}
+
+/* ═════════════ les blancs et noirs écrits en dur ═════════════ */
+
+/* Son logo, ses onglets actifs et ses trois premiers rangs posent
+   `background: var(--text)` avec un texte blanc. Le jeton étant devenu
+   clair, le texte blanc sur fond clair disparaissait. */
+.logo,
+.tab.active,
+.side-item:nth-child(-n + 3) .rank {
+    background: var(--accent);
+    color: #fff;
+}
+
+.tab.active { font-weight: 600; }
+
+/* Son voile de fenêtre modale est blanc à 86 % : sur un site noir, il
+   éclairait tout l'écran au moment d'ouvrir un lecteur. */
+.modal {
+    background: rgba(0, 0, 0, .78);
+    backdrop-filter: blur(16px);
+}
+
+/* Barre de défilement : la sienne est posée en gris clair. */
+::-webkit-scrollbar-thumb { background: #35353c; }
+::-webkit-scrollbar-thumb:hover { background: #4a4a53; }
+
+/* Les champs natifs héritent du thème du navigateur s'ils ne sont pas
+   nommés : un menu déroulant restait blanc au milieu du noir. */
+:where(input, select, textarea, option) { color-scheme: dark; }
+
+/* ═════════════ la lueur du logo ═════════════ */
+
+/* Sur le logo, le rouge n'est pas un aplat : il affleure sur les arêtes
+   du métal. Les surfaces le reprennent de la même façon — un liseré net
+   puis une diffusion large, jamais un fond rouge plein. */
+.card.selected,
+.search-card:focus-within {
+    box-shadow: 0 0 0 1px var(--accent), 0 0 24px rgba(204, 63, 69, .18);
+}
+
+.btn.primary {
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .14) inset,
+                0 6px 18px rgba(204, 63, 69, .28);
+}
+
+/* Les vignettes gagnent un liseré : sur fond noir, une image sombre se
+   fondait dans la page et la grille perdait sa trame. */
+.card { border-color: var(--line); }
+.card:hover { border-color: var(--line-strong); }
+.thumb { border-bottom: 1px solid var(--line); }
+
+/* ═════════════ le loader ═════════════ */
+
+/*
+   Deux pièces, et chacune répond à une attente différente.
+
+   Le voile d'ouverture couvre le temps où l'interface n'existe pas
+   encore : sans lui on voit la page se construire, ce qui ressemble à un
+   bug. Il s'efface dès que les lives sont là.
+
+   La barre du haut couvre les attentes suivantes — une recherche, un
+   téléchargement, un rendu. Elle n'immobilise rien : on continue de
+   lire pendant qu'elle avance.
+*/
+
+.ca-voile {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    display: grid;
+    place-items: center;
+    gap: 22px;
+    grid-auto-flow: row;
+    background: #000;
+    transition: opacity .45s ease, visibility .45s ease;
+}
+
+.ca-voile.is-parti { opacity: 0; visibility: hidden; }
+
+/* Le monogramme respire au lieu de tourner : une rotation sur un carré
+   se lit comme un chargement bloqué, une pulsation comme une attente. */
+.ca-voile .ca-marque {
+    display: grid;
+    place-items: center;
+    width: 54px;
+    height: 54px;
+    border-radius: 15px;
+    background: var(--accent);
+    color: #fff;
+    font: 700 26px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    letter-spacing: -.02em;
+    animation: ca-souffle 1.6s ease-in-out infinite;
+}
+
+@keyframes ca-souffle {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(204, 63, 69, .45); }
+    50% { transform: scale(1.06); box-shadow: 0 0 34px 6px rgba(204, 63, 69, .22); }
+}
+
+.ca-voile .ca-mot {
+    font: 500 12.5px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    letter-spacing: .02em;
+    color: var(--dim);
+}
+
+/* Un rail fin sous le monogramme : un reflet qui glisse, du même métal
+   que le logo. Il indique que quelque chose avance sans prétendre
+   mesurer quoi — on ne sait pas combien de temps Twitch mettra. */
+.ca-voile .ca-rail {
+    position: relative;
+    width: 128px;
+    height: 2px;
+    overflow: hidden;
+    border-radius: 2px;
+    background: #1c1c21;
+}
+
+.ca-voile .ca-rail::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    animation: ca-glisse 1.25s ease-in-out infinite;
+}
+
+@keyframes ca-glisse {
+    to { transform: translateX(100%); }
+}
+
+/* La barre de progression du haut. Elle monte vite jusqu'à 90 % puis
+   attend : prétendre connaître la fin d'un appel réseau qu'on ne mesure
+   pas produit une barre qui stagne à 99 %, ce qui est pire que pas de
+   barre du tout. */
+.ca-barre {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 998;
+    height: 2px;
+    width: 0;
+    background: linear-gradient(90deg, var(--accent), #fff);
+    box-shadow: 0 0 10px rgba(204, 63, 69, .6);
+    opacity: 0;
+    transition: width .3s ease, opacity .3s ease;
+}
+
+.ca-barre.is-active { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+    .ca-voile .ca-marque,
+    .ca-voile .ca-rail::after { animation: none; }
+
+    .ca-voile, .ca-barre { transition: none; }
+}

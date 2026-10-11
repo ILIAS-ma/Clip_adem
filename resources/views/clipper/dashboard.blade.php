@@ -329,7 +329,7 @@
                          Nginx depuis son propre service. --}}
                     <a href="/fetchclip" class="side-item">
                         <span class="who">
-                            <span class="cname">Mode créateur</span>
+                            <span class="cname">FetchClip</span>
                             <span class="cmeta">Repérer · Couper · Publier</span>
                         </span>
                         <span class="count">→</span>
