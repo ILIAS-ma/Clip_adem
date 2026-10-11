@@ -108,19 +108,50 @@
 .card:hover { border-color: var(--line-strong); }
 .thumb { border-bottom: 1px solid var(--line); }
 
+/* ═════════════ Kick, écarté ═════════════ */
+
+/*
+   Son API de clips n'est pas documentée, Cloudflare y rejette l'empreinte
+   TLS du serveur, et le téléchargement y échoue une fois sur deux. Un
+   bouton qui marche par intermittence coûte plus de confiance qu'il
+   n'apporte de clips.
+
+   Masqué plutôt que retiré de son code : le dépôt reste intact, et le
+   jour où Kick se stabilise une ligne suffit à le rendre.
+*/
+
+.plat[data-platform="kick"] { display: none; }
+
+/* Le sélecteur n'a plus qu'un choix : il devient un libellé, pas un
+   contrôle. Laisser une case à cocher qui ne coche rien laisse croire à
+   une panne. */
+.platform-switch {
+    grid-template-columns: 1fr;
+    pointer-events: none;
+}
+
+.platform-switch .plat.active { box-shadow: none; }
+
 /* ═════════════ le loader ═════════════ */
 
 /*
-   Deux pièces, et chacune répond à une attente différente.
+   Trois pièces, et chacune répond à une attente différente.
 
    Le voile d'ouverture couvre le temps où l'interface n'existe pas
    encore : sans lui on voit la page se construire, ce qui ressemble à un
-   bug. Il s'efface dès que les lives sont là.
+   bug. Il se retire vers le bas en découvrant la page — le mouvement dit
+   « c'est prêt, regarde dessous », là où une disparition ne dit rien.
+
+   Le contenu entre ensuite de haut en bas, la barre puis le panneau :
+   l'œil suit l'ordre dans lequel on lit.
 
    La barre du haut couvre les attentes suivantes — une recherche, un
-   téléchargement, un rendu. Elle n'immobilise rien : on continue de
-   lire pendant qu'elle avance.
+   téléchargement, un rendu. Elle n'immobilise rien.
 */
+
+/* Pendant le voile, la page ne défile pas : on ne doit pas pouvoir
+   faire glisser un écran qu'on ne voit pas encore. */
+body.ca-fige { overflow: hidden; }
 
 .ca-voile {
     position: fixed;
@@ -128,16 +159,33 @@
     z-index: 999;
     display: grid;
     place-items: center;
-    gap: 22px;
-    grid-auto-flow: row;
     background: #000;
-    transition: opacity .45s ease, visibility .45s ease;
+    /* Le voile se replie vers le bas : la page apparaît par le haut, dans
+       le sens de la lecture. */
+    transform: translateY(0);
+    transition: transform .62s cubic-bezier(.76, 0, .24, 1),
+                opacity .4s ease .22s;
 }
 
-.ca-voile.is-parti { opacity: 0; visibility: hidden; }
+.ca-voile.is-parti {
+    transform: translateY(100%);
+    opacity: 0;
+    pointer-events: none;
+}
 
-/* Le monogramme respire au lieu de tourner : une rotation sur un carré
-   se lit comme un chargement bloqué, une pulsation comme une attente. */
+.ca-voile .ca-centre {
+    display: grid;
+    justify-items: center;
+    gap: 20px;
+    transition: transform .45s cubic-bezier(.76, 0, .24, 1), opacity .3s ease;
+}
+
+/* Le contenu du voile part un peu plus vite que le voile lui-même : sans
+   ce décalage, le monogramme semble collé au bord pendant la sortie. */
+.ca-voile.is-parti .ca-centre { transform: translateY(-28px); opacity: 0; }
+
+/* Le monogramme respire au lieu de tourner : une rotation se lit comme un
+   chargement bloqué, une pulsation comme une attente. */
 .ca-voile .ca-marque {
     display: grid;
     place-items: center;
@@ -162,9 +210,9 @@
     color: var(--dim);
 }
 
-/* Un rail fin sous le monogramme : un reflet qui glisse, du même métal
-   que le logo. Il indique que quelque chose avance sans prétendre
-   mesurer quoi — on ne sait pas combien de temps Twitch mettra. */
+/* Un rail fin : un reflet qui glisse, du même métal que le logo. Il dit
+   que quelque chose avance sans prétendre mesurer quoi — on ne sait pas
+   combien de temps Twitch mettra. */
 .ca-voile .ca-rail {
     position: relative;
     width: 128px;
@@ -185,6 +233,18 @@
 
 @keyframes ca-glisse {
     to { transform: translateX(100%); }
+}
+
+/* L'entrée du contenu, de haut en bas : la barre latérale, puis le
+   panneau de recherche, puis la grille. L'œil descend au lieu de tout
+   recevoir d'un bloc. */
+body.ca-entre .sidebar { animation: ca-descend .5s cubic-bezier(.2, .7, .3, 1) both; }
+body.ca-entre .search-card { animation: ca-descend .5s cubic-bezier(.2, .7, .3, 1) .07s both; }
+body.ca-entre .main > .tab-panel { animation: ca-descend .5s cubic-bezier(.2, .7, .3, 1) .14s both; }
+
+@keyframes ca-descend {
+    from { opacity: 0; transform: translateY(-16px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* La barre de progression du haut. Elle monte vite jusqu'à 90 % puis
@@ -210,5 +270,7 @@
     .ca-voile .ca-marque,
     .ca-voile .ca-rail::after { animation: none; }
 
-    .ca-voile, .ca-barre { transition: none; }
+    .ca-voile, .ca-voile .ca-centre, .ca-barre { transition: none; }
+
+    body.ca-entre :where(.sidebar, .search-card, .main > .tab-panel) { animation: none; }
 }
