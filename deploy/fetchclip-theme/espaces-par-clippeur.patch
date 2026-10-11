@@ -1,0 +1,202 @@
+diff --git a/lib/download.js b/lib/download.js
+index bf29d0c..db06f8c 100644
+--- a/lib/download.js
++++ b/lib/download.js
+@@ -3,14 +3,29 @@ import path from 'node:path';
+ import { spawn } from 'node:child_process';
+ import { pipeline } from 'node:stream/promises';
+ import { Readable } from 'node:stream';
+-import { ROOT } from './env.js';
++import { espaceRacine } from './env.js';
+ 
+-const DATA_DIR = path.join(ROOT, 'data');
+-const HISTORY_FILE = path.join(DATA_DIR, 'history.json');
++/**
++ * L'historique est par clippeur, comme le reste.
++ *
++ * Partage, la coche « deja telechargle » d'une personne marquait le clip
++ * comme pris pour tout le monde : chacun voyait disparaitre des clips qu'il
++ * n'avait jamais touches.
++ */
++function historyFile() {
++  const dir = path.join(espaceRacine(), 'data');
++  fs.mkdirSync(dir, { recursive: true });
++  return path.join(dir, 'history.json');
++}
+ 
++/**
++ * Le dossier de telechargement du clippeur en cours.
++ *
++ * DOWNLOAD_DIR n'est plus lu : une valeur absolue y renverrait tout le
++ * monde au meme endroit, ce qui est precisement ce qu'on vient de defaire.
++ */
+ export function downloadDir() {
+-  const configured = process.env.DOWNLOAD_DIR || 'downloads';
+-  const dir = path.isAbsolute(configured) ? configured : path.join(ROOT, configured);
++  const dir = path.join(espaceRacine(), 'downloads');
+   fs.mkdirSync(dir, { recursive: true });
+   return dir;
+ }
+@@ -222,15 +237,14 @@ function finishDownload(clip, staging, file, method) {
+ 
+ export function readHistory() {
+   try {
+-    return JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf8'));
++    return JSON.parse(fs.readFileSync(historyFile(), 'utf8'));
+   } catch {
+     return {};
+   }
+ }
+ 
+ function writeHistory(history) {
+-  fs.mkdirSync(DATA_DIR, { recursive: true });
+-  fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2));
++  fs.writeFileSync(historyFile(), JSON.stringify(history, null, 2));
+ }
+ 
+ export function rememberDownload(clip, file) {
+diff --git a/lib/env.js b/lib/env.js
+index d718a64..606d2f4 100644
+--- a/lib/env.js
++++ b/lib/env.js
+@@ -1,9 +1,50 @@
+ import fs from 'node:fs';
+ import path from 'node:path';
++import { AsyncLocalStorage } from 'node:async_hooks';
+ import { fileURLToPath } from 'node:url';
+ 
+ export const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+ 
++/**
++ * Le clippeur de la requete en cours.
++ *
++ * AsyncLocalStorage plutot qu'un parametre passe de fonction en fonction :
++ * les dossiers sont resolus a une quarantaine d'endroits, dont le fond de
++ * lib/render.js et lib/series.js. Les traverser tous avec un identifiant
++ * aurait touche chaque signature, et un seul oubli aurait ecrit dans
++ * l'espace de quelqu'un d'autre sans que rien ne le signale.
++ */
++export const clippeurCourant = new AsyncLocalStorage();
++
++/**
++ * Identifiant utilisable comme nom de dossier.
++ *
++ * Liste blanche stricte, jamais un simple echappement : l'identifiant vient
++ * d'un en-tete HTTP, et '..' suffirait a sortir de l'espace. Tout ce qui
++ * n'est pas une lettre, un chiffre ou un tiret disparait.
++ */
++export function identifiantPropre(brut) {
++  const propre = String(brut || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 40);
++
++  return propre || 'commun';
++}
++
++/**
++ * La racine de l'espace du clippeur en cours.
++ *
++ * Hors requete — demarrage, taches de fond — on retombe sur un espace
++ * commun plutot que sur la racine du projet : un fichier ecrit a cote du
++ * code s'y retrouve melange aux sources.
++ */
++export function espaceRacine() {
++  const id = clippeurCourant.getStore();
++  const dir = path.join(ROOT, 'espaces', identifiantPropre(id));
++
++  fs.mkdirSync(dir, { recursive: true });
++
++  return dir;
++}
++
+ // Mini parseur .env : evite une dependance a dotenv.
+ export function loadEnv() {
+   const file = path.join(ROOT, '.env');
+diff --git a/lib/render.js b/lib/render.js
+index 4e2d8d1..f27391b 100644
+--- a/lib/render.js
++++ b/lib/render.js
+@@ -3,7 +3,7 @@ import os from 'node:os';
+ import path from 'node:path';
+ import { spawn } from 'node:child_process';
+ import { downloadDir } from './download.js';
+-import { ROOT } from './env.js';
++import { espaceRacine } from './env.js';
+ 
+ /** Dossier de sortie des montages, a cote des clips bruts. */
+ export function editedDir() {
+@@ -14,7 +14,7 @@ export function editedDir() {
+ 
+ /** Videos de fond pour l'ecran partage. L'utilisateur y depose ses propres fichiers. */
+ export function backgroundsDir() {
+-  const dir = path.join(ROOT, 'fonds');
++  const dir = path.join(espaceRacine(), 'fonds');
+   fs.mkdirSync(dir, { recursive: true });
+   return dir;
+ }
+diff --git a/lib/series.js b/lib/series.js
+index f1acdd4..aeacef0 100644
+--- a/lib/series.js
++++ b/lib/series.js
+@@ -1,7 +1,7 @@
+ import fs from 'node:fs';
+ import path from 'node:path';
+ import { spawn } from 'node:child_process';
+-import { ROOT } from './env.js';
++import { espaceRacine } from './env.js';
+ import { findFfmpeg, renderClip, editedDir } from './render.js';
+ import { rememberRender } from './publish.js';
+ 
+@@ -13,7 +13,7 @@ import { rememberRender } from './publish.js';
+ 
+ /** Videos longues deposees par l'utilisateur, en attente de decoupe. */
+ export function sourcesDir() {
+-  const dir = path.join(ROOT, 'sources');
++  const dir = path.join(espaceRacine(), 'sources');
+   fs.mkdirSync(dir, { recursive: true });
+   return dir;
+ }
+diff --git a/server.js b/server.js
+index f4392d9..148c6c6 100644
+--- a/server.js
++++ b/server.js
+@@ -2,7 +2,7 @@ import http from 'node:http';
+ import fs from 'node:fs';
+ import path from 'node:path';
+ import { spawn } from 'node:child_process';
+-import { loadEnv, ROOT } from './lib/env.js';
++import { loadEnv, ROOT, clippeurCourant, identifiantPropre } from './lib/env.js';
+ import {
+   isConfigured,
+   getUsers,
+@@ -301,7 +301,22 @@ function openFolder(dir) {
+   spawn(cmd, [dir], { detached: true, stdio: 'ignore', shell: process.platform === 'win32' }).unref();
+ }
+ 
+-const server = http.createServer(async (req, res) => {
++const server = http.createServer((req, res) => {
++  /*
++   * Chaque requete travaille dans l'espace de son clippeur.
++   *
++   * L'identite vient de l'en-tete pose par Nginx, qui l'obtient de Laravel
++   * avant de laisser passer la requete : elle ne peut donc pas etre
++   * choisie par le navigateur. Sans en-tete — usage local, en direct sur
++   * le port — tout le monde partage l'espace « commun », ce qui est le
++   * comportement d'origine.
++   */
++  const clippeur = identifiantPropre(req.headers['x-clipper-id']);
++
++  clippeurCourant.run(clippeur, () => void traiter(req, res));
++});
++
++async function traiter(req, res) {
+   const url = new URL(req.url, `http://localhost:${PORT}`);
+ 
+   try {
+@@ -611,7 +626,7 @@ const server = http.createServer(async (req, res) => {
+     const status = err instanceof TwitchError || err instanceof kick.KickError ? err.status || 500 : 500;
+     sendJson(res, status, { error: err.message });
+   }
+-});
++}
+ 
+ server.listen(PORT, () => {
+   console.log(`\n  FetchClip -> http://localhost:${PORT}`);
