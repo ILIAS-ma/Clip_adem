@@ -285,6 +285,26 @@ class DatabaseCampaignBudgetService implements CampaignBudgetService
             return BudgetQuote::nothing(CreditOutcome::BelowThreshold, $remaining);
         }
 
+        /*
+         * Volume minimum : la campagne peut exiger cinq clips plutôt qu'un
+         * seul coup de chance. En dessous, les vues sont comptées mais rien
+         * n'est crédité.
+         *
+         * Rien n'est perdu pour autant, et c'est ce qui rend la règle
+         * tenable : le delta se calcule plus bas sur le total de vues moins
+         * les vues déjà payées, pas sur le relevé du moment. Le jour où le
+         * clip manquant est validé, le relevé suivant rattrape l'arriéré des
+         * précédents d'un seul coup.
+         *
+         * Ne comptent que les clips validés : sinon cinq soumissions
+         * bâclées suffiraient à ouvrir le robinet, ce que la règle existe
+         * précisément pour empêcher.
+         */
+        if ($campaign->min_clips_per_clipper > 0
+            && $campaign->payableClipCountFor($clip->user_id) < $campaign->min_clips_per_clipper) {
+            return BudgetQuote::nothing(CreditOutcome::TooFewClips, $remaining);
+        }
+
         $rate = $campaign->rateFor($clip->platform);
 
         if (! $rate || $rate <= 0) {

@@ -141,6 +141,15 @@ class CampaignForm
                         ->default(0)
                         ->minValue(0),
 
+                    TextInput::make('min_clips_per_clipper')
+                        ->label('Clips minimum par clippeur')
+                        ->numeric()
+                        ->minValue(1)
+                        ->maxValue(100)
+                        ->placeholder('Aucun')
+                        ->helperText("En dessous, les vues sont comptées mais rien n'est crédité. "
+                            ."L'arriéré est rattrapé dès que le compte est atteint : rien n'est perdu."),
+
                     static::money('max_payout_per_clip_cents')
                         ->label('Plafond par clip')
                         ->placeholder('Aucun'),

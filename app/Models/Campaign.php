@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CampaignStatus;
+use App\Enums\ClipStatus;
 use App\Enums\Platform;
 use App\Exceptions\InvalidCampaignTransition;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[Fillable([
     'creator_id', 'title', 'slug', 'brief', 'required_hashtags',
     'status', 'currency', 'budget_total_cents', 'min_views_per_clip',
-    'max_payout_per_clip_cents',
+    'min_clips_per_clipper', 'max_payout_per_clip_cents',
     'starts_at', 'ends_at', 'requires_approval', 'created_by',
 ])]
 class Campaign extends Model
@@ -31,6 +32,7 @@ class Campaign extends Model
             'budget_total_cents' => 'integer',
             'spent_cents' => 'integer',
             'min_views_per_clip' => 'integer',
+            'min_clips_per_clipper' => 'integer',
             'max_payout_per_clip_cents' => 'integer',
             'requires_approval' => 'boolean',
             'starts_at' => 'datetime',
@@ -167,6 +169,28 @@ class Campaign extends Model
             CampaignStatus::Exhausted,
             CampaignStatus::Completed,
         ], true);
+    }
+
+    /**
+     * Clips validés de ce clippeur sur cette campagne.
+     *
+     * Une seule définition de « clip qui compte », partagée par le moteur de
+     * budget et par l'affichage : si les deux divergeaient, le clippeur
+     * verrait « 5 / 5 » sans être payé, ou l'inverse — et dans les deux cas
+     * il conclurait à un bug.
+     *
+     * Validés seulement : cinq soumissions bâclées ne doivent pas suffire à
+     * ouvrir le robinet, ce que la règle existe précisément pour empêcher.
+     */
+    public function payableClipCountFor(int $userId): int
+    {
+        return (int) $this->clips()
+            ->where('user_id', $userId)
+            ->whereIn('status', array_filter(
+                ClipStatus::cases(),
+                fn (ClipStatus $s) => $s->isPayable(),
+            ))
+            ->count();
     }
 
     /** @param  Builder<self>  $query */

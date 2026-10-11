@@ -47,6 +47,32 @@
             </div>
         @endif
 
+        {{--
+            Le volume minimum, dit en clair et au-dessus de tout le reste.
+
+            La ligne du tableau à droite ne suffit pas : quelqu'un qui voit ses
+            vues monter sans que ses gains bougent cherche une panne, pas une
+            règle. Autant la lui rappeler là où il regarde.
+        --}}
+        @php
+            $minClips = (int) $campaign->min_clips_per_clipper;
+            $valides = $minClips > 0 ? $campaign->payableClipCountFor(auth()->id()) : 0;
+        @endphp
+
+        @if ($minClips > 0 && $valides < $minClips)
+            <div class="alert-warn">
+                <p class="font-semibold">
+                    {{ $minClips }} clips validés avant d'être rémunéré —
+                    vous en avez {{ $valides }}
+                </p>
+                <p class="mt-1 leading-relaxed">
+                    Vos vues sont comptées dès maintenant, mais rien n'est crédité avant le
+                    {{ $minClips }}<sup>e</sup> clip validé. Dès qu'il l'est, tout l'arriéré des
+                    précédents est rattrapé d'un coup : rien n'est perdu, tout est différé.
+                </p>
+            </div>
+        @endif
+
         <div class="grid gap-6 lg:grid-cols-3">
 
             <div class="space-y-6 lg:col-span-2">
@@ -196,6 +222,18 @@
                             <div class="flex justify-between gap-2 border-t border-ink-700 pt-3">
                                 <dt class="text-ink-400">Vues minimum</dt>
                                 <dd class="tabular text-ink-100">{{ Money::views($campaign->min_views_per_clip) }}</dd>
+                            </div>
+                        @endif
+
+                        @if ($minClips > 0)
+                            {{-- La progression, pas seulement l'exigence : « 5
+                                 clips minimum » laisse compter de tête, et se
+                                 tromper. --}}
+                            <div class="flex justify-between gap-2">
+                                <dt class="text-ink-400">Clips minimum</dt>
+                                <dd class="tabular {{ $valides >= $minClips ? 'text-ink-100' : 'text-amber-300' }}">
+                                    {{ $valides }} / {{ $minClips }}
+                                </dd>
                             </div>
                         @endif
 
