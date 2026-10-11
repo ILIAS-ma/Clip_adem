@@ -36,7 +36,28 @@ CODEC="$(ffprobe -v error -select_streams v:0 \
 # réencoder n'y changerait rien.
 [ -n "$CODEC" ] || { note "aucune piste video : $FICHIER"; exit 0; }
 
-SORTIE="${FICHIER%.*}.h264.mp4"
+# Nom de sortie unique au processus, et verrou sur le fichier d'entrée.
+#
+# Sans les deux, deux conversions lancées sur le même fichier — un clic
+# répété sur « télécharger » suffit — écrivaient dans la même sortie :
+# la première se faisait arracher son fichier pendant l'étape faststart,
+# et échouait sur « Unable to re-open output file for shifting data ».
+# Observé dans le journal avant ce correctif.
+SORTIE="${FICHIER%.*}.$$.h264.mp4"
+VERROU="${FICHIER}.lock"
+
+exec 9>"$VERROU" 2>/dev/null || exec 9>/dev/null
+
+if ! flock -n 9; then
+    note "conversion deja en cours, abandon : $FICHIER"
+    exit 0
+fi
+
+# Le verrou a pu être pris pendant qu'une autre conversion finissait : on
+# relit le codec plutôt que de refaire le travail.
+CODEC="$(ffprobe -v error -select_streams v:0     -show_entries stream=codec_name -of csv=p=0 "$FICHIER" 2>/dev/null | head -1)"
+
+[ "$CODEC" = "h264" ] && { rm -f "$VERROU"; exit 0; }
 
 note "conversion $CODEC -> h264 : $FICHIER"
 
@@ -66,5 +87,7 @@ else
     rm -f "$SORTIE"
     note "ECHEC de conversion, original conserve : $FICHIER"
 fi
+
+rm -f "$VERROU"
 
 exit 0
