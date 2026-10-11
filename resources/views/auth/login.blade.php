@@ -21,7 +21,11 @@
         <div>
             <div class="flex items-baseline justify-between">
                 <x-input-label for="password" value="Mot de passe" />
-                @if (Route::has('password.request'))
+                {{-- Proposé seulement si un e-mail peut réellement partir :
+                     sans prestataire, ce lien menait à un écran qui annonçait
+                     n'avoir rien envoyé. Mieux vaut ne rien promettre que
+                     d'expliquer pourquoi on ne tient pas sa promesse. --}}
+                @if (Route::has('password.request') && App\Support\MailDelivery::isActive())
                     <a href="{{ route('password.request') }}"
                        class="text-sm font-medium text-ink-400 underline-offset-2 hover:text-ink-50 hover:underline">
                         Oublié ?

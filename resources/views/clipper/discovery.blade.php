@@ -41,39 +41,48 @@
         @livewire('clip-discovery')
 
         {{--
-            Le montage reste chez le clippeur, et il faut le dire franchement.
-            Rendre une vidéo verticale demande une à deux minutes de calcul à
-            plein régime ; le faire sur le serveur qui sert aussi le site le
-            rendrait lent pour tout le monde dès deux clippeurs simultanés.
-        --}}
-        <div class="card p-6 sm:p-8">
-            <h2 class="font-display text-lg font-bold text-ink-50">Télécharger et monter</h2>
-            <p class="mt-2 max-w-3xl text-sm leading-relaxed text-ink-300">
-                Le téléchargement et le montage vertical se font sur votre machine, avec
-                <span class="font-semibold text-ink-100">FetchClip</span> : il récupère le mp4,
-                le recadre en 9:16, ajoute vos textes et sort un fichier prêt à téléverser.
-                C'est volontaire — un rendu vidéo occupe un processeur entier pendant une à deux
-                minutes, et le faire ici ralentirait le site pour tout le monde.
-            </p>
+            L'outil de montage.
 
-            <div class="mt-5 flex flex-wrap items-center gap-3">
-                <a href="https://github.com/ILIAS-ma/fetch_clip" target="_blank" rel="noopener"
-                   class="btn-ghost">
-                    Récupérer FetchClip ↗
-                </a>
-                <span class="text-sm text-ink-400">Node 18+ et yt-dlp. Aucune dépendance npm.</span>
+            Rien à télécharger depuis cet écran : le dépôt s'ouvre dans une
+            nouvelle page, et c'est tout. Le rendu vertical reste sur la
+            machine du clippeur — il occupe un processeur entier une à deux
+            minutes, et le faire sur le serveur qui sert aussi le site le
+            rendrait lent pour tout le monde dès deux clippeurs simultanés.
+
+            La carte se soulève et son liseré s'éclaire au survol : le
+            mouvement annonce qu'on quitte le site, avant le clic.
+        --}}
+        <a href="https://github.com/ILIAS-ma/fetch_clip" target="_blank" rel="noopener"
+           class="depart-card group block p-6 sm:p-8">
+            <div class="flex flex-wrap items-start justify-between gap-5">
+                <div class="min-w-0">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">Montage vertical</p>
+
+                    <h2 class="mt-1.5 flex items-center gap-2 font-display text-lg font-bold text-ink-50">
+                        FetchClip
+                        {{-- La flèche avance d'un cheveu au survol : assez pour
+                             dire « ça part ailleurs », pas assez pour sauter. --}}
+                        <span class="depart-arrow" aria-hidden="true">↗</span>
+                    </h2>
+
+                    <p class="mt-2 max-w-2xl text-sm leading-relaxed text-ink-300">
+                        Récupère le mp4, le recadre en 9:16, ajoute vos textes et sort un fichier
+                        prêt à téléverser. Ouvre la page du projet dans un nouvel onglet.
+                    </p>
+                </div>
+
+                <ol class="depart-steps">
+                    <li><span>1</span> Copier les pseudos trouvés ci-dessus</li>
+                    <li><span>2</span> Télécharger, monter en 9:16</li>
+                    <li><span>3</span> Publier, puis coller l'adresse dans la campagne</li>
+                </ol>
             </div>
 
-            <ol class="mt-6 space-y-2 border-t border-ink-700 pt-5 text-sm leading-relaxed text-ink-300">
-                <li><span class="font-semibold text-ink-100">1.</span> Collez les pseudos de chaînes trouvés ci-dessus dans l'outil.</li>
-                <li><span class="font-semibold text-ink-100">2.</span> Sélectionnez les clips, téléchargez, montez en 9:16.</li>
-                <li><span class="font-semibold text-ink-100">3.</span> Publiez depuis votre compte, puis collez l'adresse de la publication dans la campagne.</li>
-            </ol>
-
-            <p class="hint mt-5">
+            <p class="hint mt-6">
                 Un clip n'existe sur Twitch que si la chaîne autorise le clipping : c'est un
                 réglage que le streamer peut couper. Citez la chaîne source dans votre légende.
             </p>
-        </div>
+        </a>
+
     </div>
 </x-app-layout>

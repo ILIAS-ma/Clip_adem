@@ -48,16 +48,37 @@ class HonestDeliveryTest extends TestCase
     // ------------------------------------------------------------------
 
     #[Test]
-    public function resending_the_link_says_so_when_no_mail_can_leave(): void
+    public function resending_the_link_is_simply_closed_when_no_mail_can_leave(): void
     {
-        // Pilote `log` : rien ne quitte le serveur. Annoncer « lien envoyé »
-        // laisserait rafraîchir une boîte vide indéfiniment.
+        /*
+         * Pilote `log` : rien ne quitte le serveur. On reconduit chez soi
+         * sans message — expliquer la mécanique interne à quelqu'un qui
+         * voulait juste entrer ne lui sert à rien, et un bandeau d'erreur sur
+         * une action qu'il n'aurait pas dû pouvoir déclencher ressemble à une
+         * panne de son côté.
+         */
         config(['mail.default' => 'log']);
 
         $this->actingAs($this->utilisateur())
             ->post('/email/verification-notification')
-            ->assertSessionHasErrors('email')
-            ->assertSessionMissing('status');
+            ->assertRedirect('/dashboard')
+            ->assertSessionHasNoErrors();
+    }
+
+    #[Test]
+    public function resending_the_link_is_closed_when_the_control_is_suspended(): void
+    {
+        // Le numéro de téléphone tient ce rôle désormais : il n'y a plus rien
+        // à confirmer par e-mail, même avec un prestataire configuré.
+        config([
+            'mail.default' => 'smtp',
+            'clipping.onboarding.require_email_verification' => false,
+        ]);
+
+        $this->actingAs($this->utilisateur())
+            ->post('/email/verification-notification')
+            ->assertRedirect('/dashboard')
+            ->assertSessionHasNoErrors();
     }
 
     #[Test]
@@ -79,17 +100,41 @@ class HonestDeliveryTest extends TestCase
     }
 
     #[Test]
-    public function a_forgotten_password_says_so_when_no_mail_can_leave(): void
+    public function the_forgotten_password_door_is_closed_when_no_mail_can_leave(): void
     {
-        // La page où l'on arrive justement parce qu'on ne peut plus entrer :
-        // c'est le dernier endroit où mentir sur un envoi.
+        /*
+         * La page où l'on arrive justement parce qu'on ne peut plus entrer.
+         * Tant qu'aucun lien ne peut partir, elle n'a rien à offrir : le lien
+         * qui y menait est masqué sur la page de connexion, et la route
+         * elle-même reconduit à la connexion.
+         */
         config(['mail.default' => 'log']);
 
         $this->utilisateur(['email' => 'maya@clip.test']);
 
+        $this->get('/forgot-password')->assertRedirect(route('login'));
+
         $this->post('/forgot-password', ['email' => 'maya@clip.test'])
-            ->assertSessionHasErrors('email')
-            ->assertSessionMissing('status');
+            ->assertRedirect(route('login'))
+            ->assertSessionHasNoErrors();
+    }
+
+    #[Test]
+    public function the_login_page_offers_no_link_it_cannot_honour(): void
+    {
+        // Mieux vaut ne rien promettre que d'expliquer pourquoi on ne tient
+        // pas sa promesse.
+        config(['mail.default' => 'log']);
+
+        $this->get(route('login'))
+            ->assertSuccessful()
+            ->assertDontSee(route('password.request', absolute: false), escape: false);
+
+        config(['mail.default' => 'smtp']);
+
+        $this->get(route('login'))
+            ->assertSuccessful()
+            ->assertSee(route('password.request', absolute: false), escape: false);
     }
 
     #[Test]
@@ -101,6 +146,8 @@ class HonestDeliveryTest extends TestCase
 
         Mail::shouldReceive('mailer')->andThrow(new TransportException('refus de connexion'));
 
+        // Là, en revanche, le message a sa place : la personne a bien demandé
+        // un lien, et la porte était ouverte. C'est l'envoi qui a échoué.
         $this->post('/forgot-password', ['email' => 'maya@clip.test'])
             ->assertRedirect()
             ->assertSessionHasErrors('email');
@@ -110,7 +157,7 @@ class HonestDeliveryTest extends TestCase
     public function a_verified_account_is_simply_sent_home(): void
     {
         // Rien à renvoyer : ni erreur, ni message d'envoi.
-        config(['mail.default' => 'log']);
+        config(['mail.default' => 'smtp']);
 
         $this->actingAs($this->utilisateur(['email_verified_at' => now()]))
             ->post('/email/verification-notification')

@@ -14,10 +14,19 @@ use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 class PasswordResetLinkController extends Controller
 {
     /**
-     * Display the password reset link request view.
+     * Le formulaire de demande de lien.
+     *
+     * Fermé tant qu'aucun e-mail ne peut partir : l'écran n'aurait rien à
+     * offrir, et le lien qui y menait est déjà masqué sur la page de
+     * connexion. On renvoie à la connexion sans message — annoncer une panne
+     * à quelqu'un qui cherchait simplement à entrer ne l'avance à rien.
      */
-    public function create(): View
+    public function create(): View|RedirectResponse
     {
+        if (! MailDelivery::isActive()) {
+            return redirect()->route('login');
+        }
+
         return view('auth.forgot-password');
     }
 
@@ -32,15 +41,11 @@ class PasswordResetLinkController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        /*
-         * Dit avant d'essayer : sans prestataire, le lien n'est écrit que
-         * dans un journal du serveur. Annoncer « lien envoyé » laisserait
-         * quelqu'un rafraîchir sa boîte indéfiniment, persuadé d'avoir mal
-         * tapé son adresse.
-         */
+        // Même porte fermée que pour l'affichage : la route reste
+        // atteignable à la main, elle ne doit pas pour autant faire croire à
+        // un envoi.
         if (! MailDelivery::isActive()) {
-            return back()->withInput($request->only('email'))
-                ->withErrors(['email' => MailDelivery::inactiveMessage()]);
+            return redirect()->route('login');
         }
 
         try {

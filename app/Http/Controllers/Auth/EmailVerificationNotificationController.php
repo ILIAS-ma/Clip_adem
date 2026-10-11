@@ -19,12 +19,18 @@ class EmailVerificationNotificationController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        if ($request->user()->hasVerifiedEmail()) {
+        /*
+         * Trois raisons de ne rien envoyer, et la même issue : on reconduit
+         * chez soi, sans message. L'adresse est déjà confirmée, le contrôle
+         * est suspendu — le numéro de téléphone tient ce rôle désormais — ou
+         * aucun e-mail ne peut partir. Dans les trois cas, expliquer la
+         * mécanique interne à quelqu'un qui voulait juste entrer ne lui sert
+         * à rien.
+         */
+        if ($request->user()->hasVerifiedEmail()
+            || ! config('clipping.onboarding.require_email_verification')
+            || ! MailDelivery::isActive()) {
             return redirect()->intended($request->user()->role->homeRoute());
-        }
-
-        if (! MailDelivery::isActive()) {
-            return back()->withErrors(['email' => MailDelivery::inactiveMessage()]);
         }
 
         try {

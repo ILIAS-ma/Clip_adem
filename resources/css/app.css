@@ -791,6 +791,232 @@ button.sidebar-link {
 
 
 /* =====================================================================
+   Les blocs du rail, reprise de FetchClip.
+
+   Des listes compactes à en-tête discret, lues d'un coup d'œil : rang,
+   nom, chiffre. Elles tiennent trois fois plus de lignes qu'une carte
+   ordinaire dans la même hauteur, ce qui est le point — on vient y
+   chercher un classement, pas lire des paragraphes.
+   ===================================================================== */
+
+.side-block { display: flex; flex-direction: column; gap: .4rem; }
+
+.side-head { display: flex; align-items: center; gap: .4rem; padding: 0 .25rem; }
+
+.side-title {
+    margin-right: auto;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .64rem;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: theme(colors.ink.500);
+}
+
+.side-note { margin: 0 .25rem; font-size: .7rem; line-height: 1.45; color: theme(colors.ink.400); }
+
+.side-list { display: flex; flex-direction: column; gap: 1px; }
+
+/* Une ligne : rang, nom, chiffre. */
+.side-item {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    width: 100%;
+    padding: .38rem .5rem;
+    border: 0;
+    border-radius: 8px;
+    background: none;
+    color: theme(colors.ink.100);
+    font-size: .78rem;
+    text-align: left;
+    transition: background-color .14s ease;
+}
+
+.side-item:hover { background: theme(colors.ink.800); }
+
+.side-item .rank {
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    flex: none;
+    border-radius: 5px;
+    background: theme(colors.ink.800);
+    color: theme(colors.ink.400);
+    font-size: .62rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Les trois premiers en inversé : un podium se voit sans compter les
+   lignes. */
+.side-item:nth-child(-n + 3) .rank { background: #FFF; color: #000; }
+
+.side-item .who { min-width: 0; display: flex; flex-direction: column; }
+
+.side-item .cname {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+.side-item .cmeta {
+    font-size: .66rem;
+    color: theme(colors.ink.400);
+    font-variant-numeric: tabular-nums;
+}
+
+.side-item .count {
+    margin-left: auto;
+    flex: none;
+    font-size: .7rem;
+    color: theme(colors.ink.400);
+    font-variant-numeric: tabular-nums;
+}
+
+.side-item.is-empty { color: theme(colors.ink.500); font-size: .74rem; }
+.side-item.is-empty:hover { background: none; }
+
+/* Le point qui bat : il dit « en cours », là où un libellé « actif »
+   se lit comme une étiquette figée. */
+.live-pulse {
+    width: 6px;
+    height: 6px;
+    flex: none;
+    border-radius: 50%;
+    background: theme(colors.brand.500);
+    box-shadow: 0 0 0 0 rgb(204 63 69 / .45);
+    animation: battement 2.2s infinite;
+}
+
+@keyframes battement {
+    70% { box-shadow: 0 0 0 6px rgb(204 63 69 / 0); }
+    100% { box-shadow: 0 0 0 0 rgb(204 63 69 / 0); }
+}
+
+/* Bandeau d'état : quelques pastilles qui résument la situation du
+   compte, à hauteur d'un coup d'œil avant de lire quoi que ce soit. */
+.status-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+}
+
+.pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    padding: .2rem .6rem;
+    border-radius: 999px;
+    background: theme(colors.ink.800);
+    color: theme(colors.ink.300);
+    font-size: .68rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.pill.is-ok { background: rgb(255 255 255 / .12); color: #FFF; }
+.pill.is-bad { background: rgb(204 63 69 / .16); color: theme(colors.brand.300); }
+
+@media (prefers-reduced-motion: reduce) {
+    .live-pulse { animation: none; }
+}
+
+
+/* =====================================================================
+   Le départ vers l'extérieur.
+
+   Une carte entière cliquable, qui se soulève et dont le liseré
+   s'éclaire : le mouvement annonce qu'on quitte le site avant le clic.
+   La flèche avance d'un cheveu — assez pour dire « ça part ailleurs »,
+   pas assez pour sauter.
+   ===================================================================== */
+
+.depart-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid theme(colors.ink.700);
+    border-radius: 16px;
+    background: theme(colors.ink.900);
+    transition: border-color .25s ease, transform .25s cubic-bezier(.2, .7, .3, 1),
+                box-shadow .25s ease;
+}
+
+.depart-card:hover,
+.depart-card:focus-visible {
+    border-color: rgb(255 255 255 / .3);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgb(0 0 0 / .4), 0 2px 8px rgb(0 0 0 / .3);
+}
+
+.depart-card:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(255 255 255 / .22); }
+
+/* Un reflet qui balaie la carte au survol, du même métal que le logo. Il
+   passe une fois et s'arrête : une boucle attirerait l'œil en
+   permanence sur un lien secondaire. */
+.depart-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 38%,
+                rgb(255 255 255 / .07) 50%, transparent 62%);
+    transform: translateX(-100%);
+    transition: transform .7s cubic-bezier(.2, .7, .3, 1);
+    pointer-events: none;
+}
+
+.depart-card:hover::after { transform: translateX(100%); }
+
+.depart-arrow {
+    display: inline-block;
+    color: theme(colors.ink.400);
+    transition: transform .25s cubic-bezier(.2, .7, .3, 1), color .25s ease;
+}
+
+.depart-card:hover .depart-arrow {
+    transform: translate(3px, -3px);
+    color: #FFF;
+}
+
+.depart-steps {
+    display: flex;
+    flex-direction: column;
+    gap: .45rem;
+    flex: 0 1 19rem;
+    font-size: .78rem;
+    line-height: 1.45;
+    color: theme(colors.ink.400);
+}
+
+.depart-steps li { display: flex; align-items: baseline; gap: .55rem; }
+
+.depart-steps span {
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    flex: none;
+    border-radius: 6px;
+    background: theme(colors.ink.800);
+    color: theme(colors.ink.200);
+    font-size: .64rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .depart-card, .depart-card::after, .depart-arrow { transition: none; }
+    .depart-card:hover { transform: none; }
+    .depart-card:hover::after { transform: translateX(-100%); }
+    .depart-card:hover .depart-arrow { transform: none; }
+}
+
+
+/* =====================================================================
    Le panneau de recherche, reprise de FetchClip.
 
    Deux étages : la ligne qui déclenche la recherche, puis la ligne des
