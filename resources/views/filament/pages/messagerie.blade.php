@@ -24,7 +24,7 @@
             <div style="margin-top: .75rem; max-height: 65vh; overflow-y: auto; display: flex; flex-direction: column; gap: .25rem;">
                 @foreach ($conversations as $c)
                     <button type="button" wire:key="conv-{{ $c->id }}" wire:click="open({{ $c->id }})"
-                            style="text-align: left; padding: .6rem .7rem; border-radius: .6rem; border: 1px solid {{ $ouverte?->id === $c->id ? 'rgba(163,230,53,.5)' : 'transparent' }}; background: {{ $ouverte?->id === $c->id ? 'rgba(163,230,53,.08)' : 'transparent' }};">
+                            style="text-align: left; padding: .6rem .7rem; border-radius: .6rem; border: 1px solid {{ $ouverte?->id === $c->id ? 'rgba(204,63,69,.6)' : 'transparent' }}; background: {{ $ouverte?->id === $c->id ? 'rgba(204,63,69,.12)' : 'transparent' }};">
                         <div style="display: flex; justify-content: space-between; gap: .5rem; align-items: center;">
                             <strong style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                 {{ $c->user?->displayName() ?? 'Compte supprimé' }}
@@ -82,8 +82,8 @@
                     @forelse ($this->thread($ouverte) as $m)
                         <div wire:key="msg-{{ $m->id }}" style="display: flex; justify-content: {{ $m->from_staff ? 'flex-end' : 'flex-start' }};">
                             <div style="max-width: 75%; padding: .55rem .85rem; border-radius: 1rem; font-size: .875rem; line-height: 1.5;
-                                        background: {{ $m->from_staff ? 'rgb(163,230,53)' : 'rgba(127,127,127,.15)' }};
-                                        color: {{ $m->from_staff ? '#0a0a0a' : 'inherit' }};">
+                                        background: {{ $m->from_staff ? 'rgb(204,63,69)' : 'rgba(127,127,127,.15)' }};
+                                        color: {{ $m->from_staff ? '#ffffff' : 'inherit' }};">
                                 @if ($m->from_staff)
                                     <div style="font-size: .7rem; font-weight: 600; opacity: .7;">{{ $m->sender?->displayName() ?? 'Équipe' }}</div>
                                 @endif

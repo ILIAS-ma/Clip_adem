@@ -14,7 +14,7 @@
                  @class(['flex', 'justify-end' => ! $message->from_staff, 'justify-start' => $message->from_staff])>
                 <div @class([
                     'max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed sm:max-w-[70%]',
-                    'bg-brand-500 text-ink-950' => ! $message->from_staff,
+                    'bg-brand-500 text-white' => ! $message->from_staff,
                     'bg-ink-800 text-ink-100' => $message->from_staff,
                 ])>
                     @if ($message->from_staff)
@@ -23,7 +23,7 @@
                     <p class="whitespace-pre-line break-words">{{ $message->body }}</p>
                     <p @class([
                         'mt-1 text-[11px]',
-                        'text-ink-950/60' => ! $message->from_staff,
+                        'text-white/70' => ! $message->from_staff,
                         'text-ink-500' => $message->from_staff,
                     ])>{{ $message->created_at->diffForHumans() }}</p>
                 </div>

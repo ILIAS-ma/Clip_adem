@@ -52,7 +52,7 @@
                 </svg>
                 <span>{{ $link['label'] }}</span>
                 @if (! empty($link['badge']))
-                    <span class="ms-auto rounded-full bg-brand-500 px-1.5 py-0.5 text-[11px] font-bold leading-none text-ink-950"
+                    <span class="ms-auto rounded-full bg-brand-500 px-1.5 py-0.5 text-[11px] font-bold leading-none text-white"
                           aria-label="{{ $link['badge'] }} non lu{{ $link['badge'] > 1 ? 's' : '' }}">{{ $link['badge'] }}</span>
                 @endif
             </a>

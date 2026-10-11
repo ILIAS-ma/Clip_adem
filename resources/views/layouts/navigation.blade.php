@@ -107,7 +107,7 @@
                                     : request()->routeIs($link['pattern'])">
                                 {{ $link['label'] }}
                                 @if (! empty($link['badge']))
-                                    <span class="ms-2 rounded-full bg-brand-500 px-1.5 py-0.5 text-[11px] font-bold leading-none text-ink-950">{{ $link['badge'] }}</span>
+                                    <span class="ms-2 rounded-full bg-brand-500 px-1.5 py-0.5 text-[11px] font-bold leading-none text-white">{{ $link['badge'] }}</span>
                                 @endif
                             </x-responsive-nav-link>
                         </div>

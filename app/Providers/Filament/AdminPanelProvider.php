@@ -56,12 +56,16 @@ class AdminPanelProvider extends PanelProvider
                 // l'activer depuis son profil.
                 isRequired: (bool) config('clipping.onboarding.require_admin_2fa'),
             )
-            // Même identité que le front : lime sur noir. Le back-office force
-            // le mode sombre plutôt que de suivre le réglage du système, sinon
-            // l'admin et le site public n'auraient pas l'air du même produit.
+            // Même identité que le front : le rouge du logo sur du noir pur,
+            // des gris neutres plutôt que les gris bleutés par défaut. Le
+            // back-office force le mode sombre plutôt que de suivre le réglage
+            // du système, sinon l'admin et le site public n'auraient pas l'air
+            // du même produit.
             ->colors([
-                'primary' => Color::hex('#93CE2E'),
+                'primary' => Color::hex('#CC3F45'),
+                'gray' => Color::Neutral,
             ])
+            ->favicon(asset('images/logo.png'))
             ->defaultThemeMode(ThemeMode::Dark)
             ->brandLogo(fn () => is_file(public_path('images/logo.png'))
                 ? view('filament.brand-logo')
