@@ -60,14 +60,23 @@
 
 /* ═════════════ les blancs et noirs écrits en dur ═════════════ */
 
-/* Son logo, ses onglets actifs et ses trois premiers rangs posent
+/* Ses onglets actifs et ses trois premiers rangs posent
    `background: var(--text)` avec un texte blanc. Le jeton étant devenu
    clair, le texte blanc sur fond clair disparaissait. */
-.logo,
 .tab.active,
 .side-item:nth-child(-n + 3) .rank {
     background: var(--accent);
     color: #fff;
+}
+
+/* Le vrai logo à la place du monogramme.
+   Le « F » reste dans le document — on ne touche pas à son HTML — mais il
+   est rendu transparent : le retirer demanderait de modifier son dépôt,
+   et un `font-size: 0` casserait l'alignement de la boîte. */
+.logo {
+    background: #000 url("/images/logo.png") center / 82% no-repeat;
+    color: transparent;
+    border: 1px solid var(--line);
 }
 
 .tab.active { font-weight: 600; }
@@ -187,21 +196,21 @@ body.ca-fige { overflow: hidden; }
 /* Le monogramme respire au lieu de tourner : une rotation se lit comme un
    chargement bloqué, une pulsation comme une attente. */
 .ca-voile .ca-marque {
-    display: grid;
-    place-items: center;
-    width: 54px;
-    height: 54px;
-    border-radius: 15px;
-    background: var(--accent);
-    color: #fff;
-    font: 700 26px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-    letter-spacing: -.02em;
+    display: block;
+    width: 76px;
+    height: 76px;
+    border-radius: 20px;
+    background: #000 url("/images/logo.png") center / contain no-repeat;
+    /* Le monogramme de repli reste dans le document, invisible : si
+       l'image ne charge pas, la boîte garde sa place et le voile ne
+       s'effondre pas sur lui-même. */
+    color: transparent;
     animation: ca-souffle 1.6s ease-in-out infinite;
 }
 
 @keyframes ca-souffle {
-    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(204, 63, 69, .45); }
-    50% { transform: scale(1.06); box-shadow: 0 0 34px 6px rgba(204, 63, 69, .22); }
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(204, 63, 69, 0)); }
+    50% { transform: scale(1.05); filter: drop-shadow(0 0 22px rgba(204, 63, 69, .55)); }
 }
 
 .ca-voile .ca-mot {

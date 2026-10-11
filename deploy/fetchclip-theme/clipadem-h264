@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+#
+# Reconvertit en H.264 un fichier qui ne l'est pas.
+#
+# Twitch sert désormais certains clips en HEVC (H.265), à toutes les
+# qualités — pas seulement en 1440p comme le suppose le commentaire de
+# FetchClip. Les navigateurs ne savent pas le décoder : le lecteur rend
+# alors le son et une image noire. Le symptôme ne ressemble pas à un
+# problème de codec, il ressemble à une vidéo cassée.
+#
+# yt-dlp ignore le codec avant le téléchargement — il affiche « unknown »
+# pour tous les formats Twitch — donc aucun tri à la sélection ne peut
+# l'éviter. La seule issue est de regarder le fichier obtenu.
+#
+# Appelé par yt-dlp lui-même, via --exec dans /etc/yt-dlp.conf : le dépôt
+# de FetchClip n'est pas modifié, et `git pull` continue de fonctionner.
+
+set -u
+
+FICHIER="${1:-}"
+
+[ -n "$FICHIER" ] && [ -f "$FICHIER" ] || exit 0
+
+JOURNAL=/var/log/clipadem-h264.log
+
+note() { printf '%s  %s\n' "$(date '+%F %T')" "$*" >> "$JOURNAL" 2>/dev/null || true; }
+
+CODEC="$(ffprobe -v error -select_streams v:0 \
+    -show_entries stream=codec_name -of csv=p=0 "$FICHIER" 2>/dev/null | head -1)"
+
+# Déjà lisible partout : on ne touche à rien. Réencoder un H.264 en H.264
+# coûterait du temps processeur et de la qualité pour rien.
+[ "$CODEC" = "h264" ] && exit 0
+
+# Pas de piste vidéo lisible : ce n'est pas un problème de codec, et
+# réencoder n'y changerait rien.
+[ -n "$CODEC" ] || { note "aucune piste video : $FICHIER"; exit 0; }
+
+SORTIE="${FICHIER%.*}.h264.mp4"
+
+note "conversion $CODEC -> h264 : $FICHIER"
+
+# `nice` et deux fils : la machine a quatre cœurs et sert aussi le site.
+# Sans cette bride, un clippeur qui télécharge rend les pages lentes pour
+# tout le monde pendant la conversion.
+#
+# `-c:a copy` : la piste audio est déjà en AAC, la réencoder n'apporterait
+# qu'une perte. `faststart` déplace l'index en tête, pour que la lecture
+# démarre sans charger tout le fichier.
+if nice -n 19 ffmpeg -nostdin -v error -y \
+    -i "$FICHIER" \
+    -c:v libx264 -preset veryfast -crf 20 -pix_fmt yuv420p -threads 2 \
+    -c:a copy \
+    -movflags +faststart \
+    "$SORTIE" 2>>"$JOURNAL"
+then
+    # Remplacement en une seule opération : un `mv` sur le même système de
+    # fichiers est atomique, donc on ne peut pas se retrouver avec un
+    # fichier à moitié écrit sous le nom attendu.
+    mv -f "$SORTIE" "$FICHIER"
+    note "converti : $FICHIER"
+else
+    # On garde l'original : illisible dans un navigateur, mais récupérable
+    # à la main. Le supprimer laisserait le clippeur sans rien et sans
+    # explication.
+    rm -f "$SORTIE"
+    note "ECHEC de conversion, original conserve : $FICHIER"
+fi
+
+exit 0
