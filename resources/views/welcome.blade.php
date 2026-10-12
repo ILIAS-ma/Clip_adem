@@ -396,8 +396,15 @@
             </div>
 
             <div class="mt-10 flex flex-col gap-3 border-t border-ink-800 pt-6 text-xs text-ink-500 sm:flex-row sm:items-center sm:justify-between">
-                <p>{{ date('Y') }} — Plateforme de clipping</p>
-                <p>Retrait via PayPal · Frais PayPal habituels applicables</p>
+                <p>{{ date('Y') }} — Plateforme de clipping · Retrait via PayPal</p>
+                {{-- Les mentions légales doivent être accessibles depuis toutes
+                     les pages publiques : la loi le demande, et c'est ici que
+                     tout visiteur passe. --}}
+                <nav class="flex flex-wrap gap-x-4 gap-y-1">
+                    <a href="{{ route('legal.notice') }}" class="hover:text-ink-200">Mentions légales</a>
+                    <a href="{{ route('legal.terms') }}" class="hover:text-ink-200">Conditions d'utilisation</a>
+                    <a href="{{ route('legal.privacy') }}" class="hover:text-ink-200">Confidentialité</a>
+                </nav>
             </div>
         </div>
     </footer>

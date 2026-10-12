@@ -85,6 +85,14 @@
                 </a>
 
                 {{ $slot }}
+
+                {{-- Connexion et inscription sont les pages les plus vues :
+                     les mentions légales doivent y être accessibles. --}}
+                <p class="mt-10 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-500">
+                    <a href="{{ route('legal.notice') }}" class="hover:text-ink-200">Mentions légales</a>
+                    <a href="{{ route('legal.terms') }}" class="hover:text-ink-200">Conditions d'utilisation</a>
+                    <a href="{{ route('legal.privacy') }}" class="hover:text-ink-200">Confidentialité</a>
+                </p>
             </div>
         </main>
     </div>

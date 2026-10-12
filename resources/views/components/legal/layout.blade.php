@@ -41,6 +41,8 @@
                 <a href="{{ route('legal.terms') }}" class="hover:text-ink-200">Conditions d'utilisation</a>
                 <span aria-hidden="true"> · </span>
                 <a href="{{ route('legal.privacy') }}" class="hover:text-ink-200">Politique de confidentialité</a>
+                <span aria-hidden="true"> · </span>
+                <a href="{{ route('legal.notice') }}" class="hover:text-ink-200">Mentions légales</a>
             </p>
         </footer>
     </div>

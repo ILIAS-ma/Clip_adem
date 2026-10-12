@@ -30,6 +30,45 @@ class LegalPagesTest extends TestCase
     }
 
     #[Test]
+    public function the_legal_notice_shows_the_publisher_and_the_host(): void
+    {
+        config([
+            'legal.publisher.name' => 'Ilias Exemple',
+            'legal.publisher.status' => 'Entrepreneur individuel',
+            'legal.publisher.siret' => '123 456 789 00012',
+            'legal.publisher.address' => '1 rue de l’Exemple, 75000 Paris',
+            'legal.publisher.director' => 'Ilias Exemple',
+        ]);
+
+        $this->get(route('legal.notice'))
+            ->assertSuccessful()
+            ->assertSee('Ilias Exemple')
+            ->assertSee('123 456 789 00012')
+            ->assertSee('OVH SAS')
+            ->assertSee('2 rue Kellermann');
+    }
+
+    #[Test]
+    public function an_unfilled_publisher_is_never_invented(): void
+    {
+        // Pas d'identité de remplissage : la page le dit, et donne un contact.
+        config(['legal.publisher.name' => null]);
+
+        $this->get(route('legal.notice'))
+            ->assertSuccessful()
+            ->assertSee('en cours de mise à jour')
+            ->assertDontSee('SIRET');
+    }
+
+    #[Test]
+    public function every_public_entry_point_links_to_the_legal_notice(): void
+    {
+        foreach (['home', 'login', 'register'] as $route) {
+            $this->get(route($route))->assertSee(route('legal.notice', absolute: false), escape: false);
+        }
+    }
+
+    #[Test]
     public function they_stay_reachable_once_signed_in(): void
     {
         // Ni redirection vers un espace, ni garde d'onboarding : un utilisateur

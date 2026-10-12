@@ -232,6 +232,13 @@ Route::view('/privacy', 'legal.privacy', [
     'contactEmail' => config('mail.from.address'),
 ])->name('legal.privacy');
 
+// Celle-ci est en français : elle est lue par des visiteurs français, et la
+// loi qui l'impose est française.
+Route::view('/mentions-legales', 'legal.notice', [
+    'updatedAt' => '12 octobre 2026',
+    'contactEmail' => config('legal.publisher.email') ?: config('mail.from.address'),
+])->name('legal.notice');
+
 /*
 |--------------------------------------------------------------------------
 | Espace clippeur
