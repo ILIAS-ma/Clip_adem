@@ -22,28 +22,47 @@
      * campagnes, ni aux messages. Seul le bouton « précédent » du navigateur
      * en sortait.
      *
-     * Une barre fine en haut, aux couleurs du site, rend le chemin du retour.
-     * Elle porte aussi le nom de l'outil dans le produit : Echo Studio.
+     * On y remet la navigation du site, la même que partout ailleurs, dans
+     * sa forme repliée : les mêmes icônes dans le même ordre, le nom au
+     * survol. Repliée, parce que l'outil a déjà sa propre colonne et que
+     * deux colonnes pleines lui mangeraient la moitié de l'écran.
+     *
+     * Les tracés viennent de NavigationComposer : une rubrique ajoutée là
+     * doit l'être ici aussi.
      */
-    var barreSite = document.createElement('nav');
-    barreSite.className = 'ca-nav';
-    barreSite.setAttribute('aria-label', 'Navigation du site');
-    barreSite.innerHTML =
-        '<a class="ca-nav-marque" href="/dashboard" title="Retour au tableau de bord">' +
-            '<span class="ca-nav-logo" aria-hidden="true"></span>' +
-            '<span class="ca-nav-nom">Echo <b>Studio</b></span>' +
-        '</a>' +
-        '<div class="ca-nav-liens">' +
-            '<a href="/dashboard">Tableau de bord</a>' +
-            '<a href="/campagnes">Campagnes</a>' +
-            '<a href="/mes-clips">Mes clips</a>' +
-            '<a href="/messages">Messages</a>' +
-        '</div>' +
-        '<a class="ca-nav-retour" href="/dashboard">' +
-            '<span aria-hidden="true">←</span> Retour au site' +
-        '</a>';
-    document.body.insertBefore(barreSite, document.body.firstChild);
-    document.body.classList.add('ca-avec-nav');
+    var rubriques = [
+        ['/dashboard', 'Tableau de bord', 'M4 5a1 1 0 011-1h5v7H4V5zm0 9h6v6H5a1 1 0 01-1-1v-5zm10-10h5a1 1 0 011 1v4h-6V4zm0 7h6v8a1 1 0 01-1 1h-5v-9z'],
+        ['/campagnes', 'Campagnes', 'M3 10v4a1 1 0 001 1h3l5 4V5L7 9H4a1 1 0 00-1 1zm13.5-3a5 5 0 010 10M19 4a9 9 0 010 16'],
+        ['/fetchclip', 'Echo Studio', 'M11 19a8 8 0 100-16 8 8 0 000 16zm10 2l-4.35-4.35M11 8v6m-3-3h6'],
+        ['/mes-clips', 'Mes clips', 'M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1zm0 4h16M8 5v4m8-4v4m-6 4.5l4 2.5-4 2.5v-5z'],
+        ['/mes-comptes', 'Mes comptes', 'M10 13a4 4 0 005.66 0l3-3a4 4 0 10-5.66-5.66l-1 1M14 11a4 4 0 00-5.66 0l-3 3a4 4 0 105.66 5.66l1-1'],
+        ['/revenus', 'Revenus', 'M3 8a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm13 4a2 2 0 11-4 0 2 2 0 014 0z'],
+        ['/classement', 'Classement', 'M4 20h4v-7H4v7zm6 0h4V5h-4v15zm6 0h4v-11h-4v11z'],
+        ['/succes', 'Succès', 'M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.2l5.9-.9L12 3z'],
+        ['/messages', 'Messages', 'M8 10h8M8 14h5m-9 6l2.5-3H18a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v14z'],
+    ];
+    var compte = [
+        ['/profile', 'Mon compte', 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'],
+        ['/revenus/paiement', 'Moyen de paiement', 'M3 8a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm0 3h18'],
+    ];
+
+    function lien(r) {
+        var actif = r[0] === '/fetchclip';
+        return '<a href="' + r[0] + '" class="ca-rail-lien' + (actif ? ' is-actif' : '') + '" data-libelle="' + r[1] + '"' +
+            ' aria-label="' + r[1] + '"' + (actif ? ' aria-current="page"' : '') + '>' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+            '<path d="' + r[2] + '"/></svg></a>';
+    }
+
+    var rail = document.createElement('nav');
+    rail.className = 'ca-rail';
+    rail.setAttribute('aria-label', 'Navigation du site');
+    rail.innerHTML =
+        '<a href="/dashboard" class="ca-rail-marque" data-libelle="Echo Clip" aria-label="Echo Clip — tableau de bord"></a>' +
+        '<div class="ca-rail-liens">' + rubriques.map(lien).join('') + '</div>' +
+        '<div class="ca-rail-compte">' + compte.map(lien).join('') + '</div>';
+    document.body.insertBefore(rail, document.body.firstChild);
+    document.body.classList.add('ca-avec-rail');
 
     // Le nom de l'outil dans sa propre barre latérale.
     var titreOutil = document.querySelector('.brand-text h1');

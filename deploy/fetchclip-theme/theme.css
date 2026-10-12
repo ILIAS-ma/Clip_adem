@@ -333,57 +333,88 @@ body.ca-entre .main > .tab-panel { animation: ca-descend .5s cubic-bezier(.2, .7
    le clippeur. Les fichiers arrivent dans ses téléchargements (theme.js). */
 #open-folder, #open-fonds, #result-open, #open-sources { display: none !important; }
 
-/* ═════════════ la barre du site (theme.js) ═════════════
+/* ═════════════ la navigation du site (theme.js) ═════════════
 
-   L'outil prenait toute la hauteur de l'écran : la barre se pose
-   au-dessus et l'outil se resserre d'autant, sans rien recouvrir. */
+   La même que sur le reste du site, dans sa forme repliée : la colonne
+   de 4,25 rem, les mêmes icônes, la rubrique courante sur fond discret.
+   L'outil se décale d'autant, sans rien recouvrir. */
 
-:root { --ca-nav-h: 52px; }
+:root { --ca-rail-l: 68px; }
 
-body.ca-avec-nav { padding-top: var(--ca-nav-h); }
-body.ca-avec-nav .app { height: calc(100vh - var(--ca-nav-h)); }
+body.ca-avec-rail { padding-left: var(--ca-rail-l); }
 
-.ca-nav {
+.ca-rail {
     position: fixed;
-    inset: 0 0 auto 0;
+    inset: 0 auto 0 0;
     z-index: 900;
-    height: var(--ca-nav-h);
+    width: var(--ca-rail-l);
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 28px;
-    padding: 0 18px;
-    background: rgba(0, 0, 0, .86);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--line);
+    padding: 10px 0 14px;
+    background: #050506;
+    border-right: 1px solid var(--line);
 }
 
-.ca-nav a { color: var(--muted); text-decoration: none; font-size: 13.5px; transition: color .15s; }
-.ca-nav a:hover { color: var(--text); }
-
-.ca-nav-marque { display: flex; align-items: center; gap: 10px; color: var(--text) !important; }
-.ca-nav-logo {
-    width: 28px; height: 28px; border-radius: 8px;
-    background: #000 url("/images/logo.png?v=640") center / 86% no-repeat;
-    box-shadow: 0 0 14px rgba(204, 63, 69, .35);
+.ca-rail-marque {
+    width: 38px; height: 38px;
+    margin: 6px 0 18px;
+    border-radius: 9px;
+    background: #000 url("/images/logo.png?v=640") center / 92% no-repeat;
 }
-.ca-nav-nom { font-size: 15px; font-weight: 600; letter-spacing: -.02em; }
-.ca-nav-nom b { color: var(--accent); font-weight: 700; }
 
-.ca-nav-liens { display: flex; gap: 22px; }
+.ca-rail-liens, .ca-rail-compte { display: flex; flex-direction: column; gap: 4px; }
+.ca-rail-compte {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+}
 
-.ca-nav-retour {
-    margin-left: auto;
-    padding: 7px 14px;
+.ca-rail-lien {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 42px; height: 38px;
+    border-radius: 10px;
+    color: var(--dim);
+    transition: background .15s, color .15s;
+}
+.ca-rail-lien svg { width: 18px; height: 18px; }
+.ca-rail-lien:hover { background: var(--fill-hover); color: var(--text); }
+.ca-rail-lien.is-actif { background: rgba(255, 255, 255, .06); color: #fff; }
+.ca-rail-lien.is-actif::before {
+    content: "";
+    position: absolute;
+    left: -13px; top: 9px; bottom: 9px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--accent);
+}
+
+/* Le nom de la rubrique au survol, comme sur la colonne repliée du site. */
+.ca-rail-lien::after, .ca-rail-marque::after {
+    content: attr(data-libelle);
+    position: absolute;
+    left: calc(100% + 12px);
+    top: 50%;
+    transform: translate(-4px, -50%);
+    padding: 5px 9px;
+    border-radius: 7px;
+    background: #1c1c21;
     border: 1px solid var(--line-strong);
-    border-radius: 999px;
-    color: var(--text) !important;
+    color: var(--text);
+    font-size: 12.5px;
     font-weight: 500;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .12s, transform .12s;
 }
-.ca-nav-retour:hover { border-color: var(--accent); background: rgba(204, 63, 69, .12); }
+.ca-rail-marque { position: relative; }
+.ca-rail-lien:hover::after, .ca-rail-marque:hover::after,
+.ca-rail-lien:focus-visible::after { opacity: 1; transform: translate(0, -50%); }
 
-/* Sur petit écran, seul le retour reste : la place manque, et c'est le
-   seul lien indispensable. */
 @media (max-width: 760px) {
-    .ca-nav-liens { display: none; }
-    .ca-nav { gap: 12px; }
+    :root { --ca-rail-l: 56px; }
+    .ca-rail-lien { width: 38px; }
 }
