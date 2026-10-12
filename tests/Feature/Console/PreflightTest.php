@@ -52,6 +52,7 @@ class PreflightTest extends TestCase
             'services.paypal.client_id' => 'k',
             'services.paypal.client_secret' => 's',
             'services.paypal.webhook_id' => 'w',
+            'clipping.payouts.paypal_automatic' => true,
         ]);
 
         // `isProduction()` lit l'environnement de l'application, pas seulement
@@ -77,6 +78,33 @@ class PreflightTest extends TestCase
         $this->artisan('clip:preflight')
             ->expectsOutputToContain('Vérification d\'e-mail')
             ->assertFailed();
+    }
+
+    #[Test]
+    public function manual_payouts_need_no_paypal_keys(): void
+    {
+        // L'administrateur envoie depuis PayPal et pointe le retrait : rien ne
+        // passe par l'API, l'absence de clés n'est pas un manque.
+        $this->productionConfig();
+        config([
+            'clipping.payouts.paypal_automatic' => false,
+            'services.paypal.client_id' => null,
+            'services.paypal.client_secret' => null,
+            'services.paypal.webhook_id' => null,
+        ]);
+
+        $this->artisan('clip:preflight')
+            ->expectsOutputToContain('manuels')
+            ->assertSuccessful();
+    }
+
+    #[Test]
+    public function automatic_payouts_without_keys_block_the_launch(): void
+    {
+        $this->productionConfig();
+        config(['services.paypal.client_id' => null, 'services.paypal.webhook_id' => null]);
+
+        $this->artisan('clip:preflight')->assertFailed();
     }
 
     #[Test]

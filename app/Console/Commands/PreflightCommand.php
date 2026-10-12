@@ -224,6 +224,25 @@ class PreflightCommand extends Command
         $mode = (string) config('services.paypal.mode');
         $keys = filled(config('services.paypal.client_id')) && filled(config('services.paypal.client_secret'));
 
+        /*
+         * Versements à la main : l'administrateur envoie depuis PayPal puis
+         * pointe le retrait. Rien ne part par l'API, rien n'en revient par
+         * webhook — les clés ne sont alors pas un manque. Le webhook, lui,
+         * refuse toute requête non signée en production tant que
+         * PAYPAL_WEBHOOK_ID est absent : il n'ouvre aucune porte.
+         */
+        if (! config('clipping.payouts.paypal_automatic')) {
+            $this->assert(
+                'Versements',
+                false,
+                'manuels',
+                'Chaque retrait validé est à envoyer depuis PayPal, puis à pointer « PayPal envoyé ».',
+                blocking: false,
+            );
+
+            return;
+        }
+
         $this->assert(
             'PayPal',
             $keys,
@@ -301,7 +320,9 @@ class PreflightCommand extends Command
             '2FA du personnel',
             $adminsWithout2fa === 0,
             $adminsWithout2fa === 0 ? 'tous équipés' : $adminsWithout2fa.' compte(s) sans 2FA',
-            'Ils seront renvoyés vers l\'écran de configuration à leur prochaine connexion.',
+            config('clipping.onboarding.require_admin_2fa')
+                ? 'Ils seront renvoyés vers l\'écran de configuration à leur prochaine connexion.'
+                : 'La 2FA étant suspendue, leur mot de passe suffit pour entrer dans le back-office.',
             blocking: false,
         );
 
