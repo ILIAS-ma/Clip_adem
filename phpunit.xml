@@ -22,6 +22,9 @@
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
+        <!-- Les tests tournent aussi sur le serveur, à chaque déploiement :
+             sans ceci, leurs fausses erreurs se mêlaient au vrai journal. -->
+        <env name="LOG_CHANNEL" value="null"/>
         <env name="CACHE_STORE" value="array"/>
         <!--
             MySQL et non SQLite, volontairement : SQLite ne verrouille pas au

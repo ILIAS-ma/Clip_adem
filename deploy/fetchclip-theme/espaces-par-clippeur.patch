@@ -240,7 +240,7 @@ index f1acdd4..aeacef0 100644
    return dir;
  }
 diff --git a/server.js b/server.js
-index f4392d9..36c4489 100644
+index f4392d9..fa128e1 100644
 --- a/server.js
 +++ b/server.js
 @@ -2,7 +2,7 @@ import http from 'node:http';
@@ -311,12 +311,18 @@ index f4392d9..36c4489 100644
        });
        return fs.createReadStream(file).pipe(res);
      }
-@@ -611,7 +645,7 @@ const server = http.createServer(async (req, res) => {
+@@ -611,9 +645,12 @@ const server = http.createServer(async (req, res) => {
      const status = err instanceof TwitchError || err instanceof kick.KickError ? err.status || 500 : 500;
      sendJson(res, status, { error: err.message });
    }
 -});
 +}
  
- server.listen(PORT, () => {
+-server.listen(PORT, () => {
++// Ecoute locale seulement : Nginx est le seul chemin d entree. Ouvert sur
++// toutes les interfaces, le service accepterait un en-tete X-Clipper-Id
++// forge par n importe qui, des que le pare-feu laisse passer le port.
++server.listen(PORT, process.env.HOST || "127.0.0.1", () => {
    console.log(`\n  FetchClip -> http://localhost:${PORT}`);
+   console.log(`  Telechargements : ${downloadDir()}`);
+   if (isDemo()) {
