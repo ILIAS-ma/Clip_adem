@@ -5,43 +5,42 @@
 
 <x-legal.layout title="Mentions légales" :updated-at="$updatedAt" :contact-email="$contactEmail">
 
+    {{--
+        Chaque champ s'affiche toujours. Vide, il montre « [à compléter] » :
+        jamais d'identité inventée, et ce qu'il reste à renseigner se voit
+        d'un coup d'œil. Les valeurs viennent du .env (config/legal.php),
+        posées sur le serveur avec `~/clipadem-set LEGAL_… "valeur"`.
+    --}}
+    @php
+        $champ = fn (?string $valeur) => filled($valeur)
+            ? e($valeur)
+            : '<span style="color: rgb(217 96 104); font-weight: 600;">[à compléter]</span>';
+    @endphp
+
     <section>
         <h2>Éditeur du site</h2>
-        @if (filled($editeur['name']))
-            <p>
-                Le site <strong>{{ config('app.name') }}</strong> ({{ preg_replace('#^https?://#', '', config('app.url')) }})
-                est édité par :
-            </p>
-            <ul>
-                <li><strong>{{ $editeur['name'] }}</strong>@if (filled($editeur['status'])), {{ $editeur['status'] }}@endif</li>
-                @if (filled($editeur['siret']))
-                    <li>SIRET : {{ $editeur['siret'] }}</li>
-                @endif
-                @if (filled($editeur['vat']))
-                    <li>TVA intracommunautaire : {{ $editeur['vat'] }}</li>
-                @endif
-                @if (filled($editeur['address']))
-                    <li>Adresse : {{ $editeur['address'] }}</li>
-                @endif
-                @if (filled($editeur['phone']))
-                    <li>Téléphone : {{ $editeur['phone'] }}</li>
-                @endif
-                @if (filled($editeur['email']))
-                    <li>E-mail : <a href="mailto:{{ $editeur['email'] }}">{{ $editeur['email'] }}</a></li>
-                @endif
-            </ul>
-            @if (filled($editeur['director']))
-                <p>Directeur de la publication : {{ $editeur['director'] }}.</p>
+        <p>
+            Le site <strong>{{ config('app.name') }}</strong> ({{ preg_replace('#^https?://#', '', config('app.url')) }})
+            est édité par :
+        </p>
+        <ul>
+            <li>Nom ou raison sociale : <strong>{!! $champ($editeur['name']) !!}</strong></li>
+            <li>Statut juridique : {!! $champ($editeur['status']) !!}</li>
+            <li>SIRET : {!! $champ($editeur['siret']) !!}</li>
+            @if (filled($editeur['vat']))
+                <li>TVA intracommunautaire : {{ $editeur['vat'] }}</li>
             @endif
-        @else
-            {{-- Jamais d'identité inventée : tant qu'elle n'est pas renseignée,
-                 la page le dit et donne le moyen de joindre l'éditeur. --}}
-            <p>
-                Les informations relatives à l'éditeur sont en cours de mise à jour. Pour toute
-                demande, écrivez à
-                <a href="mailto:{{ $contactEmail }}">{{ $contactEmail }}</a>.
-            </p>
-        @endif
+            <li>Adresse : {!! $champ($editeur['address']) !!}</li>
+            <li>Téléphone : {!! $champ($editeur['phone']) !!}</li>
+            <li>E-mail :
+                @if (filled($editeur['email']))
+                    <a href="mailto:{{ $editeur['email'] }}">{{ $editeur['email'] }}</a>
+                @else
+                    {!! $champ(null) !!}
+                @endif
+            </li>
+        </ul>
+        <p>Directeur de la publication : {!! $champ($editeur['director']) !!}</p>
     </section>
 
     <section>

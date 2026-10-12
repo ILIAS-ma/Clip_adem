@@ -29,7 +29,7 @@ return [
 
         'address' => env('LEGAL_ADDRESS'),
         'phone' => env('LEGAL_PHONE'),
-        'email' => env('LEGAL_EMAIL', env('MAIL_FROM_ADDRESS')),
+        'email' => env('LEGAL_EMAIL'),
 
         // Le directeur de la publication : l'éditeur lui-même, ou le
         // représentant légal de la société.

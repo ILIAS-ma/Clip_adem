@@ -51,13 +51,18 @@ class LegalPagesTest extends TestCase
     #[Test]
     public function an_unfilled_publisher_is_never_invented(): void
     {
-        // Pas d'identité de remplissage : la page le dit, et donne un contact.
-        config(['legal.publisher.name' => null]);
+        // Pas d'identité de remplissage : chaque champ vide est signalé, pour
+        // qu'on voie d'un coup d'œil ce qu'il reste à renseigner.
+        config([
+            'legal.publisher.name' => null,
+            'legal.publisher.siret' => null,
+            'legal.publisher.email' => null,
+        ]);
 
         $this->get(route('legal.notice'))
             ->assertSuccessful()
-            ->assertSee('en cours de mise à jour')
-            ->assertDontSee('SIRET');
+            ->assertSee('SIRET')
+            ->assertSee('[à compléter]');
     }
 
     #[Test]
