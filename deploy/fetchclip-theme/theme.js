@@ -14,6 +14,41 @@
 
     var sobre = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    /* ─────────────── la barre du site ─────────────── */
+
+    /*
+     * L'outil occupe tout l'écran avec sa propre barre latérale : une fois
+     * dedans, plus rien ne ramenait au site — ni au tableau de bord, ni aux
+     * campagnes, ni aux messages. Seul le bouton « précédent » du navigateur
+     * en sortait.
+     *
+     * Une barre fine en haut, aux couleurs du site, rend le chemin du retour.
+     * Elle porte aussi le nom de l'outil dans le produit : Echo Studio.
+     */
+    var barreSite = document.createElement('nav');
+    barreSite.className = 'ca-nav';
+    barreSite.setAttribute('aria-label', 'Navigation du site');
+    barreSite.innerHTML =
+        '<a class="ca-nav-marque" href="/dashboard" title="Retour au tableau de bord">' +
+            '<span class="ca-nav-logo" aria-hidden="true"></span>' +
+            '<span class="ca-nav-nom">Echo <b>Studio</b></span>' +
+        '</a>' +
+        '<div class="ca-nav-liens">' +
+            '<a href="/dashboard">Tableau de bord</a>' +
+            '<a href="/campagnes">Campagnes</a>' +
+            '<a href="/mes-clips">Mes clips</a>' +
+            '<a href="/messages">Messages</a>' +
+        '</div>' +
+        '<a class="ca-nav-retour" href="/dashboard">' +
+            '<span aria-hidden="true">←</span> Retour au site' +
+        '</a>';
+    document.body.insertBefore(barreSite, document.body.firstChild);
+    document.body.classList.add('ca-avec-nav');
+
+    // Le nom de l'outil dans sa propre barre latérale.
+    var titreOutil = document.querySelector('.brand-text h1');
+    if (titreOutil) titreOutil.textContent = 'Echo Studio';
+
     /* ─────────────── le voile d'ouverture ─────────────── */
 
     /*

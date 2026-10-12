@@ -61,9 +61,11 @@
             </header>
         @endisset
 
-        <main class="pb-16">
+        <main class="flex-1 pb-16">
             {{ $slot }}
         </main>
+
+        <x-site-footer />
         </div>
     </div>
 </body>

@@ -7,6 +7,7 @@ use App\Enums\CampaignStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Campaign;
 use App\Models\Clip;
+use App\Models\Message;
 use App\Services\Clippers\ClipperProgressionService;
 use App\Services\Clips\ParticipationService;
 use Illuminate\Http\Request;
@@ -41,6 +42,14 @@ class DashboardController extends Controller
 
             'openCampaigns' => Campaign::where('status', CampaignStatus::Active)->count(),
             'accountsCount' => $clipper->socialAccounts()->count(),
+
+            // Pour le parcours « Pour démarrer » et les raccourcis.
+            'joinedCampaigns' => $clipper->participations()->count(),
+            'unreadMessages' => Message::query()
+                ->where('from_staff', true)
+                ->whereNull('read_at')
+                ->whereHas('conversation', fn ($q) => $q->where('user_id', $clipper->getKey()))
+                ->count(),
             'needsReconnect' => $clipper->socialAccounts()->where('needs_reconnect', true)->count(),
 
             // Calendrier : campagnes déjà actives mais dont la diffusion n'a

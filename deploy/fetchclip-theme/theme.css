@@ -332,3 +332,58 @@ body.ca-entre .main > .tab-panel { animation: ca-descend .5s cubic-bezier(.2, .7
 /* « Ouvrir le dossier » ouvrait l'explorateur du serveur : invisible pour
    le clippeur. Les fichiers arrivent dans ses téléchargements (theme.js). */
 #open-folder, #open-fonds, #result-open, #open-sources { display: none !important; }
+
+/* ═════════════ la barre du site (theme.js) ═════════════
+
+   L'outil prenait toute la hauteur de l'écran : la barre se pose
+   au-dessus et l'outil se resserre d'autant, sans rien recouvrir. */
+
+:root { --ca-nav-h: 52px; }
+
+body.ca-avec-nav { padding-top: var(--ca-nav-h); }
+body.ca-avec-nav .app { height: calc(100vh - var(--ca-nav-h)); }
+
+.ca-nav {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 900;
+    height: var(--ca-nav-h);
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    padding: 0 18px;
+    background: rgba(0, 0, 0, .86);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+}
+
+.ca-nav a { color: var(--muted); text-decoration: none; font-size: 13.5px; transition: color .15s; }
+.ca-nav a:hover { color: var(--text); }
+
+.ca-nav-marque { display: flex; align-items: center; gap: 10px; color: var(--text) !important; }
+.ca-nav-logo {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: #000 url("/images/logo.png?v=640") center / 86% no-repeat;
+    box-shadow: 0 0 14px rgba(204, 63, 69, .35);
+}
+.ca-nav-nom { font-size: 15px; font-weight: 600; letter-spacing: -.02em; }
+.ca-nav-nom b { color: var(--accent); font-weight: 700; }
+
+.ca-nav-liens { display: flex; gap: 22px; }
+
+.ca-nav-retour {
+    margin-left: auto;
+    padding: 7px 14px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    color: var(--text) !important;
+    font-weight: 500;
+}
+.ca-nav-retour:hover { border-color: var(--accent); background: rgba(204, 63, 69, .12); }
+
+/* Sur petit écran, seul le retour reste : la place manque, et c'est le
+   seul lien indispensable. */
+@media (max-width: 760px) {
+    .ca-nav-liens { display: none; }
+    .ca-nav { gap: 12px; }
+}

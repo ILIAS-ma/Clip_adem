@@ -59,46 +59,163 @@
             pour trouver la seule qui répond à « combien puis-je retirer ». Les
             autres restent là — elles expliquent ce solde — mais en second plan.
         --}}
+        @php
+            /*
+             * Le parcours d'un nouveau clippeur, dans l'ordre où il se fait.
+             * Chaque étape se coche d'elle-même à partir de ce qui existe : on
+             * voit d'un coup d'œil où l'on en est, et la prochaine action est
+             * toujours la première étape non cochée.
+             */
+            $etapes = [
+                ['fait' => $accountsCount > 0, 'titre' => 'Lier votre compte TikTok',
+                 'detail' => 'C\'est par lui que vos vues sont comptées.',
+                 'lien' => route('accounts.index'), 'action' => 'Lier', 'navigate' => true],
+                ['fait' => $joinedCampaigns > 0, 'titre' => 'Rejoindre une campagne',
+                 'detail' => 'Choisissez un créateur ou un streamer à promouvoir.',
+                 'lien' => route('campaigns.index'), 'action' => 'Voir', 'navigate' => true],
+                ['fait' => $clips->isNotEmpty(), 'titre' => 'Publier votre premier clip',
+                 'detail' => 'Trouvez-le et montez-le dans Echo Studio, puis collez son lien.',
+                 'lien' => url('/fetchclip'), 'action' => 'Studio', 'navigate' => false],
+                ['fait' => $manque === 0, 'titre' => 'Atteindre '.Money::euros($minimum),
+                 'detail' => 'Le minimum pour demander un retrait PayPal.',
+                 'lien' => route('earnings.index'), 'action' => 'Revenus', 'navigate' => true],
+            ];
+            $faites = collect($etapes)->where('fait', true)->count();
+            $prochaine = collect($etapes)->search(fn ($e) => ! $e['fait']);
+        @endphp
+
         <div class="grid gap-4 lg:grid-cols-5">
 
-            <div class="hero-balance card relative overflow-hidden p-7 sm:p-8 lg:col-span-3">
-                <p class="text-sm font-medium text-ink-300">Solde retirable</p>
+            {{-- Le solde, et en dessous les trois chiffres qui l'expliquent :
+                 une seule carte au lieu de quatre, sans vide au milieu. --}}
+            <div class="hero-balance card relative flex flex-col overflow-hidden lg:col-span-3">
+                <div class="flex-1 p-7 sm:p-8">
+                    <p class="text-sm font-medium text-ink-300">Solde retirable</p>
 
-                <p class="mt-2 font-display text-5xl font-extrabold tabular leading-none text-brand-400 sm:text-6xl"
-                   data-count-up>{{ Money::euros($balanceCents) }}</p>
+                    <p class="mt-2 font-display text-5xl font-extrabold tabular leading-none text-brand-400 sm:text-6xl"
+                       data-count-up>{{ Money::euros($balanceCents) }}</p>
 
-                @if ($manque > 0)
-                    <div class="mt-6 max-w-sm">
-                        {{-- La barre répond à « c'est encore loin ? », qu'un simple
-                             « minimum 20 € » laisse calculer de tête. --}}
-                        <div class="h-1.5 overflow-hidden rounded-full bg-ink-700">
-                            <div class="h-full rounded-full bg-brand-500 transition-all duration-700"
-                                 style="width: {{ $atteint }}%"></div>
+                    @if ($manque > 0)
+                        <div class="mt-6 max-w-sm">
+                            {{-- La barre répond à « c'est encore loin ? », qu'un simple
+                                 « minimum 20 € » laisse calculer de tête. --}}
+                            <div class="h-1.5 overflow-hidden rounded-full bg-ink-700">
+                                <div class="h-full rounded-full bg-brand-500 transition-all duration-700"
+                                     style="width: {{ $atteint }}%"></div>
+                            </div>
+                            <p class="mt-2 text-sm text-ink-300">
+                                Encore <span class="font-semibold tabular text-ink-100">{{ Money::euros($manque) }}</span>
+                                avant de pouvoir retirer.
+                            </p>
                         </div>
-                        <p class="mt-2 text-sm text-ink-300">
-                            Encore <span class="font-semibold tabular text-ink-100">{{ Money::euros($manque) }}</span>
-                            avant de pouvoir retirer.
-                        </p>
+                    @else
+                        <div class="mt-6 flex flex-wrap items-center gap-3">
+                            <a href="{{ route('earnings.index') }}" wire:navigate class="btn-brand">Demander un retrait</a>
+                            <span class="text-sm text-ink-300">Vous avez atteint le minimum.</span>
+                        </div>
+                    @endif
+                </div>
+
+                <dl class="grid grid-cols-3 divide-x divide-ink-700 border-t border-ink-700 bg-ink-900/60">
+                    <div class="px-5 py-4 sm:px-7">
+                        <dt class="text-xs text-ink-400">Vues cumulées</dt>
+                        <dd class="mt-1 font-display text-xl font-bold tabular text-ink-50">{{ Money::views($views) }}</dd>
+                        @if ($unpaidViews > 0)
+                            <dd class="mt-0.5 text-[11px] text-ink-500">{{ Money::views($unpaidViews) }} non rémunérées</dd>
+                        @endif
                     </div>
+                    <div class="px-5 py-4 sm:px-7">
+                        <dt class="text-xs text-ink-400">Gains validés</dt>
+                        <dd class="mt-1 font-display text-xl font-bold tabular text-brand-400">{{ Money::euros($earnedCents) }}</dd>
+                    </div>
+                    <div class="px-5 py-4 sm:px-7">
+                        <dt class="text-xs text-ink-400">Comptes liés</dt>
+                        <dd @class(['mt-1 font-display text-xl font-bold tabular', 'text-brand-400' => $accountsCount === 0, 'text-ink-50' => $accountsCount > 0])>{{ $accountsCount }}</dd>
+                    </div>
+                </dl>
+            </div>
+
+            {{-- Pour démarrer : tant que tout n'est pas fait. Ensuite, la place
+                 revient à ce qu'on fait tous les jours. --}}
+            <div class="card flex flex-col p-6 lg:col-span-2">
+                @if ($faites < count($etapes))
+                    <div class="flex items-baseline justify-between gap-3">
+                        <h2 class="font-display text-lg font-bold text-ink-50">Pour démarrer</h2>
+                        <span class="text-sm tabular text-ink-400">{{ $faites }}/{{ count($etapes) }}</span>
+                    </div>
+                    <div class="mt-3 h-1 overflow-hidden rounded-full bg-ink-700">
+                        <div class="h-full rounded-full bg-brand-500" style="width: {{ intdiv($faites * 100, count($etapes)) }}%"></div>
+                    </div>
+
+                    <ol class="mt-5 flex-1 space-y-3">
+                        @foreach ($etapes as $i => $etape)
+                            <li @class([
+                                'flex items-center gap-3 rounded-xl border px-3.5 py-3',
+                                'border-brand-500/50 bg-brand-500/5' => $i === $prochaine,
+                                'border-ink-700' => $i !== $prochaine,
+                            ])>
+                                @if ($etape['fait'])
+                                    <span class="grid h-7 w-7 flex-none place-items-center rounded-full bg-brand-500 text-white" aria-label="Fait">
+                                        <svg viewBox="0 0 20 20" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 10.5l3 3 7-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    </span>
+                                @else
+                                    <span class="grid h-7 w-7 flex-none place-items-center rounded-full border border-ink-600 text-xs font-bold text-ink-300">{{ $i + 1 }}</span>
+                                @endif
+
+                                <span class="min-w-0 flex-1">
+                                    <span @class(['block text-sm font-semibold', 'text-ink-500 line-through' => $etape['fait'], 'text-ink-50' => ! $etape['fait']])>{{ $etape['titre'] }}</span>
+                                    @if (! $etape['fait'])
+                                        <span class="block text-xs text-ink-400">{{ $etape['detail'] }}</span>
+                                    @endif
+                                </span>
+
+                                @if ($i === $prochaine)
+                                    <a href="{{ $etape['lien'] }}" @if ($etape['navigate']) wire:navigate @endif class="btn-brand flex-none px-3 py-1.5 text-xs">{{ $etape['action'] }}</a>
+                                @endif
+                            </li>
+                        @endforeach
+                    </ol>
                 @else
-                    <div class="mt-6 flex flex-wrap items-center gap-3">
-                        <a href="{{ route('earnings.index') }}" wire:navigate class="btn-brand">Demander un retrait</a>
-                        <span class="text-sm text-ink-300">Vous avez atteint le minimum.</span>
-                    </div>
+                    <h2 class="font-display text-lg font-bold text-ink-50">Tout est prêt</h2>
+                    <p class="mt-2 text-sm text-ink-300">
+                        Compte lié, campagne rejointe, clips publiés : continuez sur votre lancée.
+                    </p>
+                    <a href="{{ url('/fetchclip') }}" class="btn-brand mt-auto self-start">Ouvrir Echo Studio</a>
                 @endif
             </div>
+        </div>
 
-            <div class="grid gap-4 sm:grid-cols-3 lg:col-span-2 lg:grid-cols-1">
-                <x-stat label="Vues cumulées" :value="Money::views($views)"
-                        :hint="$unpaidViews > 0 ? Money::views($unpaidViews).' non rémunérées' : null" />
-
-                <x-stat label="Gains validés" :value="Money::euros($earnedCents)"
-                        tone="money" hint="Définitivement acquis" />
-
-                <x-stat label="Comptes liés" :value="$accountsCount"
-                        :tone="$accountsCount === 0 ? 'brand' : 'neutral'"
-                        :hint="$accountsCount === 0 ? 'Nécessaire pour participer' : null" />
-            </div>
+        {{-- Les trois endroits où l'on va tous les jours. --}}
+        <div class="grid gap-4 sm:grid-cols-3">
+            @foreach ([
+                ['href' => url('/fetchclip'), 'navigate' => false, 'titre' => 'Echo Studio',
+                 'texte' => 'Trouvez les meilleurs moments Twitch et montez-les en 9:16.',
+                 'icone' => 'M15 10l4.55-2.28A1 1 0 0121 8.62v6.76a1 1 0 01-1.45.9L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z'],
+                ['href' => route('campaigns.index'), 'navigate' => true, 'titre' => 'Campagnes',
+                 'texte' => $openCampaigns > 0 ? $openCampaigns.' ouverte'.($openCampaigns > 1 ? 's' : '').' en ce moment.' : 'Aucune ouverte pour l\'instant.',
+                 'icone' => 'M3 10v4a1 1 0 001 1h3l5 4V5L7 9H4a1 1 0 00-1 1zm13.5-3a5 5 0 010 10'],
+                ['href' => route('messages.index'), 'navigate' => true, 'titre' => 'Messages',
+                 'texte' => $unreadMessages > 0 ? $unreadMessages.' réponse'.($unreadMessages > 1 ? 's' : '').' de l\'équipe à lire.' : 'Une question ? L\'équipe vous répond ici.',
+                 'icone' => 'M8 10h8M8 14h5m-9 6l2.5-3H18a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v14z',
+                 'badge' => $unreadMessages],
+            ] as $raccourci)
+                <a href="{{ $raccourci['href'] }}" @if ($raccourci['navigate']) wire:navigate @endif
+                   class="card group flex items-start gap-4 p-5 transition hover:border-brand-500/50 hover:bg-ink-800/60">
+                    <span class="grid h-11 w-11 flex-none place-items-center rounded-xl bg-brand-500/10 text-brand-400 ring-1 ring-brand-500/30 transition group-hover:bg-brand-500 group-hover:text-white">
+                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ $raccourci['icone'] }}"/></svg>
+                    </span>
+                    <span class="min-w-0 flex-1">
+                        <span class="flex items-center gap-2 font-display font-bold text-ink-50">
+                            {{ $raccourci['titre'] }}
+                            @if (! empty($raccourci['badge']))
+                                <span class="rounded-full bg-brand-500 px-1.5 py-0.5 text-[11px] font-bold leading-none text-white">{{ $raccourci['badge'] }}</span>
+                            @endif
+                        </span>
+                        <span class="mt-1 block text-sm text-ink-400">{{ $raccourci['texte'] }}</span>
+                    </span>
+                    <span class="self-center text-ink-600 transition group-hover:translate-x-0.5 group-hover:text-ink-200" aria-hidden="true">→</span>
+                </a>
+            @endforeach
         </div>
 
         <div class="grid gap-6 lg:grid-cols-3">
@@ -161,23 +278,6 @@
                         </li>
                     @endforeach
                 </ul>
-            </div>
-        @endif
-
-        @if ($accountsCount === 0)
-            {{-- Sans compte lié, rien n'est possible : c'est la première action
-                 à proposer, pas une information noyée dans une liste. --}}
-            <div class="card overflow-hidden">
-                <div class="flex flex-wrap items-center gap-6 p-8">
-                    <div class="flex-1 min-w-[16rem]">
-                        <h2 class="font-display text-xl font-bold text-ink-50">Liez un compte pour commencer</h2>
-                        <p class="mt-2 max-w-lg text-sm leading-relaxed text-ink-300">
-                            TikTok. C'est par ce compte que vos vues seront relevées
-                            et vos gains calculés — sans lui, vous ne pouvez pas rejoindre de campagne.
-                        </p>
-                    </div>
-                    <a href="{{ route('accounts.index') }}" wire:navigate class="btn-brand">Lier un compte</a>
-                </div>
             </div>
         @endif
 

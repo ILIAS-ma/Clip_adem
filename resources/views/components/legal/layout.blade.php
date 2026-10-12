@@ -19,11 +19,42 @@
     <x-favicon />
     @vite(['resources/css/app.css'])
 </head>
-<body class="bg-ink-950 text-ink-100 antialiased">
-    <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:py-16">
-        <a href="{{ url('/') }}" class="inline-flex items-center gap-2 text-sm text-ink-400 hover:text-ink-100">
-            ← Retour à {{ config('app.name') }}
-        </a>
+<body class="flex min-h-screen flex-col bg-ink-950 text-ink-100 antialiased">
+    {{-- Une vraie barre plutôt qu'un lien « retour » perdu en haut de page :
+         on arrive souvent ici depuis un pied de page, et il faut pouvoir
+         repartir vers son espace en un clic. --}}
+    <header class="sticky top-0 z-30 border-b border-ink-800 bg-ink-950/85 backdrop-blur">
+        <div class="mx-auto flex h-16 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
+            <a href="{{ url('/') }}" class="flex items-center gap-2.5">
+                <x-brand-mark />
+                <span class="font-display text-lg font-bold tracking-tight text-white">{{ config('app.name') }}</span>
+            </a>
+
+            <nav class="flex items-center gap-2 text-sm">
+                @auth
+                    <a href="{{ url(auth()->user()->role->homeRoute()) }}" class="btn-primary">Mon espace</a>
+                @else
+                    <a href="{{ route('login') }}" class="hidden px-3 py-2 text-ink-300 hover:text-ink-50 sm:inline">Se connecter</a>
+                    <a href="{{ route('register') }}" class="btn-primary">Créer un compte</a>
+                @endauth
+            </nav>
+        </div>
+    </header>
+
+    <div class="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6 lg:py-14">
+        <nav class="flex flex-wrap gap-2 text-sm" aria-label="Documents légaux">
+            @foreach ([
+                'legal.notice' => 'Mentions légales',
+                'legal.terms' => 'Conditions d\'utilisation',
+                'legal.privacy' => 'Confidentialité',
+            ] as $route => $libelle)
+                <a href="{{ route($route) }}" @class([
+                    'rounded-full border px-3 py-1 transition',
+                    'border-brand-500/60 bg-brand-500/10 text-ink-50' => request()->routeIs($route),
+                    'border-ink-700 text-ink-400 hover:border-ink-600 hover:text-ink-100' => ! request()->routeIs($route),
+                ])>{{ $libelle }}</a>
+            @endforeach
+        </nav>
 
         <h1 class="mt-8 font-display text-3xl font-bold text-ink-50 sm:text-4xl">{{ $title }}</h1>
         <p class="mt-2 text-sm text-ink-400">Dernière mise à jour : {{ $updatedAt }}</p>
@@ -32,19 +63,12 @@
             {{ $slot }}
         </div>
 
-        <footer class="mt-16 border-t border-ink-700 pt-6 text-sm text-ink-500">
-            <p>
-                Une question sur ce document ?
-                <a href="mailto:{{ $contactEmail }}" class="text-brand-400 underline underline-offset-2">{{ $contactEmail }}</a>
-            </p>
-            <p class="mt-2">
-                <a href="{{ route('legal.terms') }}" class="hover:text-ink-200">Conditions d'utilisation</a>
-                <span aria-hidden="true"> · </span>
-                <a href="{{ route('legal.privacy') }}" class="hover:text-ink-200">Politique de confidentialité</a>
-                <span aria-hidden="true"> · </span>
-                <a href="{{ route('legal.notice') }}" class="hover:text-ink-200">Mentions légales</a>
-            </p>
-        </footer>
+        <p class="mt-14 rounded-xl border border-ink-800 bg-ink-900 px-5 py-4 text-sm text-ink-400">
+            Une question sur ce document ?
+            <a href="mailto:{{ $contactEmail }}" class="text-brand-400 underline underline-offset-2">{{ $contactEmail }}</a>
+        </p>
     </div>
+
+    <x-site-footer />
 </body>
 </html>

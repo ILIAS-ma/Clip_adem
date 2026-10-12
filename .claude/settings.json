@@ -4,7 +4,12 @@
       "Bash(timeout 400 ssh -o BatchMode=yes clipadem ' *)",
       "Bash(timeout 300 ssh -o BatchMode=yes clipadem \"sudo mysql clip -e \\\\\"SELECT id, handle, is_active, needs_reconnect, scopes, token_expires_at, LEFT\\(COALESCE\\(last_error,'—'\\),40\\) AS erreur FROM social_accounts\\\\\\\\G\\\\\" 2>&1 | tail -18\")",
       "Bash(timeout 600 ssh -o BatchMode=yes clipadem \"cd /var/www/clipadem && php artisan clips:sync 2>&1 | tail -15\")",
-      "Bash(timeout 600 ssh -o BatchMode=yes clipadem \"cd /var/www/clipadem && php artisan clips:sync 2>&1 | head -12; echo '--- valeur en .env ---'; grep -E '^TIKTOK_DAILY_QUOTA' .env\")"
+      "Bash(timeout 600 ssh -o BatchMode=yes clipadem \"cd /var/www/clipadem && php artisan clips:sync 2>&1 | head -12; echo '--- valeur en .env ---'; grep -E '^TIKTOK_DAILY_QUOTA' .env\")",
+      "Bash(ssh clipadem *)",
+      "Bash(ls \"/c/Program Files \\(x86\\)/Microsoft/Edge/Application/msedge.exe\" \"/c/Program Files/Google/Chrome/Application/chrome.exe\" 2>&1 | head; node --version)",
+      "Read(//c/Program Files/Google/Chrome/Application/**)",
+      "Bash(ssh -o ExitOnForwardFailure=yes -f -N -L 8443:127.0.0.1:443 clipadem)",
+      "Bash(curl -s -o /dev/null -w \"tunnel: %{http_code}\\\\n\" --resolve echoclip.fr:8443:127.0.0.1 https://echoclip.fr:8443/login)"
     ]
   }
 }
