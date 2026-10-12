@@ -333,88 +333,21 @@ body.ca-entre .main > .tab-panel { animation: ca-descend .5s cubic-bezier(.2, .7
    le clippeur. Les fichiers arrivent dans ses téléchargements (theme.js). */
 #open-folder, #open-fonds, #result-open, #open-sources { display: none !important; }
 
-/* ═════════════ la navigation du site (theme.js) ═════════════
+/* ═════════════ le retour au site (theme.js) ═════════════ */
 
-   La même que sur le reste du site, dans sa forme repliée : la colonne
-   de 4,25 rem, les mêmes icônes, la rubrique courante sur fond discret.
-   L'outil se décale d'autant, sans rien recouvrir. */
-
-:root { --ca-rail-l: 68px; }
-
-body.ca-avec-rail { padding-left: var(--ca-rail-l); }
-
-.ca-rail {
-    position: fixed;
-    inset: 0 auto 0 0;
-    z-index: 900;
-    width: var(--ca-rail-l);
+.ca-retour {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    padding: 10px 0 14px;
-    background: #050506;
-    border-right: 1px solid var(--line);
-}
-
-.ca-rail-marque {
-    width: 38px; height: 38px;
-    margin: 6px 0 18px;
-    border-radius: 9px;
-    background: #000 url("/images/logo.png?v=640") center / 92% no-repeat;
-}
-
-.ca-rail-liens, .ca-rail-compte { display: flex; flex-direction: column; gap: 4px; }
-.ca-rail-compte {
-    margin-top: auto;
-    padding-top: 12px;
-    border-top: 1px solid var(--line);
-}
-
-.ca-rail-lien {
-    position: relative;
-    display: grid;
-    place-items: center;
-    width: 42px; height: 38px;
-    border-radius: 10px;
-    color: var(--dim);
-    transition: background .15s, color .15s;
-}
-.ca-rail-lien svg { width: 18px; height: 18px; }
-.ca-rail-lien:hover { background: var(--fill-hover); color: var(--text); }
-.ca-rail-lien.is-actif { background: rgba(255, 255, 255, .06); color: #fff; }
-.ca-rail-lien.is-actif::before {
-    content: "";
-    position: absolute;
-    left: -13px; top: 9px; bottom: 9px;
-    width: 3px;
-    border-radius: 0 3px 3px 0;
-    background: var(--accent);
-}
-
-/* Le nom de la rubrique au survol, comme sur la colonne repliée du site. */
-.ca-rail-lien::after, .ca-rail-marque::after {
-    content: attr(data-libelle);
-    position: absolute;
-    left: calc(100% + 12px);
-    top: 50%;
-    transform: translate(-4px, -50%);
-    padding: 5px 9px;
-    border-radius: 7px;
-    background: #1c1c21;
+    justify-content: center;
+    gap: 6px;
+    margin: -6px 0 2px;
+    padding: 8px 12px;
     border: 1px solid var(--line-strong);
+    border-radius: 999px;
     color: var(--text);
-    font-size: 12.5px;
+    font-size: 13px;
     font-weight: 500;
-    white-space: nowrap;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity .12s, transform .12s;
+    text-decoration: none;
+    transition: border-color .15s, background .15s;
 }
-.ca-rail-marque { position: relative; }
-.ca-rail-lien:hover::after, .ca-rail-marque:hover::after,
-.ca-rail-lien:focus-visible::after { opacity: 1; transform: translate(0, -50%); }
-
-@media (max-width: 760px) {
-    :root { --ca-rail-l: 56px; }
-    .ca-rail-lien { width: 38px; }
-}
+.ca-retour:hover { border-color: var(--accent); background: rgba(204, 63, 69, .12); }
