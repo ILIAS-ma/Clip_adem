@@ -33,10 +33,22 @@ class LandingShowcase
      */
     public function forLanding(): array
     {
-        return Cache::remember(self::CACHE_KEY, now()->addMinutes(10), fn () => [
+        /*
+         * Le cache ne garde que des tableaux de valeurs simples : la
+         * configuration refuse de désérialiser des objets
+         * (`cache.serializable_classes` à false), et un modèle mis en cache
+         * revenait en objet incomplet — la page tombait au deuxième visiteur.
+         * Les clips sont réhydratés à la lecture, sans requête.
+         */
+        $cached = Cache::remember(self::CACHE_KEY, now()->addMinutes(10), fn () => [
             'stats' => $this->stats(),
-            'clips' => $this->wall(),
+            'clips' => $this->wall()->map(fn (Clip $clip) => $clip->getAttributes())->values()->all(),
         ]);
+
+        return [
+            'stats' => $cached['stats'],
+            'clips' => Clip::hydrate($cached['clips']),
+        ];
     }
 
     public function forget(): void

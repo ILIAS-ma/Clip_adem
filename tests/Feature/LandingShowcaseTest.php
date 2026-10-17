@@ -60,6 +60,20 @@ class LandingShowcaseTest extends TestCase
     }
 
     #[Test]
+    public function the_wall_survives_a_cache_that_refuses_objects(): void
+    {
+        // La configuration de production : cache en base, aucune classe
+        // désérialisable. Le deuxième affichage lit le cache.
+        config()->set('cache.default', 'database');
+        config()->set('cache.serializable_classes', false);
+
+        $this->clip(['url' => 'https://www.tiktok.com/@a/video/9', 'views_total' => 500_000, 'featured_at' => now()]);
+
+        $this->get('/')->assertSuccessful()->assertSee('500k');
+        $this->get('/')->assertSuccessful()->assertSee('500k')->assertSee('TikTok');
+    }
+
+    #[Test]
     public function counters_only_count_validated_views(): void
     {
         $this->clip(['views_total' => 10_000]);
