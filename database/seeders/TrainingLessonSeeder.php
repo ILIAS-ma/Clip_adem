@@ -59,7 +59,7 @@ Un artiste, un label ou un streamer **finance une campagne**. Tu publies des cli
 - **Tes vues sont relevées toutes seules.** Rien à déclarer à la main.
 - **Tu retires dès 20 €**, sur PayPal ou par virement.
 
-> Le parcours : lier ton compte → choisir une campagne → poster → soumettre le lien → suivre tes vues → retirer ton argent. Chaque leçon qui suit couvre une étape.
+> Le parcours : lier ton compte → choisir une campagne → poster → soumettre le lien → suivre tes vues → retirer ton argent.
 MD,
             ],
             [
