@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\BudgetTransactionType;
 use App\Enums\CampaignStatus;
 use App\Enums\ClipStatus;
 use App\Enums\Platform;
@@ -15,9 +16,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
-    'creator_id', 'title', 'slug', 'brief', 'required_hashtags',
+    'creator_id', 'category_id', 'title', 'slug', 'brief', 'required_hashtags',
     'status', 'currency', 'budget_total_cents', 'min_views_per_clip',
     'min_clips_per_clipper', 'max_payout_per_clip_cents',
+    'launch_bonus_cents', 'launch_bonus_slots',
     'starts_at', 'ends_at', 'requires_approval', 'created_by',
 ])]
 class Campaign extends Model
@@ -34,6 +36,8 @@ class Campaign extends Model
             'min_views_per_clip' => 'integer',
             'min_clips_per_clipper' => 'integer',
             'max_payout_per_clip_cents' => 'integer',
+            'launch_bonus_cents' => 'integer',
+            'launch_bonus_slots' => 'integer',
             'requires_approval' => 'boolean',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
@@ -45,6 +49,11 @@ class Campaign extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(Creator::class);
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
     }
 
     public function rates(): HasMany
@@ -82,6 +91,21 @@ class Campaign extends Model
     // ------------------------------------------------------------------
     // Budget — lecture seule. Toute écriture passe par CampaignBudgetService.
     // ------------------------------------------------------------------
+
+    /** Places de prime de lancement restantes, ou null sans prime. */
+    public function launchBonusSlotsLeft(): ?int
+    {
+        if (! $this->launch_bonus_cents || ! $this->launch_bonus_slots) {
+            return null;
+        }
+
+        $granted = $this->budgetTransactions()
+            ->where('type', BudgetTransactionType::Bonus)
+            ->where('meta->kind', 'launch')
+            ->count();
+
+        return max(0, $this->launch_bonus_slots - $granted);
+    }
 
     public function remainingCents(): int
     {

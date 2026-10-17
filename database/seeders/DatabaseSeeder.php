@@ -156,6 +156,8 @@ class DatabaseSeeder extends Seeder
         }
 
         $this->seedModerationQueue($campaign);
+
+        $this->call(TrainingLessonSeeder::class);
     }
 
     /**

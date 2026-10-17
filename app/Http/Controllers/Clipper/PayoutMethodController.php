@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Clipper;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PayoutMethodRequest;
+use App\Services\Payouts\WithdrawalAllowance;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -18,10 +19,14 @@ use Illuminate\View\View;
  */
 class PayoutMethodController extends Controller
 {
-    public function edit(Request $request): View
+    public function edit(Request $request, WithdrawalAllowance $allowance): View
     {
+        $user = $request->user();
+
         return view('clipper.payout-method', [
-            'user' => $request->user(),
+            'user' => $user,
+            // null : pas de plafond (SIRET vérifié, ou contrôle désactivé).
+            'allowance' => $allowance->appliesTo($user) ? $allowance->usage($user) : null,
         ]);
     }
 

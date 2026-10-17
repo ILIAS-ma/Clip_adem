@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Enums\PayoutStatus;
 use App\Exceptions\PayoutRefused;
 use App\Services\Payouts\PayoutService;
+use App\Services\Payouts\WithdrawalAllowance;
 use Livewire\Component;
 
 class RequestPayout extends Component
@@ -48,9 +49,13 @@ class RequestPayout extends Component
 
     public function render()
     {
+        $allowance = app(WithdrawalAllowance::class);
+
         return view('livewire.request-payout', [
             'available' => auth()->user()->availableBalanceCents(),
             'minimum' => config('clipping.payouts.minimum_cents'),
+            // null quand aucun plafond ne s'applique.
+            'allowanceLeft' => $allowance->remainingCents(auth()->user()),
         ]);
     }
 }

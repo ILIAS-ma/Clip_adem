@@ -13,12 +13,16 @@ enum BudgetTransactionType: string
     /** Correction manuelle d'un administrateur. Signe libre. */
     case Adjustment = 'adjustment';
 
+    /** Prime fixe sur un clip validé, sans vues associées. amount_cents > 0. */
+    case Bonus = 'bonus';
+
     public function label(): string
     {
         return match ($this) {
             self::Credit => 'Dépense',
             self::Reversal => 'Annulation',
             self::Adjustment => 'Ajustement',
+            self::Bonus => 'Prime',
         };
     }
 }

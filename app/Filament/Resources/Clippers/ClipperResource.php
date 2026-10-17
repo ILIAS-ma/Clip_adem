@@ -75,8 +75,17 @@ class ClipperResource extends Resource
         ];
     }
 
+    /**
+     * Un SIRET en attente passe avant le compte des bannis : c'est une action
+     * à faire, et un clippeur bloqué sous son plafond tant qu'elle ne l'est
+     * pas. Les bannis restent comptés quand il n'y a rien à vérifier.
+     */
     public static function getNavigationBadge(): ?string
     {
+        if (($pending = static::pendingSiretCount()) > 0) {
+            return (string) $pending;
+        }
+
         $banned = static::getModel()::where('role', UserRole::Clipper)->where('is_banned', true)->count();
 
         return $banned > 0 ? (string) $banned : null;
@@ -84,7 +93,17 @@ class ClipperResource extends Resource
 
     public static function getNavigationBadgeColor(): ?string
     {
-        return 'danger';
+        return static::pendingSiretCount() > 0 ? 'warning' : 'danger';
+    }
+
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return static::pendingSiretCount() > 0 ? 'SIRET à vérifier' : 'Clippeurs bannis';
+    }
+
+    protected static function pendingSiretCount(): int
+    {
+        return once(fn () => static::getModel()::where('role', UserRole::Clipper)->pendingSiret()->count());
     }
 
     public static function getPages(): array

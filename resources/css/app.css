@@ -269,6 +269,51 @@
     }
 }
 
+/* Texte des leçons de formation, rédigé en Markdown dans le back-office. */
+@layer components {
+    .lesson h2 {
+        @apply mt-8 font-display text-lg font-bold text-ink-50 first:mt-0;
+    }
+
+    .lesson h3 {
+        @apply mt-6 font-semibold text-ink-100;
+    }
+
+    .lesson p,
+    .lesson li {
+        @apply leading-relaxed text-ink-300;
+    }
+
+    .lesson p {
+        @apply mt-3 first:mt-0;
+    }
+
+    .lesson ul,
+    .lesson ol {
+        @apply mt-3 space-y-2 pl-5;
+    }
+
+    .lesson ul {
+        @apply list-disc;
+    }
+
+    .lesson ol {
+        @apply list-decimal;
+    }
+
+    .lesson strong {
+        @apply font-semibold text-ink-100;
+    }
+
+    .lesson a {
+        @apply text-brand-400 underline underline-offset-2;
+    }
+
+    .lesson blockquote {
+        @apply mt-4 rounded-xl border-l-4 border-brand-500 bg-brand-500/10 p-4 text-ink-200;
+    }
+}
+
 /* =====================================================================
    Transitions de navigation et animations d'ambiance.
 

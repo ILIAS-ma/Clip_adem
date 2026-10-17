@@ -25,6 +25,13 @@ class CampaignsTable
                     ->weight('bold')
                     ->description(fn (Campaign $record) => $record->creator?->name),
 
+                TextColumn::make('category.name')
+                    ->label('Catégorie')
+                    ->badge()
+                    ->color('gray')
+                    ->placeholder('—')
+                    ->toggleable(),
+
                 TextColumn::make('status')
                     ->label('Statut')
                     ->badge()
@@ -107,6 +114,11 @@ class CampaignsTable
                     ->label('Créateur')
                     ->relationship('creator', 'name')
                     ->searchable()
+                    ->preload(),
+
+                SelectFilter::make('category')
+                    ->label('Catégorie')
+                    ->relationship('category', 'name')
                     ->preload(),
 
                 TrashedFilter::make()

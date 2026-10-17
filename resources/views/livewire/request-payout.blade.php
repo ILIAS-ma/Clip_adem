@@ -32,6 +32,14 @@
                 Les petits montants sont validés automatiquement. Au-delà, un administrateur vérifie
                 la demande avant le virement.
             </p>
+
+            @if ($allowanceLeft !== null)
+                <p class="hint">
+                    Sans statut déclaré, il vous reste <strong class="text-ink-100">{{ Money::euros($allowanceLeft) }}</strong>
+                    de retraits possibles cette année.
+                    <a href="{{ route('payout-method.edit') }}#statut-legal" wire:navigate class="text-brand-400 underline underline-offset-2">Déclarer mon SIRET</a>
+                </p>
+            @endif
         </form>
     @endif
 </div>

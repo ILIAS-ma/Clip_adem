@@ -31,4 +31,22 @@ final class Money
     {
         return number_format((int) $views, 0, ',', ' ');
     }
+
+    /** Vues en format court, à la manière des plateformes : « 878k », « 1,2M ». */
+    public static function compactViews(?int $views): string
+    {
+        $views = (int) $views;
+
+        return match (true) {
+            $views >= 1_000_000 => rtrim(rtrim(number_format($views / 1_000_000, 1, ',', ''), '0'), ',').'M',
+            $views >= 1_000 => intdiv($views, 1_000).'k',
+            default => (string) $views,
+        };
+    }
+
+    /** Montant arrondi à l'euro, pour les compteurs : « 12 480 € ». */
+    public static function wholeEuros(int $cents): string
+    {
+        return number_format(intdiv($cents, 100), 0, ',', ' ').' €';
+    }
 }

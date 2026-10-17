@@ -5,11 +5,14 @@ namespace App\Filament\Resources\Clips\Tables;
 use App\Enums\ClipStatus;
 use App\Enums\Platform;
 use App\Models\Clip;
+use App\Services\Budget\BonusService;
 use App\Services\Moderation\ClipModerationService;
 use App\Services\Moderation\SuspiciousViewsDetector;
+use App\Services\Reporting\LandingShowcase;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
@@ -111,6 +114,10 @@ class ClipsTable
                     ->label('Vues suspectes')
                     ->query(fn ($query) => app(SuspiciousViewsDetector::class)->scopeSuspicious($query)),
 
+                Filter::make('featured')
+                    ->label('Mis en avant sur l’accueil')
+                    ->query(fn ($query) => $query->whereNotNull('featured_at')),
+
                 Filter::make('unpaid')
                     ->label('Vues non rémunérées')
                     ->query(fn ($query) => $query->whereColumn('views_total', '>', 'paid_views')),
@@ -132,8 +139,87 @@ class ClipsTable
                     static::rejectAction(),
                     static::invalidateAction(),
                     static::inspectAction(),
+                    static::featureAction(),
+                    static::unfeatureAction(),
+                    static::bonusAction(),
                 ]),
             ]);
+    }
+
+    /**
+     * Prime fixe, prise sur le budget de la campagne. Réservée au super-admin :
+     * c'est le seul geste de modération qui sort de l'argent sans vue en face.
+     */
+    protected static function bonusAction(): Action
+    {
+        return Action::make('bonus')
+            ->label('Accorder une prime')
+            ->icon('heroicon-o-gift')
+            ->color('success')
+            ->visible(fn (Clip $record) => $record->status === ClipStatus::Approved && auth()->user()?->isSuperAdmin())
+            ->schema([
+                TextInput::make('amount')
+                    ->label('Montant')
+                    ->numeric()
+                    ->prefix('€')
+                    ->step(0.01)
+                    ->minValue(0.01)
+                    ->required(),
+
+                Textarea::make('reason')
+                    ->label('Message au clippeur')
+                    ->placeholder('Ex. : clip exemplaire, repris dans le brief')
+                    ->required()
+                    ->maxLength(255)
+                    ->rows(2),
+            ])
+            ->modalDescription(fn (Clip $record) => sprintf(
+                'Prise sur le budget de « %s » (%s restants), créditée tout de suite sur le solde du clippeur.',
+                $record->campaign?->title,
+                number_format(($record->campaign?->remainingCents() ?? 0) / 100, 2, ',', ' ').' €',
+            ))
+            ->action(function (Clip $record, array $data) {
+                $cents = (int) round(((float) $data['amount']) * 100);
+                $result = app(BonusService::class)->grantManual($record, $cents, $data['reason'], auth()->user());
+
+                $result->creditedCents > 0
+                    ? Notification::make()->success()->title('Prime accordée')
+                        ->body(number_format($cents / 100, 2, ',', ' ').' € crédités au clippeur.')->send()
+                    : Notification::make()->danger()->title('Prime non versée')
+                        ->body($result->outcome->label())->send();
+            });
+    }
+
+    /** Vitrine de la page d'accueil : un choix humain, clip par clip. */
+    protected static function featureAction(): Action
+    {
+        return Action::make('feature')
+            ->label('Mettre en avant sur l’accueil')
+            ->icon('heroicon-o-star')
+            ->color('success')
+            ->visible(fn (Clip $record) => $record->featured_at === null && $record->status === ClipStatus::Approved)
+            ->requiresConfirmation()
+            ->modalDescription('Le clip apparaîtra dans la vitrine publique de la page d’accueil, avec ses vues. '
+                .'Le nom du clippeur n’est pas affiché.')
+            ->action(function (Clip $record) {
+                app(LandingShowcase::class)->feature($record);
+
+                Notification::make()->success()->title('Clip mis en avant')->send();
+            });
+    }
+
+    protected static function unfeatureAction(): Action
+    {
+        return Action::make('unfeature')
+            ->label('Retirer de l’accueil')
+            ->icon('heroicon-o-star')
+            ->color('gray')
+            ->visible(fn (Clip $record) => $record->featured_at !== null)
+            ->action(function (Clip $record) {
+                app(LandingShowcase::class)->unfeature($record);
+
+                Notification::make()->success()->title('Clip retiré de l’accueil')->send();
+            });
     }
 
     protected static function approveAction(): Action

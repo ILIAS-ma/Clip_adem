@@ -7,9 +7,11 @@ use App\Enums\ClipStatus;
 use App\Enums\PayoutStatus;
 use App\Models\BudgetTransaction;
 use App\Models\Campaign;
+use App\Models\Category;
 use App\Models\Clip;
 use App\Models\Creator;
 use App\Models\Payout;
+use App\Models\Season;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -121,6 +123,131 @@ class ReportingService
 
                 return $row;
             });
+    }
+
+    /**
+     * Classement depuis toujours des clippeurs d'une catégorie : vues et gains
+     * cumulés sur toutes les campagnes qui y sont rangées.
+     *
+     * Mêmes définitions que topClippers() — vues des clips validés, gains de
+     * tous les clips (un clip invalidé est remis à zéro, il ne compte donc
+     * plus) — pour qu'un clippeur ne lise jamais deux chiffres différents
+     * pour la même chose selon l'onglet.
+     *
+     * Les campagnes supprimées restent comptées : c'est un classement de
+     * carrière, et l'argent gagné dessus a bien été gagné.
+     *
+     * Les comptes bannis sont exclus à la requête : ce classement est public.
+     *
+     * @return Collection<int, object{id: int, name: string, views: int, earned_cents: int, clips_count: int}>
+     */
+    public function topClippersInCategory(Category $category, int $limit = 20): Collection
+    {
+        return DB::table('clips')
+            ->join('campaigns', 'campaigns.id', '=', 'clips.campaign_id')
+            ->join('users', 'users.id', '=', 'clips.user_id')
+            ->where('campaigns.category_id', $category->getKey())
+            ->where('users.is_banned', false)
+            ->select('users.id', 'users.name')
+            ->selectRaw('SUM(clips.earned_cents) as earned_cents')
+            ->selectRaw('SUM(CASE WHEN clips.status = ? THEN clips.views_total ELSE 0 END) as views', [ClipStatus::Approved->value])
+            ->selectRaw('SUM(CASE WHEN clips.status = ? THEN 1 ELSE 0 END) as clips_count', [ClipStatus::Approved->value])
+            ->groupBy('users.id', 'users.name')
+            ->havingRaw('SUM(clips.earned_cents) > 0 OR SUM(CASE WHEN clips.status = ? THEN clips.views_total ELSE 0 END) > 0', [ClipStatus::Approved->value])
+            ->orderByDesc('earned_cents')
+            ->orderByDesc('views')
+            ->limit($limit)
+            ->get()
+            ->map(function ($row) {
+                $row->earned_cents = (int) $row->earned_cents;
+                $row->views = (int) $row->views;
+                $row->clips_count = (int) $row->clips_count;
+
+                return $row;
+            });
+    }
+
+    /**
+     * Classement d'une saison : ce qui a été gagné ENTRE ses bornes, lu dans
+     * le grand livre.
+     *
+     * Le grand livre plutôt que les compteurs des clips : un clip publié avant
+     * la saison continue de faire des vues pendant, et ce sont celles-là qui
+     * comptent — pas son total de carrière. Une invalidation pendant la
+     * saison y figure en négatif et fait redescendre son auteur.
+     *
+     * @return Collection<int, object{id: int, name: string, views: int, earned_cents: int}>
+     */
+    public function topClippersInSeason(Season $season, int $limit = 20): Collection
+    {
+        $table = (new BudgetTransaction)->getTable();
+
+        return DB::table($table)
+            ->join('users', 'users.id', '=', $table.'.user_id')
+            ->whereBetween($table.'.created_at', [$season->startsAt(), $season->endsAt()])
+            ->where('users.is_banned', false)
+            ->groupBy('users.id', 'users.name')
+            ->select('users.id', 'users.name')
+            ->selectRaw('SUM('.$table.'.amount_cents) as earned_cents')
+            ->selectRaw('SUM('.$table.'.views_delta) as views')
+            ->havingRaw('SUM('.$table.'.amount_cents) > 0')
+            ->orderByDesc('earned_cents')
+            ->orderByDesc('views')
+            ->limit($limit)
+            ->get()
+            ->map(function ($row) {
+                $row->earned_cents = (int) $row->earned_cents;
+                $row->views = (int) $row->views;
+
+                return $row;
+            });
+    }
+
+    /**
+     * Meilleurs parrains : commissions cumulées, reprises déduites.
+     *
+     * @return Collection<int, object{id: int, name: string, earned_cents: int, referrals: int}>
+     */
+    public function topReferrers(int $limit = 10): Collection
+    {
+        return DB::table('referral_commissions')
+            ->join('users', 'users.id', '=', 'referral_commissions.referrer_id')
+            ->where('users.is_banned', false)
+            ->groupBy('users.id', 'users.name')
+            ->select('users.id', 'users.name')
+            ->selectRaw('SUM(referral_commissions.amount_cents) as earned_cents')
+            ->selectRaw('COUNT(DISTINCT referral_commissions.referred_id) as referrals')
+            ->havingRaw('SUM(referral_commissions.amount_cents) > 0')
+            ->orderByDesc('earned_cents')
+            ->limit($limit)
+            ->get()
+            ->map(function ($row) {
+                $row->earned_cents = (int) $row->earned_cents;
+                $row->referrals = (int) $row->referrals;
+
+                return $row;
+            });
+    }
+
+    /**
+     * Totaux d'une catégorie, tous clippeurs confondus : ce que la catégorie
+     * a généré en vues et en euros depuis toujours.
+     *
+     * @return array{views: int, earned_cents: int}
+     */
+    public function categoryTotals(Category $category): array
+    {
+        $row = DB::table('clips')
+            ->join('campaigns', 'campaigns.id', '=', 'clips.campaign_id')
+            ->where('campaigns.category_id', $category->getKey())
+            ->selectRaw('COALESCE(SUM(clips.earned_cents), 0) as earned_cents')
+            ->selectRaw('COALESCE(SUM(CASE WHEN clips.status = ? THEN clips.views_total ELSE 0 END), 0) as views', [ClipStatus::Approved->value])
+            ->first();
+
+        return [
+            'views' => (int) $row->views,
+            'earned_cents' => (int) $row->earned_cents,
+        ];
     }
 
     /**

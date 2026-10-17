@@ -763,6 +763,70 @@ d'invalidation.
 Toutes les agrégations lisent le grand livre plutôt que les compteurs
 dénormalisés : les chiffres sont reproductibles et auditables.
 
+## Formation
+
+`/formation` : des leçons courtes (vidéo + texte Markdown), gérées dans
+**Communication › Formation**. La progression est enregistrée par clippeur ; tout
+terminer débloque le succès « Formé », qui se rouvre si une leçon est ajoutée.
+
+Le parcours par défaut s'installe, et se met à jour sans toucher aux vidéos ni à
+la progression, avec :
+
+```bash
+php artisan db:seed --class=TrainingLessonSeeder --force
+```
+
+**Les vidéos se tournent toutes seules.** `scripts/formation/record.mjs` pilote le
+vrai site dans Edge (Playwright), joue chaque parcours avec sous-titres et curseur,
+et dépose `storage/app/public/formation/{identifiant}.webm` — que la leçon du même
+identifiant reprend d'elle-même. Quand l'interface change, on relance :
+
+```bash
+npx playwright-core install ffmpeg      # une fois, encodeur vidéo (1 Mo)
+php artisan serve & npm run dev          # le site doit tourner
+node scripts/formation/record.mjs        # --only=lier-ses-comptes pour une seule
+```
+
+Ces fichiers ne sont pas versionnés (`storage/app/public`) : à produire sur le
+serveur, ou à déposer dans la leçon depuis le back-office.
+
+## Statut légal
+
+Sans SIRET **vérifié**, les retraits sont plafonnés sur l'année civile, en montant
+et en nombre (`clipping.legal`, par défaut 2 000 € et 30 retraits). Le contrôle se
+fait dans `PayoutService::request()`, sous le même verrou que le solde. Le
+clippeur déclare son SIRET dans « Moyen de paiement » (14 chiffres, clé de Luhn) ;
+l'équipe le vérifie au registre depuis la fiche clippeur, ce qui lève le plafond.
+Changer de numéro efface la vérification.
+
+## Primes garanties
+
+Un montant fixe crédité sur un clip validé, en plus de ses vues. Il passe par
+`CampaignBudgetService::grantBonus()` : pris sur le budget de la campagne, inscrit
+au grand livre (type `bonus`), tout ou rien, idempotent. `clips.bonus_cents` isole
+la part des primes pour qu'elle n'entame pas le plafond par clip ; une
+invalidation la reprend avec le reste. Pas de commission de parrainage dessus.
+
+- **Prime de lancement** (fiche campagne) : versée au premier clip validé de
+  chacun des N premiers clippeurs, une seule par clippeur, après le minimum de
+  clips s'il y en a un.
+- **Prime manuelle** (liste des clips, super-admin) : avec un message au clippeur.
+
+Le tableau de bord du clippeur célèbre chaque prime tant qu'il ne l'a pas ouverte.
+
+## Classements, vitrine et relances
+
+- **Catégories** (Catalogue) : chaque campagne peut en recevoir une ; le
+  classement affiche un onglet par catégorie, vues et gains depuis toujours.
+- **Saisons** (Catalogue) : classement sur une période, lu dans le grand livre
+  entre deux dates. La récompense annoncée se verse à la main.
+- **Top parrains** : commissions cumulées, reprises déduites.
+- **Vitrine de l'accueil** : clips choisis un par un (« Mettre en avant sur
+  l'accueil » dans la liste des clips), miniature copiée chez nous car celles des
+  plateformes expirent. Les compteurs publics se masquent tant qu'ils sont nuls.
+- **Clippeurs à relancer** (Communication) : actifs à 0 €, gains en baisse,
+  inactifs (`clipping.retention`). La relance part dans la messagerie du site.
+
 ## Tests
 
 ```bash

@@ -13,6 +13,7 @@ use App\Models\ModerationLog;
 use App\Models\Payout;
 use App\Models\User;
 use App\Notifications\ClipRejected;
+use App\Services\Budget\BonusService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -52,7 +53,7 @@ class ClipModerationService
 
     public function approve(Clip $clip, ?User $by = null): Clip
     {
-        return DB::transaction(function () use ($clip, $by) {
+        $clip = DB::transaction(function () use ($clip, $by) {
             $clip->forceFill([
                 'status' => ClipStatus::Approved,
                 'rejection_reason' => null,
@@ -62,6 +63,22 @@ class ClipModerationService
 
             return $clip;
         });
+
+        /*
+         * Prime de lancement, APRÈS le commit : elle prend ses propres verrous
+         * dans le moteur de budget, et la validation ne doit jamais échouer
+         * parce qu'une prime n'a pas pu être versée.
+         */
+        try {
+            app(BonusService::class)->awardLaunchBonus($clip);
+        } catch (\Throwable $exception) {
+            Log::warning('Prime de lancement non versée', [
+                'clip_id' => $clip->getKey(),
+                'error' => $exception->getMessage(),
+            ]);
+        }
+
+        return $clip;
     }
 
     /**

@@ -24,6 +24,33 @@
             <div class="alert-ok">{{ session('status') }}</div>
         @endif
 
+        @foreach ($bonuses as $bonus)
+            <div class="card relative overflow-hidden border-brand-500/50 p-6" id="prime-{{ $bonus->id }}">
+                <div aria-hidden="true" class="pointer-events-none absolute -right-10 -top-16 h-48 w-48 rounded-full bg-brand-500/25 blur-3xl"></div>
+                <div class="relative flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <span class="flex h-12 w-12 flex-none items-center justify-center rounded-full bg-brand-500 text-ink-950">
+                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                            </svg>
+                        </span>
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-brand-400">Prime débloquée</p>
+                            <p class="font-display text-xl font-bold text-ink-50">
+                                +{{ Money::euros($bonus->data['amount_cents'] ?? 0) }}
+                            </p>
+                            <p class="mt-0.5 text-sm text-ink-300">{{ $bonus->data['body'] ?? '' }}</p>
+                        </div>
+                    </div>
+
+                    <form method="POST" action="{{ route('notifications.read', $bonus->id) }}">
+                        @csrf
+                        <button type="submit" class="btn-primary">Voir mes revenus</button>
+                    </form>
+                </div>
+            </div>
+        @endforeach
+
         {{-- L'état du compte en quelques pastilles, avant de lire quoi que ce
              soit : on sait tout de suite si l'on est en mesure de participer
              ou s'il manque quelque chose. --}}

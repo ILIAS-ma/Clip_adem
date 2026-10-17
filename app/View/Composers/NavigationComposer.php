@@ -56,6 +56,14 @@ class NavigationComposer
                     'icon' => 'M4 5a1 1 0 011-1h5v7H4V5zm0 9h6v6H5a1 1 0 01-1-1v-5zm10-10h5a1 1 0 011 1v4h-6V4zm0 7h6v8a1 1 0 01-1 1h-5v-9z',
                 ],
                 [
+                    // Juste après l'accueil : c'est là qu'un nouveau venu doit
+                    // tomber avant de chercher sa première campagne.
+                    'route' => 'training.index',
+                    'pattern' => 'training.*',
+                    'label' => 'Formation',
+                    'icon' => 'M12 14l9-5-9-5-9 5 9 5zm0 0v6m-6-9.2V16c0 1.1 2.7 3 6 3s6-1.9 6-3v-5.2',
+                ],
+                [
                     'route' => 'campaigns.index',
                     'pattern' => 'campaigns.*',
                     'label' => 'Campagnes',

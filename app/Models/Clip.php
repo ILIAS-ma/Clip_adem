@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * ATTENTION — frontière d'écriture.
@@ -36,6 +37,7 @@ class Clip extends Model
             'views_total' => 'integer',
             'paid_views' => 'integer',
             'earned_cents' => 'integer',
+            'bonus_cents' => 'integer',
             'duration_seconds' => 'integer',
             'compliance' => 'array',
             'posted_at' => 'datetime',
@@ -43,7 +45,18 @@ class Clip extends Model
             'last_synced_at' => 'datetime',
             'missing_since' => 'datetime',
             'missing_checks' => 'integer',
+            'featured_at' => 'datetime',
         ];
+    }
+
+    /** Miniature de vitrine : la copie locale d'abord, l'originale à défaut. */
+    public function showcaseThumbnailUrl(): ?string
+    {
+        if ($this->featured_thumbnail_path) {
+            return Storage::disk('public')->url($this->featured_thumbnail_path);
+        }
+
+        return $this->thumbnail_url;
     }
 
     // ------------------------------------------------------------------

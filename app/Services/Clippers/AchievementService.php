@@ -5,6 +5,7 @@ namespace App\Services\Clippers;
 use App\Enums\ClipStatus;
 use App\Enums\PayoutStatus;
 use App\Enums\Platform;
+use App\Models\TrainingLesson;
 use App\Models\User;
 use App\Support\Clippers\Achievement;
 use Illuminate\Support\Collection;
@@ -80,6 +81,25 @@ class AchievementService
                 description: 'Faire valider un clip dans 5 campagnes différentes.',
                 unlocked: $campaignsCount >= 5,
             ),
+            new Achievement(
+                key: 'trained',
+                label: 'Formé',
+                description: 'Terminer toutes les leçons de la formation.',
+                unlocked: $this->finishedTraining($clipper),
+            ),
         ]);
+    }
+
+    /**
+     * Toutes les leçons publiées, au moment présent : une leçon ajoutée plus
+     * tard rouvre le succès, plutôt que de le laisser affirmer une formation
+     * complète qui ne l'est plus.
+     */
+    protected function finishedTraining(User $clipper): bool
+    {
+        $published = TrainingLesson::query()->published()->pluck('id');
+
+        return $published->isNotEmpty()
+            && $clipper->completedLessons()->whereIn('training_lessons.id', $published)->count() === $published->count();
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\LegalStatus;
 use App\Enums\PayoutMethod;
 use App\Enums\PayoutStatus;
 use App\Enums\UserRole;
@@ -14,8 +15,10 @@ use Filament\Panel;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -59,6 +62,9 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
             // l'affichage et le rapprochement d'un virement.
             'iban' => 'encrypted',
             'referred_at' => 'datetime',
+            'legal_status' => LegalStatus::class,
+            'siret_submitted_at' => 'datetime',
+            'siret_verified_at' => 'datetime',
         ];
     }
 
@@ -170,6 +176,13 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     public function clips(): HasMany
     {
         return $this->hasMany(Clip::class);
+    }
+
+    /** Leçons de formation terminées. */
+    public function completedLessons(): BelongsToMany
+    {
+        return $this->belongsToMany(TrainingLesson::class, 'training_lesson_user')
+            ->withPivot('completed_at');
     }
 
     public function participations(): HasMany
@@ -310,5 +323,40 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     public function hasPayoutDestination(): bool
     {
         return $this->payoutDestination() !== null;
+    }
+
+    // ------------------------------------------------------------------
+    // Statut légal
+    // ------------------------------------------------------------------
+
+    public function legalStatus(): LegalStatus
+    {
+        return $this->legal_status ?? LegalStatus::Individual;
+    }
+
+    /** SIRET déclaré ET vérifié par l'équipe : seul cas qui lève le plafond. */
+    public function isVerifiedBusiness(): bool
+    {
+        return $this->legalStatus() === LegalStatus::Business
+            && filled($this->siret)
+            && $this->siret_verified_at !== null;
+    }
+
+    /** @param  Builder<self>  $query */
+    public function scopePendingSiret($query)
+    {
+        return $query->where('legal_status', LegalStatus::Business->value)
+            ->whereNotNull('siret')
+            ->whereNull('siret_verified_at')
+            ->whereNull('siret_rejection_reason');
+    }
+
+    /** SIRET déclaré, ni vérifié ni refusé : en attente d'un administrateur. */
+    public function hasPendingSiret(): bool
+    {
+        return $this->legalStatus() === LegalStatus::Business
+            && filled($this->siret)
+            && $this->siret_verified_at === null
+            && $this->siret_rejection_reason === null;
     }
 }

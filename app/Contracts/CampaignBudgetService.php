@@ -36,6 +36,28 @@ interface CampaignBudgetService
     public function creditViews(Clip $clip, int $newTotalViews, string $idempotencyKey): CreditResult;
 
     /**
+     * Crédite une prime fixe sur un clip validé, prise sur le budget de sa
+     * campagne. Tout ou rien : une prime n'est jamais versée en partie.
+     *
+     * @param  string  $idempotencyKey  Une même clé ne paie qu'une fois — c'est ce
+     *                                  qui limite la prime de lancement à une par
+     *                                  clippeur et par campagne.
+     * @param  string|null  $kind  Nature de la prime (« launch », « manual »),
+     *                             inscrite au grand livre.
+     * @param  int|null  $maxOfKind  Nombre maximal de primes de cette nature sur
+     *                               la campagne, vérifié sous le verrou.
+     */
+    public function grantBonus(
+        Clip $clip,
+        int $amountCents,
+        string $idempotencyKey,
+        ?string $kind = null,
+        ?int $maxOfKind = null,
+        ?string $reason = null,
+        ?User $by = null,
+    ): CreditResult;
+
+    /**
      * Annule tout ce qu'un clip a coûté et restitue le budget.
      * Utilisé par la modération : clip frauduleux, brief non respecté.
      */

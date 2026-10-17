@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Campaign;
 use App\Models\Clip;
 use App\Models\Message;
+use App\Notifications\BonusGranted;
 use App\Services\Clippers\ClipperProgressionService;
 use App\Services\Clips\ParticipationService;
 use Illuminate\Http\Request;
@@ -26,6 +27,9 @@ class DashboardController extends Controller
 
         return view('clipper.dashboard', [
             'clipper' => $clipper,
+            // Primes pas encore vues : célébrées en tête de page jusqu'à ce que
+            // le clippeur les ouvre.
+            'bonuses' => $clipper->unreadNotifications()->where('type', BonusGranted::TYPE)->latest()->limit(3)->get(),
             'progression' => app(ClipperProgressionService::class)->for($clipper),
             'clips' => $clips,
             'views' => (int) $clips->sum('views_total'),

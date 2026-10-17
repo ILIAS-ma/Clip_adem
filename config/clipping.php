@@ -314,6 +314,54 @@ return [
     |--------------------------------------------------------------------------
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Clippeurs à relancer
+    |--------------------------------------------------------------------------
+    |
+    | Trois signaux, du plus urgent au moins urgent. Ils ne déclenchent rien :
+    | ils dressent la liste de ceux à qui écrire avant qu'ils ne partent.
+    |
+    */
+
+    'retention' => [
+        // Fenêtre d'observation, en jours.
+        'window_days' => 30,
+
+        // « Actif à 0 € » : au moins N clips soumis dans la fenêtre, rien gagné.
+        'busy_min_clips' => 3,
+
+        // « Gains en baisse » : moins de la moitié de la fenêtre précédente,
+        // à partir d'un montant qui rend la baisse significative (centimes).
+        'drop_ratio' => 0.5,
+        'drop_min_previous_cents' => 1_000,
+
+        // « Inactif » : déjà validé au moins une fois, plus rien depuis N jours.
+        'inactive_days' => 21,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Statut légal
+    |--------------------------------------------------------------------------
+    |
+    | Gagner de l'argent régulièrement en ligne est une activité déclarable, et
+    | la plateforme doit pouvoir dire à qui elle a versé quoi. Sans SIRET
+    | vérifié, les retraits sont plafonnés sur l'année civile — en montant et
+    | en nombre. Au-delà, le clippeur déclare son statut d'auto-entrepreneur.
+    |
+    | Les valeurs par défaut reprennent les seuils de la directive DAC7
+    | (30 opérations ou 2 000 € par an) : à faire confirmer par l'expert-
+    | comptable avant l'ouverture, elles ne valent pas avis juridique.
+    |
+    */
+
+    'legal' => [
+        'enabled' => env('LEGAL_LIMITS_ENABLED', true),
+        'unregistered_max_cents_per_year' => (int) env('LEGAL_UNREGISTERED_MAX_CENTS', 200_000),
+        'unregistered_max_payouts_per_year' => (int) env('LEGAL_UNREGISTERED_MAX_PAYOUTS', 30),
+    ],
+
     'payouts' => [
         // Montant minimum d'une demande de retrait, en centimes.
         'minimum_cents' => 2_000,

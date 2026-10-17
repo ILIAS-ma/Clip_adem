@@ -182,6 +182,112 @@ class DatabaseCampaignBudgetService implements CampaignBudgetService
         return $result;
     }
 
+    public function grantBonus(
+        Clip $clip,
+        int $amountCents,
+        string $idempotencyKey,
+        ?string $kind = null,
+        ?int $maxOfKind = null,
+        ?string $reason = null,
+        ?User $by = null,
+    ): CreditResult {
+        if ($amountCents <= 0) {
+            return CreditResult::skipped(CreditOutcome::NothingToCredit, $this->remaining($clip->campaign_id));
+        }
+
+        $exhaustedCampaign = null;
+
+        $result = DB::transaction(function () use ($clip, $amountCents, $idempotencyKey, $kind, $maxOfKind, $reason, $by, &$exhaustedCampaign) {
+            if ($existing = $this->findTransaction($idempotencyKey)) {
+                return $this->alreadyProcessed($existing);
+            }
+
+            // Même ordre de verrouillage que partout ailleurs : campagne, puis clip.
+            $campaign = Campaign::withTrashed()->whereKey($clip->campaign_id)->lockForUpdate()->firstOrFail();
+            $clip = Clip::whereKey($clip->getKey())->lockForUpdate()->firstOrFail();
+
+            if ($existing = $this->findTransaction($idempotencyKey, locking: true)) {
+                return $this->alreadyProcessed($existing);
+            }
+
+            if (! $campaign->acceptsCredits()) {
+                return CreditResult::skipped(CreditOutcome::CampaignClosed, $campaign->remainingCents());
+            }
+
+            if (! $clip->status->isPayable()) {
+                return CreditResult::skipped(CreditOutcome::ClipNotPayable, $campaign->remainingCents());
+            }
+
+            /*
+             * Places limitées (« les 20 premiers clippeurs ») : comptées ici,
+             * sous le verrou de la campagne, sans quoi deux validations
+             * simultanées pourraient toutes deux prendre la dernière place.
+             */
+            if ($kind !== null && $maxOfKind !== null) {
+                $granted = BudgetTransaction::where('campaign_id', $campaign->getKey())
+                    ->where('type', BudgetTransactionType::Bonus)
+                    ->where('meta->kind', $kind)
+                    ->count();
+
+                if ($granted >= $maxOfKind) {
+                    return CreditResult::skipped(CreditOutcome::NoBudgetLeft, $campaign->remainingCents());
+                }
+            }
+
+            // Tout ou rien : une prime annoncée « 10 € » qui arriverait à
+            // 3,40 € serait vécue comme une promesse non tenue.
+            if ($campaign->remainingCents() < $amountCents) {
+                return CreditResult::skipped(CreditOutcome::NoBudgetLeft, $campaign->remainingCents());
+            }
+
+            $clip->forceFill([
+                'earned_cents' => $clip->earned_cents + $amountCents,
+                'bonus_cents' => $clip->bonus_cents + $amountCents,
+            ])->save();
+
+            $campaign->forceFill([
+                'spent_cents' => $campaign->spent_cents + $amountCents,
+            ])->save();
+
+            $transaction = BudgetTransaction::create([
+                'campaign_id' => $campaign->getKey(),
+                'clip_id' => $clip->getKey(),
+                'user_id' => $clip->user_id,
+                'type' => BudgetTransactionType::Bonus,
+                'amount_cents' => $amountCents,
+                'views_delta' => 0,
+                'balance_after_cents' => $campaign->remainingCents(),
+                'idempotency_key' => $idempotencyKey,
+                'created_by' => $by?->getKey(),
+                'meta' => array_filter(['kind' => $kind, 'reason' => $reason]),
+            ]);
+
+            $exhausted = $this->markExhaustedIfNeeded($campaign);
+            $exhaustedCampaign = $exhausted ? $campaign : null;
+
+            return new CreditResult(
+                outcome: CreditOutcome::Credited,
+                creditedCents: $amountCents,
+                remainingCents: $campaign->remainingCents(),
+                campaignExhausted: $campaign->status === CampaignStatus::Exhausted,
+                transaction: $transaction,
+            );
+        }, self::TRANSACTION_ATTEMPTS);
+
+        if ($exhaustedCampaign) {
+            CampaignExhausted::dispatch($exhaustedCampaign);
+        }
+
+        /*
+         * Pas de commission de parrainage sur une prime : la commission
+         * récompense des vues apportées, et une prime n'en est pas une. Elle
+         * resterait sinon un coût caché pour la plateforme à chaque geste
+         * commercial.
+         */
+
+        return $result;
+    }
+
     public function reverseClip(Clip $clip, string $reason, ?User $by = null): ReversalResult
     {
         $result = DB::transaction(function () use ($clip, $reason, $by) {
@@ -195,9 +301,12 @@ class DatabaseCampaignBudgetService implements CampaignBudgetService
                 return ReversalResult::nothing($campaign->remainingCents());
             }
 
+            // Les primes partent avec le reste : un clip frauduleux ne garde
+            // pas la prime que sa validation lui avait value.
             $clip->forceFill([
                 'paid_views' => 0,
                 'earned_cents' => 0,
+                'bonus_cents' => 0,
             ])->save();
 
             $campaign->forceFill([
@@ -341,7 +450,9 @@ class DatabaseCampaignBudgetService implements CampaignBudgetService
                 * $this->progression->for($clip->user)->clipCapMultiplier(),
             );
 
-            $caps[] = max(0, $clipCap - $clip->earned_cents);
+            // Le plafond borne ce que les VUES d'un clip peuvent coûter : une
+            // prime déjà versée ne doit pas l'entamer.
+            $caps[] = max(0, $clipCap - ($clip->earned_cents - $clip->bonus_cents));
         }
 
         /*

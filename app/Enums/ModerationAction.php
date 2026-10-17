@@ -19,6 +19,9 @@ enum ModerationAction: string
     case PayoutApproved = 'payout_approved';
     case PayoutCancelled = 'payout_cancelled';
     case PasswordResetLinkIssued = 'password_reset_link_issued';
+    case SiretVerified = 'siret_verified';
+    case SiretRejected = 'siret_rejected';
+    case BonusGranted = 'bonus_granted';
 
     public function label(): string
     {
@@ -34,14 +37,19 @@ enum ModerationAction: string
             self::PayoutApproved => 'Retrait validé',
             self::PayoutCancelled => 'Retrait annulé',
             self::PasswordResetLinkIssued => 'Lien de réinitialisation créé',
+            self::SiretVerified => 'SIRET vérifié',
+            self::SiretRejected => 'SIRET refusé',
+            self::BonusGranted => 'Prime accordée',
         };
     }
 
     public function color(): string
     {
         return match ($this) {
-            self::ClipApproved, self::ClipperUnbanned, self::PayoutApproved, self::CampaignFunded => 'success',
-            self::ClipRejected, self::PayoutCancelled, self::ClipDisappeared, self::PasswordResetLinkIssued => 'warning',
+            self::ClipApproved, self::ClipperUnbanned, self::PayoutApproved, self::CampaignFunded,
+            self::SiretVerified, self::BonusGranted => 'success',
+            self::ClipRejected, self::PayoutCancelled, self::ClipDisappeared, self::PasswordResetLinkIssued,
+            self::SiretRejected => 'warning',
             self::ClipInvalidated, self::ClipperBanned, self::ClipNotOwned => 'danger',
         };
     }

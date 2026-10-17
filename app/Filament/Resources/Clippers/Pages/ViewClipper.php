@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Clippers\Pages;
 
+use App\Filament\Actions\SiretActions;
 use App\Filament\Resources\Clippers\ClipperResource;
 use Filament\Resources\Pages\ViewRecord;
 
@@ -11,6 +12,9 @@ class ViewClipper extends ViewRecord
 
     protected function getHeaderActions(): array
     {
-        return [];
+        return [
+            SiretActions::verify(),
+            SiretActions::reject(),
+        ];
     }
 }

@@ -50,6 +50,25 @@ class PayoutRefused extends RuntimeException
         ));
     }
 
+    public static function yearlyPayoutCountReached(int $max): self
+    {
+        return new self(sprintf(
+            'Limite de %d retraits par an atteinte sans statut déclaré. '
+            .'Déclarez votre SIRET dans « Moyen de paiement » pour continuer.',
+            $max,
+        ));
+    }
+
+    public static function yearlyAmountReached(int $left, int $max): self
+    {
+        return new self(sprintf(
+            'Sans statut déclaré, les retraits sont plafonnés à %s € par an : il vous reste %s € cette année. '
+            .'Déclarez votre SIRET dans « Moyen de paiement » pour lever le plafond.',
+            number_format($max / 100, 0, ',', ' '),
+            number_format($left / 100, 2, ',', ' '),
+        ));
+    }
+
     public static function insufficientBalance(int $amount, int $available): self
     {
         return new self(sprintf(

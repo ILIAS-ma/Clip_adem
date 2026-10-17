@@ -10,8 +10,11 @@ use App\Enums\PayoutStatus;
 use App\Enums\Platform;
 use App\Enums\UserRole;
 use App\Models\Campaign;
+use App\Models\Category;
 use App\Models\Clip;
 use App\Models\Payout;
+use App\Models\Season;
+use App\Models\TrainingLesson;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -44,6 +47,7 @@ class AdminPagesRenderTest extends TestCase
         $campaign = Campaign::factory()
             ->withRate(Platform::TikTok, ratePer1kCents: 100)
             ->create([
+                'category_id' => Category::factory(),
                 'status' => CampaignStatus::Active,
                 'budget_total_cents' => 100_000,
             ]);
@@ -85,6 +89,13 @@ class AdminPagesRenderTest extends TestCase
             '/admin' => 'tableau de bord',
             '/admin/creators' => 'créateurs',
             '/admin/campaigns' => 'campagnes',
+            '/admin/categories' => 'catégories',
+            '/admin/categories/create' => 'nouvelle catégorie',
+            '/admin/seasons' => 'saisons',
+            '/admin/seasons/create' => 'nouvelle saison',
+            '/admin/training-lessons' => 'formation',
+            '/admin/training-lessons/create' => 'nouvelle leçon',
+            '/admin/clippeurs-a-relancer' => 'clippeurs à relancer',
             '/admin/clips' => 'clips',
             '/admin/clippers' => 'clippeurs',
             '/admin/payouts' => 'retraits',
@@ -116,6 +127,30 @@ class AdminPagesRenderTest extends TestCase
 
         $this->actingAs($admin)->get('/admin/campaigns/create')->assertSuccessful();
         $this->actingAs($admin)->get("/admin/campaigns/{$campaign->getKey()}/edit")->assertSuccessful();
+        $this->actingAs($admin)->get("/admin/categories/{$campaign->category_id}/edit")->assertSuccessful();
+    }
+
+    #[Test]
+    public function the_new_record_pages_render(): void
+    {
+        $this->seedActivity();
+        $admin = $this->admin();
+
+        $season = Season::factory()->create();
+        $lesson = TrainingLesson::factory()->create();
+
+        // Un clippeur avec un SIRET en attente : sa fiche affiche les actions
+        // de vérification et le bloc « Statut légal ».
+        $clipper = User::where('role', UserRole::Clipper)->first();
+        $clipper->forceFill(['legal_status' => 'business', 'siret' => '73282932000074', 'siret_submitted_at' => now()])->save();
+
+        $this->actingAs($admin)->get("/admin/seasons/{$season->getKey()}/edit")->assertSuccessful();
+        $this->actingAs($admin)->get("/admin/training-lessons/{$lesson->slug}/edit")->assertSuccessful();
+        $this->actingAs($admin)
+            ->get("/admin/clippers/{$clipper->getKey()}")
+            ->assertSuccessful()
+            ->assertSee('Statut légal')
+            ->assertSee('Valider le SIRET');
     }
 
     #[Test]

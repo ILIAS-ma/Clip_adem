@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Clippers\Schemas;
 
+use App\Filament\Actions\SiretActions;
 use App\Models\User;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
@@ -50,6 +51,36 @@ class ClipperInfolist
                         // Le solde est toujours calculé, jamais stocké : un
                         // solde dénormalisé finit par diverger du grand livre.
                         ->helperText('Gains − retraits demandés ou versés.'),
+                ]),
+
+            Section::make('Statut légal')
+                ->columns(3)
+                ->schema([
+                    TextEntry::make('legal_status')
+                        ->label('Statut déclaré')
+                        ->state(fn (User $record) => $record->legalStatus()->label()),
+
+                    TextEntry::make('siret')
+                        ->label('SIRET')
+                        ->placeholder('—')
+                        ->copyable()
+                        ->url(fn (User $record) => SiretActions::registryUrl($record), shouldOpenInNewTab: true),
+
+                    TextEntry::make('siret_state')
+                        ->label('Vérification')
+                        ->badge()
+                        ->state(fn (User $record) => match (true) {
+                            $record->isVerifiedBusiness() => 'Vérifié le '.$record->siret_verified_at->format('d/m/Y'),
+                            $record->hasPendingSiret() => 'À vérifier',
+                            $record->siret_rejection_reason !== null => 'Refusé : '.$record->siret_rejection_reason,
+                            default => 'Sans objet',
+                        })
+                        ->color(fn (User $record) => match (true) {
+                            $record->isVerifiedBusiness() => 'success',
+                            $record->hasPendingSiret() => 'warning',
+                            $record->siret_rejection_reason !== null => 'danger',
+                            default => 'gray',
+                        }),
                 ]),
         ]);
     }

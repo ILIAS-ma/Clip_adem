@@ -7,16 +7,19 @@ use App\Http\Controllers\Clipper\ClipController;
 use App\Http\Controllers\Clipper\DashboardController;
 use App\Http\Controllers\Clipper\EarningsController;
 use App\Http\Controllers\Clipper\LeaderboardController;
+use App\Http\Controllers\Clipper\LegalStatusController;
 use App\Http\Controllers\Clipper\PayoutMethodController;
 use App\Http\Controllers\Clipper\ProfileCompletionController;
 use App\Http\Controllers\Clipper\ReferralController;
 use App\Http\Controllers\Clipper\SocialAccountController;
+use App\Http\Controllers\Clipper\TrainingController;
 use App\Http\Controllers\Creator\CampaignController as CreatorCampaignController;
 use App\Http\Controllers\Creator\DashboardController as CreatorDashboardController;
 use App\Http\Controllers\Creator\ProfileController as CreatorProfileController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PayPalWebhookController;
 use App\Http\Controllers\ProfileController;
+use App\Services\Reporting\LandingShowcase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
@@ -59,7 +62,7 @@ $onboardingGuards = static fn (): array => array_values(array_filter([
 Route::get('/', function () {
     return auth()->check()
         ? redirect(auth()->user()->role->homeRoute())
-        : view('welcome');
+        : view('welcome', ['showcase' => app(LandingShowcase::class)->forLanding()]);
 })->name('home');
 
 // Ancienne URL de la landing page, conservée pour ne pas casser les liens
@@ -289,8 +292,13 @@ Route::middleware(['auth', 'not.banned', 'role:clipper'])->group(function () use
         Route::get('/classement', [LeaderboardController::class, 'index'])->name('leaderboard.index');
         Route::get('/succes', [AchievementController::class, 'index'])->name('achievements.index');
 
+        Route::get('/formation', [TrainingController::class, 'index'])->name('training.index');
+        Route::get('/formation/{lesson}', [TrainingController::class, 'show'])->name('training.show');
+        Route::post('/formation/{lesson}/terminer', [TrainingController::class, 'complete'])->name('training.complete');
+
         Route::get('/revenus/paiement', [PayoutMethodController::class, 'edit'])->name('payout-method.edit');
         Route::patch('/revenus/paiement', [PayoutMethodController::class, 'update'])->name('payout-method.update');
+        Route::patch('/revenus/statut-legal', [LegalStatusController::class, 'update'])->name('legal-status.update');
     });
 });
 

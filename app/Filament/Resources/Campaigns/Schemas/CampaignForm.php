@@ -5,7 +5,9 @@ namespace App\Filament\Resources\Campaigns\Schemas;
 use App\Enums\AssetKind;
 use App\Enums\CampaignStatus;
 use App\Enums\Platform;
+use App\Filament\Resources\Categories\Schemas\CategoryForm;
 use App\Models\Campaign;
+use App\Models\Category;
 use App\Models\Creator;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
@@ -39,6 +41,15 @@ class CampaignForm
                                 ->dehydrateStateUsing(fn ($state) => Str::slug((string) $state)),
                         ])
                         ->createOptionUsing(fn (array $data) => Creator::create($data)->getKey()),
+
+                    Select::make('category_id')
+                        ->label('Catégorie')
+                        ->relationship('category', 'name', fn ($query) => $query->ordered())
+                        ->preload()
+                        ->placeholder('Aucune')
+                        ->createOptionForm(CategoryForm::components())
+                        ->createOptionUsing(fn (array $data) => Category::create($data)->getKey())
+                        ->helperText('Range la campagne dans un classement par catégorie.'),
 
                     Select::make('status')
                         ->label('Statut')
@@ -154,6 +165,30 @@ class CampaignForm
                         ->label('Plafond par clip')
                         ->placeholder('Aucun'),
 
+                ]),
+
+            Section::make('Prime de lancement')
+                ->description('Optionnelle. Un montant garanti versé au premier clip validé de chaque clippeur, '
+                    .'pour les premiers arrivés : de quoi lancer une campagne sans attendre que les vues montent. '
+                    .'Prise sur le budget, une seule par clippeur.')
+                ->columns(2)
+                ->collapsible()
+                ->schema([
+                    static::money('launch_bonus_cents')
+                        ->label('Montant de la prime')
+                        ->placeholder('Aucune')
+                        ->minValue(0.01),
+
+                    TextInput::make('launch_bonus_slots')
+                        ->label('Nombre de clippeurs concernés')
+                        ->numeric()
+                        ->integer()
+                        ->minValue(1)
+                        ->maxValue(1000)
+                        ->placeholder('Aucun')
+                        ->requiredWith('launch_bonus_cents')
+                        ->helperText('Les N premiers clippeurs à faire valider un clip. Si la campagne exige un minimum '
+                            .'de clips, la prime attend qu’il soit atteint.'),
                 ]),
 
             Section::make('Brief')

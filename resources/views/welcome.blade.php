@@ -209,6 +209,66 @@
             </ol>
         </section>
 
+        {{-- Chiffres réels du site, et non des promesses. Masqués tant qu'ils
+             sont nuls : un compteur à zéro sur une page d'accueil dissuade
+             plus qu'il ne rassure. --}}
+        @php
+            $stats = $showcase['stats'] ?? null;
+            $wall = $showcase['clips'] ?? collect();
+        @endphp
+
+        @if ($stats && $stats['views'] > 0)
+            <section id="en-direct" class="border-t border-ink-800">
+                <div class="mx-auto grid max-w-6xl gap-8 px-6 py-16 text-center sm:grid-cols-3">
+                    @foreach ([
+                        [\App\Support\Money::views($stats['clippers']), 'clippeurs inscrits'],
+                        [\App\Support\Money::compactViews($stats['views']), 'vues validées'],
+                        [\App\Support\Money::wholeEuros($stats['earned_cents']), 'gagnés par les clippeurs'],
+                    ] as $index => [$value, $label])
+                        <div data-reveal style="--reveal-delay: {{ $index * 120 }}ms">
+                            <p class="font-display text-4xl font-bold tabular text-ink-50 sm:text-5xl">{{ $value }}</p>
+                            <p class="mt-2 text-sm text-ink-300">{{ $label }}</p>
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
+        @if ($wall->isNotEmpty())
+            <section id="clips" class="border-t border-ink-800">
+                <div class="mx-auto max-w-6xl px-6 py-24 sm:py-28">
+                    <div data-reveal class="mx-auto max-w-2xl text-center">
+                        <span class="chip bg-brand-500/15 text-brand-300">Des clips réels</span>
+                        <h2 class="mt-4 font-display text-3xl font-bold text-ink-50 sm:text-4xl">Voilà à quoi ressemble un clip payé</h2>
+                        <p class="mt-3 text-ink-200">Publiés par nos clippeurs, vues relevées sur la plateforme. Chacune a été rémunérée.</p>
+                    </div>
+
+                    <ul class="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                        @foreach ($wall as $index => $clip)
+                            <li data-reveal style="--reveal-delay: {{ ($index % 5) * 80 }}ms">
+                                <a href="{{ $clip->url }}" target="_blank" rel="noopener noreferrer nofollow"
+                                   class="group relative block aspect-[9/16] overflow-hidden rounded-2xl bg-gradient-to-br from-brand-500/30 via-ink-800 to-ink-900 ring-1 ring-ink-700 transition hover:-translate-y-1 hover:ring-brand-500/60">
+                                    @if ($thumbnail = $clip->showcaseThumbnailUrl())
+                                        <img src="{{ $thumbnail }}" alt="" loading="lazy" decoding="async"
+                                             onerror="this.remove()"
+                                             class="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105">
+                                    @endif
+                                    <div aria-hidden="true" class="absolute inset-0 bg-gradient-to-t from-ink-950/90 via-ink-950/10 to-transparent"></div>
+                                    <span class="absolute left-3 top-3 rounded-full bg-ink-950/70 px-2.5 py-1 text-xs font-semibold text-ink-100 backdrop-blur">
+                                        {{ $clip->platform->label() }}
+                                    </span>
+                                    <span class="absolute inset-x-3 bottom-3 font-display text-xl font-bold tabular text-ink-50">
+                                        {{ \App\Support\Money::compactViews($clip->views_total) }} <span class="text-sm font-semibold text-ink-200">vues</span>
+                                    </span>
+                                    <span class="sr-only">Voir le clip sur {{ $clip->platform->label() }}</span>
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            </section>
+        @endif
+
         <section id="chiffres" class="border-t border-ink-800 bg-ink-800">
             <div class="mx-auto grid max-w-6xl gap-8 px-6 py-20 sm:grid-cols-3">
                 @foreach ([

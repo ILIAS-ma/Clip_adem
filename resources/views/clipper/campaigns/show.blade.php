@@ -246,6 +246,23 @@
                             </div>
                         @endif
 
+                        @if (($slotsLeft = $campaign->launchBonusSlotsLeft()) !== null)
+                            {{-- Annoncée avec les places restantes : une prime
+                                 « pour les premiers » sans compteur pousse à
+                                 publier vite sans savoir s'il reste une chance. --}}
+                            <div class="flex justify-between gap-2 border-t border-ink-700 pt-3">
+                                <dt class="text-ink-400">Prime de lancement</dt>
+                                <dd class="text-right">
+                                    <span class="tabular font-semibold text-brand-400">{{ Money::euros($campaign->launch_bonus_cents) }}</span>
+                                    <span class="block text-xs text-ink-400">
+                                        {{ $slotsLeft > 0
+                                            ? $slotsLeft.' place'.($slotsLeft > 1 ? 's' : '').' restante'.($slotsLeft > 1 ? 's' : '').' · au premier clip validé'
+                                            : 'Toutes les places sont prises' }}
+                                    </span>
+                                </dd>
+                            </div>
+                        @endif
+
                         @if ($campaign->ends_at)
                             <div class="flex justify-between gap-2 border-t border-ink-700 pt-3">
                                 <dt class="text-ink-400">Fin</dt>

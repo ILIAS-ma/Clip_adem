@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Clippers\Tables;
 
 use App\Filament\Actions\PasswordResetLinkAction;
+use App\Filament\Actions\SiretActions;
 use App\Models\User;
 use App\Services\Clippers\ClipperProgressionService;
 use App\Services\Moderation\ClipModerationService;
@@ -12,8 +13,10 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class ClippersTable
 {
@@ -77,6 +80,25 @@ class ClippersTable
                     ->color(fn (User $record) => $record->is_banned ? 'danger' : 'success')
                     ->description(fn (User $record) => $record->ban_reason),
 
+                TextColumn::make('legal_status')
+                    ->label('Statut légal')
+                    ->badge()
+                    ->state(fn (User $record) => match (true) {
+                        $record->isVerifiedBusiness() => 'SIRET vérifié',
+                        $record->hasPendingSiret() => 'SIRET à vérifier',
+                        $record->siret_rejection_reason !== null => 'SIRET refusé',
+                        default => 'Particulier',
+                    })
+                    ->color(fn (User $record) => match (true) {
+                        $record->isVerifiedBusiness() => 'success',
+                        $record->hasPendingSiret() => 'warning',
+                        $record->siret_rejection_reason !== null => 'danger',
+                        default => 'gray',
+                    })
+                    ->description(fn (User $record) => $record->siret)
+                    ->url(fn (User $record) => SiretActions::registryUrl($record), shouldOpenInNewTab: true)
+                    ->toggleable(),
+
                 TextColumn::make('created_at')
                     ->label('Inscrit le')
                     ->date('d/m/Y')
@@ -87,9 +109,15 @@ class ClippersTable
             ->filters([
                 TernaryFilter::make('is_banned')
                     ->label('Banni'),
+
+                Filter::make('siret_pending')
+                    ->label('SIRET à vérifier')
+                    ->query(fn (Builder $query) => $query->pendingSiret()),
             ])
             ->recordActions([
                 ViewAction::make(),
+                SiretActions::verify(),
+                SiretActions::reject(),
                 static::banAction(),
                 static::unbanAction(),
                 PasswordResetLinkAction::make(fn (User $record) => $record),

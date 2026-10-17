@@ -28,6 +28,7 @@ class PayoutService
 {
     public function __construct(
         protected PayPalClient $paypal,
+        protected WithdrawalAllowance $allowance,
     ) {}
 
     /**
@@ -64,6 +65,23 @@ class PayoutService
 
             if ($amount > $available) {
                 throw PayoutRefused::insufficientBalance($amount, $available);
+            }
+
+            /*
+             * Plafond annuel sans SIRET vérifié. Contrôlé ici, sous le même
+             * verrou que le solde : deux demandes simultanées ne doivent pas
+             * pouvoir franchir ensemble un plafond que chacune respecte seule.
+             */
+            if ($this->allowance->appliesTo($clipper)) {
+                $usage = $this->allowance->usage($clipper);
+
+                if ($usage->payoutsLeft() === 0) {
+                    throw PayoutRefused::yearlyPayoutCountReached($usage->maxPayouts);
+                }
+
+                if ($amount > $usage->centsLeft()) {
+                    throw PayoutRefused::yearlyAmountReached($usage->centsLeft(), $usage->maxCents);
+                }
             }
 
             $payout = Payout::create([
@@ -106,6 +124,13 @@ class PayoutService
 
         return ModerationLog::where('subject_type', $clipper->getMorphClass())
             ->where('subject_id', $clipper->getKey())
+            // La vérification d'un SIRET est une démarche administrative, pas
+            // un incident : la journaliser ne doit pas priver un clippeur en
+            // règle de la validation automatique.
+            ->whereNotIn('action', [
+                ModerationAction::SiretVerified->value,
+                ModerationAction::SiretRejected->value,
+            ])
             ->doesntExist();
     }
 
