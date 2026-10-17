@@ -46,6 +46,13 @@ class TikTokProvider implements SocialProvider
             'response_type' => 'code',
             'redirect_uri' => $this->redirectUri(),
             'state' => $state,
+            /*
+             * Toujours montrer l'écran d'autorisation. Sans ce paramètre,
+             * TikTok reprend en silence la session ouverte dans le navigateur
+             * et relie le compte déjà autorisé — le clippeur qui voulait
+             * relier son autre compte n'a même pas vu lequel partait.
+             */
+            'disable_auto_auth' => 1,
         ]);
     }
 

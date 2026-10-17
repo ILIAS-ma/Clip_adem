@@ -114,4 +114,16 @@ class RedirectUriTest extends TestCase
 
         Http::assertSent(fn ($request) => ! isset($request['redirect_uri']));
     }
+
+    #[Test]
+    public function tiktok_always_shows_its_authorization_screen(): void
+    {
+        // Sans ce paramètre, TikTok relie en silence le compte déjà autorisé
+        // dans le navigateur : on ne voit même pas lequel part.
+        config(['services.tiktok.client_key' => 'cle', 'services.tiktok.client_secret' => 'secret']);
+
+        parse_str((string) parse_url(app(TikTokProvider::class)->redirectUrl('etat'), PHP_URL_QUERY), $query);
+
+        $this->assertSame('1', $query['disable_auto_auth'] ?? null);
+    }
 }
