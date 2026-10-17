@@ -8,6 +8,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
 class TrainingLessonsTable
@@ -45,6 +46,16 @@ class TrainingLessonsTable
             ])
             ->defaultSort('position')
             ->reorderable('position')
+            // Par défaut, la liste montre ce que voient les clippeurs ; les
+            // leçons masquées restent à un clic, dans le filtre.
+            ->filters([
+                TernaryFilter::make('is_published')
+                    ->label('Publiée')
+                    ->trueLabel('Publiées seulement')
+                    ->falseLabel('Masquées seulement')
+                    ->placeholder('Toutes')
+                    ->default(true),
+            ])
             ->recordActions([
                 EditAction::make(),
             ])

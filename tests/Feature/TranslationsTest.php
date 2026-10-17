@@ -92,6 +92,44 @@ class TranslationsTest extends TestCase
     }
 
     #[Test]
+    public function the_back_office_never_shows_a_raw_filament_key(): void
+    {
+        /*
+         * Même panne, côté administration : la traduction française de
+         * Filament est incomplète, et le repli étant `fr`, chaque clé absente
+         * s'affichait brute — « filament-tables::table.result_count » sous la
+         * liste des leçons. Les manques sont comblés dans lang/vendor ; ce test
+         * signale ceux qu'une mise à jour de Filament ajouterait.
+         */
+        $namespaces = [
+            'actions' => 'filament-actions', 'filament' => 'filament-panels', 'forms' => 'filament-forms',
+            'infolists' => 'filament-infolists', 'notifications' => 'filament-notifications',
+            'query-builder' => 'filament-query-builder', 'schemas' => 'filament-schemas',
+            'tables' => 'filament-tables', 'widgets' => 'filament-widgets',
+        ];
+
+        $missing = [];
+
+        foreach (glob(base_path('vendor/filament/*/resources/lang/en/*.php')) as $file) {
+            $namespace = $namespaces[basename(dirname($file, 4))] ?? null;
+
+            if ($namespace === null) {
+                continue;
+            }
+
+            foreach ($this->flatten(require $file) as $key) {
+                $full = $namespace.'::'.basename($file, '.php').'.'.$key;
+
+                if (trans($full, [], 'fr') === $full) {
+                    $missing[] = $full;
+                }
+            }
+        }
+
+        $this->assertSame([], $missing, 'Clés Filament sans traduction française : à ajouter dans lang/vendor.');
+    }
+
+    #[Test]
     public function the_failure_message_does_not_say_which_emails_exist(): void
     {
         /*
