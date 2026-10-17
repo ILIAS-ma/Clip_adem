@@ -22,7 +22,7 @@
             <div class="card overflow-hidden">
                 <video class="aspect-video w-full bg-ink-950" controls preload="metadata" playsinline>
                     <source src="{{ $file }}" type="{{ str_ends_with($file, '.webm') ? 'video/webm' : 'video/mp4' }}">
-                    Votre navigateur ne lit pas cette vidéo.
+                    Ton navigateur ne lit pas cette vidéo.
                 </video>
             </div>
         @elseif ($embed = $lesson->embedUrl())

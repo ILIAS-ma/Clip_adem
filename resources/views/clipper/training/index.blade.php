@@ -3,7 +3,7 @@
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
                 <h1 class="font-display text-2xl font-bold text-ink-50">Formation</h1>
-                <p class="mt-1 text-ink-300">Tout ce qu'il faut savoir pour être payé dès vos premiers clips.</p>
+                <p class="mt-1 text-ink-300">Tout ce que tu dois savoir pour être payé dès tes premiers clips.</p>
             </div>
 
             @if ($lessons->isNotEmpty())

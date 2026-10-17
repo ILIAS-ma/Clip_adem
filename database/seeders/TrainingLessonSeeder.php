@@ -9,7 +9,11 @@ use Illuminate\Database\Seeder;
  * Le parcours de formation par défaut.
  *
  * Idempotent : relancé, il met à jour les textes sans toucher aux vidéos
- * déposées dans le back-office ni à la progression des clippeurs.
+ * déposées dans le back-office ni à la progression des clippeurs. Les
+ * identifiants (slug) ne changent jamais : ce sont eux qui relient une leçon
+ * à sa vidéo enregistrée et à la progression de chacun.
+ *
+ * Écrit au tutoiement : c'est ainsi que parlent les clippeurs entre eux.
  *
  *     php artisan db:seed --class=TrainingLessonSeeder --force
  */
@@ -40,193 +44,198 @@ class TrainingLessonSeeder extends Seeder
         return [
             [
                 'slug' => 'bienvenue',
-                'title' => 'Le principe : payé à la vue',
-                'summary' => 'Comment un clip devient de l’argent, en deux minutes.',
-                'duration_minutes' => 2,
+                'title' => 'Le principe : tes vues = ton argent',
+                'summary' => 'Comment un clip devient de l’argent, en 30 secondes.',
+                'duration_minutes' => 1,
                 'body' => <<<'MD'
-## Le modèle en une phrase
+## En une phrase
 
-Un artiste, un label ou un streamer finance une **campagne**. Vous publiez des clips sur **votre propre compte**, et chaque tranche de **1 000 vues** vous rapporte le cachet annoncé sur la campagne.
+Un artiste, un label ou un streamer **finance une campagne**. Tu publies des clips sur **ton propre compte**, et chaque tranche de **1 000 vues** te rapporte le cachet affiché sur la campagne.
 
 ## Ce qu'il faut retenir
 
-- **Aucun minimum d'abonnés.** C'est la vue qui est payée, pas la taille de votre communauté. Un compte tout neuf peut percer.
-- **Le budget part au premier arrivé.** Chaque campagne affiche son budget restant en temps réel : quand il est épuisé, plus rien n'est crédité. Ne tardez pas.
-- **Les vues sont relevées automatiquement** sur vos publications. Vous n'avez rien à déclarer à la main.
-- **Vous retirez vos gains** dès 20 €, sur PayPal ou par virement.
+- **Zéro abonné minimum.** On paie la vue, pas la taille de ta commu. Un compte tout neuf peut exploser.
+- **Le budget part au premier arrivé.** Chaque campagne affiche ce qu'il lui reste en direct : quand c'est vide, plus rien n'est payé. Ne traîne pas.
+- **Tes vues sont relevées toutes seules.** Rien à déclarer à la main.
+- **Tu retires dès 20 €**, sur PayPal ou par virement.
 
-> Le parcours complet : lier son compte → rejoindre une campagne → publier → soumettre le lien → suivre ses vues → retirer. Chaque leçon qui suit couvre une étape.
+> Le parcours : lier ton compte → choisir une campagne → poster → soumettre le lien → suivre tes vues → retirer ton argent. Chaque leçon qui suit couvre une étape.
 MD,
             ],
             [
                 'slug' => 'lier-ses-comptes',
-                'title' => 'Lier ses comptes TikTok, YouTube et Instagram',
-                'summary' => 'Sans compte lié, aucune vue ne remonte, donc aucun paiement.',
-                'duration_minutes' => 2,
+                'title' => 'Lie ton compte TikTok',
+                'summary' => 'Pas de compte lié, pas de vues comptées. Pas de vues, pas d’argent.',
+                'duration_minutes' => 1,
                 'body' => <<<'MD'
 ## Pourquoi c'est obligatoire
 
-Nous lisons vos vues directement chez la plateforme, avec votre autorisation. C'est ce qui garantit que vous êtes payé sur du réel, et qu'un tricheur ne peut pas l'être.
+On lit tes vues directement chez TikTok, YouTube ou Instagram, avec ton accord. C'est ce qui garantit que tu es payé sur du vrai, et qu'un tricheur ne l'est pas.
 
 ## Comment faire
 
-1. Ouvrez **Mes comptes** dans le menu.
-2. Cliquez sur **Lier un compte**, puis choisissez la plateforme.
-3. Connectez-vous chez TikTok, YouTube ou Instagram et **acceptez toutes les permissions** demandées.
+1. Ouvre **Mes comptes** dans le menu.
+2. Clique sur **Lier un compte** et choisis ta plateforme.
+3. Connecte-toi et **accepte toutes les permissions**.
 
-> Refuser l'accès aux statistiques empêche la liaison : sans lui, vos vues ne remonteraient jamais et vous ne seriez pas payé.
+> Si tu refuses l'accès aux statistiques, la liaison est bloquée : sans lui, tes vues ne remonteraient jamais.
 
-## Si un bandeau vous demande de reconnecter
+## Un bandeau te demande de te reconnecter ?
 
-Les plateformes font expirer les autorisations de temps en temps. Tant que le bandeau est affiché, **vos vues ne sont plus relevées** : reconnectez-vous tout de suite depuis **Mes comptes**.
+Les plateformes font expirer les accès de temps en temps. Tant que le bandeau est là, **tes vues ne sont plus relevées** : reconnecte-toi tout de suite depuis **Mes comptes**.
 MD,
             ],
             [
                 'slug' => 'choisir-une-campagne',
-                'title' => 'Choisir et rejoindre une campagne',
-                'summary' => 'Lire une fiche de campagne avant de se lancer.',
-                'duration_minutes' => 3,
+                'title' => 'Choisis ta campagne',
+                'summary' => 'Cachet, budget, règles : ce qu’il faut regarder avant de te lancer.',
+                'duration_minutes' => 2,
                 'body' => <<<'MD'
 ## Ce que dit une fiche de campagne
 
 - **Le cachet pour 1 000 vues**, plateforme par plateforme.
-- **Le budget restant.** Une campagne grisée est épuisée : vous pouvez la consulter, plus la rejoindre.
-- **Les garde-fous** : vues minimum par clip, nombre minimum de clips à faire valider, plafond par clip. Lisez-les avant de publier, pas après.
-- **Le brief** : ce que le créateur attend (son imposé, hashtags, durée, ton).
+- **Le budget restant.** Une campagne grisée est épuisée : tu peux la regarder, plus la rejoindre.
+- **Les règles du jeu** : vues minimum par clip, nombre de clips à faire valider, plafond par clip. Lis-les avant de poster, pas après.
+- **Le brief** : ce que le créateur veut (son imposé, hashtags, durée, ambiance).
 - **La matière première** : sons, rushes, images à télécharger.
+- **La prime de lancement**, s'il y en a une : un bonus garanti pour les premiers clippeurs. Le nombre de places restantes est affiché.
 
 ## Rejoindre
 
-Cliquez sur **Rejoindre la campagne**. Certaines campagnes demandent une validation manuelle de votre participation : attendez-la avant de publier.
+Clique sur **Rejoindre la campagne**. Certaines campagnes valident les participations à la main : attends le feu vert avant de poster.
 
-> Une campagne avec un minimum de clips ne paie rien tant que le compte n'est pas atteint. Rien n'est perdu : dès que le dernier clip requis est validé, tout l'arriéré est crédité d'un coup.
+> Une campagne avec un minimum de clips ne paie rien tant que tu ne l'as pas atteint. Mais rien n'est perdu : dès que ton dernier clip requis est validé, tout l'arriéré tombe d'un coup.
 MD,
             ],
             [
                 'slug' => 'formats-qui-marchent',
-                'title' => 'Les formats qui font des vues',
-                'summary' => 'Accroche, formats, régularité : ce qui sépare un clip à 500 vues d’un clip à 500 000.',
-                'duration_minutes' => 4,
+                'title' => 'Les formats qui cartonnent',
+                'summary' => 'L’accroche, 6 formats à tester, la régularité : la recette des clips qui tournent.',
+                'duration_minutes' => 1,
                 'body' => <<<'MD'
-## Les 3 premières secondes décident de tout
+## Tout se joue en 3 secondes
 
-Le spectateur choisit de rester ou de swiper presque immédiatement. Commencez par le moment fort, une phrase choc ou une question, jamais par une intro.
+Le spectateur décide de rester ou de swiper quasi instantanément. Démarre direct sur le moment fort, une phrase choc ou une question. Jamais d'intro.
 
-## Les formats à tester
+## Les 6 formats à tester
 
-- **Extrait** : le meilleur passage d'un live, d'un son ou d'une interview, découpé serré.
-- **Paroles (lyrics)** : le texte qui s'affiche en rythme sur le son.
-- **Speed up / slowed** : le son accéléré ou ralenti, très partagé sur la musique.
-- **Edit** : montage dynamique sur le son (images, film, sport, animé).
-- **Réaction** : votre réaction face caméra au son ou au moment.
-- **Storytelling** : une histoire racontée sur le son en fond.
+- **Extrait** : le meilleur passage d'un live, d'un son ou d'une interview, coupé serré.
+- **Paroles** : le texte qui s'affiche en rythme sur le son.
+- **Speed up / Slowed** : le son accéléré ou ralenti, ultra partagé sur la musique.
+- **Edit** : montage nerveux calé sur le son (film, sport, animé…).
+- **Réaction** : ta réaction face caméra.
+- **Storytelling** : une histoire racontée avec le son en fond.
 
-## La règle d'or : le volume
+## Teste plusieurs formats sur la même campagne
 
-Les meilleurs clippeurs ne parient pas sur un seul clip viral. Ils **postent régulièrement**, testent plusieurs formats sur la même campagne et gardent ce qui marche.
+Un même son peut faire 3 000 vues en extrait et 9 000 en paroles. Essaie, compare, garde ce qui marche.
 
-> Respectez toujours le brief : un clip hors sujet peut être refusé, et un clip refusé ne rapporte rien.
+## Le vrai secret : poster régulièrement
+
+Les meilleurs clippeurs ne misent pas tout sur un clip viral. Ils postent souvent, et les vues s'empilent.
+
+> Respecte toujours le brief : un clip hors sujet peut être refusé, et un clip refusé ne rapporte rien.
 MD,
             ],
             [
                 'slug' => 'echo-studio',
-                'title' => 'Préparer ses clips avec Echo Studio',
-                'summary' => 'Récupérer un passage et le monter en vertical sans quitter le site.',
-                'duration_minutes' => 3,
+                'title' => 'Prépare tes clips avec Echo Studio',
+                'summary' => 'Récupère un passage et monte-le en vertical sans quitter le site.',
+                'duration_minutes' => 2,
                 'body' => <<<'MD'
-## À quoi sert Echo Studio
+## À quoi ça sert
 
-**Echo Studio**, dans le menu, vous aide à récupérer le passage d'une vidéo et à le recadrer au format vertical des réseaux. Les fichiers restent dans votre espace pendant quelques jours, puis sont purgés : téléchargez ce que vous voulez garder.
+**Echo Studio**, dans le menu, t'aide à récupérer le passage d'une vidéo et à le recadrer au format vertical. Tes fichiers restent quelques jours dans ton espace, puis sont supprimés : télécharge ce que tu veux garder.
 
 ## Le bon réflexe
 
-1. Partez de la matière première fournie par la campagne quand elle existe : c'est le contenu officiel, autorisé.
-2. Coupez court : au-delà de 60 secondes, le clip perd son public.
-3. Publiez depuis **votre** compte lié, puis revenez soumettre le lien.
+1. Pars de la matière première fournie par la campagne quand elle existe : c'est du contenu officiel, autorisé.
+2. Fais court : au-delà de 60 secondes, tu perds ton public.
+3. Poste depuis **ton** compte lié, puis reviens soumettre le lien.
 MD,
             ],
             [
                 'slug' => 'soumettre-un-clip',
-                'title' => 'Soumettre son clip',
+                'title' => 'Poste et soumets ton clip',
                 'summary' => 'Publier, coller le lien, et comprendre la validation.',
-                'duration_minutes' => 3,
+                'duration_minutes' => 2,
                 'body' => <<<'MD'
 ## Les étapes
 
-1. Publiez la vidéo sur votre compte **lié**. Un clip publié depuis un autre compte ne sera jamais payé.
-2. Copiez le lien de la publication.
-3. Sur la campagne, cliquez sur **Soumettre un clip** et collez le lien.
+1. Poste la vidéo sur ton compte **lié**. Un clip posté depuis un autre compte ne sera jamais payé.
+2. Copie le lien de la publication.
+3. Sur la campagne, clique sur **Soumettre un clip** et colle le lien.
 
-## Ce qui se passe ensuite
+## Et après ?
 
-Au premier relevé, nous vérifions automatiquement le clip : qu'il vient bien de votre compte, la durée, les hashtags demandés. Un clip conforme sur toute la ligne est **validé automatiquement** ; au moindre doute, un modérateur le regarde.
+Au premier relevé, on vérifie automatiquement ton clip : qu'il vient bien de ton compte, sa durée, les hashtags demandés. Si tout est bon, il est **validé tout seul** ; au moindre doute, un modérateur le regarde.
 
-Vous suivez l'état de chaque clip dans **Mes clips** : en attente, validé ou refusé (avec le motif).
+Tu suis chaque clip dans **Mes clips** : en attente, validé ou refusé (avec la raison).
 
-> Un même clip ne peut être soumis qu'une fois, même avec un lien différent.
+> Un même clip ne peut être soumis qu'une fois, même avec un autre lien.
 MD,
             ],
             [
                 'slug' => 'suivre-ses-gains',
-                'title' => 'Suivre ses vues et ses gains',
-                'summary' => 'Pourquoi les vues ne bougent pas à la seconde, et comment lire ses revenus.',
-                'duration_minutes' => 2,
+                'title' => 'Suis tes vues et tes gains',
+                'summary' => 'Pourquoi tes vues ne bougent pas à la seconde, et où voir ton argent.',
+                'duration_minutes' => 1,
                 'body' => <<<'MD'
 ## Le rythme des relevés
 
-Aucune plateforme ne nous envoie les vues en direct : nous allons les chercher.
+Aucune plateforme ne nous envoie les vues en direct : on va les chercher.
 
 - **Moins de 48 h** : toutes les 30 minutes.
 - **De 2 à 7 jours** : toutes les 3 heures.
 - **Jusqu'à 30 jours** : une fois par jour.
 
-Pressé ? Le bouton **Actualiser les vues**, sur la page d'un clip, déclenche un relevé (une fois tous les quart d'heure).
+Pressé ? Le bouton **Actualiser les vues**, sur la page d'un clip, lance un relevé (une fois par quart d'heure).
 
-## Où voir son argent
+## Où voir ton argent
 
-- **Revenus** : votre solde disponible et l'historique de vos retraits.
-- **Classement** : votre place cette semaine, depuis toujours, par catégorie et sur la saison en cours.
-- **Succès** : les étapes franchies.
+- **Revenus** : ton solde dispo et l'historique de tes retraits.
+- **Classement** : ta place cette semaine, sur la saison, depuis toujours et par catégorie.
+- **Succès** : les étapes que tu as passées.
 MD,
             ],
             [
                 'slug' => 'retirer-ses-gains',
-                'title' => 'Retirer ses gains',
+                'title' => 'Retire ton argent',
                 'summary' => 'Moyen de paiement, retrait minimum et statut légal.',
-                'duration_minutes' => 3,
+                'duration_minutes' => 2,
                 'body' => <<<'MD'
-## Avant le premier retrait
+## Avant ton premier retrait
 
-Renseignez où vous voulez être payé dans **Moyen de paiement** : une adresse PayPal ou un IBAN.
+Indique où tu veux être payé dans **Moyen de paiement** : une adresse PayPal ou un IBAN.
 
 ## Demander un retrait
 
-Dans **Revenus**, cliquez sur **Demander un retrait**. Le minimum est de **20 €**. Les petits montants d'un compte sans incident sont validés automatiquement ; les autres passent par un administrateur avant le virement.
+Dans **Revenus**, clique sur **Demander un retrait**. Le minimum est de **20 €**. Les petits montants sont validés automatiquement si ton compte est clean ; les autres passent par l'équipe avant le virement.
 
 ## Le statut légal
 
-Gagner de l'argent régulièrement en ligne est une activité déclarable. Sans statut, vos retraits sont **plafonnés sur l'année**. Si vous êtes auto-entrepreneur (ou en société), déclarez votre **SIRET** dans **Moyen de paiement** : une fois vérifié par l'équipe, le plafond est levé.
+Gagner de l'argent régulièrement en ligne, ça se déclare. Sans statut, tes retraits sont **plafonnés sur l'année**. Tu es auto-entrepreneur (ou en société) ? Déclare ton **SIRET** dans **Moyen de paiement** : une fois vérifié par l'équipe, le plafond saute.
 
-> Le compteur de la page **Moyen de paiement** vous montre en permanence où vous en êtes par rapport au plafond annuel.
+> Le compteur de la page **Moyen de paiement** te montre où tu en es par rapport au plafond de l'année.
 MD,
             ],
             [
                 'slug' => 'les-regles',
-                'title' => 'Les règles à ne jamais enfreindre',
-                'summary' => 'Ce qui fait perdre ses gains, voire son compte.',
-                'duration_minutes' => 2,
+                'title' => 'Les 3 règles d’or',
+                'summary' => 'Ce qui te fait perdre tes gains, et ton compte.',
+                'duration_minutes' => 1,
                 'body' => <<<'MD'
 ## Interdit, sans exception
 
-- **Acheter des vues** ou utiliser des bots. Les pics anormaux sont détectés.
-- **Soumettre la vidéo de quelqu'un d'autre.** Seules les publications de votre compte lié sont payées.
-- **Republier du contenu non autorisé** quand la campagne fournit le sien.
+1. **Jamais de vues achetées ni de bots.** Les pics anormaux sont détectés.
+2. **Ne soumets que tes propres vidéos.** Seules les publications de ton compte lié sont payées.
+3. **Ne reposte pas de contenu non autorisé** quand la campagne fournit le sien.
 
-## Ce qui arrive en cas de fraude
+## En cas de fraude
 
-Le clip est **invalidé** : ce qu'il avait rapporté est repris et rendu à la campagne. En cas de récidive, le compte est banni et les retraits bloqués.
+Le clip est **invalidé** : ce qu'il t'avait rapporté est repris et rendu à la campagne. En cas de récidive, le compte est banni et les retraits bloqués.
 
-> En cas de doute sur ce qui est permis, écrivez à l'équipe depuis **Messages** avant de publier. On répond.
+> Un doute sur ce qui est permis ? Écris à l'équipe dans **Messages** avant de poster. On répond.
 MD,
             ],
         ];

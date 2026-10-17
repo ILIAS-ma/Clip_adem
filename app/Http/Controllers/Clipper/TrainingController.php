@@ -61,7 +61,7 @@ class TrainingController extends Controller
 
         return $following
             ? redirect()->route('training.show', $following)->with('status', 'Leçon terminée. Place à la suivante.')
-            : redirect()->route('training.index')->with('status', 'Formation terminée. Vous savez tout ce qu’il faut pour vous lancer.');
+            : redirect()->route('training.index')->with('status', 'Formation terminée. Tu as tout ce qu’il faut pour te lancer.');
     }
 
     /** @return list<int> */
