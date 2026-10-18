@@ -8,6 +8,7 @@ use App\Models\Campaign;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
@@ -19,6 +20,12 @@ class CampaignsTable
     {
         return $table
             ->columns([
+                ImageColumn::make('cover_path')
+                    ->label('')
+                    ->disk('public')
+                    ->imageHeight(36)
+                    ->extraImgAttributes(['class' => 'rounded-md object-cover aspect-video']),
+
                 TextColumn::make('title')
                     ->label('Campagne')
                     ->searchable()

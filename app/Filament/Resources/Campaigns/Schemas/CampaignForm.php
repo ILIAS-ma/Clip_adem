@@ -12,6 +12,7 @@ use App\Models\Category;
 use App\Models\Creator;
 use App\Support\Campaigns\Reward;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -91,6 +92,24 @@ class CampaignForm
                         ->afterStateUpdated(fn ($state, $set) => $set('slug', Str::slug((string) $state)))
                         ->dehydrateStateUsing(fn ($state) => Str::slug((string) $state))
                         ->helperText('Apparaît dans l’adresse de la campagne : /campagnes/mon-identifiant'),
+
+                    /*
+                     * La couverture est ce qui fait cliquer dans le catalogue.
+                     * Le format paysage 16:9 est celui de la carte et du
+                     * bandeau de la fiche ; l'éditeur permet de recadrer.
+                     */
+                    FileUpload::make('cover_path')
+                        ->label('Image de couverture')
+                        ->image()
+                        ->imageEditor()
+                        // Proposé, jamais imposé : l'affichage recadre de
+                        // lui-même, une image carrée reste donc acceptée.
+                        ->imageEditorAspectRatios(['16:9', null])
+                        ->disk('public')
+                        ->directory('campaigns')
+                        ->maxSize(5 * 1024)
+                        ->helperText('Affichée dans le catalogue et en haut de la campagne. Idéalement en paysage (16:9), 5 Mo maximum.')
+                        ->columnSpanFull(),
 
                     DateTimePicker::make('starts_at')
                         ->label('Début de diffusion')

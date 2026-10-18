@@ -120,6 +120,15 @@
                        'group flex flex-col card p-5 transition hover:-translate-y-0.5 hover:shadow-lifted',
                        'opacity-60' => $closed,
                    ])>
+                    @if ($cover = $campaign->coverUrl())
+                        {{-- La couverture en tête de carte, bord à bord : c'est
+                             elle qui fait cliquer avant même de lire. --}}
+                        <div class="-mx-5 -mt-5 mb-4 aspect-video overflow-hidden rounded-t-2xl bg-ink-900">
+                            <img src="{{ $cover }}" alt="" loading="lazy" decoding="async"
+                                 class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
+                        </div>
+                    @endif
+
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0">
                             <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">

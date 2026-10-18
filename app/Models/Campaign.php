@@ -17,9 +17,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 #[Fillable([
-    'creator_id', 'category_id', 'mode', 'contest_prizes', 'contest_post_prizes', 'title', 'slug', 'brief', 'required_hashtags',
+    'creator_id', 'category_id', 'mode', 'contest_prizes', 'contest_post_prizes', 'title', 'cover_path', 'slug', 'brief', 'required_hashtags',
     'status', 'currency', 'budget_total_cents', 'min_views_per_clip',
     'min_clips_per_clipper', 'max_payout_per_clip_cents',
     'launch_bonus_cents', 'launch_bonus_slots',
@@ -57,6 +58,12 @@ class Campaign extends Model
             'exhausted_at' => 'datetime',
             'completed_at' => 'datetime',
         ];
+    }
+
+    /** Image de couverture, ou null si la campagne n'en a pas. */
+    public function coverUrl(): ?string
+    {
+        return $this->cover_path ? Storage::disk('public')->url($this->cover_path) : null;
     }
 
     public function creator(): BelongsTo

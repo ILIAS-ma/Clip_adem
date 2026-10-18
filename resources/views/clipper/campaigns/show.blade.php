@@ -19,6 +19,12 @@
 
     <div class="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
 
+        @if ($cover = $campaign->coverUrl())
+            <div class="card overflow-hidden">
+                <img src="{{ $cover }}" alt="{{ $campaign->title }}" class="aspect-[21/9] w-full object-cover">
+            </div>
+        @endif
+
         @if (session('status'))
             <div class="alert-ok">{{ session('status') }}</div>
         @endif
