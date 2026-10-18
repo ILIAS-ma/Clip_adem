@@ -37,10 +37,6 @@ class CampaignForm
                         ->required()
                         ->createOptionForm([
                             TextInput::make('name')->label('Nom')->required(),
-                            TextInput::make('slug')
-                                ->label('Identifiant URL')
-                                ->required()
-                                ->dehydrateStateUsing(fn ($state) => Str::slug((string) $state)),
                         ])
                         ->createOptionUsing(fn (array $data) => Creator::create($data)->getKey()),
 

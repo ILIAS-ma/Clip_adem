@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Creator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -116,14 +115,6 @@ class ProfileController extends Controller
 
     protected function uniqueSlug(string $name): string
     {
-        $base = Str::slug($name) ?: 'créateur';
-        $slug = $base;
-        $suffix = 2;
-
-        while (Creator::withTrashed()->where('slug', $slug)->exists()) {
-            $slug = $base.'-'.$suffix++;
-        }
-
-        return $slug;
+        return Creator::uniqueSlug($name);
     }
 }

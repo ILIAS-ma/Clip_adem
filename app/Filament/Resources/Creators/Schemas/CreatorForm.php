@@ -10,7 +10,6 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Str;
 
 class CreatorForm
 {
@@ -39,20 +38,13 @@ class CreatorForm
             Section::make('Identité')
                 ->columns(2)
                 ->schema([
+                    // L'identifiant interne se fabrique tout seul depuis le nom
+                    // (voir Creator::booted()) : aucune adresse ne l'affiche.
                     TextInput::make('name')
                         ->label(fn ($get) => static::kind($get)->nameLabel())
                         ->required()
                         ->maxLength(255)
-                        ->live(onBlur: true)
-                        ->afterStateUpdated(fn ($state, $set, $context) => $context === 'create'
-                            ? $set('slug', Str::slug((string) $state))
-                            : null),
-
-                    TextInput::make('slug')
-                        ->label('Identifiant URL')
-                        ->required()
-                        ->unique(ignoreRecord: true)
-                        ->maxLength(255),
+                        ->columnSpanFull(),
 
                     FileUpload::make('avatar_path')
                         ->label('Photo')

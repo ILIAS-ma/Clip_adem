@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 #[Fillable([
     'user_id', 'name', 'slug', 'kind', 'bio', 'avatar_path', 'spotify_url',
@@ -19,6 +20,34 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Creator extends Model
 {
     use HasFactory, SoftDeletes;
+
+    /**
+     * L'identifiant n'apparaît dans aucune adresse du site : c'est une clé
+     * interne. Il se fabrique donc tout seul à la création, depuis le nom,
+     * plutôt que d'être demandé dans chaque formulaire.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (Creator $creator) {
+            if (blank($creator->slug)) {
+                $creator->slug = static::uniqueSlug((string) $creator->name);
+            }
+        });
+    }
+
+    /** « Saya », puis « saya-2 », « saya-3 »… fiches supprimées comprises. */
+    public static function uniqueSlug(string $name): string
+    {
+        $base = Str::slug($name) ?: 'createur';
+        $slug = $base;
+        $suffix = 2;
+
+        while (static::withTrashed()->where('slug', $slug)->exists()) {
+            $slug = $base.'-'.$suffix++;
+        }
+
+        return $slug;
+    }
 
     protected function casts(): array
     {
