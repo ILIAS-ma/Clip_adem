@@ -68,5 +68,16 @@
         <x-site-footer />
         </div>
     </div>
+
+    @if (auth()->user()?->isClipper())
+        {{-- Pas sur la messagerie elle-même : on y est déjà. --}}
+        @unless (request()->routeIs('messages.*'))
+            <x-help-button />
+        @endunless
+
+        @if (auth()->user()->welcome_seen_at === null)
+            <x-welcome-modal />
+        @endif
+    @endif
 </body>
 </html>

@@ -56,6 +56,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
             'app_authentication_secret' => 'encrypted',
             'app_authentication_recovery_codes' => 'encrypted:array',
             'profile_completed_at' => 'datetime',
+            'welcome_seen_at' => 'datetime',
             'payout_method' => PayoutMethod::class,
             // Donnée bancaire : un dump de base ne doit pas la livrer en clair.
             // Les quatre derniers chiffres vivent à part, eux en clair, pour

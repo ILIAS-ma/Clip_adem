@@ -201,6 +201,13 @@ Route::middleware(['auth', 'not.banned'])->group(function () {
     Route::post('/notifications/{notification}/lue', [NotificationController::class, 'read'])->name('notifications.read');
     Route::post('/notifications/tout-lire', [NotificationController::class, 'readAll'])->name('notifications.read-all');
 
+    // Fenêtre de bienvenue fermée : retenue sur le compte, elle ne revient plus.
+    Route::post('/bienvenue/vu', function (Request $request) {
+        $request->user()->forceFill(['welcome_seen_at' => now()])->save();
+
+        return $request->expectsJson() ? response()->noContent() : back();
+    })->name('welcome.seen');
+
     // Le fil avec l'équipe. L'équipe, elle, répond depuis le back-office :
     // elle n'a pas de fil à elle.
     Route::get('/messages', function () {
