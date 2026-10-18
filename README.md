@@ -820,14 +820,21 @@ Type de campagne choisi au brouillon : **Payée aux vues** (le fonctionnement
 historique) ou **Classement**. En classement, rien n'est payé aux vues : les
 plateformes sont ouvertes avec un taux à zéro, et le moteur de budget ne
 crédite donc rien sans qu'aucune de ses règles connaisse ce mode. Les
-clippeurs sont classés sur les vues de leurs clips validés (`ContestService`) ;
-le budget est la somme des prix annoncés par place.
+clippeurs sont classés sur les vues de leurs clips validés (`ContestService`).
+
+Chaque place récompensée reçoit **de l'argent** ou **un objet** ; aucune place
+récompensée = classement pour la gloire. Le budget est la seule part en
+argent : un classement d'objets ou pour la gloire n'a pas de budget, n'exige
+pas de financement, et reste ouvert tant qu'il tourne (`isOpenForClips()`,
+qui distingue « la campagne tourne » de « il reste de quoi payer »).
 
 Passé la date de fin, le classement se lit sur le dernier relevé antérieur à
 cette date : les relevés suivants ne font plus bouger le podium. Le
-super-admin clique alors **Verser les prix** sur la campagne : chaque prix
-passe par `grantBonus()` (type `prize`, seule prime autorisée campagne
-close), avec une clé par place — une relance ne paie jamais deux fois.
+super-admin clique alors **Clôturer et attribuer** : l'argent passe par
+`grantBonus()` (type `prize`, seule prime autorisée campagne close, une clé
+par place), les gagnants d'un objet sont prévenus et reçoivent un message de
+l'équipe pour organiser la remise, et le podium est figé
+(`campaigns.contest_winners`).
 
 ## Classements, vitrine et relances
 

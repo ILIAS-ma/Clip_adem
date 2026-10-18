@@ -10,6 +10,7 @@ use App\Filament\Widgets\CampaignBudgetOverview;
 use App\Models\Campaign;
 use App\Services\Campaigns\ContestService;
 use App\Support\Budget\CreditOutcome;
+use App\Support\Campaigns\Reward;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
@@ -48,7 +49,7 @@ class EditCampaign extends EditRecord
                 ->color('primary'),
 
             $this->standingsAction(),
-            $this->payPrizesAction(),
+            $this->awardRewardsAction(),
 
             DeleteAction::make(),
             ForceDeleteAction::make(),
@@ -118,14 +119,15 @@ class EditCampaign extends EditRecord
     }
 
     /**
-     * Versement des prix, une fois le classement arrêté. Réservé au
-     * super-admin : c'est de l'argent qui sort en une fois.
+     * Clôture du classement, une fois la date de fin passée : argent versé
+     * sur les soldes, lots annoncés aux gagnants, podium conservé. Réservé au
+     * super-admin : de l'argent peut sortir en une fois.
      */
-    protected function payPrizesAction(): Action
+    protected function awardRewardsAction(): Action
     {
-        return Action::make('payPrizes')
-            ->label('Verser les prix')
-            ->icon('heroicon-o-banknotes')
+        return Action::make('awardRewards')
+            ->label('Clôturer et attribuer')
+            ->icon('heroicon-o-trophy')
             ->color('success')
             ->visible(fn () => $this->getRecord()->isContest()
                 && $this->getRecord()->prizes_paid_at === null
@@ -135,36 +137,45 @@ class EditCampaign extends EditRecord
                 ? null
                 : 'Disponible après la date de fin, ou une fois la campagne terminée.')
             ->requiresConfirmation()
-            ->modalHeading('Verser les prix du classement ?')
+            ->modalHeading('Clôturer le classement ?')
             ->modalDescription(function () {
                 $campaign = $this->getRecord();
                 $standings = app(ContestService::class)->standings($campaign);
+                $rewards = $campaign->rewards();
 
-                return collect($campaign->prizes())
-                    ->map(fn (int $cents, int $index) => sprintf(
+                if ($rewards === []) {
+                    return 'Classement sans récompense : le podium sera figé et affiché aux clippeurs.';
+                }
+
+                return collect($rewards)
+                    ->map(fn (Reward $reward, int $index) => sprintf(
                         '%s : %s → %s',
                         $index === 0 ? '1re place' : ($index + 1).'e place',
-                        number_format($cents / 100, 2, ',', ' ').' €',
-                        $standings[$index]->name ?? 'personne (non versé)',
+                        $reward->display(),
+                        $standings[$index]->name ?? 'personne (non attribué)',
                     ))
-                    ->implode(' · ').'. Les gains arrivent tout de suite sur leur solde.';
+                    ->implode(' · ').'. L’argent arrive tout de suite sur les soldes ; '
+                    .'les gagnants d’un lot reçoivent un message pour organiser la remise.';
             })
             ->action(function () {
                 try {
-                    $paid = app(ContestService::class)->payPrizes($this->getRecord(), auth()->user());
+                    $awarded = app(ContestService::class)->awardRewards($this->getRecord(), auth()->user());
                 } catch (\InvalidArgumentException $exception) {
-                    Notification::make()->danger()->title('Prix non versés')->body($exception->getMessage())->send();
+                    Notification::make()->danger()->title('Classement non clôturé')->body($exception->getMessage())->send();
 
                     return;
                 }
 
-                $failed = collect($paid)->reject(fn (array $line) => $line['result']->creditedCents > 0
-                    || $line['result']->outcome === CreditOutcome::AlreadyProcessed);
+                $failed = collect($awarded)->filter(fn (array $line) => $line['result'] !== null
+                    && $line['result']->creditedCents === 0
+                    && $line['result']->outcome !== CreditOutcome::AlreadyProcessed);
 
                 $failed->isEmpty()
-                    ? Notification::make()->success()->title(count($paid).' prix versés')->send()
-                    : Notification::make()->warning()->title('Certains prix n’ont pas pu être versés')
-                        ->body($failed->map(fn (array $line) => $line['rank'].'e place : '.$line['result']->outcome->label())->implode(' · '))
+                    ? Notification::make()->success()->title('Classement clôturé')
+                        ->body(count($awarded).' récompense(s) attribuée(s).')->send()
+                    : Notification::make()->warning()->title('Certaines récompenses en argent n’ont pas pu être versées')
+                        ->body($failed->map(fn (array $line) => $line['rank'].'e place : '.$line['result']->outcome->label())->implode(' · ')
+                            .'. Corrigez puis relancez : rien ne sera versé deux fois.')
                         ->send();
 
                 $this->getRecord()->refresh();

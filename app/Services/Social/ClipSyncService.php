@@ -542,9 +542,11 @@ class ClipSyncService
 
     protected function isPayable(Clip $clip): bool
     {
+        // Un classement en cours ne paie rien aux vues, mais ses vues font le
+        // podium : elles doivent être relevées aussi souvent que des vues payées.
         return $clip->status === ClipStatus::Approved
             && $clip->campaign
-            && $clip->campaign->acceptsCredits();
+            && $clip->campaign->isOpenForClips();
     }
 
     /** Quota encore disponible aujourd'hui, ou null si la plateforme n'en publie pas. */

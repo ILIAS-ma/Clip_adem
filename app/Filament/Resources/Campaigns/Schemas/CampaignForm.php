@@ -10,6 +10,7 @@ use App\Filament\Resources\Categories\Schemas\CategoryForm;
 use App\Models\Campaign;
 use App\Models\Category;
 use App\Models\Creator;
+use App\Support\Campaigns\Reward;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -129,22 +130,51 @@ class CampaignForm
                             : 'Chaque tranche de 1 000 vues est payée au taux de la plateforme, jusqu’à épuisement du budget.')
                         ->columnSpanFull(),
 
+                    /*
+                     * Une ligne par place récompensée, dans l'ordre. Chaque
+                     * place reçoit de l'argent (versé sur le solde) ou un
+                     * objet (remis par l'équipe). Aucune ligne : classement
+                     * pour la gloire, sans budget.
+                     */
                     Repeater::make('contest_prizes')
-                        ->label('Prix du classement')
-                        ->simple(
-                            static::money('amount')
-                                ->label('Prix')
+                        ->label('Récompenses par place')
+                        ->schema([
+                            Select::make('type')
+                                ->label('Récompense')
+                                ->options([
+                                    Reward::MONEY => 'Argent',
+                                    Reward::ITEM => 'Objet / lot',
+                                ])
+                                ->default(Reward::MONEY)
+                                ->selectablePlaceholder(false)
                                 ->required()
-                                ->minValue(0.01),
-                        )
+                                ->live(),
+
+                            static::money('amount_cents')
+                                ->label('Montant')
+                                ->required(fn ($get) => $get('type') === Reward::MONEY)
+                                ->minValue(0.01)
+                                ->visible(fn ($get) => $get('type') === Reward::MONEY),
+
+                            TextInput::make('label')
+                                ->label('Objet')
+                                ->placeholder('PS5, maillot dédicacé, place de concert…')
+                                ->maxLength(120)
+                                ->required(fn ($get) => $get('type') === Reward::ITEM)
+                                ->visible(fn ($get) => $get('type') === Reward::ITEM),
+                        ])
+                        ->columns(2)
                         ->itemNumbers()
+                        ->itemLabel(fn (array $state) => match ($state['type'] ?? null) {
+                            Reward::ITEM => filled($state['label'] ?? null) ? $state['label'] : 'Objet',
+                            default => 'Argent',
+                        })
                         ->reorderable()
-                        ->minItems(1)
-                        ->defaultItems(3)
-                        ->addActionLabel('Ajouter une place')
+                        ->defaultItems(0)
+                        ->addActionLabel('Ajouter une place récompensée')
                         ->visible(fn ($get) => static::isContest($get))
-                        ->live(onBlur: true)
-                        ->helperText('Dans l’ordre : le premier montant va à la 1re place, le deuxième à la 2e, etc.')
+                        ->helperText('Dans l’ordre : la 1re ligne récompense la 1re place, la 2e la 2e place, etc. '
+                            .'Sans aucune ligne, le classement se joue pour la gloire.')
                         ->columnSpanFull(),
 
                     // En classement, le budget est exactement la somme des prix,
@@ -154,11 +184,11 @@ class CampaignForm
                     static::money('budget_total_cents')
                         ->label('Budget total')
                         ->required(fn ($get) => ! static::isContest($get))
-                        ->minValue(0.01)
+                        ->minValue(fn ($get) => static::isContest($get) ? 0 : 0.01)
                         ->disabled(fn ($get) => static::isContest($get))
                         ->dehydrated()
                         ->helperText(fn ($get) => static::isContest($get)
-                            ? 'Calculé à l’enregistrement : la somme des prix.'
+                            ? 'Calculé à l’enregistrement : la somme des récompenses en argent (0 € si objets seulement, ou rien).'
                             : 'Plafond absolu : la campagne bascule en « Épuisée » dès qu\'il est atteint.'),
 
                     Repeater::make('rates')
@@ -316,12 +346,15 @@ class CampaignForm
         }
 
         if ($mode === CampaignMode::Contest->value) {
-            $data['contest_prizes'] = collect((array) ($data['contest_prizes'] ?? []))
-                ->map(fn ($item) => (int) (is_array($item) ? ($item['amount'] ?? reset($item)) : $item))
-                ->filter(fn (int $cents) => $cents > 0)
-                ->values()
-                ->all();
-            $data['budget_total_cents'] = array_sum($data['contest_prizes']);
+            $rewards = collect((array) ($data['contest_prizes'] ?? []))
+                ->map(fn ($raw) => Reward::from($raw))
+                ->filter()
+                ->values();
+
+            $data['contest_prizes'] = $rewards->map->toArray()->all();
+            // Seul l'argent pèse sur le budget : les objets sont remis par
+            // l'équipe, hors de la caisse de la campagne.
+            $data['budget_total_cents'] = $rewards->filter->isMoney()->sum('amountCents');
         } else {
             $data['contest_prizes'] = null;
         }

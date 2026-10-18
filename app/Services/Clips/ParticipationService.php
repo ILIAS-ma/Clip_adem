@@ -47,7 +47,7 @@ class ParticipationService
 
         if (! $this->canJoinNow($campaign, $clipper)) {
             throw match (true) {
-                $campaign->remainingCents() <= 0 => ParticipationRefused::budgetExhausted(),
+                ! $campaign->isContest() && $campaign->remainingCents() <= 0 => ParticipationRefused::budgetExhausted(),
                 $this->isPending($campaign) => ParticipationRefused::notOpenYet(
                     $this->opensAtFor($campaign, $clipper),
                 ),
@@ -117,7 +117,7 @@ class ParticipationService
     protected function isPending(Campaign $campaign): bool
     {
         return $campaign->status->acceptsNewClips()
-            && $campaign->remainingCents() > 0
+            && ($campaign->isContest() || $campaign->remainingCents() > 0)
             && ! $campaign->hasStarted()
             && (! $campaign->ends_at || now()->lte($campaign->ends_at));
     }

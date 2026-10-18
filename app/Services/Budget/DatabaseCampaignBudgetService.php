@@ -378,7 +378,9 @@ class DatabaseCampaignBudgetService implements CampaignBudgetService
 
     public function acceptsNewClips(Campaign $campaign): bool
     {
-        return $campaign->status->acceptsNewClips() && $campaign->acceptsCredits();
+        // isOpenForClips() : le budget pour une campagne payée aux vues, la
+        // seule fenêtre de diffusion pour un classement.
+        return $campaign->status->acceptsNewClips() && $campaign->isOpenForClips();
     }
 
     // ------------------------------------------------------------------

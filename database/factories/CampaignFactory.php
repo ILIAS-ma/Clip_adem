@@ -7,6 +7,7 @@ use App\Enums\CampaignStatus;
 use App\Enums\Platform;
 use App\Models\Campaign;
 use App\Models\Creator;
+use App\Support\Campaigns\Reward;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -68,17 +69,22 @@ class CampaignFactory extends Factory
      * TikTok, soit 0,1 centime la vue.
      */
     /**
-     * Campagne « classement » : prix par place, budget égal à leur somme, et
-     * plateforme ouverte avec un taux à zéro.
+     * Campagne « classement » : récompense par place, budget égal à l'argent
+     * promis, et plateforme ouverte avec un taux à zéro.
      *
-     * @param  list<int>  $prizes  centimes, 1re place d'abord
+     * @param  list<int|string>  $rewards  1re place d'abord : un entier = des
+     *                                     centimes, une chaîne = un objet
      */
-    public function contest(array $prizes = [10_000, 5_000, 2_500], Platform $platform = Platform::TikTok): static
+    public function contest(array $rewards = [10_000, 5_000, 2_500], Platform $platform = Platform::TikTok): static
     {
+        $prizes = array_map(fn ($reward) => is_int($reward)
+            ? ['type' => Reward::MONEY, 'amount_cents' => $reward]
+            : ['type' => Reward::ITEM, 'label' => $reward], $rewards);
+
         return $this->state(fn () => [
             'mode' => CampaignMode::Contest,
             'contest_prizes' => $prizes,
-            'budget_total_cents' => array_sum($prizes),
+            'budget_total_cents' => array_sum(array_filter($rewards, 'is_int')),
         ])->withRate($platform, ratePer1kCents: 0);
     }
 

@@ -13,9 +13,11 @@ use App\Filament\Resources\Campaigns\Pages\EditCampaign;
 use App\Models\Campaign;
 use App\Models\Clip;
 use App\Models\ClipViewSnapshot;
+use App\Models\Conversation;
 use App\Models\Creator;
 use App\Models\User;
 use App\Notifications\BonusGranted;
+use App\Notifications\ContestRewardWon;
 use App\Services\Campaigns\ContestService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -147,7 +149,7 @@ class ContestTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
 
-        app(ContestService::class)->payPrizes($campaign);
+        app(ContestService::class)->awardRewards($campaign);
     }
 
     #[Test]
@@ -159,7 +161,7 @@ class ContestTest extends TestCase
         $this->clip($campaign, $first, 90_000);
         $this->clip($campaign, $second, 40_000);
 
-        $paid = app(ContestService::class)->payPrizes($campaign);
+        $paid = app(ContestService::class)->awardRewards($campaign);
 
         $this->assertCount(2, $paid);
         $this->assertSame(10_000, $first->availableBalanceCents());
@@ -171,21 +173,87 @@ class ContestTest extends TestCase
         Notification::assertSentTo($first, BonusGranted::class, fn ($n) => str_contains($n->reason, '1re place'));
 
         $this->expectException(InvalidArgumentException::class);
-        app(ContestService::class)->payPrizes($campaign->fresh());
+        app(ContestService::class)->awardRewards($campaign->fresh());
     }
 
     #[Test]
-    public function a_contest_needs_prizes_to_go_live(): void
+    public function a_contest_for_glory_goes_live_without_any_budget_and_stays_open(): void
     {
+        config()->set('clipping.onboarding.require_funded_campaigns', true);
+
         $campaign = Campaign::factory()->contest([])->create([
             'status' => CampaignStatus::Draft,
-            'budget_total_cents' => 1_000,
+            'brief' => 'Pour la gloire.',
+            'ends_at' => now()->addWeek(),
         ]);
 
+        $campaign->transitionTo(CampaignStatus::Active);
+
+        $this->assertSame(CampaignStatus::Active, $campaign->fresh()->status);
+        $this->assertSame(0, $campaign->fresh()->budget_total_cents);
+        // Zéro budget, et pourtant ouverte : un classement ne s'épuise pas.
+        $this->assertTrue(app(CampaignBudgetService::class)->acceptsNewClips($campaign->fresh()));
+    }
+
+    #[Test]
+    public function a_contest_promising_money_still_needs_it_funded(): void
+    {
+        config()->set('clipping.onboarding.require_funded_campaigns', true);
+
+        $campaign = Campaign::factory()->contest([10_000, 'PS5'])->create([
+            'status' => CampaignStatus::Draft,
+            'brief' => 'Concours.',
+        ]);
+
+        $this->assertSame(10_000, $campaign->prizePoolCents());
+
         $this->expectException(InvalidCampaignTransition::class);
-        $this->expectExceptionMessage('au moins un prix');
+        $this->expectExceptionMessage('pas couvert');
 
         $campaign->transitionTo(CampaignStatus::Active);
+    }
+
+    #[Test]
+    public function an_item_winner_is_told_and_contacted_while_money_lands_in_the_balance(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::SuperAdmin]);
+        $campaign = $this->contest(['ends_at' => now()->subHour(), 'contest_prizes' => [
+            ['type' => 'money', 'amount_cents' => 5_000],
+            ['type' => 'item', 'label' => 'PS5'],
+        ], 'budget_total_cents' => 5_000]);
+
+        [$first, $second] = [$this->clipper('Premier'), $this->clipper('Second')];
+        $this->clip($campaign, $first, 90_000);
+        $this->clip($campaign, $second, 40_000);
+
+        app(ContestService::class)->awardRewards($campaign, $admin);
+
+        $this->assertSame(5_000, $first->availableBalanceCents());
+        $this->assertSame(0, $second->availableBalanceCents());
+        Notification::assertSentTo($second, ContestRewardWon::class, fn ($n) => $n->reward === 'PS5' && $n->rank === 2);
+        $this->assertDatabaseHas('messages', ['from_staff' => true]);
+        $this->assertStringContainsString('PS5', Conversation::for($second)->messages()->value('body'));
+
+        $winners = $campaign->fresh()->contest_winners;
+        $this->assertSame('PS5', $winners[1]['reward']);
+        $this->assertTrue($winners[1]['awarded']);
+
+        $this->actingAs($second)
+            ->get(route('campaigns.show', $campaign))
+            ->assertSee('Gagnants')
+            ->assertSee('PS5');
+    }
+
+    #[Test]
+    public function closing_a_contest_for_glory_freezes_the_podium(): void
+    {
+        $campaign = $this->contest(['ends_at' => now()->subHour(), 'contest_prizes' => [], 'budget_total_cents' => 0]);
+        $this->clip($campaign, $this->clipper('Seul'), 1_000);
+
+        $this->assertSame([], app(ContestService::class)->awardRewards($campaign));
+
+        $this->assertNotNull($campaign->fresh()->prizes_paid_at);
+        $this->assertSame('Seul', $campaign->fresh()->contest_winners[0]['name']);
     }
 
     #[Test]
@@ -223,7 +291,11 @@ class ContestTest extends TestCase
                 'title' => 'Concours du mois',
                 'slug' => 'concours-du-mois',
                 'mode' => 'contest',
-                'contest_prizes' => [['amount' => 100], ['amount' => 50]],
+                'contest_prizes' => [
+                    ['type' => 'money', 'amount_cents' => 100],
+                    ['type' => 'item', 'label' => 'Maillot dédicacé'],
+                    ['type' => 'money', 'amount_cents' => 50],
+                ],
                 'rates' => [['platform' => 'tiktok', 'is_enabled' => true]],
                 'brief' => 'Le meilleur clip gagne.',
             ])
@@ -233,7 +305,8 @@ class ContestTest extends TestCase
         $campaign = Campaign::where('slug', 'concours-du-mois')->firstOrFail();
 
         $this->assertTrue($campaign->isContest());
-        $this->assertSame([10_000, 5_000], $campaign->prizes());
+        $this->assertSame(['100,00 €', 'Maillot dédicacé', '50,00 €'], array_map(fn ($r) => $r->display(), $campaign->rewards()));
+        // Seul l'argent fait le budget.
         $this->assertSame(15_000, $campaign->budget_total_cents);
         $this->assertSame(0, $campaign->rates()->first()->rate_per_1k_cents);
 

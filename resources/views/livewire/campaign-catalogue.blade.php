@@ -109,7 +109,9 @@
             @foreach ($campaigns as $campaign)
                 @php
                     $left = $remaining[$campaign->id];
-                    $closed = $left <= 0 || $campaign->status->value !== 'active';
+                    // Un classement n'a pas de budget qui s'épuise : il ferme à sa date de fin.
+                    $exhausted = ! $campaign->isContest() && $left <= 0;
+                    $closed = $exhausted || $campaign->status->value !== 'active';
                     $best = $campaign->rates->where('is_enabled', true)->max('rate_per_1k_cents');
                 @endphp
 
@@ -131,9 +133,9 @@
                         <span @class([
                             'shrink-0',
                             'chip-ok' => ! $closed,
-                            'chip-danger' => $left <= 0,
-                            'chip-neutral' => $closed && $left > 0,
-                        ])>{{ $left <= 0 ? 'Épuisée' : $campaign->status->label() }}</span>
+                            'chip-danger' => $exhausted,
+                            'chip-neutral' => $closed && ! $exhausted,
+                        ])>{{ $exhausted ? 'Épuisée' : $campaign->status->label() }}</span>
                     </div>
 
                     {{-- Le cachet est le premier critère de choix : il mérite
@@ -141,12 +143,21 @@
                     @if ($campaign->isContest())
                         {{-- Un classement ne paie pas aux vues : ce qui compte,
                              c'est ce qu'il y a à gagner en haut du podium. --}}
+                        @php $first = $campaign->rewardFor(1); @endphp
                         <p class="mt-4 font-display text-2xl font-bold tabular text-ink-50">
-                            {{ Money::wholeEuros($campaign->prizePoolCents()) }}
-                            <span class="text-sm font-semibold text-ink-400">à gagner</span>
+                            @if ($campaign->prizePoolCents() > 0)
+                                {{ Money::wholeEuros($campaign->prizePoolCents()) }}
+                                <span class="text-sm font-semibold text-ink-400">à gagner</span>
+                            @elseif ($first)
+                                {{ $first->display() }}
+                                <span class="text-sm font-semibold text-ink-400">pour le 1er</span>
+                            @else
+                                Classement
+                                <span class="text-sm font-semibold text-ink-400">pour la gloire</span>
+                            @endif
                         </p>
-                        @if ($first = $campaign->prizes()[0] ?? null)
-                            <p class="mt-0.5 text-sm text-ink-300">dont {{ Money::wholeEuros($first) }} pour le 1er</p>
+                        @if ($first && $campaign->prizePoolCents() > 0)
+                            <p class="mt-0.5 text-sm text-ink-300">1er : {{ $first->display() }}</p>
                         @endif
                     @elseif ($best)
                         <p class="mt-4 font-display text-2xl font-bold tabular text-ink-50">

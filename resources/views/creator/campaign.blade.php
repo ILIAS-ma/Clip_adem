@@ -117,12 +117,17 @@
                         @if ($campaign->isContest())
                             {{-- Le créateur finance des prix, pas des vues : il
                                  doit lire ce qu'il a promis, place par place. --}}
-                            @foreach ($campaign->prizes() as $index => $cents)
+                            @forelse ($campaign->rewards() as $index => $reward)
                                 <div class="flex justify-between gap-2 {{ $index === 0 ? 'border-t border-ink-700 pt-3' : '' }}">
                                     <dt class="text-ink-400">{{ $index === 0 ? '1re' : ($index + 1).'e' }} place</dt>
-                                    <dd class="tabular text-ink-100">{{ Money::euros($cents) }}</dd>
+                                    <dd class="text-right tabular text-ink-100">{{ $reward->display() }}</dd>
                                 </div>
-                            @endforeach
+                            @empty
+                                <div class="flex justify-between gap-2 border-t border-ink-700 pt-3">
+                                    <dt class="text-ink-400">Récompense</dt>
+                                    <dd class="text-ink-100">Pour la gloire</dd>
+                                </div>
+                            @endforelse
                         @endif
 
                         @if ($campaign->starts_at)

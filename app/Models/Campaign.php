@@ -8,6 +8,7 @@ use App\Enums\CampaignStatus;
 use App\Enums\ClipStatus;
 use App\Enums\Platform;
 use App\Exceptions\InvalidCampaignTransition;
+use App\Support\Campaigns\Reward;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -39,6 +40,7 @@ class Campaign extends Model
             'mode' => CampaignMode::class,
             'contest_prizes' => 'array',
             'prizes_paid_at' => 'datetime',
+            'contest_winners' => 'array',
             'required_hashtags' => 'array',
             'budget_total_cents' => 'integer',
             'spent_cents' => 'integer',
@@ -111,22 +113,35 @@ class Campaign extends Model
     }
 
     /**
-     * Prix par place, en centimes, dans l'ordre : index 0 = 1re place.
+     * Récompenses par place, dans l'ordre : index 0 = 1re place. Argent ou
+     * objet ; une liste vide = classement sans récompense.
      *
-     * @return list<int>
+     * @return list<Reward>
      */
-    public function prizes(): array
+    public function rewards(): array
     {
         return collect($this->contest_prizes ?? [])
-            ->map(fn ($prize) => (int) (is_array($prize) ? ($prize['amount_cents'] ?? 0) : $prize))
-            ->filter(fn (int $cents) => $cents > 0)
+            ->map(fn ($raw) => Reward::from($raw))
+            ->filter()
             ->values()
             ->all();
     }
 
+    /** La récompense d'une place (1 = première), ou null si elle n'en a pas. */
+    public function rewardFor(int $rank): ?Reward
+    {
+        return $this->rewards()[$rank - 1] ?? null;
+    }
+
+    /** L'argent promis, seule part qui pèse sur le budget. */
     public function prizePoolCents(): int
     {
-        return array_sum($this->prizes());
+        return collect($this->rewards())->filter->isMoney()->sum('amountCents');
+    }
+
+    public function hasItemRewards(): bool
+    {
+        return collect($this->rewards())->contains->isItem();
     }
 
     /**
@@ -185,6 +200,16 @@ class Campaign extends Model
      */
     public function acceptsCredits(): bool
     {
+        return $this->isRunning() && $this->remainingCents() > 0;
+    }
+
+    /**
+     * La campagne tourne : active, non retirée, dans sa fenêtre de diffusion.
+     * Sans regarder le budget — c'est acceptsCredits() qui ajoute « et il
+     * reste de quoi payer ».
+     */
+    public function isRunning(): bool
+    {
         /*
          * Une campagne retirée du catalogue ne paie plus.
          *
@@ -211,7 +236,20 @@ class Campaign extends Model
             return false;
         }
 
-        return $this->remainingCents() > 0;
+        return true;
+    }
+
+    /**
+     * Les clippeurs peuvent-ils encore participer ?
+     *
+     * Une campagne payée aux vues ferme quand son budget est épuisé. Un
+     * classement, lui, ne dépense rien pendant qu'il court — il peut même
+     * n'avoir aucun budget s'il récompense en objets, ou pas du tout : il
+     * reste ouvert tant qu'il tourne.
+     */
+    public function isOpenForClips(): bool
+    {
+        return $this->isContest() ? $this->isRunning() : $this->acceptsCredits();
     }
 
     public function isExhausted(): bool
@@ -317,11 +355,19 @@ class Campaign extends Model
      */
     protected function guardActivation(): void
     {
-        if ($this->budget_total_cents <= 0) {
+        /*
+         * Un classement sans récompense en argent — objets seulement, ou pour
+         * la gloire — n'engage aucun budget : il n'y a rien à exiger ni à
+         * faire couvrir. Dès qu'il promet de l'argent, les règles d'argent
+         * s'appliquent comme partout.
+         */
+        $needsBudget = ! $this->isContest() || $this->prizePoolCents() > 0;
+
+        if ($needsBudget && $this->budget_total_cents <= 0) {
             throw InvalidCampaignTransition::because('le budget total doit être supérieur à 0.');
         }
 
-        if ($this->remainingCents() <= 0) {
+        if ($needsBudget && $this->remainingCents() <= 0) {
             throw InvalidCampaignTransition::because(
                 'le budget est déjà consommé : augmentez le budget total avant de réactiver.'
             );
@@ -331,10 +377,6 @@ class Campaign extends Model
             throw InvalidCampaignTransition::because($this->isContest()
                 ? 'au moins une plateforme doit être ouverte.'
                 : 'au moins une plateforme doit avoir un taux actif.');
-        }
-
-        if ($this->isContest() && $this->prizes() === []) {
-            throw InvalidCampaignTransition::because('un classement doit annoncer au moins un prix.');
         }
 
         if (blank($this->brief)) {
@@ -352,7 +394,7 @@ class Campaign extends Model
          * back-office sans saisir d'encaissement — mais à rétablir avant
          * l'ouverture, sous peine de devoir de l'argent qu'on n'a pas.
          */
-        if (config('clipping.onboarding.require_funded_campaigns') && $this->fundedCents() < $this->budget_total_cents) {
+        if ($needsBudget && config('clipping.onboarding.require_funded_campaigns') && $this->fundedCents() < $this->budget_total_cents) {
             throw InvalidCampaignTransition::because(sprintf(
                 'le budget n’est pas couvert : %s € encaissés pour %s € engagés. '
                 .'Enregistrez l’encaissement du créateur avant d’activer.',

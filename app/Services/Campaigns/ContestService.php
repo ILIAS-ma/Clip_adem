@@ -3,13 +3,18 @@
 namespace App\Services\Campaigns;
 
 use App\Enums\ClipStatus;
+use App\Events\MessagePosted;
 use App\Models\Campaign;
+use App\Models\Conversation;
 use App\Models\User;
+use App\Notifications\ContestRewardWon;
 use App\Services\Budget\BonusService;
 use App\Support\Budget\CreditOutcome;
 use App\Support\Budget\CreditResult;
+use App\Support\Campaigns\Reward;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
 /**
@@ -91,16 +96,20 @@ class ContestService
     }
 
     /**
-     * Verse les prix aux premières places, une seule fois.
+     * Clôture le classement : attribue la récompense de chaque place, une seule fois.
      *
-     * Chaque prix passe par le moteur de budget, avec une clé par place : une
-     * relance après une coupure ne paie jamais deux fois la même place. Les
-     * places sans clippeur (moins de participants que de prix) ne sont pas
-     * versées, et leur montant reste dans le budget.
+     * - Argent : versé sur le solde par le moteur de budget, avec une clé par
+     *   place — une relance après une coupure ne paie jamais deux fois.
+     * - Objet : le gagnant est prévenu, et l'équipe lui écrit dans sa
+     *   messagerie pour organiser la remise.
+     * - Rien : le classement est simplement clôturé, podium conservé.
      *
-     * @return list<array{rank: int, user: string, cents: int, result: CreditResult}>
+     * Les places récompensées sans clippeur (moins de participants que de
+     * récompenses) ne sont pas attribuées ; leur argent reste au budget.
+     *
+     * @return list<array{rank: int, user: string, reward: Reward, result: ?CreditResult}>
      */
-    public function payPrizes(Campaign $campaign, ?User $by = null): array
+    public function awardRewards(Campaign $campaign, ?User $by = null): array
     {
         if (! $campaign->isContest()) {
             throw new InvalidArgumentException('Cette campagne n’est pas un classement.');
@@ -111,39 +120,95 @@ class ContestService
         }
 
         if ($campaign->prizes_paid_at !== null) {
-            throw new InvalidArgumentException('Les prix de ce classement ont déjà été versés.');
+            throw new InvalidArgumentException('Les récompenses de ce classement ont déjà été attribuées.');
         }
 
         $standings = $this->standings($campaign);
-        $paid = [];
+        $rewards = $campaign->rewards();
+        // Ce qui a déjà été attribué lors d'une tentative précédente : un lot
+        // ne doit pas être annoncé deux fois si l'on relance.
+        $already = collect($campaign->contest_winners ?? [])->keyBy('rank');
+        $awarded = [];
 
-        foreach ($campaign->prizes() as $index => $cents) {
+        foreach ($rewards as $index => $reward) {
             $row = $standings[$index] ?? null;
 
             if ($row === null) {
                 break;
             }
 
-            $paid[] = [
-                'rank' => $row->rank,
-                'user' => $row->name,
-                'cents' => $cents,
-                'result' => $this->bonuses->grantPrize($campaign, $row->best_clip_id, $row->rank, $cents, $by),
-            ];
+            $result = null;
+
+            if ($reward->isMoney()) {
+                $result = $this->bonuses->grantPrize($campaign, $row->best_clip_id, $row->rank, $reward->amountCents, $by);
+            } elseif (! ($already[$row->rank]['awarded'] ?? false)) {
+                $this->announceItem($campaign, $row, $reward, $by);
+            }
+
+            $awarded[] = ['rank' => $row->rank, 'user' => $row->name, 'reward' => $reward, 'result' => $result, 'row' => $row];
         }
 
-        /*
-         * Marqué « versé » seulement si chaque place est passée : un prix
-         * refusé (budget insuffisant) doit pouvoir être retenté, et les places
-         * déjà payées ne le seront pas deux fois grâce à leur clé.
-         */
-        $allPaid = collect($paid)->every(fn (array $line) => $line['result']->wasPaid()
+        $complete = collect($awarded)->every(fn (array $line) => $line['result'] === null
+            || $line['result']->wasPaid()
             || $line['result']->outcome === CreditOutcome::AlreadyProcessed);
 
-        if ($allPaid) {
-            $campaign->forceFill(['prizes_paid_at' => now()])->save();
+        /*
+         * Podium conservé : les places récompensées, ou à défaut les trois
+         * premières d'un classement pour la gloire.
+         */
+        $podium = $standings->take(max(count($rewards), 3))->map(function (object $row) use ($campaign, $awarded) {
+            $line = collect($awarded)->firstWhere('rank', $row->rank);
+            $reward = $campaign->rewardFor($row->rank);
+
+            return [
+                'rank' => $row->rank,
+                'user_id' => $row->user_id,
+                'name' => $row->name,
+                'views' => $row->views,
+                'reward' => $reward?->display(),
+                'awarded' => $line !== null && ($line['result'] === null || $line['result']->wasPaid()
+                    || $line['result']->outcome === CreditOutcome::AlreadyProcessed),
+            ];
+        })->values()->all();
+
+        /*
+         * Clôturé seulement si chaque place est passée : un prix en argent
+         * refusé (budget insuffisant) doit pouvoir être retenté, sans repayer
+         * les places déjà versées ni réannoncer les lots déjà remis.
+         */
+        $campaign->forceFill([
+            'contest_winners' => $podium,
+            'prizes_paid_at' => $complete ? now() : null,
+        ])->save();
+
+        return collect($awarded)->map(fn (array $line) => collect($line)->except('row')->all())->all();
+    }
+
+    /** Prévient le gagnant d'un lot, et lui écrit au nom de l'équipe. */
+    protected function announceItem(Campaign $campaign, object $row, Reward $reward, ?User $by): void
+    {
+        $winner = User::find($row->user_id);
+
+        if (! $winner) {
+            return;
         }
 
-        return $paid;
+        try {
+            $winner->notify(new ContestRewardWon($campaign, $row->rank, (string) $reward->label));
+        } catch (\Throwable $exception) {
+            Log::warning('Notification de lot non envoyée', ['user_id' => $winner->getKey(), 'error' => $exception->getMessage()]);
+        }
+
+        if ($by) {
+            $place = $row->rank === 1 ? '1re place' : $row->rank.'e place';
+
+            MessagePosted::dispatch(Conversation::for($winner)->post($by, sprintf(
+                'Bravo ! Vous terminez %s du classement « %s » et gagnez : %s. '
+                .'Répondez ici avec vos coordonnées pour qu’on organise la remise.',
+                $place,
+                $campaign->title,
+                $reward->label,
+            )));
+        }
     }
 }
