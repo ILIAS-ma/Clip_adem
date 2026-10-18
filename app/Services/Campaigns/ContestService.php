@@ -3,6 +3,7 @@
 namespace App\Services\Campaigns;
 
 use App\Enums\ClipStatus;
+use App\Enums\ContestMetric;
 use App\Events\MessagePosted;
 use App\Models\Campaign;
 use App\Models\Conversation;
@@ -32,7 +33,7 @@ class ContestService
     ) {}
 
     /**
-     * @return Collection<int, object{rank: int, user_id: int, name: string, views: int, clips: int, best_clip_id: int}>
+     * @return Collection<int, object{rank: int, user_id: int, name: string, views: int, clips: int, score: int, best_clip_id: int}>
      */
     public function standings(Campaign $campaign, ?int $limit = null): Collection
     {
@@ -58,26 +59,36 @@ class ContestService
             ->where('clips.status', ClipStatus::Approved->value)
             // Un compte banni ne monte pas sur un podium public.
             ->where('users.is_banned', false)
+            // Classement arrêté : un clip soumis après la fin n'entre plus.
+            ->when($frozenAt, fn ($query) => $query->where('clips.submitted_at', '<=', $frozenAt))
             ->select('clips.id', 'clips.user_id', 'clips.submitted_at', 'users.name', $views)
             ->get();
 
+        $byPosts = $campaign->contestMetric() === ContestMetric::Posts;
+
         $rows = $clips
             ->groupBy('user_id')
-            ->map(function (Collection $own) {
+            ->map(function (Collection $own) use ($byPosts) {
                 $best = $own->sortByDesc('effective_views')->first();
+                $views = (int) $own->sum('effective_views');
 
                 return (object) [
                     'user_id' => (int) $best->user_id,
                     'name' => $best->name,
-                    'views' => (int) $own->sum('effective_views'),
+                    'views' => $views,
                     'clips' => $own->count(),
+                    // Le chiffre qui classe : clips validés ou vues.
+                    'score' => $byPosts ? $own->count() : $views,
                     'best_clip_id' => (int) $best->id,
-                    // Départage : à vues égales, celui qui a publié en premier.
                     'first_at' => (string) $own->min('submitted_at'),
                 ];
             })
-            ->filter(fn (object $row) => $row->views > 0)
-            ->sort(fn (object $a, object $b) => [$b->views, $a->first_at] <=> [$a->views, $b->first_at])
+            ->filter(fn (object $row) => $row->score > 0)
+            /*
+             * Départage : au nombre de clips, les vues font la différence ;
+             * ensuite, ou directement aux vues, celui qui a publié en premier.
+             */
+            ->sort(fn (object $a, object $b) => [$b->score, $b->views, $a->first_at] <=> [$a->score, $a->views, $b->first_at])
             ->values()
             ->map(function (object $row, int $index) {
                 $row->rank = $index + 1;
@@ -165,6 +176,7 @@ class ContestService
                 'user_id' => $row->user_id,
                 'name' => $row->name,
                 'views' => $row->views,
+                'clips' => $row->clips,
                 'reward' => $reward?->display(),
                 'awarded' => $line !== null && ($line['result'] === null || $line['result']->wasPaid()
                     || $line['result']->outcome === CreditOutcome::AlreadyProcessed),

@@ -1,6 +1,7 @@
 @php
     use App\Support\Money;
     $rewards = $campaign->rewards();
+    $metric = $campaign->contestMetric();
     $winners = $campaign->prizes_paid_at ? collect($campaign->contest_winners ?? []) : collect();
 @endphp
 
@@ -17,7 +18,7 @@
             @endif
         </p>
         <p class="mt-1 text-sm leading-relaxed text-ink-300">
-            Pas de paiement aux vues : les clippeurs sont classés sur les vues de leurs clips validés.
+            Pas de paiement aux vues : les clippeurs sont classés sur {{ $metric->rankedOn() }}.
             @if ($campaign->ends_at)
                 {{ $campaign->contestIsOver() ? 'Classement arrêté le' : 'Fin du classement le' }}
                 <span class="font-semibold text-ink-100">{{ $campaign->ends_at->format('d/m/Y à H:i') }}</span>.
@@ -45,7 +46,7 @@
                 @foreach ($winners as $winner)
                     <li @class(['flex justify-between gap-3', 'font-semibold text-brand-300' => $winner['user_id'] === auth()->id()])>
                         <span class="truncate text-ink-50">{{ $winner['rank'] }}. {{ $winner['name'] }}</span>
-                        <span class="flex-none text-ink-300">{{ $winner['reward'] ?? Money::compactViews($winner['views']).' vues' }}</span>
+                        <span class="flex-none text-ink-300">{{ $winner['reward'] ?? $metric->formatScore($metric === \App\Enums\ContestMetric::Posts ? ($winner['clips'] ?? 0) : $winner['views']) }}</span>
                     </li>
                 @endforeach
             </ol>
@@ -55,7 +56,7 @@
     @if ($myStanding)
         <div class="border-b border-ink-700 bg-brand-500/10 px-6 py-3 text-sm">
             Vous êtes <span class="font-bold text-ink-50">{{ $myStanding->rank === 1 ? '1er' : $myStanding->rank.'e' }}</span>
-            avec <span class="font-semibold tabular text-ink-50">{{ Money::views($myStanding->views) }}</span> vues.
+            avec <span class="font-semibold tabular text-ink-50">{{ $metric->formatScore($myStanding->score) }}</span>.
             @if ($reward = $campaign->rewardFor($myStanding->rank))
                 <span class="text-brand-400">Place récompensée : {{ $reward->display() }}.</span>
             @endif
@@ -63,7 +64,7 @@
     @endif
 
     @if ($standings->isEmpty())
-        <p class="px-6 py-8 text-center text-sm text-ink-300">Personne n'a encore de vues validées. La 1re place est libre.</p>
+        <p class="px-6 py-8 text-center text-sm text-ink-300">Personne n'est encore classé. La 1re place est libre.</p>
     @else
         <ol class="divide-y divide-ink-700">
             @foreach ($standings as $row)
@@ -73,7 +74,7 @@
                 ])>
                     <span class="w-6 flex-none text-sm font-semibold tabular text-ink-400">{{ $row->rank }}</span>
                     <span class="min-w-0 flex-1 truncate text-sm font-medium text-ink-50">{{ $row->name }}</span>
-                    <span class="flex-none text-sm font-semibold tabular text-ink-100">{{ Money::compactViews($row->views) }}</span>
+                    <span class="flex-none text-sm font-semibold tabular text-ink-100">{{ $metric->formatScore($row->score) }}</span>
                 </li>
             @endforeach
         </ol>

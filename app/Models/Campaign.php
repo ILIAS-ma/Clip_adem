@@ -6,6 +6,7 @@ use App\Enums\BudgetTransactionType;
 use App\Enums\CampaignMode;
 use App\Enums\CampaignStatus;
 use App\Enums\ClipStatus;
+use App\Enums\ContestMetric;
 use App\Enums\Platform;
 use App\Exceptions\InvalidCampaignTransition;
 use App\Support\Campaigns\Reward;
@@ -18,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
-    'creator_id', 'category_id', 'mode', 'contest_prizes', 'title', 'slug', 'brief', 'required_hashtags',
+    'creator_id', 'category_id', 'mode', 'contest_metric', 'contest_prizes', 'title', 'slug', 'brief', 'required_hashtags',
     'status', 'currency', 'budget_total_cents', 'min_views_per_clip',
     'min_clips_per_clipper', 'max_payout_per_clip_cents',
     'launch_bonus_cents', 'launch_bonus_slots',
@@ -31,6 +32,7 @@ class Campaign extends Model
     /** Le mode par défaut, aussi en mémoire avant le premier rechargement. */
     protected $attributes = [
         'mode' => 'cpm',
+        'contest_metric' => 'views',
     ];
 
     protected function casts(): array
@@ -38,6 +40,7 @@ class Campaign extends Model
         return [
             'status' => CampaignStatus::class,
             'mode' => CampaignMode::class,
+            'contest_metric' => ContestMetric::class,
             'contest_prizes' => 'array',
             'prizes_paid_at' => 'datetime',
             'contest_winners' => 'array',
@@ -110,6 +113,12 @@ class Campaign extends Model
     public function isContest(): bool
     {
         return $this->mode === CampaignMode::Contest;
+    }
+
+    /** Critère du classement : les vues, ou le nombre de clips validés. */
+    public function contestMetric(): ContestMetric
+    {
+        return $this->contest_metric ?? ContestMetric::Views;
     }
 
     /**

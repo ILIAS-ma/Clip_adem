@@ -1,9 +1,9 @@
 <div class="space-y-3">
     <p class="text-sm text-gray-500 dark:text-gray-400">
         @if ($campaign->contestIsOver())
-            Classement arrêté{{ $campaign->ends_at ? ' au '.$campaign->ends_at->format('d/m/Y H:i') : '' }} : vues relevées jusqu'à cette date.
+            Classement arrêté{{ $campaign->ends_at ? ' au '.$campaign->ends_at->format('d/m/Y H:i') : '' }}, sur {{ $campaign->contestMetric()->rankedOn() }} jusqu'à cette date.
         @else
-            Classement en direct, sur les vues des clips validés.
+            Classement en direct, sur {{ $campaign->contestMetric()->rankedOn() }}.
         @endif
         @if ($campaign->prizes_paid_at)
             Récompenses attribuées le {{ $campaign->prizes_paid_at->format('d/m/Y') }}.
@@ -11,7 +11,7 @@
     </p>
 
     @if ($standings->isEmpty())
-        <p class="py-6 text-center text-sm text-gray-500 dark:text-gray-400">Aucun clip validé avec des vues pour l'instant.</p>
+        <p class="py-6 text-center text-sm text-gray-500 dark:text-gray-400">Aucun clip validé pour l'instant.</p>
     @else
         <table class="w-full text-left text-sm">
             <thead>

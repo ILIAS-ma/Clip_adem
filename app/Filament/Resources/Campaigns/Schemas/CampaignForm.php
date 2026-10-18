@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Campaigns\Schemas;
 use App\Enums\AssetKind;
 use App\Enums\CampaignMode;
 use App\Enums\CampaignStatus;
+use App\Enums\ContestMetric;
 use App\Enums\Platform;
 use App\Filament\Resources\Categories\Schemas\CategoryForm;
 use App\Models\Campaign;
@@ -124,6 +125,21 @@ class CampaignForm
                             ? 'Aucune vue n’est payée au fil de l’eau : les clippeurs sont classés sur leurs vues, '
                                 .'et les prix ci-dessous récompensent les premières places à la fin.'
                             : 'Chaque tranche de 1 000 vues est payée au taux de la plateforme, jusqu’à épuisement du budget.')
+                        ->columnSpanFull(),
+
+                    // Le critère se fixe au brouillon, comme le mode : le
+                    // changer en cours de route changerait le podium.
+                    Select::make('contest_metric')
+                        ->label('Classement sur')
+                        ->options(ContestMetric::options())
+                        ->default(ContestMetric::Views->value)
+                        ->required()
+                        ->selectablePlaceholder(false)
+                        ->visible(fn ($get) => static::isContest($get))
+                        ->disabled(fn (?Campaign $record) => $record !== null && $record->status !== CampaignStatus::Draft)
+                        ->dehydrated(fn (?Campaign $record) => $record === null || $record->status === CampaignStatus::Draft)
+                        ->helperText('Vues : le plus vu gagne. Nombre de clips postés : le plus régulier gagne '
+                            .'(seuls les clips validés comptent ; à égalité, les vues départagent).')
                         ->columnSpanFull(),
 
                     /*

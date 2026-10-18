@@ -168,7 +168,9 @@
 
                     <div class="mt-3 flex flex-wrap gap-1.5">
                         @if ($campaign->isContest())
-                            <span class="chip bg-brand-500/15 text-brand-300">Classement</span>
+                            <span class="chip bg-brand-500/15 text-brand-300">
+                                Classement{{ $campaign->contestMetric() === \App\Enums\ContestMetric::Posts ? ' · nombre de clips' : ' · vues' }}
+                            </span>
                         @endif
                         @foreach ($campaign->rates->where('is_enabled', true) as $rate)
                             <span class="chip-neutral">{{ $rate->platform->label() }}</span>

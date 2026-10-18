@@ -108,6 +108,46 @@ class ContestTest extends TestCase
     }
 
     #[Test]
+    public function a_posts_contest_ranks_on_validated_clip_count_then_views(): void
+    {
+        $campaign = $this->contest(['contest_metric' => 'posts']);
+        [$regular, $viral, $tied] = [$this->clipper('Régulier'), $this->clipper('Viral'), $this->clipper('Égal')];
+
+        foreach (range(1, 4) as $i) {
+            $this->clip($campaign, $regular, 1_000);
+        }
+        $this->clip($campaign, $regular, 0, ClipStatus::PendingReview); // pas validé : ne compte pas
+
+        $this->clip($campaign, $viral, 900_000);
+
+        // Même nombre de clips que Viral, moins de vues : derrière lui.
+        $this->clip($campaign, $tied, 500);
+
+        $standings = app(ContestService::class)->standings($campaign);
+
+        $this->assertSame(['Régulier', 'Viral', 'Égal'], $standings->pluck('name')->all());
+        $this->assertSame(4, $standings[0]->score);
+        $this->assertSame(4, $standings[0]->clips);
+
+        $this->actingAs($regular)
+            ->get(route('campaigns.show', $campaign))
+            ->assertSee('le nombre de clips validés')
+            ->assertSee('4 clips');
+    }
+
+    #[Test]
+    public function a_posts_contest_ignores_clips_submitted_after_the_end(): void
+    {
+        $campaign = $this->contest(['contest_metric' => 'posts', 'ends_at' => now()->subDay()]);
+        $late = $this->clipper('Tardif');
+
+        $this->clip($campaign, $late, 1_000, submittedAt: now()->subDays(3)->toDateTimeString());
+        $this->clip($campaign, $late, 1_000, submittedAt: now()->toDateTimeString());
+
+        $this->assertSame(1, app(ContestService::class)->standings($campaign)->first()->clips);
+    }
+
+    #[Test]
     public function a_tie_goes_to_whoever_posted_first(): void
     {
         $campaign = $this->contest();
