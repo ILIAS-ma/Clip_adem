@@ -205,15 +205,25 @@
             </div>
 
             <div class="space-y-6">
-                <div class="card p-6">
-                    <x-budget-bar :campaign="$campaign" :remaining="$remainingCents" />
+                @if ($campaign->isContest())
+                    @include('clipper.campaigns.partials.contest', ['campaign' => $campaign, 'standings' => $standings, 'myStanding' => $myStanding])
+                @endif
 
-                    <dl class="mt-6 space-y-3 border-t border-ink-700 pt-5 text-sm">
+                <div class="card p-6">
+                    @unless ($campaign->isContest())
+                        <x-budget-bar :campaign="$campaign" :remaining="$remainingCents" />
+                    @endunless
+
+                    <dl @class(['space-y-3 text-sm', 'mt-6 border-t border-ink-700 pt-5' => ! $campaign->isContest()])>
                         @foreach ($campaign->rates->where('is_enabled', true) as $rate)
                             <div class="flex items-baseline justify-between gap-2">
                                 <dt class="text-ink-400">{{ $rate->platform->label() }}</dt>
                                 <dd class="font-display font-bold tabular text-ink-50">
-                                    {{ Money::rate($rate->rate_per_1k_cents) }}<span class="text-xs font-medium text-ink-400"> /1000</span>
+                                    @if ($campaign->isContest())
+                                        <span class="text-sm font-medium text-ink-300">acceptée</span>
+                                    @else
+                                        {{ Money::rate($rate->rate_per_1k_cents) }}<span class="text-xs font-medium text-ink-400"> /1000</span>
+                                    @endif
                                 </dd>
                             </div>
                         @endforeach

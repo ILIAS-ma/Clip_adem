@@ -138,7 +138,17 @@
 
                     {{-- Le cachet est le premier critère de choix : il mérite
                          d'être lisible sans lire la carte entière. --}}
-                    @if ($best)
+                    @if ($campaign->isContest())
+                        {{-- Un classement ne paie pas aux vues : ce qui compte,
+                             c'est ce qu'il y a à gagner en haut du podium. --}}
+                        <p class="mt-4 font-display text-2xl font-bold tabular text-ink-50">
+                            {{ Money::wholeEuros($campaign->prizePoolCents()) }}
+                            <span class="text-sm font-semibold text-ink-400">à gagner</span>
+                        </p>
+                        @if ($first = $campaign->prizes()[0] ?? null)
+                            <p class="mt-0.5 text-sm text-ink-300">dont {{ Money::wholeEuros($first) }} pour le 1er</p>
+                        @endif
+                    @elseif ($best)
                         <p class="mt-4 font-display text-2xl font-bold tabular text-ink-50">
                             {{ Money::rate($best) }}
                             <span class="text-sm font-semibold text-ink-400">/ 1000 vues</span>
@@ -146,12 +156,21 @@
                     @endif
 
                     <div class="mt-3 flex flex-wrap gap-1.5">
+                        @if ($campaign->isContest())
+                            <span class="chip bg-brand-500/15 text-brand-300">Classement</span>
+                        @endif
                         @foreach ($campaign->rates->where('is_enabled', true) as $rate)
                             <span class="chip-neutral">{{ $rate->platform->label() }}</span>
                         @endforeach
                     </div>
 
-                    <x-budget-bar class="mt-auto pt-5" :campaign="$campaign" :remaining="$left" />
+                    @if ($campaign->isContest())
+                        <p class="mt-auto pt-5 text-sm text-ink-400">
+                            {{ $campaign->ends_at ? 'Classement arrêté le '.$campaign->ends_at->format('d/m/Y à H:i') : 'Date de fin à venir' }}
+                        </p>
+                    @else
+                        <x-budget-bar class="mt-auto pt-5" :campaign="$campaign" :remaining="$left" />
+                    @endif
                 </a>
             @endforeach
         </div>

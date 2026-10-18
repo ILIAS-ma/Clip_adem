@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\CampaignMode;
 use App\Enums\CampaignStatus;
 use App\Enums\Platform;
 use App\Models\Campaign;
@@ -66,6 +67,21 @@ class CampaignFactory extends Factory
      * Ajoute un taux CPM après création. Par défaut 1 € pour 1000 vues sur
      * TikTok, soit 0,1 centime la vue.
      */
+    /**
+     * Campagne « classement » : prix par place, budget égal à leur somme, et
+     * plateforme ouverte avec un taux à zéro.
+     *
+     * @param  list<int>  $prizes  centimes, 1re place d'abord
+     */
+    public function contest(array $prizes = [10_000, 5_000, 2_500], Platform $platform = Platform::TikTok): static
+    {
+        return $this->state(fn () => [
+            'mode' => CampaignMode::Contest,
+            'contest_prizes' => $prizes,
+            'budget_total_cents' => array_sum($prizes),
+        ])->withRate($platform, ratePer1kCents: 0);
+    }
+
     public function withRate(Platform $platform = Platform::TikTok, int $ratePer1kCents = 100): static
     {
         return $this->afterCreating(function (Campaign $campaign) use ($platform, $ratePer1kCents) {

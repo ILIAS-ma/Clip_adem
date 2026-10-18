@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Campaigns\Schemas;
 
 use App\Enums\AssetKind;
+use App\Enums\CampaignMode;
 use App\Enums\CampaignStatus;
 use App\Enums\Platform;
 use App\Filament\Resources\Categories\Schemas\CategoryForm;
@@ -108,14 +109,60 @@ class CampaignForm
                 ->description('Tous les montants sont saisis en euros et stockés en centimes entiers.')
                 ->columns(2)
                 ->schema([
+                    /*
+                     * Le mode se choisit au brouillon et ne bouge plus ensuite :
+                     * basculer une campagne lancée d'un mode à l'autre
+                     * changerait les règles de paiement de clips déjà publiés.
+                     */
+                    Select::make('mode')
+                        ->label('Type de campagne')
+                        ->options(CampaignMode::options())
+                        ->default(CampaignMode::Cpm->value)
+                        ->required()
+                        ->selectablePlaceholder(false)
+                        ->live()
+                        ->disabled(fn (?Campaign $record) => $record !== null && $record->status !== CampaignStatus::Draft)
+                        ->dehydrated(fn (?Campaign $record) => $record === null || $record->status === CampaignStatus::Draft)
+                        ->helperText(fn ($get) => static::isContest($get)
+                            ? 'Aucune vue n’est payée au fil de l’eau : les clippeurs sont classés sur leurs vues, '
+                                .'et les prix ci-dessous récompensent les premières places à la fin.'
+                            : 'Chaque tranche de 1 000 vues est payée au taux de la plateforme, jusqu’à épuisement du budget.')
+                        ->columnSpanFull(),
+
+                    Repeater::make('contest_prizes')
+                        ->label('Prix du classement')
+                        ->simple(
+                            static::money('amount')
+                                ->label('Prix')
+                                ->required()
+                                ->minValue(0.01),
+                        )
+                        ->itemNumbers()
+                        ->reorderable()
+                        ->minItems(1)
+                        ->defaultItems(3)
+                        ->addActionLabel('Ajouter une place')
+                        ->visible(fn ($get) => static::isContest($get))
+                        ->live(onBlur: true)
+                        ->helperText('Dans l’ordre : le premier montant va à la 1re place, le deuxième à la 2e, etc.')
+                        ->columnSpanFull(),
+
+                    // En classement, le budget est exactement la somme des prix,
+                    // recalculée à l'enregistrement (voir withContestBudget()) :
+                    // le saisir à part permettrait de promettre plus que ce qui
+                    // est financé, ou l'inverse.
                     static::money('budget_total_cents')
                         ->label('Budget total')
-                        ->required()
+                        ->required(fn ($get) => ! static::isContest($get))
                         ->minValue(0.01)
-                        ->helperText('Plafond absolu : la campagne bascule en « Épuisée » dès qu\'il est atteint.'),
+                        ->disabled(fn ($get) => static::isContest($get))
+                        ->dehydrated()
+                        ->helperText(fn ($get) => static::isContest($get)
+                            ? 'Calculé à l’enregistrement : la somme des prix.'
+                            : 'Plafond absolu : la campagne bascule en « Épuisée » dès qu\'il est atteint.'),
 
                     Repeater::make('rates')
-                        ->label('Taux par plateforme')
+                        ->label(fn ($get) => static::isContest($get) ? 'Plateformes acceptées' : 'Taux par plateforme')
                         ->relationship()
                         ->columns(3)
                         ->minItems(1)
@@ -130,10 +177,21 @@ class CampaignForm
                                 ->required()
                                 ->distinct(),
 
+                            /*
+                             * En classement, le taux est forcé à zéro : la
+                             * plateforme reste ouverte à la participation, et
+                             * le moteur de budget ne paie rien aux vues sans
+                             * qu'aucune de ses règles ait à connaître ce mode.
+                             */
                             static::money('rate_per_1k_cents')
                                 ->label('Rémunération / 1000 vues')
-                                ->required()
-                                ->minValue(0.01),
+                                ->required(fn ($get) => ! static::isContest($get, '../../'))
+                                ->minValue(fn ($get) => static::isContest($get, '../../') ? 0 : 0.01)
+                                ->hidden(fn ($get) => static::isContest($get, '../../'))
+                                ->dehydratedWhenHidden()
+                                ->dehydrateStateUsing(fn ($state, $get) => static::isContest($get, '../../')
+                                    ? 0
+                                    : ($state === null || $state === '' ? null : (int) round(((float) $state) * 100))),
 
                             Toggle::make('is_enabled')
                                 ->label('Actif')
@@ -142,7 +200,10 @@ class CampaignForm
                         ]),
                 ]),
 
+            // Sans objet en classement : rien n'est payé aux vues, il n'y a
+            // donc rien à plafonner ni de minimum à atteindre pour être payé.
             Section::make('Garde-fous')
+                ->visible(fn ($get) => ! static::isContest($get))
                 ->description('Optionnels. Ils limitent ce qu\'un clip ou un clippeur peut capter du budget.')
                 ->columns(3)
                 ->schema([
@@ -168,6 +229,7 @@ class CampaignForm
                 ]),
 
             Section::make('Prime de lancement')
+                ->visible(fn ($get) => ! static::isContest($get))
                 ->description('Optionnelle. Un montant garanti versé au premier clip validé de chaque clippeur, '
                     .'pour les premiers arrivés : de quoi lancer une campagne sans attendre que les vues montent. '
                     .'Prise sur le budget, une seule par clippeur.')
@@ -229,6 +291,42 @@ class CampaignForm
                         ->schema(CampaignAssetForm::components()),
                 ]),
         ]);
+    }
+
+    /** Le formulaire décrit-il un classement ? `$prefix` remonte depuis un élément de liste. */
+    protected static function isContest(callable $get, string $prefix = ''): bool
+    {
+        return $get($prefix.'mode') === CampaignMode::Contest->value
+            || $get($prefix.'mode') === CampaignMode::Contest;
+    }
+
+    /**
+     * En classement, le budget est la somme des prix. Appelé par les pages de
+     * création et d'édition, une fois les montants convertis en centimes.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    public static function withContestBudget(array $data, ?Campaign $record = null): array
+    {
+        $mode = $data['mode'] ?? $record?->mode?->value ?? CampaignMode::Cpm->value;
+
+        if ($mode instanceof CampaignMode) {
+            $mode = $mode->value;
+        }
+
+        if ($mode === CampaignMode::Contest->value) {
+            $data['contest_prizes'] = collect((array) ($data['contest_prizes'] ?? []))
+                ->map(fn ($item) => (int) (is_array($item) ? ($item['amount'] ?? reset($item)) : $item))
+                ->filter(fn (int $cents) => $cents > 0)
+                ->values()
+                ->all();
+            $data['budget_total_cents'] = array_sum($data['contest_prizes']);
+        } else {
+            $data['contest_prizes'] = null;
+        }
+
+        return $data;
     }
 
     /**

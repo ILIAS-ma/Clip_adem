@@ -4,6 +4,7 @@ namespace App\Services\Budget;
 
 use App\Contracts\CampaignBudgetService;
 use App\Enums\ModerationAction;
+use App\Models\Campaign;
 use App\Models\Clip;
 use App\Models\ModerationLog;
 use App\Models\User;
@@ -86,6 +87,38 @@ class BonusService
         if ($result->creditedCents > 0) {
             ModerationLog::record(ModerationAction::BonusGranted, $clip, $by, $reason, [
                 'amount_cents' => $result->creditedCents,
+            ]);
+
+            $this->tell($clip, $result->creditedCents, $reason);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Prix d'un classement, versé sur le meilleur clip du lauréat.
+     *
+     * Une clé par place et par campagne : relancer le versement après une
+     * interruption ne paie jamais deux fois la même place.
+     */
+    public function grantPrize(Campaign $campaign, int $clipId, int $rank, int $amountCents, ?User $by = null): CreditResult
+    {
+        $clip = Clip::findOrFail($clipId);
+        $reason = ($rank === 1 ? '1re' : $rank.'e').' place du classement « '.$campaign->title.' »';
+
+        $result = $this->budget->grantBonus(
+            clip: $clip,
+            amountCents: $amountCents,
+            idempotencyKey: sprintf('campaign:%d:prize:%d', $campaign->getKey(), $rank),
+            kind: CampaignBudgetService::BONUS_KIND_PRIZE,
+            reason: $reason,
+            by: $by,
+        );
+
+        if ($result->creditedCents > 0) {
+            ModerationLog::record(ModerationAction::BonusGranted, $clip, $by, $reason, [
+                'amount_cents' => $result->creditedCents,
+                'rank' => $rank,
             ]);
 
             $this->tell($clip, $result->creditedCents, $reason);

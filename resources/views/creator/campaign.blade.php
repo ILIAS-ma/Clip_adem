@@ -105,10 +105,25 @@
                             <div class="flex items-baseline justify-between gap-2">
                                 <dt class="text-ink-400">{{ $rate->platform->label() }}</dt>
                                 <dd class="font-display font-bold tabular text-ink-50">
-                                    {{ Money::rate($rate->rate_per_1k_cents) }}<span class="text-xs font-medium text-ink-400"> /1000</span>
+                                    @if ($campaign->isContest())
+                                        <span class="text-sm font-medium text-ink-300">acceptée</span>
+                                    @else
+                                        {{ Money::rate($rate->rate_per_1k_cents) }}<span class="text-xs font-medium text-ink-400"> /1000</span>
+                                    @endif
                                 </dd>
                             </div>
                         @endforeach
+
+                        @if ($campaign->isContest())
+                            {{-- Le créateur finance des prix, pas des vues : il
+                                 doit lire ce qu'il a promis, place par place. --}}
+                            @foreach ($campaign->prizes() as $index => $cents)
+                                <div class="flex justify-between gap-2 {{ $index === 0 ? 'border-t border-ink-700 pt-3' : '' }}">
+                                    <dt class="text-ink-400">{{ $index === 0 ? '1re' : ($index + 1).'e' }} place</dt>
+                                    <dd class="tabular text-ink-100">{{ Money::euros($cents) }}</dd>
+                                </div>
+                            @endforeach
+                        @endif
 
                         @if ($campaign->starts_at)
                             <div class="flex justify-between gap-2">

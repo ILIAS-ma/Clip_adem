@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Clipper;
 use App\Contracts\CampaignBudgetService;
 use App\Http\Controllers\Controller;
 use App\Models\Campaign;
+use App\Services\Campaigns\ContestService;
 use App\Services\Clips\ParticipationService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -29,6 +30,10 @@ class CampaignController extends Controller
         $campaign->load(['creator', 'rates', 'assets']);
         $clipper = $request->user();
 
+        // Classement : le haut du tableau, et la place du clippeur même s'il
+        // n'y figure pas — savoir qu'on est 14e motive autant que d'être 3e.
+        $standings = $campaign->isContest() ? app(ContestService::class)->standings($campaign) : collect();
+
         return view('clipper.campaigns.show', [
             'campaign' => $campaign,
             // Le reliquat est demandé au service, jamais lu directement sur la
@@ -49,6 +54,8 @@ class CampaignController extends Controller
                 ->where('user_id', $clipper->getKey())
                 ->latest('submitted_at')
                 ->get(),
+            'standings' => $standings->take(10)->values(),
+            'myStanding' => $standings->firstWhere('user_id', $clipper->getKey()),
         ]);
     }
 }

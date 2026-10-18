@@ -210,7 +210,15 @@ class DatabaseCampaignBudgetService implements CampaignBudgetService
                 return $this->alreadyProcessed($existing);
             }
 
-            if (! $campaign->acceptsCredits()) {
+            /*
+             * Un prix de classement se verse APRÈS la fin : c'est le classement
+             * arrêté qu'il récompense. Seule exception à la fermeture, et
+             * jamais sur une campagne retirée du catalogue. Le budget, lui,
+             * reste vérifié plus bas comme pour toute prime.
+             */
+            $prizeAfterClose = $kind === self::BONUS_KIND_PRIZE && ! $campaign->trashed();
+
+            if (! $campaign->acceptsCredits() && ! $prizeAfterClose) {
                 return CreditResult::skipped(CreditOutcome::CampaignClosed, $campaign->remainingCents());
             }
 

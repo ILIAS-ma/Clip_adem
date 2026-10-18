@@ -814,6 +814,21 @@ invalidation la reprend avec le reste. Pas de commission de parrainage dessus.
 
 Le tableau de bord du clippeur célèbre chaque prime tant qu'il ne l'a pas ouverte.
 
+## Campagnes « classement »
+
+Type de campagne choisi au brouillon : **Payée aux vues** (le fonctionnement
+historique) ou **Classement**. En classement, rien n'est payé aux vues : les
+plateformes sont ouvertes avec un taux à zéro, et le moteur de budget ne
+crédite donc rien sans qu'aucune de ses règles connaisse ce mode. Les
+clippeurs sont classés sur les vues de leurs clips validés (`ContestService`) ;
+le budget est la somme des prix annoncés par place.
+
+Passé la date de fin, le classement se lit sur le dernier relevé antérieur à
+cette date : les relevés suivants ne font plus bouger le podium. Le
+super-admin clique alors **Verser les prix** sur la campagne : chaque prix
+passe par `grantBonus()` (type `prize`, seule prime autorisée campagne
+close), avec une clé par place — une relance ne paie jamais deux fois.
+
 ## Classements, vitrine et relances
 
 - **Catégories** (Catalogue) : chaque campagne peut en recevoir une ; le

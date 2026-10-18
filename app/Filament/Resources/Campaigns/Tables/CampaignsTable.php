@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Campaigns\Tables;
 
+use App\Enums\CampaignMode;
 use App\Enums\CampaignStatus;
 use App\Models\Campaign;
 use Filament\Actions\BulkActionGroup;
@@ -24,6 +25,13 @@ class CampaignsTable
                     ->sortable()
                     ->weight('bold')
                     ->description(fn (Campaign $record) => $record->creator?->name),
+
+                TextColumn::make('mode')
+                    ->label('Type')
+                    ->badge()
+                    ->formatStateUsing(fn (CampaignMode $state) => $state->label())
+                    ->color(fn (CampaignMode $state) => $state === CampaignMode::Contest ? 'warning' : 'gray')
+                    ->toggleable(),
 
                 TextColumn::make('category.name')
                     ->label('Catégorie')

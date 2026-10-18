@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Campaigns\Pages;
 
 use App\Filament\Resources\Campaigns\CampaignResource;
+use App\Filament\Resources\Campaigns\Schemas\CampaignForm;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateCampaign extends CreateRecord
@@ -14,6 +15,6 @@ class CreateCampaign extends CreateRecord
         // Traçabilité : qui a engagé ce budget.
         $data['created_by'] = auth()->id();
 
-        return $data;
+        return CampaignForm::withContestBudget($data);
     }
 }

@@ -17,6 +17,12 @@ use App\Support\Budget\ReversalResult;
  */
 interface CampaignBudgetService
 {
+    /**
+     * Prime de classement : la seule qui se verse campagne close, puisqu'elle
+     * récompense un classement arrêté à la date de fin.
+     */
+    public const BONUS_KIND_PRIZE = 'prize';
+
     /** Budget restant en centimes. Lecture non verrouillée : valeur d'affichage. */
     public function remaining(Campaign|int $campaign): int;
 

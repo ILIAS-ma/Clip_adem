@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\BudgetTransactionType;
+use App\Enums\CampaignMode;
 use App\Enums\CampaignStatus;
 use App\Enums\ClipStatus;
 use App\Enums\Platform;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
-    'creator_id', 'category_id', 'title', 'slug', 'brief', 'required_hashtags',
+    'creator_id', 'category_id', 'mode', 'contest_prizes', 'title', 'slug', 'brief', 'required_hashtags',
     'status', 'currency', 'budget_total_cents', 'min_views_per_clip',
     'min_clips_per_clipper', 'max_payout_per_clip_cents',
     'launch_bonus_cents', 'launch_bonus_slots',
@@ -26,10 +27,18 @@ class Campaign extends Model
 {
     use HasFactory, SoftDeletes;
 
+    /** Le mode par défaut, aussi en mémoire avant le premier rechargement. */
+    protected $attributes = [
+        'mode' => 'cpm',
+    ];
+
     protected function casts(): array
     {
         return [
             'status' => CampaignStatus::class,
+            'mode' => CampaignMode::class,
+            'contest_prizes' => 'array',
+            'prizes_paid_at' => 'datetime',
             'required_hashtags' => 'array',
             'budget_total_cents' => 'integer',
             'spent_cents' => 'integer',
@@ -91,6 +100,44 @@ class Campaign extends Model
     // ------------------------------------------------------------------
     // Budget — lecture seule. Toute écriture passe par CampaignBudgetService.
     // ------------------------------------------------------------------
+
+    // ------------------------------------------------------------------
+    // Mode classement
+    // ------------------------------------------------------------------
+
+    public function isContest(): bool
+    {
+        return $this->mode === CampaignMode::Contest;
+    }
+
+    /**
+     * Prix par place, en centimes, dans l'ordre : index 0 = 1re place.
+     *
+     * @return list<int>
+     */
+    public function prizes(): array
+    {
+        return collect($this->contest_prizes ?? [])
+            ->map(fn ($prize) => (int) (is_array($prize) ? ($prize['amount_cents'] ?? 0) : $prize))
+            ->filter(fn (int $cents) => $cents > 0)
+            ->values()
+            ->all();
+    }
+
+    public function prizePoolCents(): int
+    {
+        return array_sum($this->prizes());
+    }
+
+    /**
+     * Le classement est arrêté : la date de fin est passée, ou la campagne
+     * est terminée. C'est le moment où les prix peuvent être versés.
+     */
+    public function contestIsOver(): bool
+    {
+        return $this->status === CampaignStatus::Completed
+            || ($this->ends_at !== null && now()->gt($this->ends_at));
+    }
 
     /** Places de prime de lancement restantes, ou null sans prime. */
     public function launchBonusSlotsLeft(): ?int
@@ -281,7 +328,13 @@ class Campaign extends Model
         }
 
         if ($this->rates()->where('is_enabled', true)->doesntExist()) {
-            throw InvalidCampaignTransition::because('au moins une plateforme doit avoir un taux actif.');
+            throw InvalidCampaignTransition::because($this->isContest()
+                ? 'au moins une plateforme doit être ouverte.'
+                : 'au moins une plateforme doit avoir un taux actif.');
+        }
+
+        if ($this->isContest() && $this->prizes() === []) {
+            throw InvalidCampaignTransition::because('un classement doit annoncer au moins un prix.');
         }
 
         if (blank($this->brief)) {
