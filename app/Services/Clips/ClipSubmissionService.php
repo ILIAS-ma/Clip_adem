@@ -5,10 +5,13 @@ namespace App\Services\Clips;
 use App\Contracts\CampaignBudgetService;
 use App\Enums\ClipStatus;
 use App\Enums\ParticipationStatus;
+use App\Enums\Platform;
 use App\Exceptions\ClipSubmissionRefused;
 use App\Models\Campaign;
 use App\Models\Clip;
+use App\Models\SocialAccount;
 use App\Models\User;
+use App\Support\Clips\ClipUrl;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
@@ -31,8 +34,52 @@ class ClipSubmissionService
      */
     public function submit(Campaign $campaign, User $clipper, string $url): Clip
     {
-        $parsed = $this->parser->parse($url);
+        return $this->submitParsed($campaign, $clipper, $this->parser->parse($url));
+    }
 
+    /**
+     * Soumission d'une vidéo choisie au doigt dans la liste des publications
+     * récentes du compte lié — le chemin du téléphone, sans lien à copier.
+     *
+     * La vidéo vient de la liste de CE compte : la participation est donc
+     * cherchée sur ce compte précisément, et le contrôle de pseudo n'a rien à
+     * vérifier. Les autres règles (campagne ouverte, doublons) restent celles
+     * d'un lien collé.
+     */
+    public function submitPicked(Campaign $campaign, User $clipper, SocialAccount $account, string $externalPostId, ?string $url = null): Clip
+    {
+        abort_unless($account->user_id === $clipper->getKey(), 403);
+
+        // L'adresse de partage porte le vrai nom d'utilisateur : on la lit si
+        // possible, sinon on la reconstruit depuis l'identifiant.
+        $parsed = null;
+
+        if ($url) {
+            try {
+                $parsed = $this->parser->parse($url);
+            } catch (ClipSubmissionRefused) {
+                $parsed = null;
+            }
+        }
+
+        if (! $parsed || $parsed->externalPostId !== $externalPostId) {
+            $handle = static::looksLikeUsername((string) $account->handle) ? ltrim($account->handle, '@') : 'user';
+            $parsed = new ClipUrl(
+                $account->platform,
+                $externalPostId,
+                match ($account->platform) {
+                    Platform::TikTok => "https://www.tiktok.com/@{$handle}/video/{$externalPostId}",
+                    Platform::YouTube => "https://www.youtube.com/shorts/{$externalPostId}",
+                    Platform::Instagram => "https://www.instagram.com/reel/{$externalPostId}/",
+                },
+            );
+        }
+
+        return $this->submitParsed($campaign, $clipper, new ClipUrl($parsed->platform, $parsed->externalPostId, $parsed->canonicalUrl), $account);
+    }
+
+    protected function submitParsed(Campaign $campaign, User $clipper, ClipUrl $parsed, ?SocialAccount $onlyAccount = null): Clip
+    {
         if (! $this->budget->acceptsNewClips($campaign)) {
             throw ClipSubmissionRefused::campaignClosed();
         }
@@ -54,6 +101,7 @@ class ClipSubmissionService
             ->with('socialAccount')
             ->get()
             ->filter(fn ($p) => $p->socialAccount?->platform === $parsed->platform)
+            ->filter(fn ($p) => $onlyAccount === null || $p->social_account_id === $onlyAccount->getKey())
             ->sortByDesc(fn ($p) => [
                 $p->socialAccount->isSyncable() ? 1 : 0,
                 $p->socialAccount->getKey(),

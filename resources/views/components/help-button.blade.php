@@ -31,7 +31,7 @@
     </div>
 
     <button type="button" @click="open = ! open" :aria-expanded="open ? 'true' : 'false'" aria-label="Besoin d'aide ?"
-            class="flex h-14 items-center gap-2 rounded-full bg-brand-500 px-5 font-semibold text-white shadow-glow transition hover:bg-brand-400">
+            class="flex h-11 items-center gap-2 rounded-full bg-brand-500 px-3 font-semibold text-white shadow-glow transition hover:bg-brand-400 sm:h-14 sm:px-5">
         <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.2 9a3.8 3.8 0 017.3 1.3c0 2.5-3.5 3-3.5 5M12 18h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
         <span class="hidden sm:inline">Aide</span>
     </button>

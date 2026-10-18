@@ -2,12 +2,14 @@
 
 namespace App\Services\Social;
 
+use App\Contracts\ListsRecentPosts;
 use App\Contracts\SocialProvider;
 use App\Enums\Platform;
 use App\Exceptions\SocialProviderFailed;
 use App\Models\SocialAccount;
 use App\Support\Social\ConnectedAccount;
 use App\Support\Social\PostMetrics;
+use App\Support\Social\RecentPost;
 use Carbon\Carbon;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Collection;
@@ -23,7 +25,7 @@ use Illuminate\Support\Facades\Http;
  *
  * Non encore éprouvée sur l'API réelle.
  */
-class TikTokProvider implements SocialProvider
+class TikTokProvider implements ListsRecentPosts, SocialProvider
 {
     use ResolvesRedirectUri;
 
@@ -174,6 +176,37 @@ class TikTokProvider implements SocialProvider
                     thumbnailUrl: $video['cover_image_url'] ?? null,
                 ),
             ]);
+    }
+
+    /**
+     * Les dernières vidéos du compte, pour le choix au doigt sur téléphone.
+     * Même portée `video.list` que le relevé des vues : rien de plus à demander.
+     */
+    public function recentPosts(SocialAccount $account, int $limit = 12): Collection
+    {
+        $response = Http::withToken($account->access_token)
+            ->asJson()
+            ->timeout(15)
+            ->post('https://open.tiktokapis.com/v2/video/list/?fields='.implode(',', [
+                'id', 'cover_image_url', 'title', 'video_description', 'view_count', 'create_time', 'share_url',
+            ]), [
+                'max_count' => min(20, max(1, $limit)),
+            ]);
+
+        if ($response->failed()) {
+            throw SocialProviderFailed::fetchFailed($this->platform(), $response->status(), $response->body());
+        }
+
+        return collect($response->json('data.videos', []))
+            ->map(fn (array $video) => new RecentPost(
+                externalPostId: (string) $video['id'],
+                url: $video['share_url'] ?? null,
+                thumbnailUrl: $video['cover_image_url'] ?? null,
+                caption: ($video['title'] ?? null) ?: ($video['video_description'] ?? null),
+                views: (int) ($video['view_count'] ?? 0),
+                postedAt: isset($video['create_time']) ? Carbon::createFromTimestamp($video['create_time']) : null,
+            ))
+            ->values();
     }
 
     public function batchSize(): int

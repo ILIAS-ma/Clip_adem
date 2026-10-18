@@ -2,12 +2,14 @@
 
 namespace App\Services\Social;
 
+use App\Contracts\ListsRecentPosts;
 use App\Contracts\SocialProvider;
 use App\Enums\Platform;
 use App\Models\Clip;
 use App\Models\SocialAccount;
 use App\Support\Social\ConnectedAccount;
 use App\Support\Social\PostMetrics;
+use App\Support\Social\RecentPost;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -24,7 +26,7 @@ use Illuminate\Support\Str;
  * façon plausible puis sature. Un aléatoire pur rendrait les tests instables et
  * ferait parfois baisser les vues sans raison.
  */
-class FakeSocialProvider implements SocialProvider
+class FakeSocialProvider implements ListsRecentPosts, SocialProvider
 {
     public function __construct(
         protected Platform $platform,
@@ -139,6 +141,33 @@ class FakeSocialProvider implements SocialProvider
                     // la vraie API renverrait une miniature.
                     thumbnailUrl: $clip->thumbnail_url ?? "https://picsum.photos/seed/{$id}/400/500",
                 )];
+            });
+    }
+
+    /**
+     * Six vidéos simulées, stables pour un même compte : de quoi éprouver le
+     * choix au doigt en développement, sans clé de plateforme.
+     */
+    public function recentPosts(SocialAccount $account, int $limit = 12): Collection
+    {
+        $handle = $account->handle ?: 'demo';
+
+        return collect(range(1, min(6, $limit)))
+            ->map(function (int $i) use ($account, $handle) {
+                $id = (string) (7_400_000_000_000_000_000 + crc32($account->getKey().'|'.$i) * 1000 + $i);
+
+                return new RecentPost(
+                    externalPostId: $id,
+                    url: match ($this->platform) {
+                        Platform::TikTok => "https://www.tiktok.com/@{$handle}/video/{$id}",
+                        Platform::YouTube => "https://www.youtube.com/shorts/{$id}",
+                        Platform::Instagram => "https://www.instagram.com/reel/{$id}/",
+                    },
+                    thumbnailUrl: "https://picsum.photos/seed/{$id}/360/640",
+                    caption: "Vidéo de démonstration n°{$i}",
+                    views: (crc32($id) % 50_000) + 120,
+                    postedAt: now()->subHours($i * 7),
+                );
             });
     }
 
