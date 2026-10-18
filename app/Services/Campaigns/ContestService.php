@@ -35,7 +35,7 @@ class ContestService
     /**
      * @return Collection<int, object{rank: int, user_id: int, name: string, views: int, clips: int, score: int, best_clip_id: int}>
      */
-    public function standings(Campaign $campaign, ?int $limit = null): Collection
+    public function standings(Campaign $campaign, ?int $limit = null, ContestMetric $board = ContestMetric::Views): Collection
     {
         $frozenAt = $campaign->ends_at !== null && now()->gt($campaign->ends_at) ? $campaign->ends_at : null;
 
@@ -64,7 +64,7 @@ class ContestService
             ->select('clips.id', 'clips.user_id', 'clips.submitted_at', 'users.name', $views)
             ->get();
 
-        $byPosts = $campaign->contestMetric() === ContestMetric::Posts;
+        $byPosts = $board === ContestMetric::Posts;
 
         $rows = $clips
             ->groupBy('user_id')
@@ -101,9 +101,9 @@ class ContestService
     }
 
     /** La ligne d'un clippeur dans le classement, ou null s'il n'y figure pas. */
-    public function rowFor(Campaign $campaign, User $clipper): ?object
+    public function rowFor(Campaign $campaign, User $clipper, ContestMetric $board = ContestMetric::Views): ?object
     {
-        return $this->standings($campaign)->firstWhere('user_id', $clipper->getKey());
+        return $this->standings($campaign, board: $board)->firstWhere('user_id', $clipper->getKey());
     }
 
     /**
@@ -118,7 +118,7 @@ class ContestService
      * Les places récompensées sans clippeur (moins de participants que de
      * récompenses) ne sont pas attribuées ; leur argent reste au budget.
      *
-     * @return list<array{rank: int, user: string, reward: Reward, result: ?CreditResult}>
+     * @return list<array{board: ContestMetric, rank: int, user: string, reward: Reward, result: ?CreditResult}>
      */
     public function awardRewards(Campaign $campaign, ?User $by = null): array
     {
@@ -134,70 +134,98 @@ class ContestService
             throw new InvalidArgumentException('Les récompenses de ce classement ont déjà été attribuées.');
         }
 
-        $standings = $this->standings($campaign);
-        $rewards = $campaign->rewards();
-        // Ce qui a déjà été attribué lors d'une tentative précédente : un lot
-        // ne doit pas être annoncé deux fois si l'on relance.
-        $already = collect($campaign->contest_winners ?? [])->keyBy('rank');
         $awarded = [];
+        $podiums = [];
 
-        foreach ($rewards as $index => $reward) {
-            $row = $standings[$index] ?? null;
+        // Les deux tableaux, chacun avec ses récompenses : un même clippeur
+        // peut gagner les deux, chaque place a sa propre clé.
+        foreach (ContestMetric::cases() as $board) {
+            $standings = $this->standings($campaign, board: $board);
+            $rewards = $campaign->rewards($board);
+            // Ce qui a déjà été attribué lors d'une tentative précédente : un
+            // lot ne doit pas être annoncé deux fois si l'on relance.
+            $already = collect($this->winnersOf($campaign, $board))->keyBy('rank');
+            $lines = [];
 
-            if ($row === null) {
-                break;
+            foreach ($rewards as $index => $reward) {
+                $row = $standings[$index] ?? null;
+
+                if ($row === null) {
+                    break;
+                }
+
+                $result = null;
+
+                if ($reward->isMoney()) {
+                    $result = $this->bonuses->grantPrize($campaign, $row->best_clip_id, $row->rank, $reward->amountCents, $by, $board);
+                } elseif (! ($already[$row->rank]['awarded'] ?? false)) {
+                    $this->announceItem($campaign, $row, $reward, $by, $board);
+                }
+
+                $lines[] = ['board' => $board, 'rank' => $row->rank, 'user' => $row->name, 'reward' => $reward, 'result' => $result];
             }
 
-            $result = null;
+            /*
+             * Podium conservé : les places récompensées, ou à défaut les trois
+             * premières d'un tableau sans récompense.
+             */
+            $podiums[$board->value] = $standings->take(max(count($rewards), 3))->map(function (object $row) use ($campaign, $board, $lines) {
+                $line = collect($lines)->firstWhere('rank', $row->rank);
 
-            if ($reward->isMoney()) {
-                $result = $this->bonuses->grantPrize($campaign, $row->best_clip_id, $row->rank, $reward->amountCents, $by);
-            } elseif (! ($already[$row->rank]['awarded'] ?? false)) {
-                $this->announceItem($campaign, $row, $reward, $by);
-            }
+                return [
+                    'rank' => $row->rank,
+                    'user_id' => $row->user_id,
+                    'name' => $row->name,
+                    'views' => $row->views,
+                    'clips' => $row->clips,
+                    'reward' => $campaign->rewardFor($row->rank, $board)?->display(),
+                    'awarded' => $line !== null && $this->settled($line['result']),
+                ];
+            })->values()->all();
 
-            $awarded[] = ['rank' => $row->rank, 'user' => $row->name, 'reward' => $reward, 'result' => $result, 'row' => $row];
+            $awarded = [...$awarded, ...$lines];
         }
-
-        $complete = collect($awarded)->every(fn (array $line) => $line['result'] === null
-            || $line['result']->wasPaid()
-            || $line['result']->outcome === CreditOutcome::AlreadyProcessed);
-
-        /*
-         * Podium conservé : les places récompensées, ou à défaut les trois
-         * premières d'un classement pour la gloire.
-         */
-        $podium = $standings->take(max(count($rewards), 3))->map(function (object $row) use ($campaign, $awarded) {
-            $line = collect($awarded)->firstWhere('rank', $row->rank);
-            $reward = $campaign->rewardFor($row->rank);
-
-            return [
-                'rank' => $row->rank,
-                'user_id' => $row->user_id,
-                'name' => $row->name,
-                'views' => $row->views,
-                'clips' => $row->clips,
-                'reward' => $reward?->display(),
-                'awarded' => $line !== null && ($line['result'] === null || $line['result']->wasPaid()
-                    || $line['result']->outcome === CreditOutcome::AlreadyProcessed),
-            ];
-        })->values()->all();
 
         /*
          * Clôturé seulement si chaque place est passée : un prix en argent
          * refusé (budget insuffisant) doit pouvoir être retenté, sans repayer
          * les places déjà versées ni réannoncer les lots déjà remis.
          */
+        $complete = collect($awarded)->every(fn (array $line) => $this->settled($line['result']));
+
         $campaign->forceFill([
-            'contest_winners' => $podium,
+            'contest_winners' => $podiums,
             'prizes_paid_at' => $complete ? now() : null,
         ])->save();
 
-        return collect($awarded)->map(fn (array $line) => collect($line)->except('row')->all())->all();
+        return $awarded;
+    }
+
+    /**
+     * Le podium figé d'un tableau. Les toutes premières clôtures stockaient une
+     * simple liste : c'était celui des vues.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function winnersOf(Campaign $campaign, ContestMetric $board): array
+    {
+        $winners = $campaign->contest_winners ?? [];
+
+        if (array_is_list($winners)) {
+            return $board === ContestMetric::Views ? $winners : [];
+        }
+
+        return $winners[$board->value] ?? [];
+    }
+
+    /** Une place est réglée : lot annoncé, ou argent versé (maintenant ou avant). */
+    protected function settled(?CreditResult $result): bool
+    {
+        return $result === null || $result->wasPaid() || $result->outcome === CreditOutcome::AlreadyProcessed;
     }
 
     /** Prévient le gagnant d'un lot, et lui écrit au nom de l'équipe. */
-    protected function announceItem(Campaign $campaign, object $row, Reward $reward, ?User $by): void
+    protected function announceItem(Campaign $campaign, object $row, Reward $reward, ?User $by, ContestMetric $board): void
     {
         $winner = User::find($row->user_id);
 
@@ -206,7 +234,7 @@ class ContestService
         }
 
         try {
-            $winner->notify(new ContestRewardWon($campaign, $row->rank, (string) $reward->label));
+            $winner->notify(new ContestRewardWon($campaign, $row->rank, (string) $reward->label, $board));
         } catch (\Throwable $exception) {
             Log::warning('Notification de lot non envoyée', ['user_id' => $winner->getKey(), 'error' => $exception->getMessage()]);
         }
@@ -215,9 +243,10 @@ class ContestService
             $place = $row->rank === 1 ? '1re place' : $row->rank.'e place';
 
             MessagePosted::dispatch(Conversation::for($winner)->post($by, sprintf(
-                'Bravo ! Vous terminez %s du classement « %s » et gagnez : %s. '
+                'Bravo ! Vous terminez %s du %s de « %s » et gagnez : %s. '
                 .'Répondez ici avec vos coordonnées pour qu’on organise la remise.',
                 $place,
+                $board->boardName(),
                 $campaign->title,
                 $reward->label,
             )));

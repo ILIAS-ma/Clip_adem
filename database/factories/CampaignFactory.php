@@ -65,29 +65,31 @@ class CampaignFactory extends Factory
     }
 
     /**
-     * Ajoute un taux CPM après création. Par défaut 1 € pour 1000 vues sur
-     * TikTok, soit 0,1 centime la vue.
-     */
-    /**
      * Campagne « classement » : récompense par place, budget égal à l'argent
      * promis, et plateforme ouverte avec un taux à zéro.
      *
-     * @param  list<int|string>  $rewards  1re place d'abord : un entier = des
-     *                                     centimes, une chaîne = un objet
+     * @param  list<int|string>  $rewards  tableau des vues, 1re place d'abord :
+     *                                     un entier = des centimes, une chaîne = un objet
+     * @param  list<int|string>  $postRewards  tableau du nombre de clips, idem
      */
-    public function contest(array $rewards = [10_000, 5_000, 2_500], Platform $platform = Platform::TikTok): static
+    public function contest(array $rewards = [10_000, 5_000, 2_500], array $postRewards = [], Platform $platform = Platform::TikTok): static
     {
-        $prizes = array_map(fn ($reward) => is_int($reward)
+        $toPrizes = fn (array $list) => array_map(fn ($reward) => is_int($reward)
             ? ['type' => Reward::MONEY, 'amount_cents' => $reward]
-            : ['type' => Reward::ITEM, 'label' => $reward], $rewards);
+            : ['type' => Reward::ITEM, 'label' => $reward], $list);
 
         return $this->state(fn () => [
             'mode' => CampaignMode::Contest,
-            'contest_prizes' => $prizes,
-            'budget_total_cents' => array_sum(array_filter($rewards, 'is_int')),
+            'contest_prizes' => $toPrizes($rewards),
+            'contest_post_prizes' => $toPrizes($postRewards),
+            'budget_total_cents' => array_sum(array_filter([...$rewards, ...$postRewards], 'is_int')),
         ])->withRate($platform, ratePer1kCents: 0);
     }
 
+    /**
+     * Ajoute un taux CPM après création. Par défaut 1 € pour 1000 vues sur
+     * TikTok, soit 0,1 centime la vue.
+     */
     public function withRate(Platform $platform = Platform::TikTok, int $ratePer1kCents = 100): static
     {
         return $this->afterCreating(function (Campaign $campaign) use ($platform, $ratePer1kCents) {

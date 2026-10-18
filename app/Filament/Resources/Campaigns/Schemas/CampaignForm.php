@@ -5,7 +5,6 @@ namespace App\Filament\Resources\Campaigns\Schemas;
 use App\Enums\AssetKind;
 use App\Enums\CampaignMode;
 use App\Enums\CampaignStatus;
-use App\Enums\ContestMetric;
 use App\Enums\Platform;
 use App\Filament\Resources\Categories\Schemas\CategoryForm;
 use App\Models\Campaign;
@@ -122,72 +121,19 @@ class CampaignForm
                         ->disabled(fn (?Campaign $record) => $record !== null && $record->status !== CampaignStatus::Draft)
                         ->dehydrated(fn (?Campaign $record) => $record === null || $record->status === CampaignStatus::Draft)
                         ->helperText(fn ($get) => static::isContest($get)
-                            ? 'Aucune vue n’est payée au fil de l’eau : les clippeurs sont classés sur leurs vues, '
-                                .'et les prix ci-dessous récompensent les premières places à la fin.'
+                            ? 'Aucune vue n’est payée au fil de l’eau. Deux classements courent en même temps — '
+                                .'les vues et le nombre de clips validés — et les récompenses ci-dessous vont aux premières places à la fin.'
                             : 'Chaque tranche de 1 000 vues est payée au taux de la plateforme, jusqu’à épuisement du budget.')
                         ->columnSpanFull(),
 
-                    // Le critère se fixe au brouillon, comme le mode : le
-                    // changer en cours de route changerait le podium.
-                    Select::make('contest_metric')
-                        ->label('Classement sur')
-                        ->options(ContestMetric::options())
-                        ->default(ContestMetric::Views->value)
-                        ->required()
-                        ->selectablePlaceholder(false)
-                        ->visible(fn ($get) => static::isContest($get))
-                        ->disabled(fn (?Campaign $record) => $record !== null && $record->status !== CampaignStatus::Draft)
-                        ->dehydrated(fn (?Campaign $record) => $record === null || $record->status === CampaignStatus::Draft)
-                        ->helperText('Vues : le plus vu gagne. Nombre de clips postés : le plus régulier gagne '
-                            .'(seuls les clips validés comptent ; à égalité, les vues départagent).')
-                        ->columnSpanFull(),
-
                     /*
-                     * Une ligne par place récompensée, dans l'ordre. Chaque
-                     * place reçoit de l'argent (versé sur le solde) ou un
-                     * objet (remis par l'équipe). Aucune ligne : classement
-                     * pour la gloire, sans budget.
+                     * Deux classements courent en même temps, chacun avec ses
+                     * récompenses : le plus vu, et celui qui poste le plus.
+                     * Une ligne par place récompensée, dans l'ordre ; aucune
+                     * ligne = tableau pour la gloire.
                      */
-                    Repeater::make('contest_prizes')
-                        ->label('Récompenses par place')
-                        ->schema([
-                            Select::make('type')
-                                ->label('Récompense')
-                                ->options([
-                                    Reward::MONEY => 'Argent',
-                                    Reward::ITEM => 'Objet / lot',
-                                ])
-                                ->default(Reward::MONEY)
-                                ->selectablePlaceholder(false)
-                                ->required()
-                                ->live(),
-
-                            static::money('amount_cents')
-                                ->label('Montant')
-                                ->required(fn ($get) => $get('type') === Reward::MONEY)
-                                ->minValue(0.01)
-                                ->visible(fn ($get) => $get('type') === Reward::MONEY),
-
-                            TextInput::make('label')
-                                ->label('Objet')
-                                ->placeholder('PS5, maillot dédicacé, place de concert…')
-                                ->maxLength(120)
-                                ->required(fn ($get) => $get('type') === Reward::ITEM)
-                                ->visible(fn ($get) => $get('type') === Reward::ITEM),
-                        ])
-                        ->columns(2)
-                        ->itemNumbers()
-                        ->itemLabel(fn (array $state) => match ($state['type'] ?? null) {
-                            Reward::ITEM => filled($state['label'] ?? null) ? $state['label'] : 'Objet',
-                            default => 'Argent',
-                        })
-                        ->reorderable()
-                        ->defaultItems(0)
-                        ->addActionLabel('Ajouter une place récompensée')
-                        ->visible(fn ($get) => static::isContest($get))
-                        ->helperText('Dans l’ordre : la 1re ligne récompense la 1re place, la 2e la 2e place, etc. '
-                            .'Sans aucune ligne, le classement se joue pour la gloire.')
-                        ->columnSpanFull(),
+                    static::rewardsRepeater('contest_prizes', 'Récompenses du classement des vues'),
+                    static::rewardsRepeater('contest_post_prizes', 'Récompenses du classement du nombre de clips'),
 
                     // En classement, le budget est exactement la somme des prix,
                     // recalculée à l'enregistrement (voir withContestBudget()) :
@@ -335,6 +281,54 @@ class CampaignForm
         ]);
     }
 
+    /**
+     * Liste des récompenses d'un tableau : chaque place reçoit de l'argent
+     * (versé sur le solde) ou un objet (remis par l'équipe).
+     */
+    protected static function rewardsRepeater(string $name, string $label): Repeater
+    {
+        return Repeater::make($name)
+            ->label($label)
+            ->schema([
+                Select::make('type')
+                    ->label('Récompense')
+                    ->options([
+                        Reward::MONEY => 'Argent',
+                        Reward::ITEM => 'Objet / lot',
+                    ])
+                    ->default(Reward::MONEY)
+                    ->selectablePlaceholder(false)
+                    ->required()
+                    ->live(),
+
+                static::money('amount_cents')
+                    ->label('Montant')
+                    ->required(fn ($get) => $get('type') === Reward::MONEY)
+                    ->minValue(0.01)
+                    ->visible(fn ($get) => $get('type') === Reward::MONEY),
+
+                TextInput::make('label')
+                    ->label('Objet')
+                    ->placeholder('PS5, maillot dédicacé, place de concert…')
+                    ->maxLength(120)
+                    ->required(fn ($get) => $get('type') === Reward::ITEM)
+                    ->visible(fn ($get) => $get('type') === Reward::ITEM),
+            ])
+            ->columns(2)
+            ->itemNumbers()
+            ->itemLabel(fn (array $state) => match ($state['type'] ?? null) {
+                Reward::ITEM => filled($state['label'] ?? null) ? $state['label'] : 'Objet',
+                default => 'Argent',
+            })
+            ->reorderable()
+            ->defaultItems(0)
+            ->addActionLabel('Ajouter une place récompensée')
+            ->visible(fn ($get) => static::isContest($get))
+            ->helperText('La 1re ligne récompense la 1re place, la 2e la 2e place, etc. '
+                .'Sans aucune ligne, ce classement se joue pour la gloire.')
+            ->columnSpanFull();
+    }
+
     /** Le formulaire décrit-il un classement ? `$prefix` remonte depuis un élément de liste. */
     protected static function isContest(callable $get, string $prefix = ''): bool
     {
@@ -358,17 +352,24 @@ class CampaignForm
         }
 
         if ($mode === CampaignMode::Contest->value) {
-            $rewards = collect((array) ($data['contest_prizes'] ?? []))
-                ->map(fn ($raw) => Reward::from($raw))
-                ->filter()
-                ->values();
+            $budget = 0;
 
-            $data['contest_prizes'] = $rewards->map->toArray()->all();
-            // Seul l'argent pèse sur le budget : les objets sont remis par
-            // l'équipe, hors de la caisse de la campagne.
-            $data['budget_total_cents'] = $rewards->filter->isMoney()->sum('amountCents');
+            foreach (['contest_prizes', 'contest_post_prizes'] as $key) {
+                $rewards = collect((array) ($data[$key] ?? []))
+                    ->map(fn ($raw) => Reward::from($raw))
+                    ->filter()
+                    ->values();
+
+                $data[$key] = $rewards->map->toArray()->all();
+                // Seul l'argent pèse sur le budget : les objets sont remis
+                // par l'équipe, hors de la caisse de la campagne.
+                $budget += $rewards->filter->isMoney()->sum('amountCents');
+            }
+
+            $data['budget_total_cents'] = $budget;
         } else {
             $data['contest_prizes'] = null;
+            $data['contest_post_prizes'] = null;
         }
 
         return $data;

@@ -73,6 +73,12 @@
             </div>
         @endif
 
+        {{-- Les deux classements en pleine largeur, côte à côte : dans la
+             colonne latérale, deux tableaux n'auraient pas tenu. --}}
+        @if ($campaign->isContest())
+            @include('clipper.campaigns.partials.contest', ['campaign' => $campaign, 'boards' => $boards])
+        @endif
+
         <div class="grid gap-6 lg:grid-cols-3">
 
             <div class="space-y-6 lg:col-span-2">
@@ -205,10 +211,6 @@
             </div>
 
             <div class="space-y-6">
-                @if ($campaign->isContest())
-                    @include('clipper.campaigns.partials.contest', ['campaign' => $campaign, 'standings' => $standings, 'myStanding' => $myStanding])
-                @endif
-
                 <div class="card p-6">
                     @unless ($campaign->isContest())
                         <x-budget-bar :campaign="$campaign" :remaining="$remainingCents" />

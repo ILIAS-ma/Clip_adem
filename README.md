@@ -819,8 +819,11 @@ Le tableau de bord du clippeur célèbre chaque prime tant qu'il ne l'a pas ouve
 Type de campagne choisi au brouillon : **Payée aux vues** (le fonctionnement
 historique) ou **Classement**. En classement, rien n'est payé aux vues : les
 plateformes sont ouvertes avec un taux à zéro, et le moteur de budget ne
-crédite donc rien sans qu'aucune de ses règles connaisse ce mode. Les
-clippeurs sont classés sur les vues de leurs clips validés (`ContestService`).
+crédite donc rien sans qu'aucune de ses règles connaisse ce mode. **Deux
+classements courent en même temps**, affichés côte à côte (`ContestService`,
+`ContestMetric`) : sur les vues des clips validés, et sur leur nombre (les vues
+départagent les égalités). Chacun a ses propres récompenses
+(`contest_prizes`, `contest_post_prizes`) ; un même clippeur peut gagner les deux.
 
 Chaque place récompensée reçoit **de l'argent** ou **un objet** ; aucune place
 récompensée = classement pour la gloire. Le budget est la seule part en

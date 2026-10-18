@@ -30,6 +30,24 @@ enum ContestMetric: string
         };
     }
 
+    /** Titre court du tableau : « Top vues », « Top clips ». */
+    public function title(): string
+    {
+        return match ($this) {
+            self::Views => 'Top vues',
+            self::Posts => 'Top clips',
+        };
+    }
+
+    /** Pour les phrases : « 1re place du classement des vues ». */
+    public function boardName(): string
+    {
+        return match ($this) {
+            self::Views => 'classement des vues',
+            self::Posts => 'classement des clips',
+        };
+    }
+
     /** Le chiffre qui classe, prêt à afficher : « 12 clips » ou « 878k vues ». */
     public function formatScore(int $score): string
     {

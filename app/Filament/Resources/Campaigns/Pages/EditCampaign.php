@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Campaigns\Pages;
 
 use App\Enums\CampaignStatus;
+use App\Enums\ContestMetric;
 use App\Exceptions\InvalidCampaignTransition;
 use App\Filament\Resources\Campaigns\CampaignResource;
 use App\Filament\Resources\Campaigns\Schemas\CampaignForm;
@@ -10,7 +11,6 @@ use App\Filament\Widgets\CampaignBudgetOverview;
 use App\Models\Campaign;
 use App\Services\Campaigns\ContestService;
 use App\Support\Budget\CreditOutcome;
-use App\Support\Campaigns\Reward;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
@@ -114,7 +114,10 @@ class EditCampaign extends EditRecord
             ->modalCancelActionLabel('Fermer')
             ->modalContent(fn () => view('filament.campaigns.contest-standings', [
                 'campaign' => $this->getRecord(),
-                'standings' => app(ContestService::class)->standings($this->getRecord(), 50),
+                'boards' => collect(ContestMetric::cases())->map(fn (ContestMetric $metric) => [
+                    'metric' => $metric,
+                    'standings' => app(ContestService::class)->standings($this->getRecord(), 50, $metric),
+                ])->all(),
             ]));
     }
 
@@ -140,21 +143,28 @@ class EditCampaign extends EditRecord
             ->modalHeading('Clôturer le classement ?')
             ->modalDescription(function () {
                 $campaign = $this->getRecord();
-                $standings = app(ContestService::class)->standings($campaign);
-                $rewards = $campaign->rewards();
 
-                if ($rewards === []) {
-                    return 'Classement sans récompense : le podium sera figé et affiché aux clippeurs.';
+                if ($campaign->allRewards() === []) {
+                    return 'Classements sans récompense : les podiums seront figés et affichés aux clippeurs.';
                 }
 
-                return collect($rewards)
-                    ->map(fn (Reward $reward, int $index) => sprintf(
-                        '%s : %s → %s',
-                        $index === 0 ? '1re place' : ($index + 1).'e place',
-                        $reward->display(),
-                        $standings[$index]->name ?? 'personne (non attribué)',
-                    ))
-                    ->implode(' · ').'. L’argent arrive tout de suite sur les soldes ; '
+                $lines = [];
+
+                foreach (ContestMetric::cases() as $metric) {
+                    $standings = app(ContestService::class)->standings($campaign, board: $metric);
+
+                    foreach ($campaign->rewards($metric) as $index => $reward) {
+                        $lines[] = sprintf(
+                            '%s, %s : %s → %s',
+                            $metric->title(),
+                            $index === 0 ? '1re place' : ($index + 1).'e place',
+                            $reward->display(),
+                            $standings[$index]->name ?? 'personne (non attribué)',
+                        );
+                    }
+                }
+
+                return implode(' · ', $lines).'. L’argent arrive tout de suite sur les soldes ; '
                     .'les gagnants d’un lot reçoivent un message pour organiser la remise.';
             })
             ->action(function () {
@@ -174,7 +184,7 @@ class EditCampaign extends EditRecord
                     ? Notification::make()->success()->title('Classement clôturé')
                         ->body(count($awarded).' récompense(s) attribuée(s).')->send()
                     : Notification::make()->warning()->title('Certaines récompenses en argent n’ont pas pu être versées')
-                        ->body($failed->map(fn (array $line) => $line['rank'].'e place : '.$line['result']->outcome->label())->implode(' · ')
+                        ->body($failed->map(fn (array $line) => $line['board']->title().', '.$line['rank'].'e place : '.$line['result']->outcome->label())->implode(' · ')
                             .'. Corrigez puis relancez : rien ne sera versé deux fois.')
                         ->send();
 

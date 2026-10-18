@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Clipper;
 
 use App\Contracts\CampaignBudgetService;
+use App\Enums\ContestMetric;
 use App\Http\Controllers\Controller;
 use App\Models\Campaign;
 use App\Services\Campaigns\ContestService;
@@ -32,7 +33,18 @@ class CampaignController extends Controller
 
         // Classement : le haut du tableau, et la place du clippeur même s'il
         // n'y figure pas — savoir qu'on est 14e motive autant que d'être 3e.
-        $standings = $campaign->isContest() ? app(ContestService::class)->standings($campaign) : collect();
+        // Les deux tableaux d'un classement, vues et nombre de clips.
+        $boards = $campaign->isContest()
+            ? collect(ContestMetric::cases())->map(function (ContestMetric $metric) use ($campaign, $clipper) {
+                $standings = app(ContestService::class)->standings($campaign, board: $metric);
+
+                return [
+                    'metric' => $metric,
+                    'standings' => $standings->take(10)->values(),
+                    'mine' => $standings->firstWhere('user_id', $clipper->getKey()),
+                ];
+            })->all()
+            : [];
 
         return view('clipper.campaigns.show', [
             'campaign' => $campaign,
@@ -54,8 +66,7 @@ class CampaignController extends Controller
                 ->where('user_id', $clipper->getKey())
                 ->latest('submitted_at')
                 ->get(),
-            'standings' => $standings->take(10)->values(),
-            'myStanding' => $standings->firstWhere('user_id', $clipper->getKey()),
+            'boards' => $boards,
         ]);
     }
 }

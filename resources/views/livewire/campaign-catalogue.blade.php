@@ -143,7 +143,7 @@
                     @if ($campaign->isContest())
                         {{-- Un classement ne paie pas aux vues : ce qui compte,
                              c'est ce qu'il y a à gagner en haut du podium. --}}
-                        @php $first = $campaign->rewardFor(1); @endphp
+                        @php $first = $campaign->rewardFor(1) ?? ($campaign->allRewards()[0] ?? null); @endphp
                         <p class="mt-4 font-display text-2xl font-bold tabular text-ink-50">
                             @if ($campaign->prizePoolCents() > 0)
                                 {{ Money::wholeEuros($campaign->prizePoolCents()) }}
@@ -169,7 +169,7 @@
                     <div class="mt-3 flex flex-wrap gap-1.5">
                         @if ($campaign->isContest())
                             <span class="chip bg-brand-500/15 text-brand-300">
-                                Classement{{ $campaign->contestMetric() === \App\Enums\ContestMetric::Posts ? ' · nombre de clips' : ' · vues' }}
+                                Classement · vues + clips
                             </span>
                         @endif
                         @foreach ($campaign->rates->where('is_enabled', true) as $rate)

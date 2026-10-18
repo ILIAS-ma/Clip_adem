@@ -5,6 +5,7 @@ namespace Tests\Feature\Campaigns;
 use App\Contracts\CampaignBudgetService;
 use App\Enums\CampaignStatus;
 use App\Enums\ClipStatus;
+use App\Enums\ContestMetric;
 use App\Enums\Platform;
 use App\Enums\UserRole;
 use App\Exceptions\InvalidCampaignTransition;
@@ -108,9 +109,9 @@ class ContestTest extends TestCase
     }
 
     #[Test]
-    public function a_posts_contest_ranks_on_validated_clip_count_then_views(): void
+    public function the_clips_board_ranks_on_validated_clip_count_then_views(): void
     {
-        $campaign = $this->contest(['contest_metric' => 'posts']);
+        $campaign = $this->contest();
         [$regular, $viral, $tied] = [$this->clipper('Régulier'), $this->clipper('Viral'), $this->clipper('Égal')];
 
         foreach (range(1, 4) as $i) {
@@ -123,28 +124,69 @@ class ContestTest extends TestCase
         // Même nombre de clips que Viral, moins de vues : derrière lui.
         $this->clip($campaign, $tied, 500);
 
-        $standings = app(ContestService::class)->standings($campaign);
+        $posts = app(ContestService::class)->standings($campaign, board: ContestMetric::Posts);
+        $views = app(ContestService::class)->standings($campaign, board: ContestMetric::Views);
 
-        $this->assertSame(['Régulier', 'Viral', 'Égal'], $standings->pluck('name')->all());
-        $this->assertSame(4, $standings[0]->score);
-        $this->assertSame(4, $standings[0]->clips);
-
-        $this->actingAs($regular)
-            ->get(route('campaigns.show', $campaign))
-            ->assertSee('le nombre de clips validés')
-            ->assertSee('4 clips');
+        $this->assertSame(['Régulier', 'Viral', 'Égal'], $posts->pluck('name')->all());
+        $this->assertSame(4, $posts[0]->score);
+        // Le même campagne, l'autre tableau : Viral devant.
+        $this->assertSame('Viral', $views->first()->name);
     }
 
     #[Test]
-    public function a_posts_contest_ignores_clips_submitted_after_the_end(): void
+    public function the_clipper_sees_both_boards_side_by_side(): void
     {
-        $campaign = $this->contest(['contest_metric' => 'posts', 'ends_at' => now()->subDay()]);
+        $campaign = Campaign::factory()->contest([10_000], ['PS5'])->create([
+            'status' => CampaignStatus::Active,
+            'ends_at' => now()->addWeek(),
+        ]);
+        $maya = $this->clipper('Maya');
+        $this->clip($campaign, $maya, 12_000);
+        $this->clip($campaign, $maya, 3_000);
+
+        $this->actingAs($maya)
+            ->get(route('campaigns.show', $campaign))
+            ->assertSuccessful()
+            ->assertSee('Top vues')
+            ->assertSee('Top clips')
+            ->assertSee('15k vues')
+            ->assertSee('2 clips')
+            ->assertSee('PS5')
+            ->assertSee('plus des lots');
+    }
+
+    #[Test]
+    public function the_clips_board_ignores_clips_submitted_after_the_end(): void
+    {
+        $campaign = $this->contest(['ends_at' => now()->subDay()]);
         $late = $this->clipper('Tardif');
 
         $this->clip($campaign, $late, 1_000, submittedAt: now()->subDays(3)->toDateTimeString());
         $this->clip($campaign, $late, 1_000, submittedAt: now()->toDateTimeString());
 
-        $this->assertSame(1, app(ContestService::class)->standings($campaign)->first()->clips);
+        $this->assertSame(1, app(ContestService::class)->standings($campaign, board: ContestMetric::Posts)->first()->clips);
+    }
+
+    #[Test]
+    public function winning_both_boards_pays_both_prizes(): void
+    {
+        $campaign = Campaign::factory()->contest([10_000], [3_000])->create([
+            'status' => CampaignStatus::Active,
+            'ends_at' => now()->subHour(),
+        ]);
+        $champion = $this->clipper('Champion');
+        $this->clip($campaign, $champion, 50_000);
+        $this->clip($campaign, $champion, 50_000);
+
+        $awarded = app(ContestService::class)->awardRewards($campaign);
+
+        $this->assertCount(2, $awarded);
+        $this->assertSame(13_000, $champion->availableBalanceCents());
+        $this->assertSame(0, Artisan::call('budget:audit'));
+
+        $winners = $campaign->fresh()->contest_winners;
+        $this->assertSame('Champion', $winners['views'][0]['name']);
+        $this->assertSame('Champion', $winners['posts'][0]['name']);
     }
 
     #[Test]
@@ -275,8 +317,8 @@ class ContestTest extends TestCase
         $this->assertStringContainsString('PS5', Conversation::for($second)->messages()->value('body'));
 
         $winners = $campaign->fresh()->contest_winners;
-        $this->assertSame('PS5', $winners[1]['reward']);
-        $this->assertTrue($winners[1]['awarded']);
+        $this->assertSame('PS5', $winners['views'][1]['reward']);
+        $this->assertTrue($winners['views'][1]['awarded']);
 
         $this->actingAs($second)
             ->get(route('campaigns.show', $campaign))
@@ -293,7 +335,8 @@ class ContestTest extends TestCase
         $this->assertSame([], app(ContestService::class)->awardRewards($campaign));
 
         $this->assertNotNull($campaign->fresh()->prizes_paid_at);
-        $this->assertSame('Seul', $campaign->fresh()->contest_winners[0]['name']);
+        $this->assertSame('Seul', $campaign->fresh()->contest_winners['views'][0]['name']);
+        $this->assertSame('Seul', $campaign->fresh()->contest_winners['posts'][0]['name']);
     }
 
     #[Test]

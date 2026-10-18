@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Enums\ContestMetric;
 use App\Models\Campaign;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -22,6 +23,7 @@ class ContestRewardWon extends Notification implements ShouldQueue
         public readonly Campaign $campaign,
         public readonly int $rank,
         public readonly string $reward,
+        public readonly ContestMetric $board = ContestMetric::Views,
     ) {}
 
     /** @return array<int, string> */
@@ -35,7 +37,7 @@ class ContestRewardWon extends Notification implements ShouldQueue
     {
         return [
             'title' => 'Vous avez gagné : '.$this->reward,
-            'body' => $this->place().' du classement « '.$this->campaign->title.' ». '
+            'body' => $this->place().' du '.$this->board->boardName().' de « '.$this->campaign->title.' ». '
                 .'L’équipe vous écrit dans Messages pour organiser la remise.',
             'url' => route('messages.index'),
         ];
@@ -46,7 +48,7 @@ class ContestRewardWon extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject('Bravo, vous avez gagné : '.$this->reward)
             ->greeting('Bonjour '.$notifiable->displayName().',')
-            ->line('Vous terminez **'.$this->place().'** du classement « '.$this->campaign->title.' ».')
+            ->line('Vous terminez **'.$this->place().'** du '.$this->board->boardName().' de « '.$this->campaign->title.' ».')
             ->line('Votre lot : **'.$this->reward.'**. L’équipe vous écrit dans votre messagerie pour organiser la remise.')
             ->action('Ouvrir mes messages', route('messages.index'));
     }

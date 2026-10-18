@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
-    'creator_id', 'category_id', 'mode', 'contest_metric', 'contest_prizes', 'title', 'slug', 'brief', 'required_hashtags',
+    'creator_id', 'category_id', 'mode', 'contest_prizes', 'contest_post_prizes', 'title', 'slug', 'brief', 'required_hashtags',
     'status', 'currency', 'budget_total_cents', 'min_views_per_clip',
     'min_clips_per_clipper', 'max_payout_per_clip_cents',
     'launch_bonus_cents', 'launch_bonus_slots',
@@ -32,7 +32,6 @@ class Campaign extends Model
     /** Le mode par défaut, aussi en mémoire avant le premier rechargement. */
     protected $attributes = [
         'mode' => 'cpm',
-        'contest_metric' => 'views',
     ];
 
     protected function casts(): array
@@ -40,8 +39,8 @@ class Campaign extends Model
         return [
             'status' => CampaignStatus::class,
             'mode' => CampaignMode::class,
-            'contest_metric' => ContestMetric::class,
             'contest_prizes' => 'array',
+            'contest_post_prizes' => 'array',
             'prizes_paid_at' => 'datetime',
             'contest_winners' => 'array',
             'required_hashtags' => 'array',
@@ -115,42 +114,45 @@ class Campaign extends Model
         return $this->mode === CampaignMode::Contest;
     }
 
-    /** Critère du classement : les vues, ou le nombre de clips validés. */
-    public function contestMetric(): ContestMetric
-    {
-        return $this->contest_metric ?? ContestMetric::Views;
-    }
-
     /**
-     * Récompenses par place, dans l'ordre : index 0 = 1re place. Argent ou
-     * objet ; une liste vide = classement sans récompense.
+     * Récompenses d'un des deux classements, par place, dans l'ordre :
+     * index 0 = 1re place. Argent ou objet ; une liste vide = classement
+     * sans récompense.
      *
      * @return list<Reward>
      */
-    public function rewards(): array
+    public function rewards(ContestMetric $board = ContestMetric::Views): array
     {
-        return collect($this->contest_prizes ?? [])
-            ->map(fn ($raw) => Reward::from($raw))
+        $raw = $board === ContestMetric::Posts ? $this->contest_post_prizes : $this->contest_prizes;
+
+        return collect($raw ?? [])
+            ->map(fn ($item) => Reward::from($item))
             ->filter()
             ->values()
             ->all();
     }
 
     /** La récompense d'une place (1 = première), ou null si elle n'en a pas. */
-    public function rewardFor(int $rank): ?Reward
+    public function rewardFor(int $rank, ContestMetric $board = ContestMetric::Views): ?Reward
     {
-        return $this->rewards()[$rank - 1] ?? null;
+        return $this->rewards($board)[$rank - 1] ?? null;
     }
 
-    /** L'argent promis, seule part qui pèse sur le budget. */
+    /** Toutes les récompenses, des deux classements. @return list<Reward> */
+    public function allRewards(): array
+    {
+        return [...$this->rewards(ContestMetric::Views), ...$this->rewards(ContestMetric::Posts)];
+    }
+
+    /** L'argent promis sur les deux classements, seule part qui pèse sur le budget. */
     public function prizePoolCents(): int
     {
-        return collect($this->rewards())->filter->isMoney()->sum('amountCents');
+        return collect($this->allRewards())->filter->isMoney()->sum('amountCents');
     }
 
     public function hasItemRewards(): bool
     {
-        return collect($this->rewards())->contains->isItem();
+        return collect($this->allRewards())->contains->isItem();
     }
 
     /**
