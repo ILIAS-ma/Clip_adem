@@ -174,6 +174,18 @@ return [
     ],
 
     /*
+    | Echo Studio (FetchClip), l'outil de recherche et de montage.
+    |
+    | En pause par défaut : il tourne sur une clé Twitch partagée par tous, et
+    | la suite prévue est que chacun branche la sienne. Tant que c'est éteint,
+    | le lien disparaît du site et le serveur refuse l'accès à l'outil.
+    | STUDIO_ENABLED=true le rouvre sans rien redéployer d'autre.
+    */
+    'studio' => [
+        'enabled' => (bool) env('STUDIO_ENABLED', false),
+    ],
+
+    /*
     | Traitement vidéo : téléchargement et montage vertical.
     |
     | Les deux garde-fous qui comptent ne sont pas des réglages de confort.

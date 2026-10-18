@@ -96,7 +96,8 @@ Route::post('/webhooks/paypal', PayPalWebhookController::class)
 Route::get('/_studio-auth', function () {
     $user = auth()->user();
 
-    abort_unless($user && $user->isClipper() && ! $user->is_banned, 401);
+    // Outil en pause : refusé à tous, Nginx renvoie alors vers la page de pause.
+    abort_unless(config('clipping.studio.enabled') && $user && $user->isClipper() && ! $user->is_banned, 401);
 
     /*
      * L'identité repart dans un en-tête, que Nginx relaie à l'outil : c'est
@@ -134,10 +135,24 @@ Route::get('/_studio-ping', fn () => response()->noContent())
  * perdu de vue ce qu'on faisait.
  */
 Route::get('/connexion-studio', function () {
+    // En pause, refaire se connecter tournerait en boucle : Nginx renverrait
+    // aussitôt ici. On explique plutôt que l'outil revient bientôt.
+    if (! config('clipping.studio.enabled')) {
+        return redirect()->route('studio.paused');
+    }
+
     session()->put('url.intended', url('/fetchclip'));
 
     return redirect()->route('login');
 })->name('studio.login');
+
+Route::get('/echo-studio-en-pause', function () {
+    if (config('clipping.studio.enabled')) {
+        return redirect('/fetchclip');
+    }
+
+    return auth()->check() ? view('clipper.studio-paused') : redirect()->route('login');
+})->name('studio.paused');
 
 /*
  * Les erreurs du navigateur, remontées dans nos journaux.

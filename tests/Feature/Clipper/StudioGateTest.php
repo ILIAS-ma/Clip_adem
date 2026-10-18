@@ -26,6 +26,34 @@ class StudioGateTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Ces tests portent sur l'outil ouvert ; la pause a les siens plus bas.
+        config()->set('clipping.studio.enabled', true);
+    }
+
+    #[Test]
+    public function a_paused_studio_refuses_everyone_and_explains_why(): void
+    {
+        config()->set('clipping.studio.enabled', false);
+        $clipper = $this->clipper();
+
+        $this->actingAs($clipper)->get(route('studio.auth'))->assertUnauthorized();
+
+        // La redirection de Nginx mène à l'explication, pas en boucle à la connexion.
+        $this->actingAs($clipper)->get(route('studio.login'))->assertRedirect(route('studio.paused'));
+        $this->actingAs($clipper)->get(route('studio.paused'))
+            ->assertSuccessful()
+            ->assertSee('Echo Studio est en pause');
+
+        // Et le site ne propose plus d'y aller.
+        $this->actingAs($clipper)->get(route('dashboard'))
+            ->assertSuccessful()
+            ->assertDontSee('/fetchclip', escape: false);
+    }
+
     protected function clipper(array $attributs = []): User
     {
         return User::factory()->create(array_merge([

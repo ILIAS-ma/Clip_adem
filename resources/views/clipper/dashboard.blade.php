@@ -93,6 +93,7 @@
              * voit d'un coup d'œil où l'on en est, et la prochaine action est
              * toujours la première étape non cochée.
              */
+            $studioOn = (bool) config('clipping.studio.enabled');
             $etapes = [
                 ['fait' => $accountsCount > 0, 'titre' => 'Lier votre compte TikTok',
                  'detail' => 'C\'est par lui que vos vues sont comptées.',
@@ -100,9 +101,14 @@
                 ['fait' => $joinedCampaigns > 0, 'titre' => 'Rejoindre une campagne',
                  'detail' => 'Choisissez un créateur ou un streamer à promouvoir.',
                  'lien' => route('campaigns.index'), 'action' => 'Voir', 'navigate' => true],
-                ['fait' => $clips->isNotEmpty(), 'titre' => 'Publier votre premier clip',
-                 'detail' => 'Trouvez-le et montez-le dans Echo Studio, puis collez son lien.',
-                 'lien' => url('/fetchclip'), 'action' => 'Studio', 'navigate' => false],
+                // Echo Studio en pause : l'étape mène à la campagne plutôt qu'à l'outil.
+                $studioOn
+                    ? ['fait' => $clips->isNotEmpty(), 'titre' => 'Publier votre premier clip',
+                       'detail' => 'Trouvez-le et montez-le dans Echo Studio, puis collez son lien.',
+                       'lien' => url('/fetchclip'), 'action' => 'Studio', 'navigate' => false]
+                    : ['fait' => $clips->isNotEmpty(), 'titre' => 'Publier votre premier clip',
+                       'detail' => 'Publiez-le sur votre compte, puis collez son lien sur la campagne.',
+                       'lien' => route('campaigns.index'), 'action' => 'Campagnes', 'navigate' => true],
                 ['fait' => $manque === 0, 'titre' => 'Atteindre '.Money::euros($minimum),
                  'detail' => 'Le minimum pour demander un retrait PayPal.',
                  'lien' => route('earnings.index'), 'action' => 'Revenus', 'navigate' => true],
@@ -207,7 +213,11 @@
                     <p class="mt-2 text-sm text-ink-300">
                         Compte lié, campagne rejointe, clips publiés : continuez sur votre lancée.
                     </p>
-                    <a href="{{ url('/fetchclip') }}" class="btn-brand mt-auto self-start">Ouvrir Echo Studio</a>
+                    @if ($studioOn)
+                        <a href="{{ url('/fetchclip') }}" class="btn-brand mt-auto self-start">Ouvrir Echo Studio</a>
+                    @else
+                        <a href="{{ route('campaigns.index') }}" wire:navigate class="btn-brand mt-auto self-start">Voir les campagnes</a>
+                    @endif
                 @endif
             </div>
         </div>
@@ -215,9 +225,14 @@
         {{-- Les trois endroits où l'on va tous les jours. --}}
         <div class="grid gap-4 sm:grid-cols-3">
             @foreach ([
-                ['href' => url('/fetchclip'), 'navigate' => false, 'titre' => 'Echo Studio',
-                 'texte' => 'Trouvez les meilleurs moments Twitch et montez-les en 9:16.',
-                 'icone' => 'M15 10l4.55-2.28A1 1 0 0121 8.62v6.76a1 1 0 01-1.45.9L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z'],
+                $studioOn
+                    ? ['href' => url('/fetchclip'), 'navigate' => false, 'titre' => 'Echo Studio',
+                       'texte' => 'Trouvez les meilleurs moments Twitch et montez-les en 9:16.',
+                       'icone' => 'M15 10l4.55-2.28A1 1 0 0121 8.62v6.76a1 1 0 01-1.45.9L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z']
+                    // Studio en pause : la formation prend sa place.
+                    : ['href' => route('training.index'), 'navigate' => true, 'titre' => 'Formation',
+                       'texte' => 'Les formats qui marchent et les règles, en quelques minutes.',
+                       'icone' => 'M12 14l9-5-9-5-9 5 9 5zm0 0v6m-6-9.2V16c0 1.1 2.7 3 6 3s6-1.9 6-3v-5.2'],
                 ['href' => route('campaigns.index'), 'navigate' => true, 'titre' => 'Campagnes',
                  'texte' => $openCampaigns > 0 ? $openCampaigns.' ouverte'.($openCampaigns > 1 ? 's' : '').' en ce moment.' : 'Aucune ouverte pour l\'instant.',
                  'icone' => 'M3 10v4a1 1 0 001 1h3l5 4V5L7 9H4a1 1 0 00-1 1zm13.5-3a5 5 0 010 10'],

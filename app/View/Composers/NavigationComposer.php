@@ -118,6 +118,11 @@ class NavigationComposer
                 ],
             ];
 
+        // Echo Studio en pause (clipping.studio.enabled) : son lien disparaît.
+        if (! config('clipping.studio.enabled')) {
+            $links = array_values(array_filter($links, fn (array $link) => ($link['url'] ?? null) !== '/fetchclip'));
+        }
+
         /*
          * Le fil avec l'équipe, pour tous les profils. Le badge compte ce que
          * l'équipe a écrit et qui n'a pas été lu : c'est par lui qu'on
