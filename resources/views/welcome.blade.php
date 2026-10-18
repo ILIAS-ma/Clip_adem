@@ -50,7 +50,6 @@
 
                     <nav class="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1.5 rounded-full bg-ink-50/5 px-3 py-2.5 ring-1 ring-ink-50/10 backdrop-blur md:flex">
                         <a href="#comment-ca-marche" class="rounded-full px-5 py-2.5 text-sm font-medium text-ink-200 transition-colors hover:text-ink-50">Comment ça marche</a>
-                        <a href="#pour-les-createurs" class="rounded-full px-5 py-2.5 text-sm font-medium text-ink-200 transition-colors hover:text-ink-50">Pour les créateurs</a>
                         <a href="#faq" class="rounded-full px-5 py-2.5 text-sm font-medium text-ink-200 transition-colors hover:text-ink-50">FAQ</a>
                     </nav>
 
@@ -107,9 +106,6 @@
                         <a href="#comment-ca-marche" @click="mobileNavOpen = false"
                            class="stagger-item-x border-b border-ink-800 px-3 py-4 text-xl font-medium text-ink-200 hover:text-ink-50"
                            style="--stagger-delay: 280ms">Comment ça marche</a>
-                        <a href="#pour-les-createurs" @click="mobileNavOpen = false"
-                           class="stagger-item-x border-b border-ink-800 px-3 py-4 text-xl font-medium text-ink-200 hover:text-ink-50"
-                           style="--stagger-delay: 340ms">Pour les créateurs</a>
                         <a href="#faq" @click="mobileNavOpen = false"
                            class="stagger-item-x border-b border-ink-800 px-3 py-4 text-xl font-medium text-ink-200 hover:text-ink-50"
                            style="--stagger-delay: 400ms">FAQ</a>
@@ -269,35 +265,6 @@
             </section>
         @endif
 
-        <section id="chiffres" class="border-t border-ink-800 bg-ink-800">
-            <div class="mx-auto grid max-w-6xl gap-8 px-6 py-20 sm:grid-cols-3">
-                @foreach ([
-                    ['TikTok', 'Liez votre compte en un clic'],
-                    ['Aux 1000 vues', 'Cachet annoncé avant de publier'],
-                    ['PayPal', 'Retrait à partir de 20 €'],
-                ] as $index => [$value, $label])
-                    <div data-reveal style="--reveal-delay: {{ $index * 120 }}ms">
-                        <p class="font-display text-2xl font-bold text-ink-50">{{ $value }}</p>
-                        <p class="mt-1 text-sm text-ink-200">{{ $label }}</p>
-                    </div>
-                @endforeach
-            </div>
-        </section>
-
-        {{-- Photo pleine largeur : coupe le rythme des sections en grille et
-             donne un visage réel à ce qui reste sinon très abstrait. --}}
-        <section class="relative isolate overflow-hidden">
-            <img src="https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=1920&q=70"
-                 alt="Studio d'enregistrement"
-                 class="h-72 w-full object-cover sm:h-96">
-            <div aria-hidden="true" class="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink-900 via-ink-900/40 to-transparent"></div>
-            <div data-reveal class="pointer-events-none absolute inset-x-0 bottom-0 mx-auto max-w-6xl px-6 pb-8">
-                <p class="max-w-md font-display text-xl font-bold text-ink-50 sm:text-2xl">
-                    Des artistes et des streamers qui misent sur de vrais clippeurs, pas sur des vues achetées.
-                </p>
-            </div>
-        </section>
-
         {{-- Pourquoi rester : ce qui distingue la plateforme d'un simple
              concours, dit en avantages concrets plutôt qu'en superlatifs. --}}
         <section class="mx-auto max-w-6xl px-6 py-24 sm:py-32">
@@ -319,70 +286,6 @@
                         <p class="mt-2 text-sm leading-relaxed text-ink-200">{{ $text }}</p>
                     </div>
                 @endforeach
-            </div>
-        </section>
-
-        {{-- Second public de la plateforme : le créateur qui finance les
-             campagnes. Traité à part, sans partager le CTA du clippeur. --}}
-        <section id="pour-les-createurs" class="border-t border-ink-800 bg-ink-800">
-            <div class="mx-auto grid max-w-6xl items-center gap-12 px-6 py-24 sm:py-32 lg:grid-cols-2">
-                <div data-reveal>
-                    <span class="chip bg-brand-500/15 text-brand-300">Pour les créateurs</span>
-                    <h2 class="mt-4 font-display text-3xl font-bold text-ink-50 sm:text-4xl">Votre contenu, porté par de vrais clippeurs</h2>
-                    <p class="mt-4 leading-relaxed text-ink-200">
-                        Artiste ou streamer, lancez une campagne, fixez votre cachet aux 1000 vues et
-                        votre budget total. Les clippeurs publient depuis leur propre compte TikTok :
-                        vous ne payez que pour les vues réellement générées, jamais à l'avance.
-                    </p>
-
-                    <ul class="mt-8 space-y-4 border-l-2 border-brand-500/40 pl-5">
-                        @foreach ([
-                            'Budget maîtrisé — vous ne dépensez jamais plus que ce que vous avez fixé',
-                            'Diffusion sur trois plateformes sans gérer un seul compte vous-même',
-                            'Suivi des clips et des vues consultable à tout moment depuis votre espace',
-                        ] as $point)
-                            <li class="text-sm leading-relaxed text-ink-200">{{ $point }}</li>
-                        @endforeach
-                    </ul>
-
-                    <a href="{{ route('register', ['profil' => 'creator']) }}" class="btn-brand mt-8 px-6 py-3 text-base">
-                        Lancer une campagne
-                    </a>
-                </div>
-
-                <div data-reveal style="--reveal-delay: 120ms" class="relative">
-                    <div aria-hidden="true" class="pointer-events-none absolute -inset-6 rounded-full bg-brand-500/10 blur-3xl"></div>
-
-                    <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=900&q=70"
-                         alt="Artiste sur scène"
-                         class="relative mb-4 h-48 w-full rounded-2xl object-cover shadow-lifted sm:h-56">
-
-                    <div class="card relative space-y-4 bg-ink-900 p-6">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm font-semibold text-ink-50">Campagne — Lancement</span>
-                            <span class="chip-ok">Active</span>
-                        </div>
-                        <div>
-                            <div class="flex items-center justify-between text-xs text-ink-400">
-                                <span>Budget consommé</span>
-                                <span class="tabular">620 € / 1 000 €</span>
-                            </div>
-                            <div class="mt-2 h-2 overflow-hidden rounded-full bg-ink-800">
-                                <div class="h-full w-[62%] rounded-full bg-brand-500"></div>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4 border-t border-ink-800 pt-4">
-                            <div>
-                                <p class="text-xs text-ink-400">Cachet</p>
-                                <p class="mt-1 font-display text-lg font-bold text-ink-50 tabular">8,00 € <span class="text-xs font-normal text-ink-400">/ 1000 vues</span></p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-ink-400">Clips publiés</p>
-                                <p class="mt-1 font-display text-lg font-bold text-ink-50 tabular">37</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </section>
 
@@ -449,7 +352,6 @@
 
                 <nav class="flex flex-wrap gap-x-8 gap-y-3 text-sm text-ink-400">
                     <a href="#comment-ca-marche" class="hover:text-ink-100">Comment ça marche</a>
-                    <a href="#pour-les-createurs" class="hover:text-ink-100">Pour les créateurs</a>
                     <a href="#faq" class="hover:text-ink-100">FAQ</a>
                     <a href="{{ route('login') }}" class="hover:text-ink-100">Se connecter</a>
                 </nav>
