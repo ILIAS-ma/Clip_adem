@@ -5,7 +5,6 @@ namespace App\Filament\Resources\Categories\Schemas;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Str;
 
 class CategoryForm
 {
@@ -27,22 +26,12 @@ class CategoryForm
     public static function components(): array
     {
         return [
+            // L'identifiant du lien de l'onglet se fabrique tout seul depuis
+            // le nom (voir Category::booted()).
             TextInput::make('name')
                 ->label('Nom')
                 ->required()
-                ->maxLength(255)
-                ->live(onBlur: true)
-                ->afterStateUpdated(fn ($state, $set, $context) => $context === 'create'
-                    ? $set('slug', Str::slug((string) $state))
-                    : null),
-
-            // Clé du lien partagé du classement : /classement?categorie=…
-            TextInput::make('slug')
-                ->label('Identifiant URL')
-                ->required()
-                ->unique('categories', 'slug', ignoreRecord: true)
-                ->maxLength(255)
-                ->dehydrateStateUsing(fn ($state) => Str::slug((string) $state)),
+                ->maxLength(255),
 
             TextInput::make('position')
                 ->label('Ordre d’affichage')
