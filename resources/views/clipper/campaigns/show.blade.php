@@ -20,9 +20,9 @@
     <div class="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
 
         @if ($cover = $campaign->coverUrl())
-            <div class="card overflow-hidden">
-                <img src="{{ $cover }}" alt="{{ $campaign->title }}" class="aspect-[21/9] w-full object-cover">
-            </div>
+            {{-- Bandeau de hauteur bornée : l'image entière au centre, jamais
+                 agrandie au-delà de sa taille utile ni rognée. --}}
+            <x-campaign-cover :url="$cover" :alt="$campaign->title" class="card h-48 sm:h-64" />
         @endif
 
         @if (session('status'))

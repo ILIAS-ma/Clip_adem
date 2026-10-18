@@ -123,10 +123,7 @@
                     @if ($cover = $campaign->coverUrl())
                         {{-- La couverture en tête de carte, bord à bord : c'est
                              elle qui fait cliquer avant même de lire. --}}
-                        <div class="-mx-5 -mt-5 mb-4 aspect-video overflow-hidden rounded-t-2xl bg-ink-900">
-                            <img src="{{ $cover }}" alt="" loading="lazy" decoding="async"
-                                 class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
-                        </div>
+                        <x-campaign-cover :url="$cover" class="-mx-5 -mt-5 mb-4 aspect-video rounded-t-2xl" />
                     @endif
 
                     <div class="flex items-start justify-between gap-3">
