@@ -18,7 +18,12 @@ class LeaderboardController extends Controller
 {
     public function index(Request $request, ReportingService $reporting): View
     {
-        $categories = Category::query()->ordered()->get();
+        // Onglets rangés par argent gagné : la catégorie qui rapporte le plus
+        // d'abord, et c'est elle qui s'ouvre par défaut. À égalité, par nom.
+        $earned = $reporting->earnedByCategory();
+        $categories = Category::query()->ordered()->get()
+            ->sortByDesc(fn (Category $category) => $earned[$category->id] ?? 0)
+            ->values();
 
         /*
          * La catégorie affichée passe par l'adresse plutôt que par un onglet

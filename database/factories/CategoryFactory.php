@@ -18,7 +18,6 @@ class CategoryFactory extends Factory
         return [
             'name' => Str::ucfirst($name),
             'slug' => Str::slug($name).'-'.fake()->unique()->numberBetween(1, 999999),
-            'position' => 0,
         ];
     }
 }

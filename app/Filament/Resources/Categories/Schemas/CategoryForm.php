@@ -27,19 +27,13 @@ class CategoryForm
     {
         return [
             // L'identifiant du lien de l'onglet se fabrique tout seul depuis
-            // le nom (voir Category::booted()).
+            // le nom (voir Category::booted()), et l'ordre des onglets suit
+            // l'argent gagné : rien d'autre à saisir.
             TextInput::make('name')
                 ->label('Nom')
                 ->required()
-                ->maxLength(255),
-
-            TextInput::make('position')
-                ->label('Ordre d’affichage')
-                ->numeric()
-                ->integer()
-                ->minValue(0)
-                ->default(0)
-                ->helperText('Les onglets du classement sont triés du plus petit au plus grand.'),
+                ->maxLength(255)
+                ->columnSpanFull(),
         ];
     }
 }

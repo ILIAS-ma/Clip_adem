@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
  * Univers de campagnes défini par l'administration, base des classements par
  * catégorie.
  */
-#[Fillable(['name', 'slug', 'position'])]
+#[Fillable(['name', 'slug'])]
 class Category extends Model
 {
     use HasFactory;
@@ -61,6 +61,8 @@ class Category extends Model
     /** @param  Builder<self>  $query */
     public function scopeOrdered($query)
     {
-        return $query->orderBy('position')->orderBy('name');
+        // Ordre alphabétique pour les listes de choix ; le classement, lui,
+        // range ses onglets par argent gagné (LeaderboardController).
+        return $query->orderBy('name');
     }
 }

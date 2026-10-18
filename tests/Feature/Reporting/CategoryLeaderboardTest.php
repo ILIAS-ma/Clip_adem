@@ -122,29 +122,32 @@ class CategoryLeaderboardTest extends TestCase
     #[Test]
     public function the_leaderboard_page_shows_the_requested_category(): void
     {
-        $gaming = Category::factory()->create(['name' => 'Gaming', 'slug' => 'gaming', 'position' => 1]);
-        $music = Category::factory()->create(['name' => 'Musique', 'slug' => 'musique', 'position' => 2]);
+        $gaming = Category::factory()->create(['name' => 'Gaming', 'slug' => 'gaming']);
+        $music = Category::factory()->create(['name' => 'Musique', 'slug' => 'musique']);
 
         $viewer = $this->clipper();
         $gamer = $this->clipper(['name' => 'Gamer Pro']);
         $singer = $this->clipper(['name' => 'Voix d’Or']);
 
-        $this->clip($this->campaignIn($gaming), $gamer, 12_000, 1_234);
-        $this->clip($this->campaignIn($music), $singer, 3_000, 300);
+        $this->clip($this->campaignIn($gaming), $gamer, 3_000, 300);
+        $this->clip($this->campaignIn($music), $singer, 12_000, 1_234);
 
-        // Sans paramètre : la première catégorie dans l'ordre choisi.
+        // Sans paramètre : la catégorie qui a le plus rapporté, même si elle
+        // vient après dans l'ordre alphabétique.
+        $html = $this->actingAs($viewer)->get(route('leaderboard.index'))->getContent();
         $section = $this->categorySection($this->actingAs($viewer)->get(route('leaderboard.index')));
 
-        $this->assertStringContainsString('Gamer Pro', $section);
+        $this->assertStringContainsString('Voix d’Or', $section);
         $this->assertStringContainsString('12,34', $section);
-        $this->assertStringNotContainsString('Voix d’Or', $section);
+        $this->assertStringNotContainsString('Gamer Pro', $section);
+        $this->assertLessThan(strpos($html, '?categorie=gaming'), strpos($html, '?categorie=musique'), 'Musique, qui rapporte plus, doit être le premier onglet.');
 
         $section = $this->categorySection(
-            $this->actingAs($viewer)->get(route('leaderboard.index', ['categorie' => 'musique'])),
+            $this->actingAs($viewer)->get(route('leaderboard.index', ['categorie' => 'gaming'])),
         );
 
-        $this->assertStringContainsString('Voix d’Or', $section);
-        $this->assertStringNotContainsString('Gamer Pro', $section);
+        $this->assertStringContainsString('Gamer Pro', $section);
+        $this->assertStringNotContainsString('Voix d’Or', $section);
     }
 
     /**

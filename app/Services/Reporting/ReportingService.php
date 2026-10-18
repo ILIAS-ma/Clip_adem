@@ -12,6 +12,7 @@ use App\Models\Clip;
 use App\Models\Creator;
 use App\Models\Payout;
 use App\Models\Season;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -235,6 +236,42 @@ class ReportingService
      *
      * @return array{views: int, earned_cents: int}
      */
+    /**
+     * Argent gagné par catégorie, toutes campagnes confondues : l'ordre des
+     * onglets du classement. Une seule requête pour toutes les catégories.
+     *
+     * @return Collection<int, int> identifiant de catégorie => centimes
+     */
+    public function earnedByCategory(): Collection
+    {
+        return DB::table('clips')
+            ->join('campaigns', 'campaigns.id', '=', 'clips.campaign_id')
+            ->whereNotNull('campaigns.category_id')
+            ->groupBy('campaigns.category_id')
+            ->selectRaw('campaigns.category_id, COALESCE(SUM(clips.earned_cents), 0) as cents')
+            ->pluck('cents', 'category_id')
+            ->map(fn ($cents) => (int) $cents);
+    }
+
+    /** Sous-requête « argent versé », pour trier une liste de catégories. */
+    public static function categoryEarnedSubquery(): Builder
+    {
+        return DB::table('clips')
+            ->join('campaigns', 'campaigns.id', '=', 'clips.campaign_id')
+            ->whereColumn('campaigns.category_id', 'categories.id')
+            ->selectRaw('COALESCE(SUM(clips.earned_cents), 0)');
+    }
+
+    /** Sous-requête « vues validées », pour trier une liste de catégories. */
+    public static function categoryViewsSubquery(): Builder
+    {
+        return DB::table('clips')
+            ->join('campaigns', 'campaigns.id', '=', 'clips.campaign_id')
+            ->whereColumn('campaigns.category_id', 'categories.id')
+            ->where('clips.status', ClipStatus::Approved->value)
+            ->selectRaw('COALESCE(SUM(clips.views_total), 0)');
+    }
+
     public function categoryTotals(Category $category): array
     {
         $row = DB::table('clips')
