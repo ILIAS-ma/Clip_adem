@@ -67,6 +67,7 @@ class CampaignController extends Controller
                 ->latest('submitted_at')
                 ->get(),
             'boards' => $boards,
+            'participantsCount' => $campaign->participations()->distinct('user_id')->count('user_id'),
         ]);
     }
 }

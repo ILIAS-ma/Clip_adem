@@ -133,8 +133,10 @@ class ParticipationTest extends TestCase
     }
 
     #[Test]
-    public function a_campaign_requiring_review_leaves_the_participation_pending(): void
+    public function there_is_no_request_to_approve_even_on_an_old_review_campaign(): void
     {
+        // Plus de demande de participation : on rejoint, on poste — même sur
+        // une campagne créée quand la validation manuelle existait encore.
         $clipper = $this->clipper();
         $participation = $this->participations->join(
             $this->campaign(['requires_approval' => true]),
@@ -142,8 +144,8 @@ class ParticipationTest extends TestCase
             $this->account($clipper),
         );
 
-        $this->assertSame(ParticipationStatus::Pending, $participation->status);
-        $this->assertNull($participation->approved_at);
+        $this->assertSame(ParticipationStatus::Approved, $participation->status);
+        $this->assertNotNull($participation->approved_at);
     }
 
     #[Test]
@@ -316,11 +318,14 @@ class ParticipationTest extends TestCase
     }
 
     #[Test]
-    public function a_pending_participation_cannot_submit_yet(): void
+    public function a_leftover_pending_participation_cannot_submit(): void
     {
-        $campaign = $this->campaign(['requires_approval' => true]);
+        // Une participation restée « en attente » d'avant la suppression des
+        // demandes reste bloquée par le contrôle de soumission.
+        $campaign = $this->campaign();
         $clipper = $this->clipper();
-        $this->participations->join($campaign, $clipper, $this->account($clipper));
+        $this->participations->join($campaign, $clipper, $this->account($clipper))
+            ->forceFill(['status' => ParticipationStatus::Pending])->save();
 
         $this->expectException(ClipSubmissionRefused::class);
         $this->expectExceptionMessage('validation');

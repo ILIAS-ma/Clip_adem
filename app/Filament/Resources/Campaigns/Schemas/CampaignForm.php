@@ -154,6 +154,18 @@ class CampaignForm
                     static::rewardsRepeater('contest_prizes', 'Récompenses du classement des vues'),
                     static::rewardsRepeater('contest_post_prizes', 'Récompenses du classement du nombre de clips'),
 
+                    TextInput::make('contest_post_min_views')
+                        ->label('Vues minimum pour qu’un clip compte (classement des clips)')
+                        ->numeric()
+                        ->integer()
+                        ->minValue(0)
+                        ->default(1000)
+                        ->suffix('vues')
+                        ->visible(fn ($get) => static::isContest($get))
+                        ->helperText('Un clip sous ce seuil ne compte pas au classement du nombre de clips : '
+                            .'10 clips à 40 vues ne battent pas 3 clips qui marchent. Le classement des vues, lui, compte tout.')
+                        ->columnSpanFull(),
+
                     // En classement, le budget est exactement la somme des prix,
                     // recalculée à l'enregistrement (voir withContestBudget()) :
                     // le saisir à part permettrait de promettre plus que ce qui
@@ -267,10 +279,6 @@ class CampaignForm
                         ->rows(6)
                         ->required()
                         ->helperText('Obligatoire pour activer la campagne.'),
-
-                    Toggle::make('requires_approval')
-                        ->label('Valider manuellement les participations')
-                        ->default(true),
                 ]),
 
             Section::make('Matière première du brief')

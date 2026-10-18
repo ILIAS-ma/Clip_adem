@@ -65,20 +65,24 @@ class ContestService
             ->get();
 
         $byPosts = $board === ContestMetric::Posts;
+        $threshold = $campaign->postMinViews();
 
         $rows = $clips
             ->groupBy('user_id')
-            ->map(function (Collection $own) use ($byPosts) {
+            ->map(function (Collection $own) use ($byPosts, $threshold) {
                 $best = $own->sortByDesc('effective_views')->first();
                 $views = (int) $own->sum('effective_views');
+                // Au classement des clips, seuls comptent ceux qui ont
+                // atteint le seuil de vues fixé par l'admin.
+                $qualified = $own->filter(fn ($clip) => (int) $clip->effective_views >= $threshold)->count();
 
                 return (object) [
                     'user_id' => (int) $best->user_id,
                     'name' => $best->name,
                     'views' => $views,
-                    'clips' => $own->count(),
-                    // Le chiffre qui classe : clips validés ou vues.
-                    'score' => $byPosts ? $own->count() : $views,
+                    'clips' => $byPosts ? $qualified : $own->count(),
+                    // Le chiffre qui classe : clips au-dessus du seuil, ou vues.
+                    'score' => $byPosts ? $qualified : $views,
                     'best_clip_id' => (int) $best->id,
                     'first_at' => (string) $own->min('submitted_at'),
                 ];

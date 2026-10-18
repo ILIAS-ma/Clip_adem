@@ -122,15 +122,34 @@ class ContestTest extends TestCase
         $this->clip($campaign, $viral, 900_000);
 
         // Même nombre de clips que Viral, moins de vues : derrière lui.
-        $this->clip($campaign, $tied, 500);
+        $this->clip($campaign, $tied, 2_000);
+
+        // Dix clips à 40 vues : sous le seuil de 1 000, aucun ne compte.
+        $spammer = $this->clipper('Spam');
+        foreach (range(1, 10) as $i) {
+            $this->clip($campaign, $spammer, 40);
+        }
 
         $posts = app(ContestService::class)->standings($campaign, board: ContestMetric::Posts);
         $views = app(ContestService::class)->standings($campaign, board: ContestMetric::Views);
 
         $this->assertSame(['Régulier', 'Viral', 'Égal'], $posts->pluck('name')->all());
         $this->assertSame(4, $posts[0]->score);
+        // Le classement des vues, lui, compte tout : Spam y figure.
+        $this->assertTrue($views->contains('name', 'Spam'));
         // Le même campagne, l'autre tableau : Viral devant.
         $this->assertSame('Viral', $views->first()->name);
+    }
+
+    #[Test]
+    public function the_admin_sets_the_view_threshold_of_the_clips_board(): void
+    {
+        $campaign = $this->contest(['contest_post_min_views' => 50]);
+        $small = $this->clipper('Petit');
+        $this->clip($campaign, $small, 60);
+        $this->clip($campaign, $small, 40);
+
+        $this->assertSame(1, app(ContestService::class)->standings($campaign, board: ContestMetric::Posts)->first()->score);
     }
 
     #[Test]
