@@ -310,10 +310,22 @@
                             </div>
                         @endforeach
 
-                        @if ($campaign->isContest() && $campaign->postMinViews() > 0)
-                            <div class="flex justify-between gap-2 border-t border-ink-700 pt-3">
-                                <dt class="text-ink-400">Clip compté dès</dt>
-                                <dd class="tabular text-ink-100">{{ Money::views($campaign->postMinViews()) }} vues</dd>
+                        @if ($campaign->isContest())
+                            {{-- Deux classements, deux règles : le seuil de vues ne
+                                 vaut que pour le classement du nombre de clips. --}}
+                            <div class="flex justify-between gap-3 border-t border-ink-700 pt-3">
+                                <dt class="text-ink-400">Classement des vues</dt>
+                                <dd class="text-right text-ink-100">toutes les vues comptent</dd>
+                            </div>
+                            <div class="flex justify-between gap-3">
+                                <dt class="text-ink-400">Classement des clips</dt>
+                                <dd class="text-right text-ink-100">
+                                    @if ($campaign->postMinViews() > 0)
+                                        un clip compte dès <span class="tabular font-semibold">{{ Money::views($campaign->postMinViews()) }}</span> vues
+                                    @else
+                                        chaque clip validé compte
+                                    @endif
+                                </dd>
                             </div>
                         @endif
 

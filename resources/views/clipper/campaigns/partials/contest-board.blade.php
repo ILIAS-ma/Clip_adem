@@ -11,7 +11,7 @@
     <div class="border-b border-ink-700 p-5">
         <h3 class="font-display text-lg font-bold text-ink-50">{{ $metric->title() }}</h3>
         <p class="mt-0.5 text-sm text-ink-400">
-            Classés sur {{ $metric->rankedOn() }}@if ($metric === \App\Enums\ContestMetric::Posts && $campaign->postMinViews() > 0) ayant atteint
+            Classés sur {{ $metric === \App\Enums\ContestMetric::Views ? 'toutes les vues de leurs clips validés' : $metric->rankedOn() }}@if ($metric === \App\Enums\ContestMetric::Posts && $campaign->postMinViews() > 0) ayant atteint
                 <span class="font-semibold text-ink-200">{{ \App\Support\Money::views($campaign->postMinViews()) }} vues</span>@endif.
         </p>
 
