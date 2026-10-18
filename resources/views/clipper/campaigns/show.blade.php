@@ -3,14 +3,22 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-wrap items-start justify-between gap-4">
-            <div>
-                <p class="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-ink-400">
-                    <span>{{ $campaign->creator?->name }}</span>
-                    @if ($campaign->creator?->isStreamer())
-                        <span class="chip-neutral normal-case tracking-normal">Streamer</span>
-                    @endif
-                </p>
-                <h1 class="mt-1 font-display text-2xl font-bold text-ink-50">{{ $campaign->title }}</h1>
+            <div class="flex min-w-0 items-center gap-4">
+                {{-- Vignette carrée nette, comme une pochette : la couverture
+                     s'identifie d'un coup d'œil sans prendre la page. --}}
+                @if ($cover = $campaign->coverUrl())
+                    <img src="{{ $cover }}" alt="" class="h-16 w-16 flex-none rounded-xl object-cover ring-1 ring-ink-700 sm:h-20 sm:w-20">
+                @endif
+
+                <div class="min-w-0">
+                    <p class="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-ink-400">
+                        <span>{{ $campaign->creator?->name }}</span>
+                        @if ($campaign->creator?->isStreamer())
+                            <span class="chip-neutral normal-case tracking-normal">Streamer</span>
+                        @endif
+                    </p>
+                    <h1 class="mt-1 font-display text-2xl font-bold text-ink-50">{{ $campaign->title }}</h1>
+                </div>
             </div>
 
             <a href="{{ route('campaigns.index') }}" wire:navigate class="btn-ghost">← Toutes les campagnes</a>
@@ -18,12 +26,6 @@
     </x-slot>
 
     <div class="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-
-        @if ($cover = $campaign->coverUrl())
-            {{-- Bandeau de hauteur bornée : l'image entière au centre, jamais
-                 agrandie au-delà de sa taille utile ni rognée. --}}
-            <x-campaign-cover :url="$cover" :alt="$campaign->title" class="card h-48 sm:h-64" />
-        @endif
 
         @if (session('status'))
             <div class="alert-ok">{{ session('status') }}</div>
