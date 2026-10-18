@@ -8,6 +8,7 @@ use App\Filament\Resources\Campaigns\Pages\EditCampaign;
 use App\Filament\Resources\Campaigns\Pages\ListCampaigns;
 use App\Filament\Resources\Campaigns\RelationManagers\AssetsRelationManager;
 use App\Filament\Resources\Campaigns\RelationManagers\FundingsRelationManager;
+use App\Filament\Resources\Campaigns\RelationManagers\ParticipationsRelationManager;
 use App\Filament\Resources\Campaigns\Schemas\CampaignForm;
 use App\Filament\Resources\Campaigns\Tables\CampaignsTable;
 use App\Models\Campaign;
@@ -63,6 +64,7 @@ class CampaignResource extends Resource
     public static function getRelations(): array
     {
         return [
+            ParticipationsRelationManager::class,
             AssetsRelationManager::class,
             FundingsRelationManager::class,
         ];

@@ -303,9 +303,25 @@
                                     · &#64;{{ $participation->socialAccount->handle }}
                                 @endif
                             </p>
-                            <span class="{{ $participation->status->value === 'approved' ? 'chip-ok' : 'chip-wait' }} mt-1.5">
+                            <span @class([
+                                'mt-1.5',
+                                'chip-ok' => $participation->status->value === 'approved',
+                                'chip-wait' => $participation->status->value === 'pending',
+                                'chip-danger' => in_array($participation->status->value, ['rejected', 'banned'], true),
+                            ])>
                                 {{ $participation->status->label() }}
                             </span>
+
+                            {{-- Dire ce que l'attente veut dire : sans ça, « En attente »
+                                 se lit comme un bug plutôt que comme une étape. --}}
+                            @if ($participation->status->value === 'pending')
+                                <p class="mt-2 text-xs leading-relaxed text-ink-300">
+                                    L'équipe valide les participations à cette campagne. Vous serez prévenu dès que c'est fait ;
+                                    vous pourrez alors soumettre vos clips.
+                                </p>
+                            @elseif ($participation->status->value === 'rejected' && $participation->rejection_reason)
+                                <p class="mt-2 text-xs leading-relaxed text-rose-300">Motif : {{ $participation->rejection_reason }}</p>
+                            @endif
                         </div>
                     @empty
                         <p class="mt-2 text-sm text-ink-300">Vous ne participez pas encore à cette campagne.</p>

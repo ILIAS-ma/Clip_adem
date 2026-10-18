@@ -3,9 +3,14 @@
         <div class="rounded-xl bg-ink-800 p-4 text-sm text-ink-200">
             {{-- Distinguer « aucun compte » de « aucun compte compatible » évite
                  de laisser le clippeur chercher ce qu'il a mal fait. --}}
-            @if (auth()->user()->socialAccounts()->exists())
-                <p>Aucun de vos comptes n'est compatible avec les plateformes de cette campagne,
-                   ou vous les avez déjà tous engagés.</p>
+            @if ($campaign->participations()->where('user_id', auth()->id())->exists())
+                {{-- Le cas le plus courant : le seul compte est déjà engagé. Ce
+                     n'est pas une erreur, il n'y a simplement rien à ajouter. --}}
+                <p>Tous vos comptes compatibles participent déjà à cette campagne.
+                   Pour en engager un autre, <a href="{{ route('accounts.index') }}" class="text-brand-400 underline underline-offset-2">liez un nouveau compte</a>.</p>
+            @elseif (auth()->user()->socialAccounts()->exists())
+                <p>Aucun de vos comptes n'est sur une plateforme acceptée par cette campagne.
+                   <a href="{{ route('accounts.index') }}" class="text-brand-400 underline underline-offset-2">Liez un compte compatible</a>.</p>
             @else
                 <p class="font-semibold text-ink-50">Liez d'abord un compte</p>
                 <p class="mt-1">Vos vues doivent pouvoir être relevées pour être payées.</p>
