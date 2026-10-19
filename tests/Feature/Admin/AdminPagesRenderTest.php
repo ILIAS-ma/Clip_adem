@@ -95,7 +95,6 @@ class AdminPagesRenderTest extends TestCase
             '/admin/seasons/create' => 'nouvelle saison',
             '/admin/training-lessons' => 'formation',
             '/admin/training-lessons/create' => 'nouvelle leçon',
-            '/admin/clippeurs-a-relancer' => 'clippeurs à relancer',
             '/admin/clips' => 'clips',
             '/admin/clippers' => 'clippeurs',
             '/admin/payouts' => 'retraits',

@@ -242,7 +242,7 @@ class ParticipationTest extends TestCase
     // ------------------------------------------------------------------
 
     #[Test]
-    public function submitting_a_clip_creates_it_pending_review(): void
+    public function submitting_a_clip_creates_it_approved(): void
     {
         $campaign = $this->campaign();
         $clipper = $this->clipper();
@@ -254,7 +254,7 @@ class ParticipationTest extends TestCase
             'https://www.tiktok.com/@lina.clips/video/7123456789012345678?is_from_webapp=1',
         );
 
-        $this->assertSame(ClipStatus::PendingReview, $clip->status);
+        $this->assertSame(ClipStatus::Approved, $clip->status);
         $this->assertSame('7123456789012345678', $clip->external_post_id);
         // L'URL est normalisée : les paramètres de suivi disparaissent.
         $this->assertSame('https://www.tiktok.com/@lina.clips/video/7123456789012345678', $clip->url);
@@ -301,7 +301,7 @@ class ParticipationTest extends TestCase
             'https://www.tiktok.com/@Lina.Clips/video/7123456789012345678',
         );
 
-        $this->assertSame(ClipStatus::PendingReview, $clip->status);
+        $this->assertSame(ClipStatus::Approved, $clip->status);
     }
 
     #[Test]
@@ -384,10 +384,10 @@ class ParticipationTest extends TestCase
     }
 
     #[Test]
-    public function a_submitted_clip_is_never_paid_before_moderation(): void
+    public function a_submitted_clip_is_paid_from_its_first_reading(): void
     {
-        // Le moteur de budget est seul juge : même crédité, un clip non validé
-        // ne rapporte rien. Ce test verrouille la frontière entre les modules.
+        // Plus de validation : un clip soumis est payé dès son premier relevé,
+        // sans attendre qu'un humain ouvre l'administration.
         $campaign = $this->campaign();
         $clipper = $this->clipper();
         $this->participations->join($campaign, $clipper, $this->account($clipper));
@@ -396,8 +396,8 @@ class ParticipationTest extends TestCase
 
         $result = app(CampaignBudgetService::class)->creditViews($clip, 50_000, "clip:{$clip->id}:snapshot:1");
 
-        $this->assertSame(0, $result->creditedCents);
-        $this->assertSame(0, Clip::find($clip->id)->earned_cents);
-        $this->assertSame(0, $campaign->fresh()->spent_cents);
+        $this->assertGreaterThan(0, $result->creditedCents);
+        $this->assertSame($result->creditedCents, Clip::find($clip->id)->earned_cents);
+        $this->assertSame($result->creditedCents, $campaign->fresh()->spent_cents);
     }
 }

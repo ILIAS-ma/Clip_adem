@@ -66,7 +66,7 @@
                     {{ match ($quote->outcome->value) {
                         'no_budget_left' => "Le budget de la campagne est épuisé, ou ce clip a atteint son plafond. Les vues continuent d'être comptées mais ne sont plus payées.",
                         'campaign_closed' => 'La campagne est terminée ou en pause : les vues ne sont plus rémunérées.',
-                        'clip_not_payable' => "Ce clip n'est pas encore validé par la modération.",
+                        'clip_not_payable' => "Ce clip a été écarté par l'équipe : ses vues ne sont pas rémunérées.",
                         'below_threshold' => "Ce clip n'a pas atteint le seuil de vues minimum de la campagne.",
                         default => $quote->outcome->label(),
                     } }}
@@ -103,7 +103,7 @@
                     </ul>
 
                     <p class="hint mt-5 border-t border-ink-700 pt-4">
-                        Ces contrôles sont automatiques. La validation finale reste faite par un modérateur.
+                        Ces contrôles sont automatiques. L'équipe peut écarter un clip qui ne respecte pas les règles.
                     </p>
                 @endif
 

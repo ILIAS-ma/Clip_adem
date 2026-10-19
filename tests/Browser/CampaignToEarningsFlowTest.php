@@ -57,13 +57,6 @@ class CampaignToEarningsFlowTest extends DuskTestCase
             'is_active' => true,
         ]);
 
-        $moderator = User::factory()->create([
-            'role' => UserRole::SuperAdmin,
-            'name' => 'Admin Démo',
-            'email' => 'admin.demo@clip.test',
-            'email_verified_at' => now(),
-        ]);
-
         $clipUrl = 'https://www.tiktok.com/@'.$account->handle.'/video/7345678901234567890';
 
         // --- Le clippeur : rejoint, publie, soumet -----------------------
@@ -86,12 +79,12 @@ class CampaignToEarningsFlowTest extends DuskTestCase
                 ->screenshot('04-clip-soumis');
 
             $browser->visit('/mes-clips')
-                ->waitForText('En attente de validation')
-                ->screenshot('05-clip-en-attente-cote-clippeur');
+                ->waitForText('Validé')
+                ->screenshot('05-clip-valide-cote-clippeur');
         });
 
         $clip = $campaign->clips()->firstOrFail();
-        $this->assertSame(ClipStatus::PendingReview, $clip->status);
+        $this->assertSame(ClipStatus::Approved, $clip->status);
 
         // Le fournisseur simulé fait grandir les vues avec le temps écoulé
         // depuis la publication (voir FakeSocialProvider::simulateViews) :
@@ -99,30 +92,6 @@ class CampaignToEarningsFlowTest extends DuskTestCase
         // zéro. On recule sa date de publication pour que la synchronisation
         // plus bas crédite un montant réel, pas un test qui triche sur zéro.
         $clip->forceFill(['posted_at' => now()->subHours(48)])->save();
-
-        // --- Le modérateur : valide le clip depuis l'admin ---------------
-        $this->browse(function (Browser $browser) use ($moderator) {
-            $browser->loginAs($moderator)
-                ->visit('/admin/clips')
-                ->waitForText('En attente de validation')
-                ->screenshot('06-admin-liste-des-clips')
-                // Les actions par ligne sont repliées derrière un menu
-                // « Actions » (Filament ActionGroup) : rien à cliquer avant
-                // de l'avoir ouvert.
-                ->click('button[aria-label="Actions"]')
-                ->waitForText('Valider')
-                ->press('Valider')
-                ->waitForText('Le clip deviendra rémunérable')
-                ->screenshot('07-admin-confirmation-validation');
-
-            $browser->press('Confirmer');
-
-            $browser->pause(1000)
-                ->screenshot('08-admin-clip-valide');
-        });
-
-        $clip->refresh();
-        $this->assertSame(ClipStatus::Approved, $clip->status);
 
         // Le relevé des vues est un job planifié en production : on le
         // déclenche ici directement, sans navigateur, pour que les gains

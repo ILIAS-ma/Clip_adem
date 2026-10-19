@@ -10,6 +10,7 @@ use App\Models\SocialAccount;
 use App\Support\Social\ConnectedAccount;
 use App\Support\Social\PostMetrics;
 use App\Support\Social\RecentPost;
+use App\Support\Social\RecentPostPage;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -144,15 +145,20 @@ class FakeSocialProvider implements ListsRecentPosts, SocialProvider
             });
     }
 
+    /** Vidéos simulées en tout, assez pour qu'il y ait une page suivante. */
+    public const RECENT_POSTS = 30;
+
     /**
-     * Six vidéos simulées, stables pour un même compte : de quoi éprouver le
-     * choix au doigt en développement, sans clé de plateforme.
+     * Des vidéos simulées, stables pour un même compte et paginées comme la
+     * vraie API : de quoi éprouver le choix au doigt sans clé de plateforme.
      */
-    public function recentPosts(SocialAccount $account, int $limit = 12): Collection
+    public function recentPosts(SocialAccount $account, int $limit = 20, ?string $cursor = null): RecentPostPage
     {
         $handle = $account->handle ?: 'demo';
+        $offset = (int) $cursor;
+        $count = max(0, min($limit, self::RECENT_POSTS - $offset));
 
-        return collect(range(1, min(6, $limit)))
+        $posts = collect($count > 0 ? range($offset + 1, $offset + $count) : [])
             ->map(function (int $i) use ($account, $handle) {
                 $id = (string) (7_400_000_000_000_000_000 + crc32($account->getKey().'|'.$i) * 1000 + $i);
 
@@ -168,7 +174,12 @@ class FakeSocialProvider implements ListsRecentPosts, SocialProvider
                     views: (crc32($id) % 50_000) + 120,
                     postedAt: now()->subHours($i * 7),
                 );
-            });
+            })
+            ->values();
+
+        $next = $offset + $count < self::RECENT_POSTS ? (string) ($offset + $count) : null;
+
+        return new RecentPostPage($posts, $next);
     }
 
     public function batchSize(): int

@@ -26,13 +26,19 @@
                 <div class="alert-danger">{{ $pickError }}</div>
             @endif
 
+            @if ($pickedCount > 0)
+                <div class="alert-ok">
+                    {{ $pickedCount }} clip{{ $pickedCount > 1 ? 's' : '' }} soumis : leurs vues comptent dès le prochain relevé. Touchez la suivante pour continuer.
+                </div>
+            @endif
+
             @forelse ($groups as $group)
                 <div>
                     <div class="flex items-center justify-between gap-2">
                         <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">
                             {{ ucfirst($group['platform']) }}@if ($group['handle']) · &#64;{{ $group['handle'] }}@endif
                         </p>
-                        <button type="button" wire:click="loadVideos" class="text-xs font-medium text-ink-400 hover:text-ink-100">Actualiser</button>
+                        <button type="button" wire:click="refreshVideos" class="text-xs font-medium text-ink-400 hover:text-ink-100">Actualiser</button>
                     </div>
 
                     @if ($group['error'])
@@ -41,7 +47,7 @@
                         </p>
                     @elseif ($group['videos'] === [])
                         <p class="mt-2 rounded-xl bg-ink-900 p-3 text-sm text-ink-300">
-                            Aucune nouvelle vidéo publique sur ce compte. Publiez-la d'abord sur l'application, puis touchez « Actualiser ».
+                            Toutes vos vidéos publiques sont déjà soumises. Publiez-en une nouvelle sur l'application, puis touchez « Actualiser ».
                         </p>
                     @else
                         <ul class="mt-2 grid grid-cols-3 gap-2">
@@ -68,6 +74,16 @@
                                 </li>
                             @endforeach
                         </ul>
+
+                        @if ($group['has_more'])
+                            <button type="button" wire:click="loadMore" wire:loading.attr="disabled" wire:target="loadMore"
+                                    class="btn-ghost mt-3 w-full">
+                                <span wire:loading.remove wire:target="loadMore">Voir plus de vidéos</span>
+                                <span wire:loading wire:target="loadMore" class="inline-flex items-center gap-2">
+                                    <x-loader size="sm" label="Chargement" /> Chargement…
+                                </span>
+                            </button>
+                        @endif
                     @endif
                 </div>
             @empty

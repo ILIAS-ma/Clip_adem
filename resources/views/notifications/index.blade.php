@@ -17,7 +17,7 @@
             <div class="card px-6 py-16 text-center">
                 <p class="font-display text-lg font-bold text-ink-50">Rien pour l'instant</p>
                 <p class="mx-auto mt-2 max-w-sm text-sm text-ink-300">
-                    Vous serez prévenu ici dès qu'un clip est validé ou refusé, ou qu'un retrait est versé.
+                    Vous serez prévenu ici dès qu'un clip est écarté, ou qu'un retrait est versé.
                 </p>
             </div>
         @else

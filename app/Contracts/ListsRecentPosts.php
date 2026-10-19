@@ -3,8 +3,7 @@
 namespace App\Contracts;
 
 use App\Models\SocialAccount;
-use App\Support\Social\RecentPost;
-use Illuminate\Support\Collection;
+use App\Support\Social\RecentPostPage;
 
 /**
  * Plateforme capable de lister les dernières publications d'un compte lié.
@@ -15,6 +14,9 @@ use Illuminate\Support\Collection;
  */
 interface ListsRecentPosts
 {
-    /** @return Collection<int, RecentPost> les plus récentes d'abord */
-    public function recentPosts(SocialAccount $account, int $limit = 12): Collection;
+    /**
+     * Une page de publications, les plus récentes d'abord. `$cursor` vient de
+     * la page précédente (RecentPostPage::$nextCursor) pour remonter plus loin.
+     */
+    public function recentPosts(SocialAccount $account, int $limit = 20, ?string $cursor = null): RecentPostPage;
 }

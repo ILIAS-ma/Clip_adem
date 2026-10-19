@@ -169,10 +169,6 @@ return [
         'require_for_payout' => env('REQUIRE_PHONE_FOR_PAYOUT', false),
     ],
 
-    'moderation' => [
-        'auto_approve' => env('AUTO_APPROVE_CLIPS', true),
-    ],
-
     /*
     | Echo Studio (FetchClip), l'outil de recherche et de montage.
     |
@@ -325,32 +321,6 @@ return [
     | Retraits
     |--------------------------------------------------------------------------
     */
-
-    /*
-    |--------------------------------------------------------------------------
-    | Clippeurs à relancer
-    |--------------------------------------------------------------------------
-    |
-    | Trois signaux, du plus urgent au moins urgent. Ils ne déclenchent rien :
-    | ils dressent la liste de ceux à qui écrire avant qu'ils ne partent.
-    |
-    */
-
-    'retention' => [
-        // Fenêtre d'observation, en jours.
-        'window_days' => 30,
-
-        // « Actif à 0 € » : au moins N clips soumis dans la fenêtre, rien gagné.
-        'busy_min_clips' => 3,
-
-        // « Gains en baisse » : moins de la moitié de la fenêtre précédente,
-        // à partir d'un montant qui rend la baisse significative (centimes).
-        'drop_ratio' => 0.5,
-        'drop_min_previous_cents' => 1_000,
-
-        // « Inactif » : déjà validé au moins une fois, plus rien depuis N jours.
-        'inactive_days' => 21,
-    ],
 
     /*
     |--------------------------------------------------------------------------

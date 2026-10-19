@@ -5,6 +5,7 @@ namespace Tests\Feature\Clipper;
 use App\Enums\Platform;
 use App\Exceptions\ClipSubmissionRefused;
 use App\Services\Clips\ClipUrlParser;
+use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -84,10 +85,27 @@ class ClipUrlParserTest extends TestCase
     }
 
     #[Test]
-    public function short_links_are_refused_with_an_explanation(): void
+    public function short_links_from_the_phone_app_are_followed(): void
     {
+        Http::fake([
+            'vm.tiktok.com/*' => Http::response('', 301, ['Location' => 'https://www.tiktok.com/@lina.clips/video/7123456789012345678?_r=1']),
+            'www.tiktok.com/t/*' => Http::response('', 302, ['Location' => '/@lina.clips/video/7999999999999999999']),
+        ]);
+
+        $short = $this->parser->parse('https://vm.tiktok.com/ZMabcdef/');
+        $this->assertSame('7123456789012345678', $short->externalPostId);
+        $this->assertSame('lina.clips', $short->handle);
+
+        $this->assertSame('7999999999999999999', $this->parser->parse('https://www.tiktok.com/t/ZTabcdef/')->externalPostId);
+    }
+
+    #[Test]
+    public function a_short_link_tiktok_will_not_open_is_refused_with_an_explanation(): void
+    {
+        Http::fake(['vm.tiktok.com/*' => Http::response('', 404)]);
+
         $this->expectException(ClipSubmissionRefused::class);
-        $this->expectExceptionMessage('adresse complète');
+        $this->expectExceptionMessage('choisissez la vidéo dans la liste');
 
         $this->parser->parse('https://vm.tiktok.com/ZMabcdef/');
     }

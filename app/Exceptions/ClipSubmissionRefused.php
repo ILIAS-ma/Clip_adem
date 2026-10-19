@@ -30,7 +30,7 @@ class ClipSubmissionRefused extends RuntimeException
 
     public static function shortLink(string $platform): self
     {
-        return new self("Les liens raccourcis {$platform} ne peuvent pas être vérifiés. Ouvrez la publication et copiez l'adresse complète.");
+        return new self("Ce lien {$platform} raccourci n'a pas pu être ouvert. Réessayez dans un instant, ou choisissez la vidéo dans la liste au-dessus.");
     }
 
     /**

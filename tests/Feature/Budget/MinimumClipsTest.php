@@ -200,7 +200,7 @@ class MinimumClipsTest extends TestCase
         $this->actingAs($user)
             ->get(route('campaigns.show', $campagne))
             ->assertSuccessful()
-            ->assertSee('5 clips validés avant d\'être rémunéré', escape: false)
+            ->assertSee('5 clips soumis avant d\'être rémunéré', escape: false)
             ->assertSee('vous en avez 2')
             ->assertSee('2 / 5');
     }

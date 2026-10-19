@@ -11,6 +11,7 @@ use App\Models\Campaign;
 use App\Models\Clip;
 use App\Models\SocialAccount;
 use App\Models\User;
+use App\Services\Moderation\ClipModerationService;
 use App\Support\Clips\ClipUrl;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -18,9 +19,10 @@ use Illuminate\Support\Facades\DB;
 /**
  * Soumission d'un lien de clip par un clippeur.
  *
- * Le clip naît toujours en attente de modération : la conformité automatique
- * (phase suivante) produit un rapport, jamais une validation. Un hashtag
- * correct ne dit rien du respect réel du brief.
+ * Le clip naît validé : il n'y a pas de file de modération, tout clip soumis
+ * compte dès son premier relevé. Le garde-fou qui reste est automatique — une
+ * vidéo qui n'appartient pas au compte lié est écartée au premier relevé
+ * (ClipSyncService::flagStolenPost) —, et l'admin peut toujours invalider.
  */
 class ClipSubmissionService
 {
@@ -158,7 +160,7 @@ class ClipSubmissionService
             // Rechargé après insertion : `paid_views` et `earned_cents` ne sont
             // pas assignables — seul le moteur de budget les écrit — donc le
             // modèle en mémoire ignorerait leurs valeurs par défaut.
-            return DB::transaction(fn () => Clip::create([
+            $clip = DB::transaction(fn () => Clip::create([
                 'campaign_id' => $campaign->getKey(),
                 'participation_id' => $participation->getKey(),
                 'user_id' => $clipper->getKey(),
@@ -167,7 +169,7 @@ class ClipSubmissionService
                 'external_post_id' => $parsed->externalPostId,
                 'url' => $parsed->canonicalUrl,
                 'submitted_at' => now(),
-                'status' => ClipStatus::PendingReview,
+                'status' => ClipStatus::Approved,
                 'compliance_status' => 'pending',
                 'views_total' => 0,
             ])->refresh());
@@ -186,6 +188,11 @@ class ClipSubmissionService
 
             throw $exception;
         }
+
+        // Hors transaction, comme une validation manuelle : trace dans le
+        // journal de modération et prime de lancement, qui ne doit jamais
+        // faire échouer la soumission.
+        return app(ClipModerationService::class)->approve($clip);
     }
 
     /**

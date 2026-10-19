@@ -131,10 +131,10 @@
              sans que ses gains bougent cherche une panne, pas une règle. --}}
         @if ($minClips > 0 && $valides < $minClips)
             <div class="alert-warn">
-                <p class="font-semibold">{{ $minClips }} clips validés avant d'être rémunéré — vous en avez {{ $valides }}</p>
+                <p class="font-semibold">{{ $minClips }} clips soumis avant d'être rémunéré — vous en avez {{ $valides }}</p>
                 <p class="mt-1 leading-relaxed">
                     Vos vues sont comptées dès maintenant, mais rien n'est crédité avant le
-                    {{ $minClips }}<sup>e</sup> clip validé. Dès qu'il l'est, tout l'arriéré est rattrapé d'un coup.
+                    {{ $minClips }}<sup>e</sup> clip. Dès qu'il est soumis, tout l'arriéré est rattrapé d'un coup.
                 </p>
             </div>
         @endif

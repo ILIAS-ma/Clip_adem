@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Clips;
 
-use App\Enums\ClipStatus;
 use App\Filament\Resources\Clips\Pages\ListClips;
 use App\Filament\Resources\Clips\Tables\ClipsTable;
 use App\Models\Clip;
@@ -47,19 +46,6 @@ class ClipResource extends Resource
     public static function canCreate(): bool
     {
         return false;
-    }
-
-    /** Le badge signale ce qui attend une décision. */
-    public static function getNavigationBadge(): ?string
-    {
-        $pending = static::getModel()::where('status', ClipStatus::PendingReview)->count();
-
-        return $pending > 0 ? (string) $pending : null;
-    }
-
-    public static function getNavigationBadgeColor(): ?string
-    {
-        return 'warning';
     }
 
     public static function getPages(): array

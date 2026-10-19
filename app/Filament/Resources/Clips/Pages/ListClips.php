@@ -16,15 +16,10 @@ class ListClips extends ListRecords
         return [];
     }
 
-    /** Les onglets ordonnent la file : ce qui attend une décision d'abord. */
+    /** Pas de file à modérer : tout clip soumis est validé d'office. */
     public function getTabs(): array
     {
         return [
-            'pending' => Tab::make('À modérer')
-                ->badge(fn () => ClipResource::getModel()::where('status', ClipStatus::PendingReview)->count())
-                ->badgeColor('warning')
-                ->modifyQueryUsing(fn ($query) => $query->where('status', ClipStatus::PendingReview)),
-
             'approved' => Tab::make('Validés')
                 ->modifyQueryUsing(fn ($query) => $query->where('status', ClipStatus::Approved)),
 
@@ -40,6 +35,6 @@ class ListClips extends ListRecords
 
     public function getDefaultActiveTab(): string|int|null
     {
-        return 'pending';
+        return 'approved';
     }
 }

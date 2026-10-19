@@ -40,13 +40,40 @@ class SubmitClip extends Component
         $this->campaign = $campaign;
     }
 
+    /** Combien de vidéos montrer par compte ; « Voir plus » en ajoute. */
+    #[Locked]
+    public int $want = ClipPicker::PER_PAGE;
+
+    /** Vidéos soumises depuis l'ouverture de la liste, pour le message de réussite. */
+    public int $pickedCount = 0;
+
     public function loadVideos(ClipPicker $picker): void
     {
-        $this->groups = $picker->forCampaign($this->campaign, auth()->user());
+        $this->groups = $picker->forCampaign($this->campaign, auth()->user(), $this->want);
         $this->pickError = null;
     }
 
-    public function pick(int $accountId, string $postId, ClipSubmissionService $clips, ClipPicker $picker): void
+    public function loadMore(ClipPicker $picker): void
+    {
+        $this->want += ClipPicker::PER_PAGE;
+        $this->loadVideos($picker);
+    }
+
+    /** « Actualiser » : relire TikTok, pour une vidéo qu'on vient de publier. */
+    public function refreshVideos(ClipPicker $picker): void
+    {
+        foreach ($this->groups ?? [] as $group) {
+            $account = SocialAccount::where('user_id', auth()->id())->find($group['account_id']);
+
+            if ($account) {
+                $picker->forget($account);
+            }
+        }
+
+        $this->loadVideos($picker);
+    }
+
+    public function pick(int $accountId, string $postId, ClipSubmissionService $clips): void
     {
         $account = SocialAccount::where('user_id', auth()->id())->findOrFail($accountId);
 
@@ -70,11 +97,21 @@ class SubmitClip extends Component
             return;
         }
 
-        $picker->forget($account);
+        /*
+         * On reste sur la liste, sans recharger la page : un clippeur qui
+         * rattrape vingt vidéos les soumet à la suite, d'un toucher chacune,
+         * au lieu de rouvrir la liste et de la faire défiler à chaque fois.
+         */
+        $this->groups = array_map(function (array $group) use ($accountId, $postId) {
+            if ($group['account_id'] === $accountId) {
+                $group['videos'] = array_values(array_filter($group['videos'], fn (array $v) => $v['id'] !== $postId));
+            }
 
-        session()->flash('status', 'Clip soumis. Il sera vérifié puis validé par la modération.');
+            return $group;
+        }, $this->groups);
 
-        $this->redirect(route('campaigns.show', $this->campaign), navigate: true);
+        $this->pickedCount++;
+        $this->pickError = null;
     }
 
     public function submit(ClipSubmissionService $clips): void
@@ -95,7 +132,7 @@ class SubmitClip extends Component
 
         $this->reset('url');
 
-        session()->flash('status', 'Clip soumis. Il sera vérifié puis validé par la modération avant d\'être rémunéré.');
+        session()->flash('status', 'Clip soumis : ses vues comptent dès le prochain relevé.');
 
         $this->redirect(route('campaigns.show', $this->campaign), navigate: true);
     }

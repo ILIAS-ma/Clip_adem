@@ -10,6 +10,7 @@ use App\Models\SocialAccount;
 use App\Support\Social\ConnectedAccount;
 use App\Support\Social\PostMetrics;
 use App\Support\Social\RecentPost;
+use App\Support\Social\RecentPostPage;
 use Carbon\Carbon;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Collection;
@@ -179,25 +180,27 @@ class TikTokProvider implements ListsRecentPosts, SocialProvider
     }
 
     /**
-     * Les dernières vidéos du compte, pour le choix au doigt sur téléphone.
-     * Même portée `video.list` que le relevé des vues : rien de plus à demander.
+     * Les vidéos du compte, pour le choix au doigt sur téléphone, page par
+     * page : TikTok en rend vingt au plus par appel, et un clippeur actif en a
+     * bien davantage. Même portée `video.list` que le relevé des vues.
      */
-    public function recentPosts(SocialAccount $account, int $limit = 12): Collection
+    public function recentPosts(SocialAccount $account, int $limit = 20, ?string $cursor = null): RecentPostPage
     {
         $response = Http::withToken($account->access_token)
             ->asJson()
             ->timeout(15)
             ->post('https://open.tiktokapis.com/v2/video/list/?fields='.implode(',', [
                 'id', 'cover_image_url', 'title', 'video_description', 'view_count', 'create_time', 'share_url',
-            ]), [
+            ]), array_filter([
                 'max_count' => min(20, max(1, $limit)),
-            ]);
+                'cursor' => $cursor !== null ? (int) $cursor : null,
+            ], fn ($value) => $value !== null));
 
         if ($response->failed()) {
             throw SocialProviderFailed::fetchFailed($this->platform(), $response->status(), $response->body());
         }
 
-        return collect($response->json('data.videos', []))
+        $posts = collect($response->json('data.videos', []))
             ->map(fn (array $video) => new RecentPost(
                 externalPostId: (string) $video['id'],
                 url: $video['share_url'] ?? null,
@@ -207,6 +210,12 @@ class TikTokProvider implements ListsRecentPosts, SocialProvider
                 postedAt: isset($video['create_time']) ? Carbon::createFromTimestamp($video['create_time']) : null,
             ))
             ->values();
+
+        $next = $response->json('data.has_more') && $response->json('data.cursor') !== null
+            ? (string) $response->json('data.cursor')
+            : null;
+
+        return new RecentPostPage($posts, $next);
     }
 
     public function batchSize(): int

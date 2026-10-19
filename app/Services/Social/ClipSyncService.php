@@ -15,7 +15,6 @@ use App\Models\ModerationLog;
 use App\Models\SocialAccount;
 use App\Models\SocialSyncRun;
 use App\Services\Clips\ClipComplianceChecker;
-use App\Services\Moderation\ClipAutoReview;
 use App\Support\Social\PostMetrics;
 use App\Support\Social\SyncOutcome;
 use Carbon\CarbonInterface;
@@ -50,7 +49,6 @@ class ClipSyncService
         protected SocialProviderManager $providers,
         protected CampaignBudgetService $budget,
         protected ClipComplianceChecker $compliance,
-        protected ClipAutoReview $autoReview,
     ) {}
 
     /**
@@ -449,16 +447,6 @@ class ClipSyncService
 
                 continue;
             }
-
-            /*
-             * Validation automatique, avant le crédit.
-             *
-             * L'ordre compte : un clip qui vient de passer en approuvé doit
-             * être crédité dès ce relevé-là. Dans l'autre sens, il faudrait
-             * attendre le passage suivant — jusqu'à vingt-quatre heures pour
-             * un clip déjà ancien — alors que la décision est prise.
-             */
-            $this->autoReview->review($clip);
 
             $this->budget->creditViews(
                 $clip->refresh(),
