@@ -10,7 +10,7 @@
         </div>
     </x-slot>
 
-    <div class="mx-auto max-w-2xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-2xl space-y-4 px-4 py-5 sm:space-y-6 sm:px-6 sm:py-8 lg:px-8">
 
         @if (session('status'))
             <div class="alert-ok">{{ session('status') }}</div>

@@ -6,8 +6,7 @@
     et mène aux deux recours — écrire à l'équipe, ou relire la formation.
 --}}
 <div x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false"
-     {{ $attributes->merge(['class' => 'fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3']) }}
-     style="bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));">
+     {{ $attributes->merge(['class' => 'help-fab fixed right-3 z-50 flex flex-col items-end gap-3 lg:right-5']) }}>
 
     <div x-show="open" x-cloak
          x-transition:enter="transition ease-out duration-150"
@@ -31,8 +30,8 @@
     </div>
 
     <button type="button" @click="open = ! open" :aria-expanded="open ? 'true' : 'false'" aria-label="Besoin d'aide ?"
-            class="flex h-11 items-center gap-2 rounded-full bg-brand-500 px-3 font-semibold text-white shadow-glow transition hover:bg-brand-400 sm:h-14 sm:px-5">
-        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.2 9a3.8 3.8 0 017.3 1.3c0 2.5-3.5 3-3.5 5M12 18h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-        <span class="hidden sm:inline">Aide</span>
+            class="flex h-10 items-center gap-2 rounded-full bg-brand-500 px-2.5 font-semibold text-white shadow-glow transition hover:bg-brand-400 lg:h-14 lg:px-5">
+        <svg class="h-5 w-5 lg:h-6 lg:w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.2 9a3.8 3.8 0 017.3 1.3c0 2.5-3.5 3-3.5 5M12 18h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <span class="hidden lg:inline">Aide</span>
     </button>
 </div>

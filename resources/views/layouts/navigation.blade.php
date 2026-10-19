@@ -10,6 +10,7 @@
 <nav x-data="{ open: false }"
      x-effect="document.body.classList.toggle('overflow-hidden', open)"
      @keydown.escape.window="open = false"
+     @open-nav.window="open = true"
      class="nav-bar glass-edge sticky top-0 z-30 border-x-0 border-t-0 border-b">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 items-center justify-between gap-3">
@@ -56,7 +57,7 @@
          contenu dans les 64 px de hauteur du <nav>, au lieu de couvrir
          l'écran. --}}
     <template x-teleport="body">
-        <div x-show="open" x-cloak class="fixed inset-0 z-40">
+        <div x-show="open" x-cloak class="fixed inset-0 z-[55]">
 
             <div x-show="open"
                  x-transition:enter="transition-opacity ease-out duration-200"

@@ -55,17 +55,28 @@
 
         @isset($header)
             <header class="border-b border-ink-700 bg-ink-900">
-                <div class="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
+                <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-7 lg:px-8">
                     {{ $header }}
                 </div>
             </header>
         @endisset
 
-        <main class="flex-1 pb-16">
+        @php
+            // Barre d'onglets sur téléphone, sauf là où un bouton d'action occupe déjà le bas.
+            $tabBar = auth()->user()?->canClip() && ! request()->routeIs('campaigns.show');
+        @endphp
+
+        <main @class(['flex-1', 'pb-16', 'max-lg:pb-24' => $tabBar])>
             {{ $slot }}
         </main>
 
-        <x-site-footer />
+        <div @class(['max-lg:pb-20' => $tabBar])>
+            <x-site-footer />
+        </div>
+
+        @if ($tabBar)
+            <x-mobile-tab-bar />
+        @endif
         </div>
     </div>
 

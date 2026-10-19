@@ -18,7 +18,7 @@
         </div>
     </x-slot>
 
-    <div class="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-7xl space-y-5 px-4 py-5 sm:space-y-8 sm:px-6 sm:py-8 lg:px-8">
 
         @if (session('status') && ! str_contains(session('status'), '-'))
             <div class="alert-ok">{{ session('status') }}</div>
@@ -150,20 +150,20 @@
                 </div>
 
                 <dl class="grid grid-cols-3 divide-x divide-ink-700 border-t border-ink-700 bg-ink-900/60">
-                    <div class="px-5 py-4 sm:px-7">
+                    <div class="min-w-0 px-3 py-3 sm:px-7 sm:py-4">
                         <dt class="text-xs text-ink-400">Vues cumulées</dt>
-                        <dd class="mt-1 font-display text-xl font-bold tabular text-ink-50">{{ Money::views($views) }}</dd>
+                        <dd class="mt-1 font-display text-lg font-bold tabular text-ink-50 sm:text-xl">{{ Money::views($views) }}</dd>
                         @if ($unpaidViews > 0)
                             <dd class="mt-0.5 text-[11px] text-ink-500">{{ Money::views($unpaidViews) }} non rémunérées</dd>
                         @endif
                     </div>
-                    <div class="px-5 py-4 sm:px-7">
+                    <div class="min-w-0 px-3 py-3 sm:px-7 sm:py-4">
                         <dt class="text-xs text-ink-400">Gains validés</dt>
-                        <dd class="mt-1 font-display text-xl font-bold tabular text-brand-400">{{ Money::euros($earnedCents) }}</dd>
+                        <dd class="mt-1 whitespace-nowrap font-display text-lg font-bold tabular text-brand-400 sm:text-xl">{{ Money::euros($earnedCents) }}</dd>
                     </div>
-                    <div class="px-5 py-4 sm:px-7">
+                    <div class="min-w-0 px-3 py-3 sm:px-7 sm:py-4">
                         <dt class="text-xs text-ink-400">Comptes liés</dt>
-                        <dd @class(['mt-1 font-display text-xl font-bold tabular', 'text-brand-400' => $accountsCount === 0, 'text-ink-50' => $accountsCount > 0])>{{ $accountsCount }}</dd>
+                        <dd @class(['mt-1 font-display text-lg font-bold tabular sm:text-xl', 'text-brand-400' => $accountsCount === 0, 'text-ink-50' => $accountsCount > 0])>{{ $accountsCount }}</dd>
                     </div>
                 </dl>
             </div>
@@ -223,7 +223,7 @@
         </div>
 
         {{-- Les trois endroits où l'on va tous les jours. --}}
-        <div class="grid gap-4 sm:grid-cols-3">
+        <div class="grid grid-cols-3 gap-2 sm:gap-4">
             @foreach ([
                 $studioOn
                     ? ['href' => url('/fetchclip'), 'navigate' => false, 'titre' => 'Echo Studio',
@@ -242,20 +242,20 @@
                  'badge' => $unreadMessages],
             ] as $raccourci)
                 <a href="{{ $raccourci['href'] }}" @if ($raccourci['navigate']) wire:navigate @endif
-                   class="card group flex items-start gap-4 p-5 transition hover:border-brand-500/50 hover:bg-ink-800/60">
+                   class="card group flex flex-col items-center gap-2 p-3 text-center transition hover:border-brand-500/50 hover:bg-ink-800/60 sm:flex-row sm:items-start sm:gap-4 sm:p-5 sm:text-left">
                     <span class="grid h-11 w-11 flex-none place-items-center rounded-xl bg-brand-500/10 text-brand-400 ring-1 ring-brand-500/30 transition group-hover:bg-brand-500 group-hover:text-white">
                         <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ $raccourci['icone'] }}"/></svg>
                     </span>
                     <span class="min-w-0 flex-1">
-                        <span class="flex items-center gap-2 font-display font-bold text-ink-50">
+                        <span class="flex items-center justify-center gap-2 font-display text-sm font-bold text-ink-50 sm:justify-start sm:text-base">
                             {{ $raccourci['titre'] }}
                             @if (! empty($raccourci['badge']))
                                 <span class="rounded-full bg-brand-500 px-1.5 py-0.5 text-[11px] font-bold leading-none text-white">{{ $raccourci['badge'] }}</span>
                             @endif
                         </span>
-                        <span class="mt-1 block text-sm text-ink-400">{{ $raccourci['texte'] }}</span>
+                        <span class="mt-1 hidden text-sm text-ink-400 sm:block">{{ $raccourci['texte'] }}</span>
                     </span>
-                    <span class="self-center text-ink-600 transition group-hover:translate-x-0.5 group-hover:text-ink-200" aria-hidden="true">→</span>
+                    <span class="hidden self-center text-ink-600 transition group-hover:translate-x-0.5 group-hover:text-ink-200 sm:inline" aria-hidden="true">→</span>
                 </a>
             @endforeach
         </div>
@@ -263,8 +263,12 @@
         <div class="grid gap-6 lg:grid-cols-3">
             <x-level-card class="lg:col-span-2" :progression="$progression" />
 
-            <div class="card p-6">
-                <p class="text-sm font-medium text-ink-300">Comment gagner de l'XP</p>
+            <div class="card p-5 sm:p-6" x-data="{ open: false }">
+                <button type="button" @click="open = ! open" class="flex w-full items-center justify-between text-left lg:pointer-events-none">
+                    <span class="text-sm font-medium text-ink-300">Comment gagner de l'XP</span>
+                    <span class="text-ink-500 lg:hidden" x-text="open ? '−' : '+'" aria-hidden="true">+</span>
+                </button>
+                <div x-show="open" x-cloak class="lg:!block">
                 <ul class="mt-4 space-y-3 text-sm">
                     <li class="flex items-baseline justify-between gap-3">
                         <span class="text-ink-300">Chaque vue rémunérée</span>
@@ -296,6 +300,7 @@
                     Seules les vues effectivement rémunérées comptent. Un clip invalidé perd les
                     siennes.
                 </p>
+                </div>
             </div>
         </div>
 
@@ -337,30 +342,27 @@
                 <div class="px-6 py-12 text-center">
                     <p class="font-display text-base font-bold text-ink-50">Aucun clip pour l'instant</p>
                     <p class="mx-auto mt-2 max-w-sm text-sm text-ink-300">
-                        Rejoignez une campagne, publiez votre clip, puis collez son lien.
+                        Rejoignez une campagne, publiez sur TikTok, puis choisissez vos vidéos.
                     </p>
                 </div>
             @else
-                <ul class="divide-y divide-ink-700">
-                    @foreach ($clips->take(5) as $clip)
+                <ul class="grid grid-cols-3 gap-1.5 p-3 sm:grid-cols-6 sm:gap-2 sm:p-4">
+                    @foreach ($clips->take(6) as $clip)
                         <li>
                             <a href="{{ route('clips.show', $clip) }}" wire:navigate
-                               class="flex flex-wrap items-center justify-between gap-4 px-6 py-4 transition hover:bg-ink-800">
-                                <div class="min-w-0">
-                                    <p class="font-semibold text-ink-50">{{ $clip->campaign?->title }}</p>
-                                    <p class="mt-0.5 flex flex-wrap items-center gap-2 text-sm text-ink-400">
-                                        <span>{{ $clip->platform->label() }}</span>
-                                        <span aria-hidden="true">·</span>
-                                        <span class="{{ $clip->status->value === 'approved' ? 'chip-ok' : ($clip->status->value === 'pending_review' ? 'chip-wait' : 'chip-neutral') }}">
-                                            {{ $clip->status->label() }}
-                                        </span>
-                                    </p>
-                                </div>
-
-                                <div class="text-right">
-                                    <p class="font-display font-bold tabular text-ink-50">{{ Money::euros($clip->earned_cents) }}</p>
-                                    <p class="text-xs tabular text-ink-400">{{ Money::views($clip->views_total) }} vues</p>
-                                </div>
+                               class="relative block aspect-[9/16] overflow-hidden rounded-xl bg-ink-800 ring-1 ring-ink-700 transition hover:ring-brand-500">
+                                @if ($clip->thumbnail_url)
+                                    <img src="{{ $clip->thumbnail_url }}" alt="" loading="lazy" referrerpolicy="no-referrer"
+                                         onerror="this.remove()" class="absolute inset-0 h-full w-full object-cover">
+                                @endif
+                                <span aria-hidden="true" class="absolute inset-0 bg-gradient-to-t from-ink-950/90 via-transparent to-transparent"></span>
+                                <span class="absolute inset-x-1.5 bottom-1.5">
+                                    <span class="block text-sm font-bold tabular text-white">{{ Money::compactViews($clip->views_total) }} vues</span>
+                                    @if ($clip->earned_cents > 0)
+                                        <span class="block text-[11px] font-semibold tabular text-brand-300">{{ Money::euros($clip->earned_cents) }}</span>
+                                    @endif
+                                </span>
+                                <span class="sr-only">{{ $clip->campaign?->title }} · {{ $clip->status->label() }}</span>
                             </a>
                         </li>
                     @endforeach

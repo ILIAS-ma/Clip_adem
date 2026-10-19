@@ -14,7 +14,7 @@
 
     <div class="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
 
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             <x-stat label="Budget total" :value="Money::euros($campaign->budget_total_cents)" />
 
             <x-stat label="Dépensé" :value="Money::euros($campaign->spent_cents)"

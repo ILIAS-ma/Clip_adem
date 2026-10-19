@@ -5,7 +5,7 @@
         <p class="mt-1 text-ink-300">Dernière étape avant de pouvoir rejoindre une campagne.</p>
     </x-slot>
 
-    <div class="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-2xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
 
         @if ($missing)
             {{-- Dit pourquoi on bloque, pas seulement qu'on bloque. --}}

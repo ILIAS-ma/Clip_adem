@@ -12,7 +12,7 @@
         </div>
     </x-slot>
 
-    <div class="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-3xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
         @if ($notifications->isEmpty())
             <div class="card px-6 py-16 text-center">
                 <p class="font-display text-lg font-bold text-ink-50">Rien pour l'instant</p>

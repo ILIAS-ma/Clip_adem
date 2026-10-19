@@ -21,9 +21,9 @@
     bon nombre, et un lecteur d'écran n'entend jamais un total en train de
     bouger.
 --}}
-<div {{ $attributes->merge(['class' => 'stat-card card p-5 '.($highlight ? 'ring-2 ring-brand-500' : '')]) }}>
-    <p class="text-sm font-medium text-ink-300">{{ $label }}</p>
-    <p class="mt-1.5 font-display text-2xl font-bold tabular {{ $valueTone }}" data-count-up>{{ $value }}</p>
+<div {{ $attributes->merge(['class' => 'stat-card card p-4 sm:p-5 '.($highlight ? 'ring-2 ring-brand-500' : '')]) }}>
+    <p class="text-xs font-medium text-ink-300 sm:text-sm">{{ $label }}</p>
+    <p class="mt-1 font-display text-xl font-bold tabular sm:mt-1.5 sm:text-2xl {{ $valueTone }}" data-count-up>{{ $value }}</p>
     @if ($hint)
         <p class="mt-1 text-xs text-ink-300">{{ $hint }}</p>
     @endif

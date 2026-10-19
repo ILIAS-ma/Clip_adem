@@ -9,7 +9,7 @@
         </p>
     </x-slot>
 
-    <div class="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-5xl space-y-4 px-4 py-5 sm:space-y-6 sm:px-6 sm:py-8 lg:px-8">
 
         {{-- Le lien d'abord : c'est la seule chose que la plupart viennent
              chercher sur cette page. --}}
@@ -39,7 +39,7 @@
             </div>
         </div>
 
-        <div class="grid gap-4 sm:grid-cols-3">
+        <div class="grid grid-cols-3 gap-2 sm:gap-4">
             <x-stat label="Filleuls" :value="(string) $filleuls->count()"
                     :hint="$filleuls->count() > 0 ? 'inscrits grâce à vous' : 'personne pour l’instant'" />
 

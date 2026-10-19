@@ -6,7 +6,7 @@
         <p class="mt-1 text-ink-300">Les clippeurs qui rapportent le plus : cette semaine, sur la saison, depuis toujours et par catégorie.</p>
     </x-slot>
 
-    <div class="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-5xl space-y-4 px-4 py-5 sm:space-y-6 sm:px-6 sm:py-8 lg:px-8">
 
         <div class="grid gap-6 lg:grid-cols-2">
             <div class="card">

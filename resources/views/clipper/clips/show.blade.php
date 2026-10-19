@@ -37,13 +37,13 @@
         </div>
     </x-slot>
 
-    <div class="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-5xl space-y-4 px-4 py-5 sm:space-y-6 sm:px-6 sm:py-8 lg:px-8">
 
         @if (session('status'))
             <div class="alert-ok">{{ session('status') }}</div>
         @endif
 
-        <div class="grid gap-4 sm:grid-cols-3">
+        <div class="grid grid-cols-3 gap-2 sm:gap-4">
             <x-stat label="Vues" :value="Money::views($clip->views_total)"
                     :hint="Money::views($clip->paid_views).' rémunérées'" />
 

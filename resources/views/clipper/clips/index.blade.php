@@ -13,19 +13,19 @@
                     {{ Money::euros($clips->sum('earned_cents')) }} gagnés
                 </p>
             </div>
-            <a href="{{ route('campaigns.index') }}" wire:navigate class="btn-ghost">Rejoindre une campagne</a>
+            <a href="{{ route('campaigns.index') }}" wire:navigate class="btn-ghost max-sm:hidden">Rejoindre une campagne</a>
         </div>
     </x-slot>
 
-    <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-5xl px-4 py-4 sm:px-6 sm:py-8 lg:px-8">
 
         {{-- Filtres en GET plutôt qu'en Livewire : l'URL reste partageable et
              le bouton retour du navigateur fonctionne, pour un simple filtre
              qui n'a pas besoin de réactivité. --}}
-        <form method="GET" class="card mb-6 flex flex-wrap items-end gap-4 p-4">
-            <div>
+        <form method="GET" class="card mb-4 grid grid-cols-3 items-end gap-2 p-3 sm:mb-6 sm:flex sm:flex-wrap sm:gap-4 sm:p-4">
+            <div class="min-w-0">
                 <label for="campagne" class="label">Campagne</label>
-                <x-select id="campagne" name="campagne" onchange="this.form.submit()">
+                <x-select id="campagne" name="campagne" class="w-full text-sm sm:w-auto" onchange="this.form.submit()">
                     <option value="">Toutes</option>
                     @foreach ($campaignOptions as $campaign)
                         <option value="{{ $campaign->id }}" @selected(($filters['campagne'] ?? '') == $campaign->id)>
@@ -35,9 +35,9 @@
                 </x-select>
             </div>
 
-            <div>
+            <div class="min-w-0">
                 <label for="plateforme" class="label">Plateforme</label>
-                <x-select id="plateforme" name="plateforme" onchange="this.form.submit()">
+                <x-select id="plateforme" name="plateforme" class="w-full text-sm sm:w-auto" onchange="this.form.submit()">
                     <option value="">Toutes</option>
                     @foreach ($platformOptions as $platform)
                         <option value="{{ $platform->value }}" @selected(($filters['plateforme'] ?? '') === $platform->value)>
@@ -47,9 +47,9 @@
                 </x-select>
             </div>
 
-            <div>
+            <div class="min-w-0">
                 <label for="statut" class="label">Statut</label>
-                <x-select id="statut" name="statut" onchange="this.form.submit()">
+                <x-select id="statut" name="statut" class="w-full text-sm sm:w-auto" onchange="this.form.submit()">
                     <option value="">Tous</option>
                     @foreach (ClipStatus::cases() as $status)
                         <option value="{{ $status->value }}" @selected(($filters['statut'] ?? '') === $status->value)>
@@ -60,7 +60,7 @@
             </div>
 
             @if (array_filter($filters))
-                <a href="{{ route('clips.index') }}" wire:navigate class="text-sm font-medium text-ink-300 underline-offset-2 hover:text-ink-50 hover:underline">
+                <a href="{{ route('clips.index') }}" wire:navigate class="col-span-3 text-sm font-medium text-ink-300 underline-offset-2 hover:text-ink-50 hover:underline">
                     Réinitialiser
                 </a>
             @endif
@@ -75,8 +75,8 @@
             <div class="card px-6 py-16 text-center">
                 <p class="font-display text-lg font-bold text-ink-50">Aucun clip soumis</p>
                 <p class="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-300">
-                    Rejoignez une campagne, publiez votre clip sur votre compte, puis collez le lien
-                    de la publication.
+                    Rejoignez une campagne, publiez votre clip sur TikTok, puis choisissez-le
+                    depuis la page de la campagne.
                 </p>
                 <a href="{{ route('campaigns.index') }}" wire:navigate class="btn-brand mt-6">Voir les campagnes</a>
             </div>
@@ -84,10 +84,10 @@
             <div class="space-y-3">
                 @foreach ($clips as $clip)
                     <a href="{{ route('clips.show', $clip) }}" wire:navigate
-                       class="flex items-center gap-4 card p-5 transition hover:-translate-y-0.5 hover:shadow-lifted">
+                       class="flex items-center gap-3 card p-3 transition hover:-translate-y-0.5 hover:shadow-lifted sm:gap-4 sm:p-5">
                         <div class="h-16 w-12 flex-none overflow-hidden rounded-lg bg-ink-700">
                             @if ($clip->thumbnail_url)
-                                <img src="{{ $clip->thumbnail_url }}" alt="" class="h-full w-full object-cover">
+                                <img src="{{ $clip->thumbnail_url }}" alt="" loading="lazy" referrerpolicy="no-referrer" class="h-full w-full object-cover">
                             @else
                                 <div class="flex h-full w-full items-center justify-center text-[10px] font-semibold uppercase text-ink-400">
                                     {{ $clip->platform->label() }}
@@ -122,10 +122,16 @@
                         </div>
 
                         <div class="shrink-0 text-right">
-                            <p class="font-display text-lg font-bold tabular text-ink-50 sm:text-xl">
-                                {{ Money::euros($clip->earned_cents) }}
-                            </p>
-                            <p class="text-xs tabular text-ink-400">{{ Money::views($clip->views_total) }} vues</p>
+                            {{-- Sur un classement, rien n'est payé aux vues : le chiffre qui compte, ce sont les vues. --}}
+                            @if ($clip->campaign?->isContest())
+                                <p class="font-display text-lg font-bold tabular text-ink-50 sm:text-xl">{{ Money::compactViews($clip->views_total) }}</p>
+                                <p class="text-xs text-ink-400">vues</p>
+                            @else
+                                <p class="font-display text-lg font-bold tabular text-ink-50 sm:text-xl">
+                                    {{ Money::euros($clip->earned_cents) }}
+                                </p>
+                                <p class="text-xs tabular text-ink-400">{{ Money::views($clip->views_total) }} vues</p>
+                            @endif
 
                             @if (($pending[$clip->id] ?? 0) > 0)
                                 {{-- Estimation issue du moteur : plafonds et reliquat déjà appliqués. --}}
