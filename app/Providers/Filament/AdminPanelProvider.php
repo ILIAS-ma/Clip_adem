@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Widgets\AdminList;
 use App\Filament\Widgets\BudgetConsumptionChart;
 use App\Filament\Widgets\PlatformOverview;
 use App\Filament\Widgets\SpendPerCreator;
@@ -128,6 +129,7 @@ class AdminPanelProvider extends PanelProvider
                 SpendPerCreator::class,
                 TopClippers::class,
                 TopClippersWeekly::class,
+                AdminList::class,
                 AccountWidget::class,
             ])
             ->middleware([

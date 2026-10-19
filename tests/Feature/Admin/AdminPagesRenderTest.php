@@ -9,6 +9,7 @@ use App\Enums\ClipStatus;
 use App\Enums\PayoutStatus;
 use App\Enums\Platform;
 use App\Enums\UserRole;
+use App\Filament\Widgets\AdminList;
 use App\Models\Campaign;
 use App\Models\Category;
 use App\Models\Clip;
@@ -170,6 +171,25 @@ class AdminPagesRenderTest extends TestCase
         foreach (Filament::getPanel('admin')->getWidgets() as $widget) {
             Livewire::test($widget)->assertOk();
         }
+    }
+
+    #[Test]
+    public function the_dashboard_lists_the_admins(): void
+    {
+        $admin = $this->admin();
+        User::factory()->create(['role' => UserRole::Moderator, 'email' => 'modo@clip.test']);
+        User::factory()->create(['role' => UserRole::Clipper, 'email' => 'simple.clippeur@clip.test']);
+
+        $this->actingAs($admin);
+
+        Livewire::test(AdminList::class)
+            ->assertOk()
+            ->assertSee('Administrateurs')
+            ->assertSee($admin->email)
+            ->assertSee('modo@clip.test')
+            ->assertSee('Activée')
+            ->assertSee('À configurer')
+            ->assertDontSee('simple.clippeur@clip.test');
     }
 
     #[Test]
