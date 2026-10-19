@@ -14,6 +14,7 @@ use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
+use Filament\Navigation\NavigationItem;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -88,6 +89,17 @@ class AdminPanelProvider extends PanelProvider
                     ->icon(Heroicon::OutlinedBanknotes),
                 NavigationGroup::make('Communication')
                     ->icon(Heroicon::OutlinedEnvelope),
+            ])
+            /*
+             * Tout administrateur est aussi clippeur (User::canClip) : le
+             * passage vers son espace clippeur est en tête du menu, et le
+             * retour par « Administration » de l'autre côté.
+             */
+            ->navigationItems([
+                NavigationItem::make('Espace clippeur')
+                    ->url(fn () => route('dashboard'))
+                    ->icon(Heroicon::OutlinedArrowsRightLeft)
+                    ->sort(-100),
             ])
             ->sidebarCollapsibleOnDesktop()
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])

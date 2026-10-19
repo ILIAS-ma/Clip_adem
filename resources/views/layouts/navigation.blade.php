@@ -19,7 +19,7 @@
             </a>
 
             <div class="flex items-center gap-2 sm:gap-3">
-                @if (auth()->user()->isClipper())
+                @if (auth()->user()->canClip())
                     {{-- Le solde est l'information qu'on vient chercher : elle
                          reste lisible sans ouvrir quoi que ce soit. --}}
                     <a href="{{ route('earnings.index') }}"
@@ -126,7 +126,7 @@
                     <div class="mt-3" @click="open = false">
                         <x-responsive-nav-link :href="route('profile.edit')">Mon compte</x-responsive-nav-link>
 
-                        @if (auth()->user()->isClipper())
+                        @if (auth()->user()->canClip())
                             <x-responsive-nav-link :href="route('payout-method.edit')">Moyen de paiement</x-responsive-nav-link>
                         @endif
 

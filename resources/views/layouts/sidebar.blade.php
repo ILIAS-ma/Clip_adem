@@ -89,7 +89,7 @@
             <span>Mon compte</span>
         </a>
 
-        @if (auth()->user()->isClipper())
+        @if (auth()->user()->canClip())
             <a href="{{ route('payout-method.edit') }}" wire:navigate
                @class(['sidebar-link', 'is-active' => request()->routeIs('payout-method.*')])
                x-bind:title="mini ? 'Moyen de paiement' : null">

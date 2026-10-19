@@ -78,6 +78,19 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         return $this->role === UserRole::Clipper;
     }
 
+    /**
+     * Peut utiliser l'espace clippeur : les clippeurs, et tout le personnel.
+     *
+     * Un administrateur est aussi clippeur — il rejoint des campagnes, lie son
+     * TikTok, soumet, est classé et payé comme les autres — sans perdre le
+     * back-office. `isClipper()` reste le rôle au sens strict : compter les
+     * clippeurs, cibler une annonce, choisir l'espace d'arrivée.
+     */
+    public function canClip(): bool
+    {
+        return $this->isClipper() || $this->role->isStaff();
+    }
+
     public function isCreator(): bool
     {
         return $this->role === UserRole::Creator;

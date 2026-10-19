@@ -97,7 +97,7 @@ Route::get('/_studio-auth', function () {
     $user = auth()->user();
 
     // Outil en pause : refusé à tous, Nginx renvoie alors vers la page de pause.
-    abort_unless(config('clipping.studio.enabled') && $user && $user->isClipper() && ! $user->is_banned, 401);
+    abort_unless(config('clipping.studio.enabled') && $user && $user->canClip() && ! $user->is_banned, 401);
 
     /*
      * L'identité repart dans un en-tête, que Nginx relaie à l'outil : c'est
@@ -166,7 +166,7 @@ Route::get('/echo-studio-en-pause', function () {
  * qu'on peut remplir depuis l'extérieur est un journal qu'on peut noyer.
  */
 Route::post('/_studio-log', function (Request $request) {
-    abort_unless(auth()->user()?->isClipper(), 404);
+    abort_unless(auth()->user()?->canClip(), 404);
 
     Log::warning('Erreur dans le mode créateur', [
         'user_id' => auth()->id(),

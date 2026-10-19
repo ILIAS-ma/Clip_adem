@@ -124,6 +124,25 @@ class NavigationComposer
         }
 
         /*
+         * Un administrateur est aussi clippeur : le retour au back-office
+         * remplace pour lui le fil avec l'équipe — l'équipe, c'est lui, et ses
+         * messages se lisent dans l'administration.
+         */
+        if ($user->isStaff()) {
+            $links[] = [
+                'url' => '/admin',
+                'pattern' => 'admin',
+                'navigate' => false,
+                'label' => 'Administration',
+                'icon' => 'M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3zm-3 9l2 2 4-4',
+            ];
+
+            $view->with(['navHome' => $home, 'navLinks' => $links]);
+
+            return;
+        }
+
+        /*
          * Le fil avec l'équipe, pour tous les profils. Le badge compte ce que
          * l'équipe a écrit et qui n'a pas été lu : c'est par lui qu'on
          * apprend qu'une réponse est arrivée, faute d'e-mail.

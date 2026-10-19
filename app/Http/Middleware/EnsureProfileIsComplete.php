@@ -19,7 +19,7 @@ class EnsureProfileIsComplete
     {
         $user = $request->user();
 
-        if ($user && $user->isClipper() && ! $user->hasCompleteProfile()) {
+        if ($user && $user->canClip() && ! $user->hasCompleteProfile()) {
             return redirect()
                 ->route('profile.complete')
                 ->with('status', 'profile-incomplete');

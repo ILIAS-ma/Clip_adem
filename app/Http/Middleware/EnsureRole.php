@@ -26,6 +26,11 @@ class EnsureRole
 
         $allowed = array_map(fn (string $role) => UserRole::from($role), $roles);
 
+        // L'espace clippeur est aussi celui du personnel (User::canClip).
+        if (in_array(UserRole::Clipper, $allowed, true) && $user->canClip()) {
+            return $next($request);
+        }
+
         if (! in_array($user->role, $allowed, true)) {
             return redirect($user->role->homeRoute());
         }

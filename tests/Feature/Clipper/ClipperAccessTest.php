@@ -106,15 +106,58 @@ class ClipperAccessTest extends TestCase
     }
 
     #[Test]
-    public function staff_are_sent_to_their_panel_instead_of_the_clipper_space(): void
+    public function an_admin_is_also_a_clipper(): void
     {
+        // Un administrateur garde le back-office et entre dans l'espace
+        // clippeur comme n'importe qui : profil d'abord, puis tout le reste.
         $admin = User::factory()->create([
             'role' => UserRole::SuperAdmin,
             'email_verified_at' => now(),
+            'app_authentication_secret' => 'JBSWY3DPEHPK3PXP',
         ]);
 
-        $this->actingAs($admin)->get('/dashboard')->assertRedirect('/admin');
-        $this->actingAs($admin)->get('/campagnes')->assertRedirect('/admin');
+        $this->actingAs($admin)->get('/dashboard')->assertRedirect(route('profile.complete'));
+
+        $admin->forceFill(['pseudo' => 'le.boss', 'country' => 'FR', 'paypal_email' => 'boss@paypal.test'])->save();
+
+        $this->actingAs($admin)->get('/dashboard')
+            ->assertOk()
+            ->assertSee('Administration');
+        $this->actingAs($admin)->get('/campagnes')->assertOk();
+
+        // Et la bascule existe dans l'autre sens.
+        $this->actingAs($admin)->get('/admin')->assertSee('Espace clippeur');
+    }
+
+    #[Test]
+    public function a_moderator_is_also_a_clipper(): void
+    {
+        $moderator = User::factory()->create([
+            'role' => UserRole::Moderator,
+            'email_verified_at' => now(),
+            'pseudo' => 'la.modo',
+            'country' => 'FR',
+            'paypal_email' => 'modo@paypal.test',
+        ]);
+
+        $this->actingAs($moderator)->get('/campagnes')->assertOk();
+    }
+
+    #[Test]
+    public function a_creator_still_stays_out_of_the_clipper_space(): void
+    {
+        $creator = User::factory()->create([
+            'role' => UserRole::Creator,
+            'email_verified_at' => now(),
+        ]);
+
+        $this->actingAs($creator)->get('/dashboard')->assertRedirect('/createur');
+    }
+
+    #[Test]
+    public function a_clipper_gets_no_way_into_the_admin(): void
+    {
+        $this->actingAs($this->clipper())->get('/dashboard')->assertDontSee('Administration');
     }
 
     #[Test]

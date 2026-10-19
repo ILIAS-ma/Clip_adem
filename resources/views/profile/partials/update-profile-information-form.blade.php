@@ -28,7 +28,7 @@
             <x-input-error class="mt-2" :messages="$errors->get('pseudo')" />
         </div>
 
-        @if ($user->isClipper())
+        @if ($user->canClip())
             {{-- Le moyen de paiement a sa propre page : il se change plus
                  souvent que le reste, et une erreur y coûte un virement. --}}
             <div class="rounded-xl border border-ink-700 p-4">
