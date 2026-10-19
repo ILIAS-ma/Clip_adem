@@ -17,32 +17,31 @@ use Illuminate\Support\Facades\Log;
  * Les vidéos récentes qu'un clippeur peut soumettre d'un toucher.
  *
  * Seulement depuis les comptes avec lesquels il participe à la campagne, et
- * sans celles déjà soumises.
+ * sur tout l'historique du compte, page après page.
  */
 class ClipPicker
 {
     /** Le temps de choisir, pas assez pour rater une vidéo qu'on vient de poster. */
     protected const CACHE_SECONDS = 120;
 
-    /** Vidéos ajoutées à chaque « Voir plus ». */
-    public const PER_PAGE = 12;
+    /** Vidéos ajoutées à chaque chargement : un multiple de trois, la grille en a trois par ligne. */
+    public const PER_PAGE = 24;
 
     /**
-     * Pages lues au plus, de vingt vidéos chacune : un historique entier, sans
-     * laisser un compte de mille vidéos vider le quota d'API en un toucher.
+     * Pages lues au plus, de vingt vidéos chacune : tout l'historique d'un
+     * clippeur, sans laisser un compte de dix mille vidéos vider le quota.
      */
-    protected const MAX_PAGES = 15;
+    protected const MAX_PAGES = 50;
 
     public function __construct(
         protected SocialProviderManager $providers,
     ) {}
 
     /**
-     * Les `$want` vidéos les plus récentes pas encore soumises, par compte.
-     *
-     * On remonte les pages jusqu'à en avoir assez : se contenter de la
-     * première rendait la liste vide dès que ses vidéos avaient toutes été
-     * soumises, alors que le compte en avait des dizaines d'autres.
+     * Les `$want` vidéos les plus récentes de chaque compte, des plus récentes
+     * aux plus anciennes. Celles déjà soumises restent dans la liste, marquées :
+     * le clippeur voit où il en est, au lieu d'une liste qui rétrécit sans
+     * qu'il comprenne pourquoi.
      *
      * @return list<array{account_id: int, platform: string, handle: ?string, videos: list<array<string, mixed>>, has_more: bool, error: bool}>
      */
@@ -66,13 +65,20 @@ class ClipPicker
                 continue;
             }
 
-            [$videos, $hasMore, $error] = $this->available($provider, $account, $want);
+            [$videos, $hasMore, $error] = $this->collect($provider, $account, $want);
+
+            // Déjà soumises — par lui ou par un autre : montrées, mais plus
+            // sélectionnables.
+            $taken = Clip::where('platform', $account->platform)
+                ->whereIn('external_post_id', array_column($videos, 'id'))
+                ->pluck('external_post_id')
+                ->all();
 
             $groups[] = [
                 'account_id' => $account->getKey(),
                 'platform' => $account->platform->value,
                 'handle' => $account->handle,
-                'videos' => $videos,
+                'videos' => array_map(fn (array $video) => $video + ['submitted' => in_array($video['id'], $taken, true)], $videos),
                 'has_more' => $hasMore,
                 'error' => $error,
             ];
@@ -84,7 +90,7 @@ class ClipPicker
     /**
      * @return array{0: list<array<string, mixed>>, 1: bool, 2: bool} vidéos, s'il en reste, erreur
      */
-    protected function available(ListsRecentPosts $provider, SocialAccount $account, int $want): array
+    protected function collect(ListsRecentPosts $provider, SocialAccount $account, int $want): array
     {
         $videos = [];
         $cursor = null;
@@ -93,8 +99,8 @@ class ClipPicker
             try {
                 [$batch, $cursor] = $this->page($provider, $account, $cursor);
             } catch (\Throwable $exception) {
-                // La liste est un confort : si la plateforme répond mal, le
-                // collage du lien reste là, et rien ne doit planter la page.
+                // La liste ne doit jamais planter la page : ce qui a été lu
+                // reste affiché, et l'erreur n'est signalée que s'il n'y a rien.
                 Log::info('Liste des vidéos récentes indisponible', [
                     'social_account_id' => $account->getKey(),
                     'error' => $exception->getMessage(),
@@ -103,18 +109,7 @@ class ClipPicker
                 return [$videos, false, $videos === []];
             }
 
-            // Déjà soumises — par lui ou par un autre : les proposer pour les
-            // refuser ensuite ne ferait que tromper.
-            $taken = Clip::where('platform', $account->platform)
-                ->whereIn('external_post_id', array_column($batch, 'id'))
-                ->pluck('external_post_id')
-                ->all();
-
-            foreach ($batch as $video) {
-                if (! in_array($video['id'], $taken, true)) {
-                    $videos[] = $video;
-                }
-            }
+            array_push($videos, ...$batch);
 
             if (count($videos) > $want) {
                 return [array_slice($videos, 0, $want), true, false];

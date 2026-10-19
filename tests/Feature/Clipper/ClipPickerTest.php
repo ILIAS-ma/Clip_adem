@@ -20,8 +20,8 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
- * Soumettre d'un toucher, depuis la liste de ses vidéos récentes : le chemin
- * du téléphone, sans lien à copier.
+ * Soumettre ses clips depuis la grille de ses vidéos TikTok : on en coche une
+ * ou plusieurs, on valide. Plus de lien à coller.
  */
 class ClipPickerTest extends TestCase
 {
@@ -42,85 +42,87 @@ class ClipPickerTest extends TestCase
         config()->set('services.tiktok.client_key', null);
 
         $this->campaign = Campaign::factory()->withRate(Platform::TikTok)->create(['status' => CampaignStatus::Active]);
-        $this->clipper = User::factory()->create(['role' => UserRole::Clipper, 'email_verified_at' => now()]);
+        $this->clipper = User::factory()->create([
+            'role' => UserRole::Clipper,
+            'email_verified_at' => now(),
+            'pseudo' => 'lina.clips',
+            'country' => 'FR',
+            'paypal_email' => 'lina@paypal.test',
+        ]);
         $this->account = SocialAccount::factory()->create(['user_id' => $this->clipper->id, 'platform' => Platform::TikTok, 'handle' => 'lina.clips']);
 
         app(ParticipationService::class)->join($this->campaign, $this->clipper, $this->account);
     }
 
+    /** @param  list<array<string, mixed>>  $videos */
+    protected function keys(array $videos): array
+    {
+        return array_map(fn (array $video) => $this->account->id.':'.$video['id'], $videos);
+    }
+
     #[Test]
-    public function a_tap_on_a_recent_video_submits_it(): void
+    public function several_videos_are_submitted_in_one_go(): void
     {
         $component = Livewire::actingAs($this->clipper)
             ->test(SubmitClip::class, ['campaign' => $this->campaign])
             ->call('loadVideos');
 
         $videos = $component->get('groups')[0]['videos'];
-        $this->assertCount(12, $videos);
+        $this->assertCount(24, $videos);
 
-        // On reste sur la liste, la vidéo soumise en moins, prêt pour la suivante.
-        $component->call('pick', $this->account->id, $videos[0]['id'])
-            ->assertNoRedirect()
-            ->assertSet('pickedCount', 1)
-            ->assertSee('1 clip soumis');
+        $component->call('submitSelected', $this->keys(array_slice($videos, 0, 3)))
+            ->assertRedirect(route('campaigns.show', $this->campaign));
 
-        $this->assertNotContains($videos[0]['id'], array_column($component->get('groups')[0]['videos'], 'id'));
-
-        $clip = Clip::firstOrFail();
-        $this->assertSame($videos[0]['id'], $clip->external_post_id);
+        $this->assertSame(3, Clip::count());
+        $clip = Clip::where('external_post_id', $videos[0]['id'])->firstOrFail();
         $this->assertSame($this->account->id, $clip->social_account_id);
         $this->assertSame(ClipStatus::Approved, $clip->status);
         $this->assertStringContainsString('/video/'.$videos[0]['id'], $clip->url);
+        // La vignette est là tout de suite, sans attendre le premier relevé.
+        $this->assertSame($videos[0]['thumbnail'], $clip->thumbnail_url);
     }
 
     #[Test]
-    public function already_submitted_videos_are_not_offered_again(): void
+    public function submitted_videos_stay_in_the_grid_marked_as_such(): void
     {
         $component = Livewire::actingAs($this->clipper)
             ->test(SubmitClip::class, ['campaign' => $this->campaign])
             ->call('loadVideos');
 
-        $first = $component->get('groups')[0]['videos'][0]['id'];
-        $component->call('pick', $this->account->id, $first);
+        $first = $component->get('groups')[0]['videos'][0];
+        $component->call('submitSelected', $this->keys([$first]));
 
         $again = Livewire::actingAs($this->clipper)
             ->test(SubmitClip::class, ['campaign' => $this->campaign])
             ->call('loadVideos');
 
-        $this->assertNotContains($first, array_column($again->get('groups')[0]['videos'], 'id'));
-        $this->assertCount(12, $again->get('groups')[0]['videos']);
+        $videos = $again->get('groups')[0]['videos'];
+        $this->assertSame($first['id'], $videos[0]['id']);
+        $this->assertTrue($videos[0]['submitted']);
+        $this->assertFalse($videos[1]['submitted']);
+        $again->assertSee('Soumis');
+
+        // Et on ne la soumet pas deux fois.
+        $again->call('submitSelected', $this->keys([$videos[0]]))
+            ->assertNoRedirect()
+            ->assertSet('pickError', 'Une vidéo n’est plus disponible. Actualisez la liste.');
+        $this->assertSame(1, Clip::count());
     }
 
     #[Test]
-    public function once_the_latest_twelve_are_submitted_older_videos_still_show_up(): void
+    public function the_whole_history_is_reachable_by_scrolling(): void
     {
-        /*
-         * Le bug signalé : douze clips soumis, et la liste affirmait qu'il n'y
-         * avait plus de vidéo publique alors que le compte en avait vingt de
-         * plus. Elle ne lisait que la première page.
-         */
         $component = Livewire::actingAs($this->clipper)
             ->test(SubmitClip::class, ['campaign' => $this->campaign])
             ->call('loadVideos');
 
-        foreach ($component->get('groups')[0]['videos'] as $video) {
-            $component->call('pick', $this->account->id, $video['id']);
-        }
+        $this->assertTrue($component->get('groups')[0]['has_more']);
 
-        $this->assertSame(12, Clip::count());
+        $component->call('loadMore');
 
-        $again = Livewire::actingAs($this->clipper)
-            ->test(SubmitClip::class, ['campaign' => $this->campaign])
-            ->call('loadVideos');
-
-        $this->assertCount(12, $again->get('groups')[0]['videos']);
-        $this->assertTrue($again->get('groups')[0]['has_more']);
-
-        $again->call('loadMore');
-
-        // 30 vidéos en tout, 12 soumises : il en reste 18, toutes visibles.
-        $this->assertCount(18, $again->get('groups')[0]['videos']);
-        $this->assertFalse($again->get('groups')[0]['has_more']);
+        // Les 30 vidéos du compte, sur deux pages TikTok.
+        $this->assertCount(30, $component->get('groups')[0]['videos']);
+        $this->assertFalse($component->get('groups')[0]['has_more']);
     }
 
     #[Test]
@@ -129,8 +131,8 @@ class ClipPickerTest extends TestCase
         Livewire::actingAs($this->clipper)
             ->test(SubmitClip::class, ['campaign' => $this->campaign])
             ->call('loadVideos')
-            ->call('pick', $this->account->id, '7000000000000000001')
-            ->assertSet('pickError', 'Cette vidéo n’est plus dans la liste. Rechargez-la et réessayez.');
+            ->call('submitSelected', [$this->account->id.':7000000000000000001'])
+            ->assertSet('pickError', 'Une vidéo n’est plus disponible. Actualisez la liste.');
 
         $this->assertSame(0, Clip::count());
     }
@@ -143,42 +145,22 @@ class ClipPickerTest extends TestCase
         Livewire::actingAs($this->clipper)
             ->test(SubmitClip::class, ['campaign' => $this->campaign])
             ->call('loadVideos')
-            ->call('pick', $other->id, '123')
+            ->call('submitSelected', [$other->id.':123'])
             ->assertNotFound();
     }
 
     #[Test]
-    public function pasting_a_link_still_works(): void
+    public function the_campaign_page_offers_the_grid_and_no_link_field(): void
     {
-        Livewire::actingAs($this->clipper)
-            ->test(SubmitClip::class, ['campaign' => $this->campaign])
-            ->set('url', '  https://www.tiktok.com/@lina.clips/video/7123456789012345678  ')
-            ->call('submit')
-            ->assertHasNoErrors();
-
-        $this->assertSame('7123456789012345678', Clip::firstOrFail()->external_post_id);
+        $this->actingAs($this->clipper)
+            ->get(route('campaigns.show', $this->campaign))
+            ->assertOk()
+            ->assertSee('Soumettre mes vidéos')
+            ->assertDontSee('Ou collez le lien');
     }
 
     #[Test]
-    public function a_short_link_copied_from_the_phone_app_is_followed(): void
-    {
-        Http::fake([
-            'vm.tiktok.com/*' => Http::response('', 301, ['Location' => 'https://www.tiktok.com/@lina.clips/video/7123456789012345678?_r=1']),
-        ]);
-
-        Livewire::actingAs($this->clipper)
-            ->test(SubmitClip::class, ['campaign' => $this->campaign])
-            ->set('url', 'https://vm.tiktok.com/ZNdAbCdEf/')
-            ->call('submit')
-            ->assertHasNoErrors();
-
-        $clip = Clip::firstOrFail();
-        $this->assertSame('7123456789012345678', $clip->external_post_id);
-        $this->assertSame(ClipStatus::Approved, $clip->status);
-    }
-
-    #[Test]
-    public function tiktok_recent_videos_are_read_from_the_video_list_api(): void
+    public function tiktok_videos_are_read_page_by_page_from_the_video_list_api(): void
     {
         Http::fake(['open.tiktokapis.com/v2/video/list/*' => Http::response(['data' => ['cursor' => 1759990000000, 'has_more' => true, 'videos' => [[
             'id' => '7698100369829743905',

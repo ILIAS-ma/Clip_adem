@@ -48,7 +48,7 @@ class ClipSubmissionService
      * vérifier. Les autres règles (campagne ouverte, doublons) restent celles
      * d'un lien collé.
      */
-    public function submitPicked(Campaign $campaign, User $clipper, SocialAccount $account, string $externalPostId, ?string $url = null): Clip
+    public function submitPicked(Campaign $campaign, User $clipper, SocialAccount $account, string $externalPostId, ?string $url = null, array $details = []): Clip
     {
         abort_unless($account->user_id === $clipper->getKey(), 403);
 
@@ -77,10 +77,18 @@ class ClipSubmissionService
             );
         }
 
-        return $this->submitParsed($campaign, $clipper, new ClipUrl($parsed->platform, $parsed->externalPostId, $parsed->canonicalUrl), $account);
+        // La miniature, la légende et la date sont déjà là : les garder évite une
+        // vignette vide dans « Mes clips » jusqu'au premier relevé.
+        $details = array_filter([
+            'thumbnail_url' => $details['thumbnail'] ?? null,
+            'caption' => isset($details['caption']) ? mb_substr((string) $details['caption'], 0, 2000) : null,
+            'posted_at' => $details['posted_at'] ?? null,
+        ]);
+
+        return $this->submitParsed($campaign, $clipper, new ClipUrl($parsed->platform, $parsed->externalPostId, $parsed->canonicalUrl), $account, $details);
     }
 
-    protected function submitParsed(Campaign $campaign, User $clipper, ClipUrl $parsed, ?SocialAccount $onlyAccount = null): Clip
+    protected function submitParsed(Campaign $campaign, User $clipper, ClipUrl $parsed, ?SocialAccount $onlyAccount = null, array $details = []): Clip
     {
         if (! $this->budget->acceptsNewClips($campaign)) {
             throw ClipSubmissionRefused::campaignClosed();
@@ -172,6 +180,7 @@ class ClipSubmissionService
                 'status' => ClipStatus::Approved,
                 'compliance_status' => 'pending',
                 'views_total' => 0,
+                ...$details,
             ])->refresh());
         } catch (QueryException $exception) {
             // L'unicité (platform, external_post_id) couvre aussi le cas où un

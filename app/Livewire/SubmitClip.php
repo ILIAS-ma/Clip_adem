@@ -11,27 +11,30 @@ use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 /**
- * Soumettre un clip : d'un toucher dans la liste de ses vidéos récentes — le
- * chemin du téléphone —, ou en collant le lien, en secours.
+ * Soumettre ses clips : une grille de toutes ses vidéos TikTok, on en coche
+ * une ou plusieurs, on valide. Pas de lien à copier — le chemin du téléphone,
+ * celui de presque tous les clippeurs.
  */
 class SubmitClip extends Component
 {
     public Campaign $campaign;
 
-    public string $url = '';
-
     /**
-     * Vidéos récentes par compte lié, chargées à la demande : interroger la
-     * plateforme à chaque affichage de la campagne coûterait du quota pour
+     * Vidéos par compte lié, chargées à l'ouverture de la grille : interroger
+     * la plateforme à chaque affichage de la campagne coûterait du quota pour
      * des visiteurs qui ne soumettent rien.
      *
-     * Verrouillée : c'est elle qui fait foi au moment du choix, le navigateur
-     * ne doit pas pouvoir y glisser une vidéo de son cru.
+     * Verrouillée : c'est elle qui fait foi au moment de soumettre, le
+     * navigateur ne doit pas pouvoir y glisser une vidéo de son cru.
      *
      * @var list<array<string, mixed>>|null
      */
     #[Locked]
     public ?array $groups = null;
+
+    /** Combien de vidéos montrer par compte ; le défilement en ajoute. */
+    #[Locked]
+    public int $want = ClipPicker::PER_PAGE;
 
     public ?string $pickError = null;
 
@@ -39,13 +42,6 @@ class SubmitClip extends Component
     {
         $this->campaign = $campaign;
     }
-
-    /** Combien de vidéos montrer par compte ; « Voir plus » en ajoute. */
-    #[Locked]
-    public int $want = ClipPicker::PER_PAGE;
-
-    /** Vidéos soumises depuis l'ouverture de la liste, pour le message de réussite. */
-    public int $pickedCount = 0;
 
     public function loadVideos(ClipPicker $picker): void
     {
@@ -73,68 +69,59 @@ class SubmitClip extends Component
         $this->loadVideos($picker);
     }
 
-    public function pick(int $accountId, string $postId, ClipSubmissionService $clips): void
+    /**
+     * Soumet la sélection, vidéo par vidéo : un refus — une vidéo prise entre
+     * deux par quelqu'un d'autre — n'empêche pas les autres de passer.
+     *
+     * @param  list<string>  $keys  « compte:vidéo »
+     */
+    public function submitSelected(array $keys, ClipSubmissionService $clips, ClipPicker $picker): void
     {
-        $account = SocialAccount::where('user_id', auth()->id())->findOrFail($accountId);
+        $submitted = 0;
+        $refusals = [];
 
-        // Retrouver la vidéo dans la liste proposée : on ne soumet pas un
-        // identifiant arbitraire envoyé par le navigateur.
-        $video = collect($this->groups ?? [])
-            ->firstWhere('account_id', $accountId)['videos'] ?? [];
-        $video = collect($video)->firstWhere('id', $postId);
+        foreach (array_unique($keys) as $key) {
+            [$accountId, $postId] = array_pad(explode(':', (string) $key, 2), 2, '');
 
-        if (! $video) {
-            $this->pickError = 'Cette vidéo n’est plus dans la liste. Rechargez-la et réessayez.';
+            $account = SocialAccount::where('user_id', auth()->id())->findOrFail((int) $accountId);
 
-            return;
-        }
+            // Retrouver la vidéo dans la liste proposée : on ne soumet pas un
+            // identifiant arbitraire envoyé par le navigateur.
+            $video = collect(collect($this->groups ?? [])->firstWhere('account_id', $account->getKey())['videos'] ?? [])
+                ->firstWhere('id', $postId);
 
-        try {
-            $clips->submitPicked($this->campaign, auth()->user(), $account, $postId, $video['url'] ?? null);
-        } catch (ClipSubmissionRefused $exception) {
-            $this->pickError = $exception->getMessage();
+            if (! $video || $video['submitted']) {
+                $refusals[] = 'Une vidéo n’est plus disponible. Actualisez la liste.';
 
-            return;
-        }
-
-        /*
-         * On reste sur la liste, sans recharger la page : un clippeur qui
-         * rattrape vingt vidéos les soumet à la suite, d'un toucher chacune,
-         * au lieu de rouvrir la liste et de la faire défiler à chaque fois.
-         */
-        $this->groups = array_map(function (array $group) use ($accountId, $postId) {
-            if ($group['account_id'] === $accountId) {
-                $group['videos'] = array_values(array_filter($group['videos'], fn (array $v) => $v['id'] !== $postId));
+                continue;
             }
 
-            return $group;
-        }, $this->groups);
+            try {
+                $clips->submitPicked($this->campaign, auth()->user(), $account, $postId, $video['url'] ?? null, $video);
+                $submitted++;
+            } catch (ClipSubmissionRefused $exception) {
+                $refusals[] = $exception->getMessage();
+            }
 
-        $this->pickedCount++;
-        $this->pickError = null;
-    }
+            $picker->forget($account);
+        }
 
-    public function submit(ClipSubmissionService $clips): void
-    {
-        $this->validate([
-            'url' => ['required', 'string', 'max:2048'],
-        ], [
-            'url.required' => 'Collez le lien de votre publication.',
-        ]);
-
-        try {
-            $clips->submit($this->campaign, auth()->user(), trim($this->url));
-        } catch (ClipSubmissionRefused $exception) {
-            $this->addError('url', $exception->getMessage());
+        if ($submitted === 0) {
+            $this->loadVideos($picker);
+            $this->pickError = $refusals[0] ?? 'Sélectionnez au moins une vidéo.';
 
             return;
         }
 
-        $this->reset('url');
+        session()->flash('status', $submitted === 1
+            ? 'Clip soumis : ses vues comptent dès le prochain relevé.'
+            : "{$submitted} clips soumis : leurs vues comptent dès le prochain relevé.");
 
-        session()->flash('status', 'Clip soumis : ses vues comptent dès le prochain relevé.');
+        // Recharger la page entière, sur l'onglet « Mes clips » : une simple
+        // ancre vers la même adresse ne ferait que défiler, sans rien rafraîchir.
+        session()->flash('campaign_tab', 'clips');
 
-        $this->redirect(route('campaigns.show', $this->campaign), navigate: true);
+        $this->redirect(route('campaigns.show', $this->campaign));
     }
 
     public function render()

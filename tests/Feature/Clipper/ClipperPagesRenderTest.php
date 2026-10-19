@@ -7,11 +7,9 @@ use App\Enums\Platform;
 use App\Enums\UserRole;
 use App\Livewire\CampaignCatalogue;
 use App\Livewire\JoinCampaign;
-use App\Livewire\SubmitClip;
 use App\Models\Campaign;
 use App\Models\SocialAccount;
 use App\Models\User;
-use App\Services\Clips\ParticipationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -196,23 +194,5 @@ class ClipperPagesRenderTest extends TestCase
             'campaign_id' => $campaign->getKey(),
             'social_account_id' => $account->getKey(),
         ]);
-    }
-
-    #[Test]
-    public function submitting_a_bad_link_shows_the_reason_instead_of_crashing(): void
-    {
-        $campaign = $this->campaign();
-        $clipper = $this->clipper();
-        $account = SocialAccount::factory()->create([
-            'user_id' => $clipper->getKey(),
-            'platform' => Platform::TikTok,
-        ]);
-        app(ParticipationService::class)->join($campaign, $clipper, $account);
-
-        Livewire::actingAs($clipper)
-            ->test(SubmitClip::class, ['campaign' => $campaign])
-            ->set('url', 'https://twitter.com/user/status/123')
-            ->call('submit')
-            ->assertHasErrors('url');
     }
 }

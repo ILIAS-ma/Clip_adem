@@ -6,7 +6,7 @@
     et mène aux deux recours — écrire à l'équipe, ou relire la formation.
 --}}
 <div x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false"
-     class="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3"
+     {{ $attributes->merge(['class' => 'fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3']) }}
      style="bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));">
 
     <div x-show="open" x-cloak

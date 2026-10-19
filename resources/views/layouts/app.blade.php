@@ -72,7 +72,8 @@
     @if (auth()->user()?->isClipper())
         {{-- Pas sur la messagerie elle-même : on y est déjà. --}}
         @unless (request()->routeIs('messages.*'))
-            <x-help-button />
+            {{-- Sur une campagne, le bas de l'écran du téléphone appartient au bouton « Soumettre mes vidéos ». --}}
+            <x-help-button :class="request()->routeIs('campaigns.show') ? 'max-lg:hidden' : ''" />
         @endunless
 
         @if (auth()->user()->welcome_seen_at === null)
