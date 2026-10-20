@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Exceptions\ClipSubmissionRefused;
 use App\Models\Campaign;
+use App\Models\Clip;
 use App\Models\SocialAccount;
 use App\Services\Clips\ClipPicker;
 use App\Services\Clips\ClipSubmissionService;
@@ -11,9 +12,10 @@ use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 /**
- * Soumettre ses clips : une grille de toutes ses vidéos TikTok, on en coche
- * une ou plusieurs, on valide. Pas de lien à copier — le chemin du téléphone,
- * celui de presque tous les clippeurs.
+ * Gérer ses clips : une grille de toutes ses vidéos TikTok. On coche pour
+ * soumettre, on décoche un clip déjà soumis pour le retirer, on enregistre.
+ * Pas de lien à copier — le chemin du téléphone, celui de presque tous les
+ * clippeurs.
  */
 class SubmitClip extends Component
 {
@@ -24,7 +26,7 @@ class SubmitClip extends Component
      * la plateforme à chaque affichage de la campagne coûterait du quota pour
      * des visiteurs qui ne soumettent rien.
      *
-     * Verrouillée : c'est elle qui fait foi au moment de soumettre, le
+     * Verrouillée : c'est elle qui fait foi au moment d'enregistrer, le
      * navigateur ne doit pas pouvoir y glisser une vidéo de son cru.
      *
      * @var list<array<string, mixed>>|null
@@ -70,52 +72,73 @@ class SubmitClip extends Component
     }
 
     /**
-     * Soumet la sélection, vidéo par vidéo : un refus — une vidéo prise entre
-     * deux par quelqu'un d'autre — n'empêche pas les autres de passer.
+     * Enregistre la grille : soumet les vidéos cochées, retire celles que le
+     * clippeur a décochées. Vidéo par vidéo : un refus — une vidéo prise entre
+     * deux par quelqu'un d'autre, un clip déjà payé — n'empêche pas les autres.
      *
-     * @param  list<string>  $keys  « compte:vidéo »
+     * @param  list<string>  $add  « compte:vidéo » à soumettre
+     * @param  list<string>  $remove  « compte:vidéo » à retirer
      */
-    public function submitSelected(array $keys, ClipSubmissionService $clips, ClipPicker $picker): void
+    public function save(array $add, array $remove, ClipSubmissionService $clips, ClipPicker $picker): void
     {
-        $submitted = 0;
+        $added = 0;
+        $removed = 0;
         $refusals = [];
 
-        foreach (array_unique($keys) as $key) {
-            [$accountId, $postId] = array_pad(explode(':', (string) $key, 2), 2, '');
+        foreach (['add' => array_unique($add), 'remove' => array_unique($remove)] as $action => $keys) {
+            foreach ($keys as $key) {
+                [$accountId, $postId] = array_pad(explode(':', (string) $key, 2), 2, '');
 
-            $account = SocialAccount::where('user_id', auth()->id())->findOrFail((int) $accountId);
+                $account = SocialAccount::where('user_id', auth()->id())->findOrFail((int) $accountId);
 
-            // Retrouver la vidéo dans la liste proposée : on ne soumet pas un
-            // identifiant arbitraire envoyé par le navigateur.
-            $video = collect(collect($this->groups ?? [])->firstWhere('account_id', $account->getKey())['videos'] ?? [])
-                ->firstWhere('id', $postId);
+                // Retrouver la vidéo dans la liste proposée : on n'agit pas sur
+                // un identifiant arbitraire envoyé par le navigateur.
+                $video = collect(collect($this->groups ?? [])->firstWhere('account_id', $account->getKey())['videos'] ?? [])
+                    ->firstWhere('id', $postId);
 
-            if (! $video || $video['submitted']) {
-                $refusals[] = 'Une vidéo n’est plus disponible. Actualisez la liste.';
+                try {
+                    if ($action === 'add') {
+                        if (! $video || $video['submitted']) {
+                            throw new ClipSubmissionRefused('Une vidéo n’est plus disponible. Actualisez la liste.');
+                        }
 
-                continue;
+                        $clips->submitPicked($this->campaign, auth()->user(), $account, $postId, $video['url'] ?? null, $video);
+                        $added++;
+                    } else {
+                        if (! $video || ! $video['removable']) {
+                            throw ClipSubmissionRefused::cannotWithdraw();
+                        }
+
+                        $clip = Clip::where('platform', $account->platform)
+                            ->where('external_post_id', $postId)
+                            ->where('campaign_id', $this->campaign->getKey())
+                            ->where('user_id', auth()->id())
+                            ->firstOrFail();
+
+                        $clips->withdraw($clip, auth()->user());
+                        $removed++;
+                    }
+                } catch (ClipSubmissionRefused $exception) {
+                    $refusals[] = $exception->getMessage();
+                }
+
+                $picker->forget($account);
             }
-
-            try {
-                $clips->submitPicked($this->campaign, auth()->user(), $account, $postId, $video['url'] ?? null, $video);
-                $submitted++;
-            } catch (ClipSubmissionRefused $exception) {
-                $refusals[] = $exception->getMessage();
-            }
-
-            $picker->forget($account);
         }
 
-        if ($submitted === 0) {
+        if ($added + $removed === 0) {
             $this->loadVideos($picker);
-            $this->pickError = $refusals[0] ?? 'Sélectionnez au moins une vidéo.';
+            $this->pickError = $refusals[0] ?? 'Aucun changement à enregistrer.';
 
             return;
         }
 
-        session()->flash('status', $submitted === 1
-            ? 'Clip soumis : ses vues comptent dès le prochain relevé.'
-            : "{$submitted} clips soumis : leurs vues comptent dès le prochain relevé.");
+        $done = collect([
+            $added ? ($added === 1 ? '1 clip soumis' : "{$added} clips soumis") : null,
+            $removed ? ($removed === 1 ? '1 clip retiré' : "{$removed} clips retirés") : null,
+        ])->filter()->implode(' · ');
+
+        session()->flash('status', $refusals ? $done.' · '.count($refusals).' refusé(s) : '.$refusals[0] : $done.'.');
 
         // Recharger la page entière, sur l'onglet « Mes clips » : une simple
         // ancre vers la même adresse ne ferait que défiler, sans rien rafraîchir.

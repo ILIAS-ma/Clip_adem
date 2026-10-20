@@ -7,6 +7,7 @@ use App\Enums\ClipStatus;
 use App\Enums\ParticipationStatus;
 use App\Enums\Platform;
 use App\Exceptions\ClipSubmissionRefused;
+use App\Models\BudgetTransaction;
 use App\Models\Campaign;
 use App\Models\Clip;
 use App\Models\SocialAccount;
@@ -86,6 +87,27 @@ class ClipSubmissionService
         ]);
 
         return $this->submitParsed($campaign, $clipper, new ClipUrl($parsed->platform, $parsed->externalPostId, $parsed->canonicalUrl), $account, $details);
+    }
+
+    /**
+     * Le clippeur retire un de ses clips — il s'est trompé de vidéo.
+     *
+     * Seulement tant que le clip n'a rien rapporté : ni gain, ni prime. Un clip
+     * déjà payé est une écriture du grand livre, que rien ne doit effacer ;
+     * l'invalider est l'affaire de la modération.
+     *
+     * @throws ClipSubmissionRefused
+     */
+    public function withdraw(Clip $clip, User $clipper): void
+    {
+        abort_unless($clip->user_id === $clipper->getKey(), 403);
+
+        if ($clip->earned_cents > 0 || BudgetTransaction::where('clip_id', $clip->getKey())->exists()) {
+            throw ClipSubmissionRefused::cannotWithdraw();
+        }
+
+        // Les relevés de vues partent avec lui (suppression en cascade).
+        $clip->delete();
     }
 
     protected function submitParsed(Campaign $campaign, User $clipper, ClipUrl $parsed, ?SocialAccount $onlyAccount = null, array $details = []): Clip

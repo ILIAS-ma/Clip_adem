@@ -99,14 +99,15 @@ class ClipComplianceTest extends TestCase
     }
 
     #[Test]
-    public function a_clip_that_is_too_short_fails(): void
+    public function a_short_clip_is_not_rejected_for_its_length(): void
     {
+        // Plus de durée minimale : un clip de quatre secondes est conforme.
         $clip = $this->checker->check(
             $this->clip($this->campaign()),
             $this->metrics(['durationSeconds' => 4]),
         );
 
-        $this->assertSame(ClipComplianceChecker::FAILED, $clip->compliance_status);
+        $this->assertSame(ClipComplianceChecker::PASSED, $clip->compliance_status);
         $this->assertSame(4, $clip->duration_seconds);
     }
 

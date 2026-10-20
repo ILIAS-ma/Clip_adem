@@ -43,7 +43,6 @@ class ClipComplianceChecker
 
         $checks[] = $this->checkOwnership($clip, $metrics);
         $checks[] = $this->checkHashtags($campaign, $metrics);
-        $checks[] = $this->checkDuration($campaign, $metrics);
         $checks[] = $this->checkWindow($campaign, $metrics);
 
         $checks = array_values(array_filter($checks));
@@ -120,24 +119,6 @@ class ClipComplianceChecker
             'label' => 'Hashtags obligatoires présents',
             'passed' => $missing === [],
             'detail' => $missing === [] ? null : 'Manquant : '.implode(', ', $missing),
-        ];
-    }
-
-    /** @return array{label: string, passed: bool, detail: ?string}|null */
-    protected function checkDuration(?Campaign $campaign, PostMetrics $metrics): ?array
-    {
-        $minimum = config('clipping.compliance.min_duration_seconds');
-
-        if (! $minimum || $metrics->durationSeconds === null) {
-            return null;
-        }
-
-        return [
-            'label' => "Durée d'au moins {$minimum} secondes",
-            'passed' => $metrics->durationSeconds >= $minimum,
-            'detail' => $metrics->durationSeconds >= $minimum
-                ? null
-                : "Durée relevée : {$metrics->durationSeconds} s.",
         ];
     }
 

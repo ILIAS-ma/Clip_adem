@@ -12,9 +12,22 @@
         open: false,
         loaded: false,
         selected: [],
+        removed: [],
         toggle(key) {
             const i = this.selected.indexOf(key);
             i === -1 ? this.selected.push(key) : this.selected.splice(i, 1);
+        },
+        // Un clip déjà soumis se décoche pour être retiré, et se recoche pour être gardé.
+        toggleRemove(key) {
+            const i = this.removed.indexOf(key);
+            i === -1 ? this.removed.push(key) : this.removed.splice(i, 1);
+        },
+        get changes() { return this.selected.length + this.removed.length; },
+        label() {
+            const parts = [];
+            if (this.selected.length) parts.push(this.selected.length + (this.selected.length > 1 ? ' ajoutées' : ' ajoutée'));
+            if (this.removed.length) parts.push(this.removed.length + (this.removed.length > 1 ? ' retirées' : ' retirée'));
+            return parts.length ? 'Enregistrer · ' + parts.join(' · ') : 'Touchez une vidéo pour la choisir';
         },
         show() {
             this.open = true;
@@ -39,7 +52,7 @@
             <div class="flex items-center gap-3 border-b border-ink-800 px-4 py-3" style="padding-top: max(0.75rem, env(safe-area-inset-top));">
                 <div class="min-w-0 flex-1">
                     <h2 id="picker-title" class="font-display text-lg font-bold text-ink-50">Soumettre un clip</h2>
-                    <p class="text-xs text-ink-400">Touchez vos vidéos pour les sélectionner.</p>
+                    <p class="text-xs text-ink-400">Touchez pour choisir, retouchez pour retirer.</p>
                 </div>
                 <button type="button" wire:click="refreshVideos" wire:loading.attr="disabled"
                         class="rounded-full p-2 text-ink-300 transition hover:bg-ink-800 hover:text-ink-50" aria-label="Actualiser">
@@ -86,9 +99,17 @@
                                         @php $key = $group['account_id'].':'.$video['id']; @endphp
                                         <li wire:key="video-{{ $key }}">
                                             <button type="button"
-                                                    @if ($video['submitted']) disabled @else @click="toggle('{{ $key }}')" @endif
-                                                    :aria-pressed="selected.includes('{{ $key }}') ? 'true' : 'false'"
-                                                    :class="selected.includes('{{ $key }}') ? 'ring-[3px] ring-brand-500' : 'ring-1 ring-ink-800'"
+                                                    @if ($video['removable'])
+                                                        @click="toggleRemove('{{ $key }}')"
+                                                        :aria-pressed="removed.includes('{{ $key }}') ? 'false' : 'true'"
+                                                        :class="removed.includes('{{ $key }}') ? 'ring-1 ring-ink-800' : 'ring-[3px] ring-brand-500'"
+                                                    @elseif ($video['submitted'])
+                                                        disabled
+                                                    @else
+                                                        @click="toggle('{{ $key }}')"
+                                                        :aria-pressed="selected.includes('{{ $key }}') ? 'true' : 'false'"
+                                                        :class="selected.includes('{{ $key }}') ? 'ring-[3px] ring-brand-500' : 'ring-1 ring-ink-800'"
+                                                    @endif
                                                     class="relative block aspect-[9/16] w-full overflow-hidden rounded-xl bg-ink-900 text-left transition active:scale-[0.97] disabled:active:scale-100">
                                                 @if ($video['thumbnail'])
                                                     <img src="{{ $video['thumbnail'] }}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"
@@ -103,8 +124,17 @@
                                                     @endif
                                                 </span>
 
-                                                @if ($video['submitted'])
-                                                    {{-- Déjà soumise : visible, pour que le clippeur sache où il en est. --}}
+                                                @if ($video['removable'])
+                                                    {{-- Soumise par lui, retirable : cochée tant qu'il la garde. --}}
+                                                    <span class="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full border-2"
+                                                          :class="removed.includes('{{ $key }}') ? 'border-white/70 bg-ink-950/30 text-transparent' : 'border-brand-500 bg-brand-500 text-white'">
+                                                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+                                                    </span>
+                                                    <span class="absolute left-1.5 top-1.5 rounded-full bg-brand-500 px-2 py-0.5 text-[10px] font-bold text-white"
+                                                          :class="removed.includes('{{ $key }}') && '!bg-ink-700'"
+                                                          x-text="removed.includes('{{ $key }}') ? 'À retirer' : 'Soumis'">Soumis</span>
+                                                @elseif ($video['submitted'])
+                                                    {{-- Prise par un autre, ou déjà payée : visible, mais verrouillée. --}}
                                                     <span class="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-brand-600/70 text-white">
                                                         <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.5 4.5L19 7.5" /></svg>
                                                         <span class="text-xs font-bold">Soumis</span>
@@ -147,14 +177,13 @@
             {{-- Validation --}}
             <div class="border-t border-ink-800 bg-ink-950 p-3" style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom));">
                 <button type="button"
-                        :disabled="selected.length === 0"
-                        @click="$wire.submitSelected(selected).then(() => { selected = [] })"
-                        wire:loading.attr="disabled" wire:target="submitSelected"
+                        :disabled="changes === 0"
+                        @click="$wire.save(selected, removed)"
+                        wire:loading.attr="disabled" wire:target="save"
                         class="btn-brand w-full py-3.5 text-base disabled:opacity-40">
-                    <span wire:loading.remove wire:target="submitSelected"
-                          x-text="selected.length === 0 ? 'Sélectionnez vos vidéos' : (selected.length === 1 ? 'Soumettre 1 vidéo' : 'Soumettre ' + selected.length + ' vidéos')">Sélectionnez vos vidéos</span>
-                    <span wire:loading wire:target="submitSelected" class="inline-flex items-center gap-2">
-                        <x-loader size="sm" tone="dark" label="Soumission en cours" /> Soumission…
+                    <span wire:loading.remove wire:target="save" x-text="label()">Touchez une vidéo pour la choisir</span>
+                    <span wire:loading wire:target="save" class="inline-flex items-center gap-2">
+                        <x-loader size="sm" tone="dark" label="Enregistrement en cours" /> Enregistrement…
                     </span>
                 </button>
             </div>

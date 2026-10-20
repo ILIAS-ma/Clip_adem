@@ -4,6 +4,7 @@ namespace App\Services\Clips;
 
 use App\Contracts\ListsRecentPosts;
 use App\Enums\ParticipationStatus;
+use App\Models\BudgetTransaction;
 use App\Models\Campaign;
 use App\Models\Clip;
 use App\Models\SocialAccount;
@@ -67,18 +68,32 @@ class ClipPicker
 
             [$videos, $hasMore, $error] = $this->collect($provider, $account, $want);
 
-            // Déjà soumises — par lui ou par un autre : montrées, mais plus
-            // sélectionnables.
+            // Déjà soumises : montrées, pas sélectionnables comme les autres.
+            // Les siennes, sur cette campagne et encore sans gain, se retirent
+            // d'un toucher ; le reste — pris par un autre, ou déjà payé — est verrouillé.
             $taken = Clip::where('platform', $account->platform)
                 ->whereIn('external_post_id', array_column($videos, 'id'))
-                ->pluck('external_post_id')
-                ->all();
+                ->get(['id', 'external_post_id', 'campaign_id', 'user_id', 'earned_cents'])
+                ->keyBy('external_post_id');
+
+            $withMoney = BudgetTransaction::whereIn('clip_id', $taken->pluck('id'))->pluck('clip_id')->flip();
 
             $groups[] = [
                 'account_id' => $account->getKey(),
                 'platform' => $account->platform->value,
                 'handle' => $account->handle,
-                'videos' => array_map(fn (array $video) => $video + ['submitted' => in_array($video['id'], $taken, true)], $videos),
+                'videos' => array_map(function (array $video) use ($taken, $withMoney, $campaign, $clipper) {
+                    $clip = $taken->get($video['id']);
+
+                    return $video + [
+                        'submitted' => $clip !== null,
+                        'removable' => $clip !== null
+                            && $clip->campaign_id === $campaign->getKey()
+                            && $clip->user_id === $clipper->getKey()
+                            && $clip->earned_cents === 0
+                            && ! $withMoney->has($clip->id),
+                    ];
+                }, $videos),
                 'has_more' => $hasMore,
                 'error' => $error,
             ];

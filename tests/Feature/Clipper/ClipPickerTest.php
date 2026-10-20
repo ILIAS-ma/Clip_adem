@@ -11,8 +11,10 @@ use App\Models\Campaign;
 use App\Models\Clip;
 use App\Models\SocialAccount;
 use App\Models\User;
+use App\Services\Clips\ClipComplianceChecker;
 use App\Services\Clips\ParticipationService;
 use App\Services\Social\TikTokProvider;
+use App\Support\Social\PostMetrics;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
@@ -70,7 +72,7 @@ class ClipPickerTest extends TestCase
         $videos = $component->get('groups')[0]['videos'];
         $this->assertCount(24, $videos);
 
-        $component->call('submitSelected', $this->keys(array_slice($videos, 0, 3)))
+        $component->call('save', $this->keys(array_slice($videos, 0, 3)), [])
             ->assertRedirect(route('campaigns.show', $this->campaign));
 
         $this->assertSame(3, Clip::count());
@@ -90,7 +92,7 @@ class ClipPickerTest extends TestCase
             ->call('loadVideos');
 
         $first = $component->get('groups')[0]['videos'][0];
-        $component->call('submitSelected', $this->keys([$first]));
+        $component->call('save', $this->keys([$first]), []);
 
         $again = Livewire::actingAs($this->clipper)
             ->test(SubmitClip::class, ['campaign' => $this->campaign])
@@ -103,10 +105,111 @@ class ClipPickerTest extends TestCase
         $again->assertSee('Soumis');
 
         // Et on ne la soumet pas deux fois.
-        $again->call('submitSelected', $this->keys([$videos[0]]))
+        $again->call('save', $this->keys([$videos[0]]), [])
             ->assertNoRedirect()
             ->assertSet('pickError', 'Une vidéo n’est plus disponible. Actualisez la liste.');
         $this->assertSame(1, Clip::count());
+    }
+
+    #[Test]
+    public function an_unpaid_clip_is_withdrawn_by_unticking_it(): void
+    {
+        $component = Livewire::actingAs($this->clipper)
+            ->test(SubmitClip::class, ['campaign' => $this->campaign])
+            ->call('loadVideos');
+
+        $videos = $component->get('groups')[0]['videos'];
+        $component->call('save', $this->keys(array_slice($videos, 0, 2)), []);
+        $this->assertSame(2, Clip::count());
+
+        $again = Livewire::actingAs($this->clipper)
+            ->test(SubmitClip::class, ['campaign' => $this->campaign])
+            ->call('loadVideos');
+
+        $this->assertTrue($again->get('groups')[0]['videos'][0]['removable']);
+
+        // Une vidéo retirée, une autre ajoutée, en un seul enregistrement.
+        $again->call('save', $this->keys([$videos[2]]), $this->keys([$videos[0]]))
+            ->assertRedirect(route('campaigns.show', $this->campaign));
+
+        $this->assertSame(2, Clip::count());
+        $this->assertNull(Clip::where('external_post_id', $videos[0]['id'])->first());
+        $this->assertNotNull(Clip::where('external_post_id', $videos[2]['id'])->first());
+
+        // Et la vidéo retirée redevient libre.
+        $free = Livewire::actingAs($this->clipper)
+            ->test(SubmitClip::class, ['campaign' => $this->campaign])
+            ->call('loadVideos')
+            ->get('groups')[0]['videos'][0];
+        $this->assertFalse($free['submitted']);
+    }
+
+    #[Test]
+    public function a_clip_that_already_earned_money_cannot_be_withdrawn(): void
+    {
+        $component = Livewire::actingAs($this->clipper)
+            ->test(SubmitClip::class, ['campaign' => $this->campaign])
+            ->call('loadVideos');
+
+        $video = $component->get('groups')[0]['videos'][0];
+        $component->call('save', $this->keys([$video]), []);
+
+        // Un gain est une écriture du grand livre : le clip ne s'efface plus.
+        Clip::firstOrFail()->forceFill(['earned_cents' => 250])->save();
+
+        $again = Livewire::actingAs($this->clipper)
+            ->test(SubmitClip::class, ['campaign' => $this->campaign])
+            ->call('loadVideos');
+
+        $this->assertFalse($again->get('groups')[0]['videos'][0]['removable']);
+
+        $again->call('save', [], $this->keys([$video]))
+            ->assertNoRedirect()
+            ->assertSet('pickError', 'Ce clip a déjà rapporté de l\'argent : il ne peut plus être retiré.');
+
+        $this->assertSame(1, Clip::count());
+    }
+
+    #[Test]
+    public function someone_elses_clip_cannot_be_withdrawn(): void
+    {
+        $component = Livewire::actingAs($this->clipper)
+            ->test(SubmitClip::class, ['campaign' => $this->campaign])
+            ->call('loadVideos');
+
+        $video = $component->get('groups')[0]['videos'][0];
+        $clip = Clip::factory()->create([
+            'campaign_id' => $this->campaign->id,
+            'platform' => Platform::TikTok,
+            'external_post_id' => $video['id'],
+            'earned_cents' => 0,
+        ]);
+
+        $again = Livewire::actingAs($this->clipper)
+            ->test(SubmitClip::class, ['campaign' => $this->campaign])
+            ->call('loadVideos');
+
+        $this->assertFalse($again->get('groups')[0]['videos'][0]['removable']);
+        $again->call('save', [], $this->keys([$video]));
+
+        $this->assertNotNull($clip->fresh());
+    }
+
+    #[Test]
+    public function the_minimum_duration_rule_no_longer_exists(): void
+    {
+        $clip = Clip::factory()->create(['duration_seconds' => 4]);
+        $metrics = new PostMetrics(
+            externalPostId: $clip->external_post_id,
+            views: 10,
+            durationSeconds: 4,
+            ownerExternalId: null,
+        );
+
+        app(ClipComplianceChecker::class)->check($clip, $metrics);
+
+        $labels = array_column($clip->fresh()->compliance['checks'] ?? [], 'label');
+        $this->assertNotContains("Durée d'au moins 10 secondes", $labels);
     }
 
     #[Test]
@@ -131,7 +234,7 @@ class ClipPickerTest extends TestCase
         Livewire::actingAs($this->clipper)
             ->test(SubmitClip::class, ['campaign' => $this->campaign])
             ->call('loadVideos')
-            ->call('submitSelected', [$this->account->id.':7000000000000000001'])
+            ->call('save', [$this->account->id.':7000000000000000001'], [])
             ->assertSet('pickError', 'Une vidéo n’est plus disponible. Actualisez la liste.');
 
         $this->assertSame(0, Clip::count());
@@ -145,7 +248,7 @@ class ClipPickerTest extends TestCase
         Livewire::actingAs($this->clipper)
             ->test(SubmitClip::class, ['campaign' => $this->campaign])
             ->call('loadVideos')
-            ->call('submitSelected', [$other->id.':123'])
+            ->call('save', [$other->id.':123'], [])
             ->assertNotFound();
     }
 
