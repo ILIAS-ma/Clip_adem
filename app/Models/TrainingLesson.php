@@ -110,6 +110,16 @@ class TrainingLesson extends Model
         return null;
     }
 
+    /**
+     * La « vidéo » est-elle une page animée avec sa voix off (un export HTML
+     * de Claude Design) plutôt qu'un fichier mp4 ? Elle s'affiche alors dans
+     * un cadre, avec son propre lecteur.
+     */
+    public function isInteractivePage(): bool
+    {
+        return $this->video_path !== null && str_ends_with(strtolower($this->video_path), '.html');
+    }
+
     public function hasVideo(): bool
     {
         return $this->videoFileUrl() !== null || $this->embedUrl() !== null;

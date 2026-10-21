@@ -18,7 +18,14 @@
             <div class="alert-ok">{{ session('status') }}</div>
         @endif
 
-        @if ($file = $lesson->videoFileUrl())
+        @if (($file = $lesson->videoFileUrl()) && $lesson->isInteractivePage())
+            {{-- Animation avec voix off, au format téléphone : un cadre vertical, centré. `sandbox` sans
+                 allow-same-origin : la page tourne isolée du site, elle ne peut rien lire de ta session. --}}
+            <div class="card mx-auto w-full max-w-sm overflow-hidden">
+                <iframe class="h-[min(78vh,calc(100dvh-22rem))] min-h-[24rem] w-full bg-black" src="{{ $file }}" title="{{ $lesson->title }}"
+                        sandbox="allow-scripts" allow="autoplay; fullscreen" allowfullscreen loading="lazy"></iframe>
+            </div>
+        @elseif ($file)
             <div class="card overflow-hidden">
                 <video class="aspect-video w-full bg-ink-950" controls preload="metadata" playsinline>
                     <source src="{{ $file }}" type="{{ str_ends_with($file, '.webm') ? 'video/webm' : 'video/mp4' }}">

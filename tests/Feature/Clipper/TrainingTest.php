@@ -45,6 +45,41 @@ class TrainingTest extends TestCase
     }
 
     #[Test]
+    public function an_animated_page_with_voice_over_is_shown_in_an_isolated_frame(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('formation/explainer.html', '<html><body>animation</body></html>');
+
+        $lesson = TrainingLesson::factory()->create(['video_path' => 'formation/explainer.html']);
+
+        $this->assertTrue($lesson->isInteractivePage());
+
+        $this->actingAs($this->clipper())
+            ->get(route('training.show', $lesson))
+            ->assertSuccessful()
+            ->assertSee('<iframe', escape: false)
+            ->assertSee('sandbox="allow-scripts"', escape: false)
+            ->assertSee('formation/explainer.html', escape: false)
+            ->assertDontSee('<video', escape: false);
+    }
+
+    #[Test]
+    public function a_regular_video_file_still_uses_the_video_player(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('formation/clip.mp4', 'x');
+
+        $lesson = TrainingLesson::factory()->create(['video_path' => 'formation/clip.mp4']);
+
+        $this->assertFalse($lesson->isInteractivePage());
+
+        $this->actingAs($this->clipper())
+            ->get(route('training.show', $lesson))
+            ->assertSee('<video', escape: false)
+            ->assertDontSee('sandbox=', escape: false);
+    }
+
+    #[Test]
     public function a_draft_lesson_cannot_be_opened(): void
     {
         $draft = TrainingLesson::factory()->draft()->create();
