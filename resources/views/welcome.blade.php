@@ -205,30 +205,9 @@
             </ol>
         </section>
 
-        {{-- Chiffres réels du site, et non des promesses. Masqués tant qu'ils
-             sont nuls : un compteur à zéro sur une page d'accueil dissuade
-             plus qu'il ne rassure. --}}
         @php
-            $stats = $showcase['stats'] ?? null;
             $wall = $showcase['clips'] ?? collect();
         @endphp
-
-        @if ($stats && $stats['views'] > 0)
-            <section id="en-direct" class="border-t border-ink-800">
-                <div class="mx-auto grid max-w-6xl gap-8 px-6 py-16 text-center sm:grid-cols-3">
-                    @foreach ([
-                        [\App\Support\Money::views($stats['clippers']), 'clippeurs inscrits'],
-                        [\App\Support\Money::compactViews($stats['views']), 'vues validées'],
-                        [\App\Support\Money::wholeEuros($stats['earned_cents']), 'gagnés par les clippeurs'],
-                    ] as $index => [$value, $label])
-                        <div data-reveal style="--reveal-delay: {{ $index * 120 }}ms">
-                            <p class="font-display text-4xl font-bold tabular text-ink-50 sm:text-5xl">{{ $value }}</p>
-                            <p class="mt-2 text-sm text-ink-300">{{ $label }}</p>
-                        </div>
-                    @endforeach
-                </div>
-            </section>
-        @endif
 
         @if ($wall->isNotEmpty())
             <section id="clips" class="border-t border-ink-800">

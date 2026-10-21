@@ -38,6 +38,18 @@ class LandingShowcaseTest extends TestCase
     }
 
     #[Test]
+    public function the_landing_page_shows_no_counters_even_with_real_activity(): void
+    {
+        $this->clip(['url' => 'https://www.tiktok.com/@a/video/5', 'views_total' => 2_100_000, 'featured_at' => now()]);
+
+        $this->get('/')
+            ->assertSuccessful()
+            ->assertDontSee('clippeurs inscrits')
+            ->assertDontSee('vues validées')
+            ->assertDontSee('gagnés par les clippeurs');
+    }
+
+    #[Test]
     public function only_featured_approved_clips_reach_the_wall(): void
     {
         $featured = $this->clip(['url' => 'https://www.tiktok.com/@a/video/1', 'views_total' => 878_000, 'featured_at' => now()]);
