@@ -45,22 +45,62 @@ class TrainingTest extends TestCase
     }
 
     #[Test]
-    public function an_animated_page_with_voice_over_is_shown_in_an_isolated_frame(): void
+    public function an_animated_page_opens_fullscreen_from_a_big_poster(): void
     {
-        Storage::fake('public');
-        Storage::disk('public')->put('formation/explainer.html', '<html><body>animation</body></html>');
+        Storage::fake('local');
+        Storage::disk('local')->put('formation/explainer.html', '<html><body>animation</body></html>');
 
         $lesson = TrainingLesson::factory()->create(['video_path' => 'formation/explainer.html']);
 
         $this->assertTrue($lesson->isInteractivePage());
+        $this->assertNull($lesson->videoFileUrl());
 
         $this->actingAs($this->clipper())
             ->get(route('training.show', $lesson))
             ->assertSuccessful()
-            ->assertSee('<iframe', escape: false)
+            ->assertSee('Regarder la vidéo')
             ->assertSee('sandbox="allow-scripts"', escape: false)
-            ->assertSee('formation/explainer.html', escape: false)
-            ->assertDontSee('<video', escape: false);
+            ->assertSee(route('training.player', $lesson), escape: false)
+            ->assertDontSee('<video', escape: false)
+            // Aucune adresse publique vers le fichier.
+            ->assertDontSee('/storage/formation/explainer.html', escape: false);
+    }
+
+    #[Test]
+    public function the_animated_page_is_served_only_to_signed_in_clippers_and_never_cached(): void
+    {
+        Storage::fake('local');
+        Storage::disk('local')->put('formation/explainer.html', '<html><body>animation</body></html>');
+        $lesson = TrainingLesson::factory()->create(['video_path' => 'formation/explainer.html']);
+
+        // Un visiteur non connecté est renvoyé vers la connexion.
+        $this->get(route('training.player', $lesson))->assertRedirect();
+
+        $this->actingAs($this->clipper())
+            ->get(route('training.player', $lesson))
+            ->assertSuccessful()
+            ->assertHeader('Content-Type', 'text/html; charset=utf-8')
+            ->assertHeader('X-Robots-Tag', 'noindex')
+            ->assertHeaderMissing('Content-Disposition')
+            // Affichable dans le site lui-même ; toutes les autres pages restent interdites de cadre.
+            ->assertHeader('X-Frame-Options', 'SAMEORIGIN');
+
+        $this->actingAs($this->clipper())->get(route('training.index'))->assertHeader('X-Frame-Options', 'DENY');
+
+        $this->assertStringContainsString('no-store', (string) $this->actingAs($this->clipper())->get(route('training.player', $lesson))->headers->get('Cache-Control'));
+    }
+
+    #[Test]
+    public function a_draft_or_missing_animated_page_is_not_served(): void
+    {
+        Storage::fake('local');
+        $draft = TrainingLesson::factory()->draft()->create(['video_path' => 'formation/explainer.html']);
+        Storage::disk('local')->put('formation/explainer.html', 'x');
+        $missing = TrainingLesson::factory()->create(['video_path' => 'formation/absent.html']);
+
+        $clipper = $this->clipper();
+        $this->actingAs($clipper)->get(route('training.player', $draft))->assertNotFound();
+        $this->actingAs($clipper)->get(route('training.player', $missing))->assertNotFound();
     }
 
     #[Test]
@@ -76,6 +116,7 @@ class TrainingTest extends TestCase
         $this->actingAs($this->clipper())
             ->get(route('training.show', $lesson))
             ->assertSee('<video', escape: false)
+            ->assertSee('controlsList="nodownload"', escape: false)
             ->assertDontSee('sandbox=', escape: false);
     }
 

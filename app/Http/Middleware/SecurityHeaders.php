@@ -28,7 +28,11 @@ class SecurityHeaders
         // Empêche d'afficher le site dans une <iframe> étrangère : la seule
         // vraie parade au clickjacking (superposer un bouton invisible sur un
         // site légitime pour détourner un clic).
-        $response->headers->set('X-Frame-Options', 'DENY');
+        // Sauf si la réponse en a choisi un elle-même : le lecteur de la
+        // formation doit pouvoir s'afficher dans une page du site.
+        if (! $response->headers->has('X-Frame-Options')) {
+            $response->headers->set('X-Frame-Options', 'DENY');
+        }
 
         // Empêche un navigateur de deviner le type d'un fichier à partir de son
         // contenu plutôt que de son Content-Type déclaré — la faille classique

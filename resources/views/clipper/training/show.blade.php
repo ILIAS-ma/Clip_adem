@@ -18,16 +18,48 @@
             <div class="alert-ok">{{ session('status') }}</div>
         @endif
 
-        @if (($file = $lesson->videoFileUrl()) && $lesson->isInteractivePage())
-            {{-- Animation avec voix off, au format téléphone : un cadre vertical, centré. `sandbox` sans
-                 allow-same-origin : la page tourne isolée du site, elle ne peut rien lire de ta session. --}}
-            <div class="card mx-auto w-full max-w-sm overflow-hidden">
-                <iframe class="h-[min(78vh,calc(100dvh-22rem))] min-h-[24rem] w-full bg-black" src="{{ $file }}" title="{{ $lesson->title }}"
-                        sandbox="allow-scripts" allow="autoplay; fullscreen" allowfullscreen loading="lazy"></iframe>
+        @if ($player = $lesson->playerUrl())
+            {{--
+                Un geste : on touche, la vidéo s'ouvre en plein écran, on regarde.
+
+                L'iframe n'existe qu'ouverte : la fermer coupe le son d'un coup, et
+                son chargement part du toucher, ce qui laisse le navigateur lancer
+                la voix off. `sandbox` sans allow-same-origin : la page tourne
+                isolée du site, elle ne peut rien lire de la session.
+            --}}
+            <div x-data="{ open: false }" @keydown.escape.window="open = false"
+                 x-effect="document.body.classList.toggle('overflow-hidden', open)">
+                <button type="button" @click="open = true"
+                        class="group relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-3xl border border-ink-700 bg-ink-900 text-left transition hover:border-brand-500/60 sm:aspect-[21/9]">
+                    <span aria-hidden="true" class="absolute -left-16 -top-20 h-72 w-72 rounded-full bg-brand-500/25 blur-3xl"></span>
+                    <span class="relative flex flex-col items-center gap-3 px-6 text-center">
+                        <span class="flex h-20 w-20 items-center justify-center rounded-full bg-brand-500 text-white shadow-glow transition group-hover:scale-105">
+                            <svg class="ms-1 h-9 w-9" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 001.5.86l11-6.5a1 1 0 000-1.72l-11-6.5A1 1 0 008 5.5z" /></svg>
+                        </span>
+                        <span class="font-display text-xl font-bold text-ink-50">Regarder la vidéo</span>
+                        <span class="text-sm text-ink-300">54 secondes · avec le son</span>
+                    </span>
+                </button>
+
+                {{-- Téléporté dans <body> : un parent animé ou flouté piégerait la position fixe
+                     sous la barre du haut, comme le tiroir du menu. --}}
+                <template x-teleport="body">
+                    <div x-show="open" x-cloak class="fixed inset-0 z-[70] bg-black" role="dialog" aria-modal="true" aria-label="{{ $lesson->title }}">
+                        <template x-if="open">
+                            <iframe class="h-full w-full" src="{{ $player }}" title="{{ $lesson->title }}"
+                                    sandbox="allow-scripts" allow="autoplay; fullscreen"></iframe>
+                        </template>
+                        <button type="button" @click="open = false" aria-label="Fermer"
+                                class="absolute right-3 flex h-11 w-11 items-center justify-center rounded-full bg-ink-950/80 text-ink-50 ring-1 ring-white/20 backdrop-blur transition hover:bg-ink-800"
+                                style="top: max(0.75rem, env(safe-area-inset-top));">
+                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18" /></svg>
+                        </button>
+                    </div>
+                </template>
             </div>
-        @elseif ($file)
+        @elseif ($file = $lesson->videoFileUrl())
             <div class="card overflow-hidden">
-                <video class="aspect-video w-full bg-ink-950" controls preload="metadata" playsinline>
+                <video class="aspect-video w-full bg-ink-950" controls controlsList="nodownload" disablePictureInPicture preload="metadata" playsinline oncontextmenu="return false">
                     <source src="{{ $file }}" type="{{ str_ends_with($file, '.webm') ? 'video/webm' : 'video/mp4' }}">
                     Ton navigateur ne lit pas cette vidéo.
                 </video>

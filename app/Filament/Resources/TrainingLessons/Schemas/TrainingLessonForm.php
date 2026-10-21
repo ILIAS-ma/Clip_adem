@@ -73,7 +73,7 @@ class TrainingLessonForm
                         ->label('Fichier vidéo')
                         ->disk('public')
                         ->directory(TrainingLesson::RECORDED_DIRECTORY)
-                        ->acceptedFileTypes(['video/mp4', 'video/webm', 'text/html'])
+                        ->acceptedFileTypes(['video/mp4', 'video/webm'])
                         ->maxSize(200 * 1024)
                         ->columnSpanFull(),
 

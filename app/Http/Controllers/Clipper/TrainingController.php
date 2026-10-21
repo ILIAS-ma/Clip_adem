@@ -7,6 +7,7 @@ use App\Models\TrainingLesson;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * Espace formation : apprendre à se servir du site avant d'y passer des
@@ -42,6 +43,24 @@ class TrainingController extends Controller
             'previous' => $index > 0 ? $lessons[$index - 1] : null,
             'following' => $lessons[$index + 1] ?? null,
             'number' => $index + 1,
+        ]);
+    }
+
+    /**
+     * La page animée de la leçon, avec sa voix off. Réservée aux clippeurs
+     * connectés et jamais mise en cache : elle se regarde ici, elle ne se
+     * partage pas par adresse.
+     */
+    public function player(TrainingLesson $lesson): BinaryFileResponse
+    {
+        abort_unless($lesson->is_published && $lesson->interactivePagePath() !== null, 404);
+
+        return response()->file($lesson->interactivePagePath(), [
+            'Content-Type' => 'text/html; charset=utf-8',
+            'Cache-Control' => 'private, no-store',
+            'X-Robots-Tag' => 'noindex',
+            // Affichée dans un cadre du site (la vidéo plein écran), jamais ailleurs.
+            'X-Frame-Options' => 'SAMEORIGIN',
         ]);
     }
 
