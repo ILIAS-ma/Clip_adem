@@ -47,20 +47,22 @@ class TrainingController extends Controller
     }
 
     /**
-     * La page animée de la leçon, avec sa voix off. Réservée aux clippeurs
-     * connectés et jamais mise en cache : elle se regarde ici, elle ne se
-     * partage pas par adresse.
+     * La vidéo privée de la leçon. Réservée aux clippeurs connectés et jamais
+     * mise en cache : elle se regarde ici, elle ne se partage pas par adresse.
+     *
+     * La réponse accepte les lectures par morceaux (en-tête Range), dont les
+     * iPhone ont besoin pour lancer et déplacer une vidéo.
      */
-    public function player(TrainingLesson $lesson): BinaryFileResponse
+    public function stream(TrainingLesson $lesson): BinaryFileResponse
     {
-        abort_unless($lesson->is_published && $lesson->interactivePagePath() !== null, 404);
+        abort_unless($lesson->is_published && $lesson->privateVideoPath() !== null, 404);
 
-        return response()->file($lesson->interactivePagePath(), [
-            'Content-Type' => 'text/html; charset=utf-8',
+        $path = $lesson->privateVideoPath();
+
+        return response()->file($path, [
+            'Content-Type' => str_ends_with(strtolower($path), '.webm') ? 'video/webm' : 'video/mp4',
             'Cache-Control' => 'private, no-store',
             'X-Robots-Tag' => 'noindex',
-            // Affichée dans un cadre du site (la vidéo plein écran), jamais ailleurs.
-            'X-Frame-Options' => 'SAMEORIGIN',
         ]);
     }
 

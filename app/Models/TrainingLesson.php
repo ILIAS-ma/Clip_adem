@@ -72,8 +72,8 @@ class TrainingLesson extends Model
      */
     public function videoFileUrl(): ?string
     {
-        // Une page animée n'est pas un fichier public : voir playerUrl().
-        if ($this->isInteractivePage()) {
+        // Une vidéo privée n'est pas un fichier public : voir streamUrl().
+        if ($this->privateVideoPath() !== null) {
             return null;
         }
 
@@ -115,19 +115,12 @@ class TrainingLesson extends Model
         return null;
     }
 
-    /**
-     * La « vidéo » est-elle une page animée avec sa voix off (un export HTML
-     * de Claude Design) plutôt qu'un fichier mp4 ?
-     */
-    public function isInteractivePage(): bool
+    /** Chemin de la vidéo sur le disque privé, ou null si elle n'y est pas. */
+    public function privateVideoPath(): ?string
     {
-        return $this->video_path !== null && str_ends_with(strtolower($this->video_path), '.html');
-    }
-
-    /** Chemin de la page animée sur le disque privé, ou null si elle manque. */
-    public function interactivePagePath(): ?string
-    {
-        if (! $this->isInteractivePage() || ! Storage::disk('local')->exists($this->video_path)) {
+        if ($this->video_path === null
+            || ! in_array(strtolower(pathinfo($this->video_path, PATHINFO_EXTENSION)), ['mp4', 'webm'], true)
+            || ! Storage::disk('local')->exists($this->video_path)) {
             return null;
         }
 
@@ -135,18 +128,18 @@ class TrainingLesson extends Model
     }
 
     /**
-     * Adresse de la page animée. Elle passe par une route réservée aux
+     * Adresse de la vidéo privée. Elle passe par une route réservée aux
      * clippeurs connectés, et non par un fichier public : la vidéo se regarde
      * sur le site, elle ne se récupère pas en tapant une adresse.
      */
-    public function playerUrl(): ?string
+    public function streamUrl(): ?string
     {
-        return $this->interactivePagePath() !== null ? route('training.player', $this) : null;
+        return $this->privateVideoPath() !== null ? route('training.stream', $this) : null;
     }
 
     public function hasVideo(): bool
     {
-        return $this->videoFileUrl() !== null || $this->playerUrl() !== null || $this->embedUrl() !== null;
+        return $this->videoFileUrl() !== null || $this->streamUrl() !== null || $this->embedUrl() !== null;
     }
 
     /**

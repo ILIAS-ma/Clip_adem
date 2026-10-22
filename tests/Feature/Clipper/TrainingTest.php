@@ -45,62 +45,65 @@ class TrainingTest extends TestCase
     }
 
     #[Test]
-    public function an_animated_page_opens_fullscreen_from_a_big_poster(): void
+    public function a_private_video_opens_fullscreen_from_a_big_poster(): void
     {
         Storage::fake('local');
-        Storage::disk('local')->put('formation/explainer.html', '<html><body>animation</body></html>');
+        Storage::disk('local')->put('formation/intro.mp4', str_repeat('x', 4096));
 
-        $lesson = TrainingLesson::factory()->create(['video_path' => 'formation/explainer.html']);
+        $lesson = TrainingLesson::factory()->create(['video_path' => 'formation/intro.mp4']);
 
-        $this->assertTrue($lesson->isInteractivePage());
+        $this->assertNotNull($lesson->privateVideoPath());
         $this->assertNull($lesson->videoFileUrl());
 
         $this->actingAs($this->clipper())
             ->get(route('training.show', $lesson))
             ->assertSuccessful()
             ->assertSee('Regarder la vidéo')
-            ->assertSee('sandbox="allow-scripts"', escape: false)
-            ->assertSee(route('training.player', $lesson), escape: false)
-            ->assertDontSee('<video', escape: false)
+            ->assertSee(route('training.stream', $lesson), escape: false)
+            ->assertSee('controlsList="nodownload', escape: false)
             // Aucune adresse publique vers le fichier.
-            ->assertDontSee('/storage/formation/explainer.html', escape: false);
+            ->assertDontSee('/storage/formation/intro.mp4', escape: false);
     }
 
     #[Test]
-    public function the_animated_page_is_served_only_to_signed_in_clippers_and_never_cached(): void
+    public function the_private_video_is_streamed_in_ranges_to_signed_in_clippers_only(): void
     {
         Storage::fake('local');
-        Storage::disk('local')->put('formation/explainer.html', '<html><body>animation</body></html>');
-        $lesson = TrainingLesson::factory()->create(['video_path' => 'formation/explainer.html']);
+        Storage::disk('local')->put('formation/intro.mp4', str_repeat('x', 4096));
+        $lesson = TrainingLesson::factory()->create(['video_path' => 'formation/intro.mp4']);
 
         // Un visiteur non connecté est renvoyé vers la connexion.
-        $this->get(route('training.player', $lesson))->assertRedirect();
+        $this->get(route('training.stream', $lesson))->assertRedirect();
 
-        $this->actingAs($this->clipper())
-            ->get(route('training.player', $lesson))
+        $clipper = $this->clipper();
+
+        $this->actingAs($clipper)
+            ->get(route('training.stream', $lesson))
             ->assertSuccessful()
-            ->assertHeader('Content-Type', 'text/html; charset=utf-8')
+            ->assertHeader('Content-Type', 'video/mp4')
             ->assertHeader('X-Robots-Tag', 'noindex')
-            ->assertHeaderMissing('Content-Disposition')
-            // Affichable dans le site lui-même ; toutes les autres pages restent interdites de cadre.
-            ->assertHeader('X-Frame-Options', 'SAMEORIGIN');
+            ->assertHeaderMissing('Content-Disposition');
 
-        $this->actingAs($this->clipper())->get(route('training.index'))->assertHeader('X-Frame-Options', 'DENY');
+        // Les iPhone lisent par morceaux : sans cela, la vidéo ne démarre pas.
+        $this->actingAs($clipper)
+            ->get(route('training.stream', $lesson), ['Range' => 'bytes=0-99'])
+            ->assertStatus(206)
+            ->assertHeader('Content-Range', 'bytes 0-99/4096');
 
-        $this->assertStringContainsString('no-store', (string) $this->actingAs($this->clipper())->get(route('training.player', $lesson))->headers->get('Cache-Control'));
+        $this->assertStringContainsString('no-store', (string) $this->actingAs($clipper)->get(route('training.stream', $lesson))->headers->get('Cache-Control'));
     }
 
     #[Test]
-    public function a_draft_or_missing_animated_page_is_not_served(): void
+    public function a_draft_or_missing_private_video_is_not_served(): void
     {
         Storage::fake('local');
-        $draft = TrainingLesson::factory()->draft()->create(['video_path' => 'formation/explainer.html']);
-        Storage::disk('local')->put('formation/explainer.html', 'x');
-        $missing = TrainingLesson::factory()->create(['video_path' => 'formation/absent.html']);
+        $draft = TrainingLesson::factory()->draft()->create(['video_path' => 'formation/intro.mp4']);
+        Storage::disk('local')->put('formation/intro.mp4', 'x');
+        $missing = TrainingLesson::factory()->create(['video_path' => 'formation/absent.mp4']);
 
         $clipper = $this->clipper();
-        $this->actingAs($clipper)->get(route('training.player', $draft))->assertNotFound();
-        $this->actingAs($clipper)->get(route('training.player', $missing))->assertNotFound();
+        $this->actingAs($clipper)->get(route('training.stream', $draft))->assertNotFound();
+        $this->actingAs($clipper)->get(route('training.stream', $missing))->assertNotFound();
     }
 
     #[Test]
@@ -111,13 +114,14 @@ class TrainingTest extends TestCase
 
         $lesson = TrainingLesson::factory()->create(['video_path' => 'formation/clip.mp4']);
 
-        $this->assertFalse($lesson->isInteractivePage());
+        // Posée sur le disque public (ancien mode) : lue par la balise vidéo, sans vignette plein écran.
+        $this->assertNull($lesson->privateVideoPath());
 
         $this->actingAs($this->clipper())
             ->get(route('training.show', $lesson))
             ->assertSee('<video', escape: false)
             ->assertSee('controlsList="nodownload"', escape: false)
-            ->assertDontSee('sandbox=', escape: false);
+            ->assertDontSee('Regarder la vidéo');
     }
 
     #[Test]

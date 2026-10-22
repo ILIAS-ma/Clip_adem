@@ -316,7 +316,7 @@ Route::middleware(['auth', 'not.banned', 'role:clipper'])->group(function () use
 
         Route::get('/formation', [TrainingController::class, 'index'])->name('training.index');
         Route::get('/formation/{lesson}', [TrainingController::class, 'show'])->name('training.show');
-        Route::get('/formation/{lesson}/lecteur', [TrainingController::class, 'player'])->name('training.player');
+        Route::get('/formation/{lesson}/video', [TrainingController::class, 'stream'])->name('training.stream');
         Route::post('/formation/{lesson}/terminer', [TrainingController::class, 'complete'])->name('training.complete');
 
         Route::get('/revenus/paiement', [PayoutMethodController::class, 'edit'])->name('payout-method.edit');
