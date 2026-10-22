@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\TrainingLessons\Tables;
 
 use App\Models\TrainingLesson;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -10,6 +11,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 
 class TrainingLessonsTable
 {
@@ -57,6 +59,17 @@ class TrainingLessonsTable
                     ->default(true),
             ])
             ->recordActions([
+                // Réservé au personnel (c'est le back-office) : la vidéo avec son
+                // son, en mp4, pour la donner à quelqu'un d'autre.
+                Action::make('download')
+                    ->label('Télécharger')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->visible(fn (TrainingLesson $record) => $record->downloadableVideoPath() !== null)
+                    ->action(function (TrainingLesson $record) {
+                        $path = $record->downloadableVideoPath();
+
+                        return response()->download($path, Str::slug($record->title).'.'.pathinfo($path, PATHINFO_EXTENSION));
+                    }),
                 EditAction::make(),
             ])
             ->toolbarActions([

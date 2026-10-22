@@ -9,6 +9,7 @@ use App\Enums\ClipStatus;
 use App\Enums\PayoutStatus;
 use App\Enums\Platform;
 use App\Enums\UserRole;
+use App\Filament\Resources\TrainingLessons\Pages\ListTrainingLessons;
 use App\Filament\Widgets\AdminList;
 use App\Models\Campaign;
 use App\Models\Category;
@@ -19,6 +20,7 @@ use App\Models\TrainingLesson;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -171,6 +173,32 @@ class AdminPagesRenderTest extends TestCase
         foreach (Filament::getPanel('admin')->getWidgets() as $widget) {
             Livewire::test($widget)->assertOk();
         }
+    }
+
+    #[Test]
+    public function an_admin_can_download_a_lesson_video_as_an_mp4(): void
+    {
+        Storage::fake('local');
+        Storage::disk('local')->put('formation/intro.mp4', str_repeat('x', 2048));
+
+        $lesson = TrainingLesson::factory()->create(['title' => 'Echo Clip en 1 minute', 'video_path' => 'formation/intro.mp4']);
+        $without = TrainingLesson::factory()->create(['video_path' => null]);
+
+        $this->actingAs($this->admin());
+
+        Livewire::test(ListTrainingLessons::class)
+            ->assertTableActionVisible('download', $lesson)
+            ->assertTableActionHidden('download', $without)
+            ->callTableAction('download', $lesson)
+            ->assertFileDownloaded('echo-clip-en-1-minute.mp4');
+    }
+
+    #[Test]
+    public function a_clipper_cannot_reach_the_lesson_admin_to_download_anything(): void
+    {
+        $clipper = User::factory()->create(['role' => UserRole::Clipper]);
+
+        $this->actingAs($clipper)->get('/admin/training-lessons')->assertForbidden();
     }
 
     #[Test]

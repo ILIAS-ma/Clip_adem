@@ -128,6 +128,27 @@ class TrainingLesson extends Model
     }
 
     /**
+     * Le fichier vidéo à remettre à un administrateur qui veut le télécharger :
+     * la vidéo privée, ou à défaut celle déposée sur le disque public.
+     */
+    public function downloadableVideoPath(): ?string
+    {
+        if ($path = $this->privateVideoPath()) {
+            return $path;
+        }
+
+        $disk = Storage::disk('public');
+
+        if ($this->video_path
+            && in_array(strtolower(pathinfo($this->video_path, PATHINFO_EXTENSION)), ['mp4', 'webm'], true)
+            && $disk->exists($this->video_path)) {
+            return $disk->path($this->video_path);
+        }
+
+        return null;
+    }
+
+    /**
      * Adresse de la vidéo privée. Elle passe par une route réservée aux
      * clippeurs connectés, et non par un fichier public : la vidéo se regarde
      * sur le site, elle ne se récupère pas en tapant une adresse.
