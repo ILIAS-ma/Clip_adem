@@ -70,8 +70,9 @@ class ClipperResource extends Resource
     public static function getRelations(): array
     {
         return [
-            SocialAccountsRelationManager::class,
+            // L'historique d'abord : c'est ce qu'on vient chercher sur la fiche d'un clippeur.
             ClipsRelationManager::class,
+            SocialAccountsRelationManager::class,
         ];
     }
 
