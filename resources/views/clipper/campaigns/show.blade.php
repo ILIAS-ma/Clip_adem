@@ -7,7 +7,13 @@
     $minClips = (int) $campaign->min_clips_per_clipper;
     $valides = $minClips > 0 ? $campaign->payableClipCountFor(auth()->id()) : 0;
     $isOver = $campaign->ends_at && $campaign->ends_at->isPast();
-    $joined = $participations->isNotEmpty();
+    /*
+     * « Rejoint » ne veut pas dire « peut poster » : un compte lié avec lequel on a
+     * rejoint peut être devenu inutilisable (délié, jeton mort). Ce qui compte, c'est
+     * d'avoir au moins un compte utilisable — déjà engagé, ou encore à engager, car
+     * choisir une vidéo d'un compte l'engage.
+     */
+    $joined = $participations->contains(fn ($p) => $p->socialAccount?->isSyncable()) || $eligibleAccounts->isNotEmpty();
     $canPick = $joined && $canSubmit;
 @endphp
 
@@ -174,7 +180,7 @@
                     @else
                         <h2 class="font-display text-lg font-bold text-ink-50">Soumettre un clip</h2>
                         <div class="mt-2 flex flex-wrap gap-1.5">
-                            @foreach ($participations as $participation)
+                            @foreach ($participations->filter(fn ($p) => $p->socialAccount?->isSyncable()) as $participation)
                                 <span class="chip-ok">
                                     {{ $participation->socialAccount?->platform->label() }}@if ($participation->socialAccount?->handle) · &#64;{{ $participation->socialAccount->handle }}@endif
                                 </span>

@@ -213,6 +213,62 @@ class ClipPickerTest extends TestCase
     }
 
     #[Test]
+    public function a_clipper_who_joined_with_a_dead_account_can_still_submit_with_his_current_one(): void
+    {
+        /*
+         * Le cas signalé : il a rejoint la campagne avec un ancien compte TikTok,
+         * devenu inactif ; son compte actuel est lié et actif mais n'a jamais rejoint.
+         * La grille restait vide et rien n'expliquait pourquoi.
+         */
+        $clipper = User::factory()->create([
+            'role' => UserRole::Clipper, 'email_verified_at' => now(), 'pseudo' => 'replay.vision',
+            'country' => 'FR', 'paypal_email' => 'r@paypal.test',
+        ]);
+        $dead = SocialAccount::factory()->create(['user_id' => $clipper->id, 'platform' => Platform::TikTok, 'handle' => 'ancien.compte']);
+        app(ParticipationService::class)->join($this->campaign, $clipper, $dead);
+        $dead->forceFill(['is_active' => false])->save();
+
+        $current = SocialAccount::factory()->create(['user_id' => $clipper->id, 'platform' => Platform::TikTok, 'handle' => 'compte.actuel']);
+
+        // La page propose de soumettre, au lieu d'un bouton qui mène à une grille vide.
+        $this->actingAs($clipper)
+            ->get(route('campaigns.show', $this->campaign))
+            ->assertOk()
+            ->assertSee('Soumettre mes vidéos');
+
+        $component = Livewire::actingAs($clipper)
+            ->test(SubmitClip::class, ['campaign' => $this->campaign])
+            ->call('loadVideos');
+
+        $groups = $component->get('groups');
+        $this->assertCount(1, $groups);
+        $this->assertSame($current->id, $groups[0]['account_id']);
+
+        $video = $groups[0]['videos'][0];
+        $component->call('save', [$current->id.':'.$video['id']], [])
+            ->assertRedirect(route('campaigns.show', $this->campaign));
+
+        // Le compte actuel a rejoint, et le clip est rattaché à lui.
+        $this->assertNotNull(app(ParticipationService::class)->existing($this->campaign, $current));
+        $clip = Clip::firstOrFail();
+        $this->assertSame($current->id, $clip->social_account_id);
+        $this->assertSame($clipper->id, $clip->user_id);
+    }
+
+    #[Test]
+    public function a_campaign_that_does_not_accept_the_platform_offers_no_account(): void
+    {
+        $youtubeOnly = Campaign::factory()->withRate(Platform::YouTube)->create(['status' => CampaignStatus::Active]);
+
+        $groups = Livewire::actingAs($this->clipper)
+            ->test(SubmitClip::class, ['campaign' => $youtubeOnly])
+            ->call('loadVideos')
+            ->get('groups');
+
+        $this->assertSame([], $groups);
+    }
+
+    #[Test]
     public function the_whole_history_is_reachable_by_scrolling(): void
     {
         $component = Livewire::actingAs($this->clipper)

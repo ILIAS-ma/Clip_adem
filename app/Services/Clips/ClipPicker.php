@@ -3,7 +3,6 @@
 namespace App\Services\Clips;
 
 use App\Contracts\ListsRecentPosts;
-use App\Enums\ParticipationStatus;
 use App\Models\BudgetTransaction;
 use App\Models\Campaign;
 use App\Models\Clip;
@@ -48,13 +47,17 @@ class ClipPicker
      */
     public function forCampaign(Campaign $campaign, User $clipper, int $want = self::PER_PAGE): array
     {
-        $accounts = $campaign->participations()
-            ->where('user_id', $clipper->getKey())
-            ->where('status', ParticipationStatus::Approved)
-            ->with('socialAccount')
+        /*
+         * Tous les comptes actifs du clippeur que la campagne accepte, qu'ils aient
+         * déjà rejoint ou non : choisir une vidéo suffit à rejoindre (voir
+         * SubmitClip::save). Se limiter aux comptes déjà engagés laissait la grille
+         * vide à qui avait rejoint avec un ancien compte, désormais inutilisable,
+         * alors que son compte actuel était lié et actif.
+         */
+        $accounts = $clipper->socialAccounts()
+            ->where('is_active', true)
             ->get()
-            ->pluck('socialAccount')
-            ->filter(fn (?SocialAccount $account) => $account && $account->isSyncable())
+            ->filter(fn (SocialAccount $account) => $account->isSyncable() && $campaign->rateFor($account->platform) !== null)
             ->unique('id');
 
         $groups = [];

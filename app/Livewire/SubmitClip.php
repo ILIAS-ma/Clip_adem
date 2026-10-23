@@ -3,11 +3,13 @@
 namespace App\Livewire;
 
 use App\Exceptions\ClipSubmissionRefused;
+use App\Exceptions\ParticipationRefused;
 use App\Models\Campaign;
 use App\Models\Clip;
 use App\Models\SocialAccount;
 use App\Services\Clips\ClipPicker;
 use App\Services\Clips\ClipSubmissionService;
+use App\Services\Clips\ParticipationService;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 
@@ -79,7 +81,7 @@ class SubmitClip extends Component
      * @param  list<string>  $add  « compte:vidéo » à soumettre
      * @param  list<string>  $remove  « compte:vidéo » à retirer
      */
-    public function save(array $add, array $remove, ClipSubmissionService $clips, ClipPicker $picker): void
+    public function save(array $add, array $remove, ClipSubmissionService $clips, ClipPicker $picker, ParticipationService $participations): void
     {
         $added = 0;
         $removed = 0;
@@ -102,6 +104,11 @@ class SubmitClip extends Component
                             throw new ClipSubmissionRefused('Une vidéo n’est plus disponible. Actualisez la liste.');
                         }
 
+                        // Pas de demande à part : choisir une vidéo d'un compte qui n'a pas
+                        // encore rejoint la campagne le fait rejoindre.
+                        $participations->existing($this->campaign, $account)
+                            ?? $participations->join($this->campaign, auth()->user(), $account);
+
                         $clips->submitPicked($this->campaign, auth()->user(), $account, $postId, $video['url'] ?? null, $video);
                         $added++;
                     } else {
@@ -118,7 +125,7 @@ class SubmitClip extends Component
                         $clips->withdraw($clip, auth()->user());
                         $removed++;
                     }
-                } catch (ClipSubmissionRefused $exception) {
+                } catch (ClipSubmissionRefused|ParticipationRefused $exception) {
                     $refusals[] = $exception->getMessage();
                 }
 
