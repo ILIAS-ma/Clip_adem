@@ -1,4 +1,4 @@
-@props(['series', 'label' => null, 'unit' => ''])
+@props(['series', 'label' => null, 'unit' => '', 'height' => 96])
 
 @php
     // Un graphique en barres sans dépendance : une bibliothèque de courbes
@@ -12,11 +12,11 @@
         <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">{{ $label }}</p>
     @endif
 
-    <div class="mt-3 flex h-24 items-end gap-[3px]">
+    <div class="mt-3 flex items-end gap-[3px]" style="height: {{ (int) $height }}px">
         @foreach ($values as $day => $value)
             <div class="group relative flex-1">
                 <div class="rounded-t bg-brand-500/70 transition group-hover:bg-brand-400"
-                     style="height: {{ max(2, (int) round($value / $max * 96)) }}px"
+                     style="height: {{ max(2, (int) round($value / $max * $height)) }}px"
                      role="presentation"></div>
 
                 {{-- Infobulle en CSS : survoler une barre doit dire quel jour

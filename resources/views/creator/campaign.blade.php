@@ -1,40 +1,117 @@
-@php use App\Support\Money; @endphp
+@php
+    use App\Support\Money;
+
+    $ended = $campaign->hasEnded();
+    $cover = $campaign->coverUrl();
+@endphp
 
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-wrap items-start justify-between gap-4">
-            <div>
-                <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">{{ $creator->name }}</p>
-                <h1 class="mt-1 font-display text-2xl font-bold text-ink-50">{{ $campaign->title }}</h1>
+            <div class="flex min-w-0 items-center gap-4">
+                @if ($cover)
+                    <img src="{{ $cover }}" alt="" class="h-14 w-14 flex-none rounded-xl object-cover ring-1 ring-ink-700 sm:h-16 sm:w-16 {{ $ended ? 'grayscale' : '' }}">
+                @endif
+
+                <div class="min-w-0">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">{{ $creator->name }}</p>
+                    <div class="mt-1 flex flex-wrap items-center gap-2">
+                        <h1 class="font-display text-xl font-bold text-ink-50 sm:text-2xl">{{ $campaign->title }}</h1>
+                        <span @class(['chip-neutral' => $ended, 'chip-ok' => ! $ended])>{{ $ended ? 'Terminée' : $campaign->status->label() }}</span>
+                    </div>
+                </div>
             </div>
 
-            <a href="{{ route('creator.dashboard') }}" wire:navigate class="btn-ghost">← Mes campagnes</a>
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ route('creator.dashboard') }}" wire:navigate class="btn-ghost text-sm">← Mes campagnes</a>
+                <a href="{{ route('messages.index') }}" wire:navigate class="btn-ghost text-sm">Support</a>
+            </div>
         </div>
     </x-slot>
 
-    <div class="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-6xl space-y-4 px-4 py-5 sm:space-y-6 sm:px-6 sm:py-8 lg:px-8">
 
-        <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-            <x-stat label="Budget total" :value="Money::euros($campaign->budget_total_cents)" />
+        {{-- Campagne finie : on le dit, et on rappelle que ses résultats restent là. --}}
+        @if ($ended)
+            <div class="rounded-2xl border border-ink-600 bg-ink-900 p-4 sm:p-5">
+                <p class="font-display text-lg font-bold text-ink-50">Cette campagne est terminée</p>
+                <p class="mt-1 text-sm leading-relaxed text-ink-300">
+                    @if ($campaign->ends_at)
+                        Elle s'est arrêtée le {{ $campaign->ends_at->format('d/m/Y à H\hi') }}.
+                    @endif
+                    Les statistiques restent consultables, et les vues continuent d'être mises à jour
+                    tant que les clips sont en ligne.
+                </p>
+            </div>
+        @endif
 
-            <x-stat label="Dépensé" :value="Money::euros($campaign->spent_cents)"
-                    :hint="$campaign->consumedPercent().' % du budget'" />
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
+            <x-stat label="Vues générées" :value="Money::views($overview['views'])" tone="money" />
+            <x-stat label="Clips" :value="number_format($overview['clips'], 0, ',', ' ')" />
+            <x-stat label="Clippeurs" :value="number_format($overview['clippers'], 0, ',', ' ')" />
+            <x-stat label="Meilleur clip" :value="Money::compactViews($overview['best'])" hint="vues sur un seul clip" />
+            <x-stat label="Moyenne / clip" :value="Money::compactViews($overview['average'])" hint="vues par clip" />
 
-            <x-stat label="Vues générées" :value="Money::views($views)" tone="money"
-                    :hint="$clips->count().' clip'.($clips->count() > 1 ? 's' : '').' validé'.($clips->count() > 1 ? 's' : '')" />
-
-            <x-stat label="Coût réel / 1000 vues"
-                    :value="$views > 0 ? Money::euros(intdiv($campaign->spent_cents * 1000, $views)) : '—'"
-                    highlight hint="Rendement effectif" />
+            @if ($campaign->isContest())
+                <x-stat label="Récompenses" :value="$campaign->prizePoolCents() > 0 ? Money::wholeEuros($campaign->prizePoolCents()) : 'Lots'"
+                        :hint="$campaign->prizePoolCents() > 0 ? 'Dépensé : '.Money::euros($campaign->spent_cents) : null" />
+            @else
+                <x-stat label="Dépensé" :value="Money::euros($campaign->spent_cents)"
+                        :hint="$campaign->consumedPercent().' % de '.Money::euros($campaign->budget_total_cents)" />
+            @endif
         </div>
 
-        <div class="grid gap-6 lg:grid-cols-3">
+        {{-- Le podium officiel d'un classement terminé : ce qui a été annoncé et récompensé. --}}
+        @if ($podium)
+            <div class="card p-5 sm:p-6">
+                <h2 class="font-display text-lg font-bold text-ink-50">Le podium final</h2>
+                <p class="mt-0.5 text-sm text-ink-400">Le classement arrêté à la date de fin, avec les récompenses.</p>
 
-            <div class="space-y-6 lg:col-span-2">
+                <div class="mt-5 grid gap-6 lg:grid-cols-2">
+                    @foreach ($podium as $key => $rows)
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">{{ \App\Enums\ContestMetric::from($key)->title() }}</p>
+                            <ol class="mt-3 space-y-2">
+                                @foreach ($rows as $row)
+                                    <li class="flex items-center gap-3 rounded-xl bg-ink-900 px-3 py-2.5 ring-1 ring-ink-800">
+                                        <span @class([
+                                            'flex h-8 w-8 flex-none items-center justify-center rounded-full text-sm font-bold tabular',
+                                            'bg-amber-400 text-ink-950' => $row['rank'] === 1,
+                                            'bg-ink-200 text-ink-950' => $row['rank'] === 2,
+                                            'bg-amber-700 text-white' => $row['rank'] === 3,
+                                        ])>{{ $row['rank'] }}</span>
+                                        <span class="min-w-0 flex-1">
+                                            <span class="block truncate font-semibold text-ink-50">{{ $row['name'] }}</span>
+                                            <span class="block text-xs tabular text-ink-400">{{ $row['score'] }}</span>
+                                        </span>
+                                        @if ($row['reward'])
+                                            <span class="flex-none rounded-full bg-brand-500/15 px-2.5 py-1 text-xs font-bold tabular text-brand-300">{{ $row['reward'] }}</span>
+                                        @endif
+                                    </li>
+                                @endforeach
+                            </ol>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
+        @if ($overview['clips'] > 0)
+            @include('creator.partials.analytics')
+        @endif
+
+        <div class="grid gap-4 sm:gap-6 lg:grid-cols-3">
+
+            <div class="space-y-4 sm:space-y-6 lg:col-span-2">
                 <div class="card">
-                    <div class="border-b border-ink-700 px-6 py-4">
+                    <div class="border-b border-ink-700 px-5 py-4 sm:px-6">
                         <h2 class="font-display text-lg font-bold text-ink-50">Les clips</h2>
-                        <p class="mt-0.5 text-sm text-ink-400">Classés par nombre de vues.</p>
+                        <p class="mt-0.5 text-sm text-ink-400">
+                            Classés par nombre de vues
+                            @if ($clipsTotal > $clips->count())
+                                · les {{ $clips->count() }} premiers sur {{ number_format($clipsTotal, 0, ',', ' ') }}
+                            @endif
+                        </p>
                     </div>
 
                     @if ($clips->isEmpty())
@@ -46,32 +123,36 @@
                             <table class="w-full text-sm">
                                 <thead>
                                     <tr class="text-xs uppercase tracking-wide text-ink-400">
-                                        <th class="px-6 py-3 text-left font-semibold">Clippeur</th>
-                                        <th class="px-6 py-3 text-left font-semibold">Plateforme</th>
-                                        <th class="px-6 py-3 text-right font-semibold">Vues</th>
-                                        <th class="px-6 py-3 text-right font-semibold">Coût</th>
+                                        <th class="px-5 py-3 text-left font-semibold sm:px-6">Clippeur</th>
+                                        <th class="px-3 py-3 text-left font-semibold">Plateforme</th>
+                                        <th class="px-3 py-3 text-right font-semibold">Vues</th>
+                                        @unless ($campaign->isContest())
+                                            <th class="px-5 py-3 text-right font-semibold sm:px-6">Coût</th>
+                                        @endunless
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-ink-700">
+                                <tbody class="divide-y divide-ink-800">
                                     @foreach ($clips as $clip)
                                         <tr>
                                             {{-- Pseudo uniquement : le créateur n'a pas à connaître
                                                  l'identité civile ni les coordonnées des clippeurs. --}}
-                                            <td class="px-6 py-3 font-medium text-ink-100">
+                                            <td class="px-5 py-3 font-medium text-ink-100 sm:px-6">
                                                 {{ $clip->user?->displayName() }}
                                             </td>
-                                            <td class="px-6 py-3">
+                                            <td class="px-3 py-3">
                                                 <a href="{{ $clip->url }}" target="_blank" rel="noopener"
                                                    class="text-ink-300 underline-offset-2 hover:text-ink-50 hover:underline">
                                                     {{ $clip->platform->label() }}
                                                 </a>
                                             </td>
-                                            <td class="px-6 py-3 text-right tabular text-ink-100">
+                                            <td class="px-3 py-3 text-right tabular text-ink-100">
                                                 {{ Money::views($clip->views_total) }}
                                             </td>
-                                            <td class="px-6 py-3 text-right font-semibold tabular text-ink-50">
-                                                {{ Money::euros($clip->earned_cents) }}
-                                            </td>
+                                            @unless ($campaign->isContest())
+                                                <td class="px-5 py-3 text-right font-semibold tabular text-ink-50 sm:px-6">
+                                                    {{ Money::euros($clip->earned_cents) }}
+                                                </td>
+                                            @endunless
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -81,7 +162,7 @@
                 </div>
 
                 @if ($campaign->brief)
-                    <div class="card p-6">
+                    <div class="card p-5 sm:p-6">
                         <h2 class="font-display text-lg font-bold text-ink-50">Le brief donné aux clippeurs</h2>
                         <p class="mt-3 whitespace-pre-line leading-relaxed text-ink-200">{{ $campaign->brief }}</p>
 
@@ -96,11 +177,13 @@
                 @endif
             </div>
 
-            <div class="space-y-6">
-                <div class="card p-6">
-                    <x-budget-bar :campaign="$campaign" :remaining="$remainingCents" />
+            <div class="space-y-4 sm:space-y-6">
+                <div class="card p-5 sm:p-6">
+                    @unless ($campaign->isContest())
+                        <x-budget-bar :campaign="$campaign" :remaining="$remainingCents" />
+                    @endunless
 
-                    <dl class="mt-6 space-y-3 border-t border-ink-700 pt-5 text-sm">
+                    <dl @class(['space-y-3 text-sm', 'mt-6 border-t border-ink-700 pt-5' => ! $campaign->isContest()])>
                         @foreach ($campaign->rates->where('is_enabled', true) as $rate)
                             <div class="flex items-baseline justify-between gap-2">
                                 <dt class="text-ink-400">{{ $rate->platform->label() }}</dt>
@@ -146,8 +229,8 @@
                     </dl>
                 </div>
 
-                @if ($perPlatform->isNotEmpty())
-                    <div class="card p-6">
+                @if ($perPlatform->isNotEmpty() && ! $campaign->isContest())
+                    <div class="card p-5 sm:p-6">
                         <h2 class="font-display text-lg font-bold text-ink-50">Par plateforme</h2>
 
                         <ul class="mt-4 space-y-4">
@@ -174,6 +257,12 @@
                         </ul>
                     </div>
                 @endif
+
+                <div class="card p-5 sm:p-6">
+                    <h2 class="font-display text-base font-bold text-ink-50">Une question ?</h2>
+                    <p class="mt-1 text-sm text-ink-300">L'équipe te répond directement depuis le site.</p>
+                    <a href="{{ route('messages.index') }}" wire:navigate class="btn-ghost mt-4 w-full justify-center">Contacter le support</a>
+                </div>
             </div>
         </div>
     </div>
