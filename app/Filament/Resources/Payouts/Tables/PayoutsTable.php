@@ -37,7 +37,23 @@ class PayoutsTable
                     ->label('Clippeur')
                     ->searchable()
                     ->weight('bold')
-                    ->description(fn (Payout $record) => $record->destinationLabel()),
+                    // L'adresse PayPal a sa propre colonne ; ici, seul le RIB masqué d'un virement.
+                    ->description(fn (Payout $record) => $record->payoutMethod() === PayoutMethod::PayPal
+                        ? null
+                        : $record->destinationLabel()),
+
+                // Où envoyer l'argent, figé à la demande : copiable d'un clic pour le coller dans PayPal.
+                TextColumn::make('paypal_email')
+                    ->label('Email PayPal')
+                    ->state(fn (Payout $record) => $record->payoutMethod() === PayoutMethod::PayPal
+                        ? ($record->paypal_email ?: $record->destination)
+                        : null)
+                    ->placeholder('—')
+                    ->copyable()
+                    ->copyMessage('Email PayPal copié')
+                    ->icon('heroicon-m-clipboard-document')
+                    ->iconPosition('after')
+                    ->searchable(query: fn ($query, string $search) => $query->where('paypal_email', 'like', "%{$search}%")),
 
                 TextColumn::make('method')
                     ->label('Mode')
@@ -146,12 +162,13 @@ class PayoutsTable
             ->color('success')
             ->visible(fn (Payout $record) => $record->isManual()
                 && $record->status === PayoutStatus::Approved)
-            ->schema([
+            // PayPal : aucune fenêtre, un clic suffit. Un virement bancaire garde sa
+            // référence facultative, qui sert à le retrouver sur le relevé.
+            ->modalHidden(fn (Payout $record) => $record->payoutMethod() === PayoutMethod::PayPal)
+            ->schema(fn (Payout $record) => $record->payoutMethod() === PayoutMethod::PayPal ? [] : [
                 TextInput::make('reference')
-                    ->label(fn (Payout $record) => $record->payoutMethod() === PayoutMethod::PayPal
-                        ? 'Référence de la transaction PayPal'
-                        : 'Référence du virement')
-                    ->helperText('Celle du relevé, PayPal ou bancaire. Facultative, mais elle vous sauvera un jour.')
+                    ->label('Référence du virement')
+                    ->helperText('Celle du relevé bancaire. Facultative, mais elle vous sauvera un jour.')
                     ->maxLength(64),
             ])
             ->action(function (Payout $record, array $data) {
@@ -163,7 +180,9 @@ class PayoutsTable
                     return;
                 }
 
-                Notification::make()->success()->title('Virement pointé comme versé')->send();
+                Notification::make()->success()
+                    ->title($record->payoutMethod() === PayoutMethod::PayPal ? 'PayPal envoyé' : 'Virement pointé comme versé')
+                    ->send();
             });
     }
 
