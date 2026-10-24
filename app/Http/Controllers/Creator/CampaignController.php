@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Creator;
 
 use App\Contracts\CampaignBudgetService;
+use App\Enums\CampaignStatus;
 use App\Enums\ClipStatus;
 use App\Enums\ContestMetric;
 use App\Http\Controllers\Controller;
@@ -26,6 +27,9 @@ class CampaignController extends Controller
 
         // Cloisonnement : un créateur ne voit que ses propres campagnes.
         abort_unless($campaign->creator_id === $creator->getKey(), 404);
+
+        // Un brouillon est un travail de l'équipe : le créateur n'en voit ni la page ni le budget.
+        abort_if(in_array($campaign->status, [CampaignStatus::Draft, CampaignStatus::Archived], true), 404);
 
         $campaign->load('rates');
 

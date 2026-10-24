@@ -45,14 +45,6 @@ class NavigationComposer
                     'label' => 'Mes campagnes',
                     'icon' => 'M3 11l8-8 8 8M5 10v9a1 1 0 001 1h3v-6h4v6h3a1 1 0 001-1v-9',
                 ],
-                [
-                    'route' => 'creator.profile.edit',
-                    'pattern' => 'creator.profile.*',
-                    // Un streamer gère une chaîne, pas une fiche d'artiste :
-                    // le mot doit être le sien jusque dans la navigation.
-                    'label' => $user->creator?->isStreamer() ? 'Ma chaîne' : 'Ma fiche',
-                    'icon' => 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
-                ],
             ]
             : [
                 [

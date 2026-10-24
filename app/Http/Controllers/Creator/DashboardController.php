@@ -2,29 +2,25 @@
 
 namespace App\Http\Controllers\Creator;
 
-use App\Contracts\CampaignBudgetService;
+use App\Enums\CampaignStatus;
 use App\Enums\ClipStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Campaign;
 use App\Services\Creators\CampaignAnalytics;
-use App\Services\Creators\CreatorStatsService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function __invoke(
-        Request $request,
-        CampaignBudgetService $budget,
-        CreatorStatsService $stats,
-        CampaignAnalytics $analytics,
-    ): View {
+    public function __invoke(Request $request, CampaignAnalytics $analytics): View
+    {
         $creator = $request->user()->creator;
 
         $approved = fn ($query) => $query->where('status', ClipStatus::Approved->value);
 
         $campaigns = $creator->campaigns()
-            ->with('rates')
+            // Un brouillon est un travail de l'équipe, pas une campagne : le créateur ne le voit pas.
+            ->whereNotIn('status', [CampaignStatus::Draft->value, CampaignStatus::Archived->value])
             ->withCount(['clips as clips_count' => $approved])
             ->withSum(['clips as views_sum' => $approved], 'views_total')
             ->latest('created_at')
@@ -41,9 +37,8 @@ class DashboardController extends Controller
             'creator' => $creator,
             'campaigns' => $campaigns,
 
-            // Le budget (grand livre) et l'audience (clips) sont deux lectures : une
-            // campagne « classement » ne paie rien aux vues, mais produit des vues.
-            'summary' => $stats->summary($creator),
+            // L'audience se lit sur les clips : une campagne « classement » ne paie rien
+            // aux vues, mais elle en produit. L'argent n'est pas l'affaire du créateur ici.
             'overview' => $overview,
             'headline' => $analytics->headline(
                 $overview,
@@ -57,10 +52,6 @@ class DashboardController extends Controller
             'topClippers' => $analytics->topClippers($ids, 6),
             'topClips' => $analytics->topClips($ids, 6),
             'platforms' => $analytics->platforms($ids),
-
-            'remaining' => $campaigns->mapWithKeys(fn (Campaign $campaign) => [
-                $campaign->getKey() => $budget->remaining($campaign),
-            ]),
         ]);
     }
 }

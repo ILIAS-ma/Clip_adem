@@ -249,6 +249,50 @@ class CreatorAnalyticsTest extends TestCase
     }
 
     #[Test]
+    public function the_creator_sees_no_money_figures_on_the_dashboard(): void
+    {
+        $this->clip($this->clipper('lea.clips'), 50_000);
+        $this->contest->forceFill(['spent_cents' => 30_000, 'budget_total_cents' => 30_000])->save();
+
+        $this->actingAs($this->owner)
+            ->get(route('creator.dashboard'))
+            ->assertOk()
+            ->assertDontSee('Dépensé')
+            ->assertDontSee('engagés')
+            ->assertDontSee('restants')
+            ->assertDontSee('consommé');
+    }
+
+    #[Test]
+    public function a_draft_campaign_is_hidden_from_the_creator(): void
+    {
+        $draft = Campaign::factory()->contest()->create([
+            'creator_id' => $this->creator->id,
+            'title' => 'Brouillon secret',
+            'status' => CampaignStatus::Draft,
+        ]);
+
+        $this->actingAs($this->owner)
+            ->get(route('creator.dashboard'))
+            ->assertOk()
+            ->assertDontSee('Brouillon secret')
+            ->assertDontSee('Brouillon');
+
+        $this->actingAs($this->owner)->get(route('creator.campaigns.show', $draft))->assertNotFound();
+    }
+
+    #[Test]
+    public function the_menu_has_no_profile_tab_since_the_team_creates_the_campaigns(): void
+    {
+        $response = $this->actingAs($this->owner)->get(route('creator.dashboard'))->assertOk();
+
+        $response->assertDontSee('Ma fiche')
+            ->assertDontSee('Ma chaîne')
+            ->assertSee('Mes campagnes')
+            ->assertSee('Support');
+    }
+
+    #[Test]
     public function another_creators_campaign_stays_hidden(): void
     {
         $other = Campaign::factory()->contest()->create(['creator_id' => Creator::factory()->create()->id]);

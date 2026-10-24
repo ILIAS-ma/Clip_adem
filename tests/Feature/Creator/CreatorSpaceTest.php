@@ -234,9 +234,10 @@ class CreatorSpaceTest extends TestCase
             ->get('/createur')
             ->assertSuccessful()
             ->assertDontSee('Coût pour 1000 vues')
-            // Les deux chiffres qui restent, eux, doivent être là.
+            // Ce qui reste, c'est l'audience : l'argent engagé n'est plus montré au créateur.
             ->assertSee('Vues')
-            ->assertSee('Dépensé');
+            ->assertDontSee('Dépensé')
+            ->assertDontSee('engagés');
 
         // Toujours disponible pour l'administration.
         $this->assertSame(100, $user->fresh()->creator->realCostPer1kCents());

@@ -53,8 +53,7 @@
             <x-stat label="Moyenne / clip" :value="Money::compactViews($overview['average'])" hint="vues par clip" />
 
             @if ($campaign->isContest())
-                <x-stat label="Récompenses" :value="$campaign->prizePoolCents() > 0 ? Money::wholeEuros($campaign->prizePoolCents()) : 'Lots'"
-                        :hint="$campaign->prizePoolCents() > 0 ? 'Dépensé : '.Money::euros($campaign->spent_cents) : null" />
+                <x-stat label="Récompenses" :value="$campaign->prizePoolCents() > 0 ? Money::wholeEuros($campaign->prizePoolCents()) : 'Lots'" />
             @else
                 <x-stat label="Dépensé" :value="Money::euros($campaign->spent_cents)"
                         :hint="$campaign->consumedPercent().' % de '.Money::euros($campaign->budget_total_cents)" />

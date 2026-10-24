@@ -50,14 +50,12 @@
                 <p class="mt-2 font-display text-xl font-bold leading-snug text-ink-50 sm:text-3xl">{{ $headline }}</p>
             </div>
 
-            <div class="relative mt-6 grid grid-cols-2 gap-3 border-t border-ink-700 pt-6 sm:grid-cols-3 lg:grid-cols-6">
-                <x-stat label="Vues" :value="Money::views($overview['views'])" tone="money" />
+            <div class="relative mt-6 grid grid-cols-2 gap-3 border-t border-ink-700 pt-6 sm:grid-cols-3 lg:grid-cols-5">
+                <x-stat label="Vues" :value="Money::views($overview['views'])" tone="money" class="col-span-2 sm:col-span-1" />
                 <x-stat label="Clips" :value="number_format($overview['clips'], 0, ',', ' ')" />
                 <x-stat label="Clippeurs" :value="number_format($overview['clippers'], 0, ',', ' ')" />
                 <x-stat label="Meilleur clip" :value="Money::compactViews($overview['best'])" hint="vues sur un seul clip" />
                 <x-stat label="Moyenne / clip" :value="Money::compactViews($overview['average'])" hint="vues par clip" />
-                <x-stat label="Dépensé" :value="Money::euros($summary['spent_cents'])"
-                        :hint="'sur '.Money::euros($summary['engaged_cents']).' engagés'" />
             </div>
         </div>
 
@@ -125,10 +123,6 @@
                                             <span>{{ $ended ? 'terminée le' : 'fin le' }} {{ $campaign->ends_at->format('d/m/Y') }}</span>
                                         @endif
                                     </p>
-
-                                    @unless ($ended)
-                                        <x-budget-bar class="mt-3 max-w-md" :campaign="$campaign" :remaining="$remaining[$campaign->id]" />
-                                    @endunless
                                 </div>
 
                                 <svg class="hidden h-5 w-5 flex-none text-ink-600 sm:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
