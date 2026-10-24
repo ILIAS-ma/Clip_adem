@@ -127,6 +127,21 @@ class EndedCampaignTest extends TestCase
     }
 
     #[Test]
+    public function a_past_campaign_card_shows_its_cover_image_and_its_prize_pool(): void
+    {
+        $this->campaign->forceFill(['cover_path' => 'campaigns/momo-rocma-visuel.jpg'])->save();
+        $this->end();
+
+        $this->actingAs($this->clipper);
+
+        Livewire::test(CampaignCatalogue::class)
+            ->assertSee('Campagnes passées')
+            ->assertSee('campaigns/momo-rocma-visuel.jpg', escape: false)
+            ->assertSee($this->campaign->title)
+            ->assertSee('de récompenses');
+    }
+
+    #[Test]
     public function the_past_section_stays_visible_whatever_the_open_filter_says(): void
     {
         $this->end();

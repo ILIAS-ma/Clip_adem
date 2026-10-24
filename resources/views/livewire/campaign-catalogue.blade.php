@@ -208,19 +208,30 @@
 
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach ($past as $campaign)
+                    {{-- Grisée sans disparaître : l'image et le titre restent bien lisibles, et la
+                         carte reprend ses couleurs au survol. --}}
                     <a href="{{ route('campaigns.show', $campaign) }}" wire:navigate
-                       class="group flex flex-col card p-5 opacity-60 grayscale transition hover:opacity-90 hover:grayscale-0">
+                       class="group flex flex-col card p-5 opacity-80 grayscale transition hover:opacity-100 hover:grayscale-0">
+                        @if ($cover = $campaign->coverUrl())
+                            <x-campaign-cover :url="$cover" :alt="$campaign->title" class="-mx-5 -mt-5 mb-4 aspect-video rounded-t-2xl" />
+                        @endif
+
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">{{ $campaign->creator?->name }}</p>
-                                <h3 class="mt-1 font-display text-base font-bold leading-snug text-ink-50">{{ $campaign->title }}</h3>
+                                <h3 class="mt-1 font-display text-lg font-bold leading-snug text-ink-50">{{ $campaign->title }}</h3>
                             </div>
                             <span class="chip-neutral shrink-0">Terminée</span>
                         </div>
 
-                        @if ($campaign->ends_at)
-                            <p class="mt-1 text-xs text-ink-400">Terminée le {{ $campaign->ends_at->format('d/m/Y') }}</p>
-                        @endif
+                        <p class="mt-1 text-sm text-ink-400">
+                            @if ($campaign->ends_at)
+                                Terminée le {{ $campaign->ends_at->format('d/m/Y') }}
+                            @endif
+                            @if ($campaign->prizePoolCents() > 0)
+                                · {{ Money::wholeEuros($campaign->prizePoolCents()) }} de récompenses
+                            @endif
+                        </p>
 
                         <dl class="mt-4 grid grid-cols-2 gap-3 border-t border-ink-700 pt-4">
                             <div>
