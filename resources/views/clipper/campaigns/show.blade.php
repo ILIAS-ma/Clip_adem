@@ -118,6 +118,10 @@
                     Tu peux toujours consulter {{ $campaign->isContest() ? 'le classement final et ' : '' }}tes statistiques,
                     mais il n'est plus possible de soumettre ni de retirer des clips.
                 </p>
+                <p class="mt-3 text-sm font-semibold text-ink-100">
+                    Bilan : {{ number_format($totals['clips'], 0, ',', ' ') }} clip{{ $totals['clips'] > 1 ? 's' : '' }}
+                    · {{ Money::views($totals['views']) }} vues au total
+                </p>
             </div>
         @endif
 

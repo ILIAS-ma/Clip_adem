@@ -38,7 +38,9 @@ class ProfileController extends Controller
         // validée : l'administrateur l'active avant de lui associer des
         // campagnes, sinon n'importe qui apparaîtrait au catalogue sous le nom
         // de scène qu'il veut. Le contrôle est suspendable en développement.
-        $needsValidation = (bool) config('clipping.onboarding.require_creator_validation');
+        $needsValidation = (bool) config('clipping.onboarding.require_creator_validation')
+            // Un administrateur valide les fiches : la sienne n'attend personne.
+            && ! $request->user()->isStaff();
 
         Creator::create([
             ...$validated,

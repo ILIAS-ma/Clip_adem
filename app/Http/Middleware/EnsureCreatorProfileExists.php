@@ -16,7 +16,7 @@ class EnsureCreatorProfileExists
     {
         $user = $request->user();
 
-        if ($user && $user->isCreator() && ! $user->creator) {
+        if ($user && $user->canBeCreator() && ! $user->creator) {
             return redirect()->route('creator.profile.create');
         }
 

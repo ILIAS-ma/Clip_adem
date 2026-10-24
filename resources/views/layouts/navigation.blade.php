@@ -20,14 +20,14 @@
             </a>
 
             <div class="flex items-center gap-2 sm:gap-3">
-                @if (auth()->user()->canClip())
+                @if (auth()->user()->canClip() && ! request()->routeIs('creator.*'))
                     {{-- Le solde est l'information qu'on vient chercher : elle
                          reste lisible sans ouvrir quoi que ce soit. --}}
                     <a href="{{ route('earnings.index') }}"
                        class="rounded-xl bg-brand-500/15 px-3 py-1.5 text-sm font-semibold tabular text-brand-300 transition hover:bg-brand-500/25">
                         {{ \App\Support\Money::euros(auth()->user()->availableBalanceCents()) }}
                     </a>
-                @elseif (auth()->user()->isCreator())
+                @elseif (auth()->user()->canBeCreator() && request()->routeIs('creator.*'))
                     <span class="hidden chip-neutral sm:inline-flex">Espace créateur</span>
                 @endif
 
@@ -127,7 +127,7 @@
                     <div class="mt-3" @click="open = false">
                         <x-responsive-nav-link :href="route('profile.edit')">Mon compte</x-responsive-nav-link>
 
-                        @if (auth()->user()->canClip())
+                        @if (auth()->user()->canClip() && ! request()->routeIs('creator.*'))
                             <x-responsive-nav-link :href="route('payout-method.edit')">Moyen de paiement</x-responsive-nav-link>
                         @endif
 

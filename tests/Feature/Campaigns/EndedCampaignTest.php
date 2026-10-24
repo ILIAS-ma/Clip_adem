@@ -3,6 +3,7 @@
 namespace Tests\Feature\Campaigns;
 
 use App\Enums\CampaignStatus;
+use App\Enums\ClipStatus;
 use App\Enums\Platform;
 use App\Enums\UserRole;
 use App\Exceptions\ClipSubmissionRefused;
@@ -75,12 +76,14 @@ class EndedCampaignTest extends TestCase
     public function the_page_says_the_campaign_is_over_and_what_is_still_possible(): void
     {
         $this->end();
+        Clip::factory()->create(['campaign_id' => $this->campaign->id, 'platform' => Platform::TikTok, 'status' => ClipStatus::Approved, 'views_total' => 4321]);
 
         $this->actingAs($this->clipper)
             ->get(route('campaigns.show', $this->campaign))
             ->assertOk()
             ->assertSee('Cette campagne est terminée')
             ->assertSee('Classement final')
+            ->assertSee('Bilan : 1 clip')
             ->assertSee('il n\'est plus possible de soumettre ni de retirer des clips', escape: false)
             ->assertSee('Mes clips')
             ->assertDontSee('Soumettre mes vidéos');
@@ -97,28 +100,61 @@ class EndedCampaignTest extends TestCase
     }
 
     #[Test]
-    public function the_catalogue_labels_an_ended_campaign_as_finished(): void
+    public function the_catalogue_greys_ended_campaigns_into_a_past_section_with_their_totals(): void
     {
         $this->end();
+        Campaign::factory()->withRate(Platform::TikTok)->create(['status' => CampaignStatus::Active, 'title' => 'Campagne encore ouverte']);
 
-        $this->actingAs($this->clipper)
-            ->get(route('campaigns.index'))
-            ->assertOk()
-            ->assertSee('Terminée');
-    }
-
-    #[Test]
-    public function an_ended_campaign_stays_listed_after_the_open_ones_so_results_can_be_found(): void
-    {
-        $this->end();
-        $open = Campaign::factory()->withRate(Platform::TikTok)->create(['status' => CampaignStatus::Active, 'title' => 'Campagne encore ouverte']);
+        $base = ['campaign_id' => $this->campaign->id, 'platform' => Platform::TikTok, 'status' => ClipStatus::Approved];
+        Clip::factory()->create(array_merge($base, ['views_total' => 1000]));
+        Clip::factory()->create(array_merge($base, ['views_total' => 2000]));
+        // Un clip non validé ne compte pas, comme au classement.
+        Clip::factory()->create(array_merge($base, ['views_total' => 90000, 'status' => ClipStatus::Rejected]));
 
         $this->actingAs($this->clipper);
 
-        // Les campagnes en cours d'abord ; la terminée suit, étiquetée, avec ses résultats.
+        // Les campagnes en cours d'abord, puis la section des campagnes passées.
+        $page = Livewire::test(CampaignCatalogue::class)
+            ->assertSeeInOrder(['Campagne encore ouverte', 'Campagnes passées', $this->campaign->title, 'Terminée'])
+            ->assertSee('3k');
+
+        $past = $page->viewData('past');
+        $this->assertSame(2, $past->first()->clips_total);
+        $this->assertSame(3000, (int) $past->first()->views_sum);
+
+        // Hors de la liste principale : une campagne terminée n'est plus proposée comme ouverte.
+        $this->assertFalse($page->viewData('campaigns')->contains('id', $this->campaign->id));
+    }
+
+    #[Test]
+    public function the_past_section_stays_visible_whatever_the_open_filter_says(): void
+    {
+        $this->end();
+
+        $this->actingAs($this->clipper);
+
         Livewire::test(CampaignCatalogue::class)
-            ->assertSeeInOrder(['Campagne encore ouverte', $this->campaign->title, 'Terminée'])
-            ->assertSee('résultats à consulter');
+            ->set('onlyOpen', true)
+            ->assertSee('Campagnes passées')
+            ->assertSee($this->campaign->title);
+
+        Livewire::test(CampaignCatalogue::class)
+            ->set('onlyOpen', false)
+            ->assertSee('Campagnes passées');
+    }
+
+    #[Test]
+    public function the_past_section_respects_the_search(): void
+    {
+        $this->end();
+        Campaign::factory()->contest()->create(['status' => CampaignStatus::Completed, 'title' => 'Autre vieille campagne', 'ends_at' => now()->subDays(20)]);
+
+        $this->actingAs($this->clipper);
+
+        Livewire::test(CampaignCatalogue::class)
+            ->set('search', 'vieille')
+            ->assertSee('Autre vieille campagne')
+            ->assertDontSee($this->campaign->title);
     }
 
     #[Test]

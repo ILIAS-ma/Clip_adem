@@ -101,6 +101,12 @@ class AdminPanelProvider extends PanelProvider
                     ->url(fn () => route('dashboard'))
                     ->icon(Heroicon::OutlinedArrowsRightLeft)
                     ->sort(-100),
+                // Un administrateur peut aussi être créateur (User::canBeCreator) : sa propre
+                // fiche, ses propres campagnes, sans quitter le back-office.
+                NavigationItem::make('Espace créateur')
+                    ->url(fn () => route('creator.dashboard'))
+                    ->icon(Heroicon::OutlinedSparkles)
+                    ->sort(-99),
             ])
             ->sidebarCollapsibleOnDesktop()
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])

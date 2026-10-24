@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Contracts\CampaignBudgetService;
 use App\Enums\CampaignStatus;
+use App\Enums\ClipStatus;
 use App\Enums\Platform;
 use App\Models\Campaign;
 use App\Models\Creator;
@@ -58,12 +59,11 @@ class CampaignCatalogue extends Component
         $budget = app(CampaignBudgetService::class);
         $providers = app(SocialProviderManager::class);
 
-        $campaigns = Campaign::query()
+        // Les mêmes filtres pour les deux listes : chercher « Saya » ne doit pas laisser
+        // traîner les campagnes passées d'un autre créateur.
+        $filtered = fn () => Campaign::query()
             ->visibleToClippers()
             ->with(['creator', 'rates'])
-            // Une campagne dont la date de fin est passée reste dans la liste, étiquetée
-            // « Terminée » : c'est par là que le clippeur retrouve ses résultats.
-            ->when($this->onlyOpen, fn ($q) => $q->where('status', CampaignStatus::Active))
             ->when($this->search, fn ($q) => $q->where(function ($query) {
                 $query->where('title', 'like', "%{$this->search}%")
                     ->orWhereHas('creator', fn ($a) => $a->where('name', 'like', "%{$this->search}%"));
@@ -77,15 +77,38 @@ class CampaignCatalogue extends Component
                 'rates',
                 fn ($r) => $r->where('is_enabled', true)
                     ->where('rate_per_1k_cents', '>=', (int) round((float) $this->minRate * 100)),
-            ))
-            // Les campagnes en cours d'abord : une campagne épuisée ou terminée reste
+            ));
+
+        // Terminée : clôturée à la main, ou date de fin dépassée (voir Campaign::hasEnded).
+        $isEnded = fn ($q) => $q->where('status', CampaignStatus::Completed)
+            ->orWhere(fn ($d) => $d->whereNotNull('ends_at')->where('ends_at', '<', now()));
+
+        $campaigns = $filtered()
+            ->whereNot($isEnded)
+            ->when($this->onlyOpen, fn ($q) => $q->where('status', CampaignStatus::Active))
+            // Les campagnes actives d'abord : une campagne épuisée reste
             // consultable mais n'a plus rien à proposer.
-            ->orderByRaw('CASE WHEN status = ? AND (ends_at IS NULL OR ends_at >= ?) THEN 0 ELSE 1 END', [CampaignStatus::Active->value, now()])
+            ->orderByRaw('CASE WHEN status = ? THEN 0 ELSE 1 END', [CampaignStatus::Active->value])
             ->orderByDesc('created_at')
             ->paginate(12);
 
+        /*
+         * Les campagnes passées, avec leur bilan : combien de clips, combien de vues.
+         * Visible de tous les clippeurs — c'est la preuve de ce que la plateforme a
+         * produit, et ce qui donne envie de rejoindre la suivante. Seuls les clips
+         * validés comptent, comme au classement.
+         */
+        $past = $filtered()
+            ->where($isEnded)
+            ->withCount(['clips as clips_total' => fn ($q) => $q->where('status', ClipStatus::Approved)])
+            ->withSum(['clips as views_sum' => fn ($q) => $q->where('status', ClipStatus::Approved)], 'views_total')
+            ->orderByDesc('ends_at')
+            ->limit(24)
+            ->get();
+
         return view('livewire.campaign-catalogue', [
             'campaigns' => $campaigns,
+            'past' => $past,
             'remaining' => $campaigns->mapWithKeys(fn (Campaign $campaign) => [
                 $campaign->getKey() => $budget->remaining($campaign),
             ]),

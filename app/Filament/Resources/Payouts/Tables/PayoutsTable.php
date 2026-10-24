@@ -9,6 +9,7 @@ use App\Models\Payout;
 use App\Services\Accounting\AccountingExport;
 use App\Services\Payouts\BankTransferExport;
 use App\Services\Payouts\PayoutService;
+use App\Support\Iban;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -42,16 +43,25 @@ class PayoutsTable
                         ? null
                         : $record->destinationLabel()),
 
-                // Où envoyer l'argent, figé à la demande : copiable d'un clic pour le coller dans PayPal.
-                TextColumn::make('paypal_email')
-                    ->label('Email PayPal')
-                    ->state(fn (Payout $record) => $record->payoutMethod() === PayoutMethod::PayPal
-                        ? ($record->paypal_email ?: $record->destination)
-                        : null)
+                /*
+                 * Où envoyer l'argent, copiable d'un clic : l'email PayPal, ou l'IBAN
+                 * complet d'un virement.
+                 *
+                 * L'IBAN en clair n'est montré qu'au super administrateur, comme le
+                 * fichier des virements (BankTransferExport) : un modérateur voit le
+                 * numéro masqué, sans pouvoir le copier. Le retrait ne garde que les
+                 * quatre derniers chiffres ; l'IBAN complet vient du profil, et on
+                 * vérifie qu'il n'a pas changé depuis la demande avant de le proposer.
+                 */
+                TextColumn::make('payment_destination')
+                    ->label('Email PayPal / IBAN')
+                    ->state(fn (Payout $record) => static::destination($record))
+                    ->description(fn (Payout $record) => static::destinationNote($record))
                     ->placeholder('—')
-                    ->copyable()
-                    ->copyMessage('Email PayPal copié')
-                    ->icon('heroicon-m-clipboard-document')
+                    ->copyable(fn (Payout $record) => static::copyableDestination($record) !== null)
+                    ->copyableState(fn (Payout $record) => static::copyableDestination($record))
+                    ->copyMessage(fn (Payout $record) => $record->payoutMethod() === PayoutMethod::PayPal ? 'Email PayPal copié' : 'IBAN copié')
+                    ->icon(fn (Payout $record) => static::copyableDestination($record) !== null ? 'heroicon-m-clipboard-document' : null)
                     ->iconPosition('after')
                     ->searchable(query: fn ($query, string $search) => $query->where('paypal_email', 'like', "%{$search}%")),
 
@@ -123,6 +133,68 @@ class PayoutsTable
                     static::bulkApproveAction(),
                 ]),
             ]);
+    }
+
+    /** Le texte affiché : l'email PayPal, ou l'IBAN d'un virement (en entier pour le super admin). */
+    protected static function destination(Payout $record): ?string
+    {
+        if ($record->payoutMethod() === PayoutMethod::PayPal) {
+            return $record->paypal_email ?: $record->destination;
+        }
+
+        return static::copyableDestination($record) !== null
+            ? Iban::format(static::currentIban($record))
+            : $record->destinationLabel();
+    }
+
+    /** Ce que copie le clic : sans espace, prêt à coller dans une banque ou PayPal. */
+    protected static function copyableDestination(Payout $record): ?string
+    {
+        if ($record->payoutMethod() === PayoutMethod::PayPal) {
+            return ($record->paypal_email ?: $record->destination) ?: null;
+        }
+
+        $iban = static::currentIban($record);
+
+        return $iban !== null && auth()->user()?->isSuperAdmin() ? Iban::normalize($iban) : null;
+    }
+
+    /** Titulaire et BIC sous l'IBAN, ou l'alerte d'un RIB modifié depuis la demande. */
+    protected static function destinationNote(Payout $record): ?string
+    {
+        if ($record->payoutMethod() === PayoutMethod::PayPal || ! auth()->user()?->isSuperAdmin()) {
+            return null;
+        }
+
+        if (static::currentIban($record) === null) {
+            return $record->user?->iban
+                ? 'IBAN modifié depuis la demande : vérifie avec le clippeur'
+                : null;
+        }
+
+        return collect([
+            $record->user?->account_holder ? 'Titulaire : '.$record->user->account_holder : null,
+            $record->user?->bic ? 'BIC : '.$record->user->bic : null,
+        ])->filter()->implode(' · ') ?: null;
+    }
+
+    /**
+     * L'IBAN actuel du clippeur, seulement s'il est bien celui de la demande.
+     *
+     * Le retrait n'en garde que les derniers chiffres : si le clippeur a changé de
+     * RIB depuis, le virement partirait vers un autre compte que celui demandé.
+     */
+    protected static function currentIban(Payout $record): ?string
+    {
+        $iban = $record->user?->iban;
+
+        if (blank($iban)) {
+            return null;
+        }
+
+        $asked = substr(preg_replace('/[^0-9A-Za-z]/', '', (string) $record->destination), -4);
+
+        return $asked === '' || strcasecmp($asked, (string) Iban::last4($iban)) === 0 ? $iban : null;
     }
 
     protected static function approveAction(): Action

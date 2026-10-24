@@ -111,8 +111,7 @@
                     $left = $remaining[$campaign->id];
                     // Un classement n'a pas de budget qui s'épuise : il ferme à sa date de fin.
                     $exhausted = ! $campaign->isContest() && $left <= 0;
-                    $ended = $campaign->hasEnded();
-                    $closed = $ended || $exhausted || $campaign->status->value !== 'active';
+                    $closed = $exhausted || $campaign->status->value !== 'active';
                     $best = $campaign->rates->where('is_enabled', true)->max('rate_per_1k_cents');
                 @endphp
 
@@ -142,7 +141,7 @@
                             'chip-ok' => ! $closed,
                             'chip-danger' => $exhausted,
                             'chip-neutral' => $closed && ! $exhausted,
-                        ])>{{ $ended ? 'Terminée' : ($exhausted ? 'Épuisée' : $campaign->status->label()) }}</span>
+                        ])>{{ $exhausted ? 'Épuisée' : $campaign->status->label() }}</span>
                     </div>
 
                     {{-- Le cachet est le premier critère de choix : il mérite
@@ -186,7 +185,7 @@
 
                     @if ($campaign->isContest())
                         <p class="mt-auto pt-5 text-sm text-ink-400">
-                            {{ $ended ? 'Terminée le '.$campaign->ends_at?->format('d/m/Y').' · résultats à consulter' : ($campaign->ends_at ? 'Classement arrêté le '.$campaign->ends_at->format('d/m/Y à H:i') : 'Date de fin à venir') }}
+                            {{ $campaign->ends_at ? 'Classement arrêté le '.$campaign->ends_at->format('d/m/Y à H:i') : 'Date de fin à venir' }}
                         </p>
                     @else
                         <x-budget-bar class="mt-auto pt-5" :campaign="$campaign" :remaining="$left" />
@@ -196,5 +195,46 @@
         </div>
 
         <div>{{ $campaigns->links() }}</div>
+    @endif
+
+    {{-- Les campagnes passées : grisées, avec leur bilan. Toujours visibles, quel que soit le
+         filtre « ouvertes » : c'est ici qu'on retrouve les résultats d'une campagne finie. --}}
+    @if ($past->isNotEmpty())
+        <section class="space-y-4 border-t border-ink-800 pt-8" aria-labelledby="past-title">
+            <div>
+                <h2 id="past-title" class="font-display text-xl font-bold text-ink-50">Campagnes passées</h2>
+                <p class="mt-1 text-sm text-ink-400">Terminées. Tu peux toujours consulter leurs résultats.</p>
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                @foreach ($past as $campaign)
+                    <a href="{{ route('campaigns.show', $campaign) }}" wire:navigate
+                       class="group flex flex-col card p-5 opacity-60 grayscale transition hover:opacity-90 hover:grayscale-0">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">{{ $campaign->creator?->name }}</p>
+                                <h3 class="mt-1 font-display text-base font-bold leading-snug text-ink-50">{{ $campaign->title }}</h3>
+                            </div>
+                            <span class="chip-neutral shrink-0">Terminée</span>
+                        </div>
+
+                        @if ($campaign->ends_at)
+                            <p class="mt-1 text-xs text-ink-400">Terminée le {{ $campaign->ends_at->format('d/m/Y') }}</p>
+                        @endif
+
+                        <dl class="mt-4 grid grid-cols-2 gap-3 border-t border-ink-700 pt-4">
+                            <div>
+                                <dt class="text-xs text-ink-400">Clips</dt>
+                                <dd class="font-display text-xl font-bold tabular text-ink-50">{{ number_format($campaign->clips_total, 0, ',', ' ') }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-xs text-ink-400">Vues</dt>
+                                <dd class="font-display text-xl font-bold tabular text-ink-50">{{ Money::compactViews((int) $campaign->views_sum) }}</dd>
+                            </div>
+                        </dl>
+                    </a>
+                @endforeach
+            </div>
+        </section>
     @endif
 </div>

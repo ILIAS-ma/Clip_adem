@@ -29,9 +29,15 @@ class NavigationComposer
             return;
         }
 
-        $home = $user->isCreator() ? route('creator.dashboard') : route('dashboard');
+        /*
+         * L'espace affiché : celui du créateur pour un créateur, et pour un membre du
+         * personnel, celui où il se trouve — il passe de l'un à l'autre à volonté.
+         */
+        $inCreatorSpace = $user->isCreator() || ($user->isStaff() && request()->routeIs('creator.*'));
 
-        $links = $user->isCreator()
+        $home = $inCreatorSpace ? route('creator.dashboard') : route('dashboard');
+
+        $links = $inCreatorSpace
             ? [
                 [
                     'route' => 'creator.dashboard',
@@ -129,6 +135,23 @@ class NavigationComposer
          * messages se lisent dans l'administration.
          */
         if ($user->isStaff()) {
+            // Les trois espaces d'un membre du personnel : on propose les deux autres.
+            $links[] = $inCreatorSpace
+                ? [
+                    'route' => 'dashboard',
+                    'pattern' => 'dashboard',
+                    'navigate' => false,
+                    'label' => 'Espace clippeur',
+                    'icon' => 'M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1zm6 4.5l4 2.5-4 2.5v-5z',
+                ]
+                : [
+                    'route' => 'creator.dashboard',
+                    'pattern' => 'creator.dashboard',
+                    'navigate' => false,
+                    'label' => 'Espace créateur',
+                    'icon' => 'M3 11l8-8 8 8M5 10v9a1 1 0 001 1h3v-6h4v6h3a1 1 0 001-1v-9',
+                ];
+
             $links[] = [
                 'url' => '/admin',
                 'pattern' => 'admin',

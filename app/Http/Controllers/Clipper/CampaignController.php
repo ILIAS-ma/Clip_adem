@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Clipper;
 
 use App\Contracts\CampaignBudgetService;
+use App\Enums\ClipStatus;
 use App\Enums\ContestMetric;
 use App\Http\Controllers\Controller;
 use App\Models\Campaign;
@@ -68,6 +69,11 @@ class CampaignController extends Controller
                 ->get(),
             'boards' => $boards,
             'participantsCount' => $campaign->participations()->distinct('user_id')->count('user_id'),
+            // Le bilan de la campagne, montré quand elle est terminée : clips validés et leurs vues.
+            'totals' => [
+                'clips' => $campaign->clips()->where('status', ClipStatus::Approved)->count(),
+                'views' => (int) $campaign->clips()->where('status', ClipStatus::Approved)->sum('views_total'),
+            ],
         ]);
     }
 }

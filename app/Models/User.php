@@ -96,6 +96,18 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         return $this->role === UserRole::Creator;
     }
 
+    /**
+     * Peut utiliser l'espace créateur : les créateurs, et tout le personnel.
+     *
+     * Comme pour les clippeurs (canClip), un administrateur peut aussi être
+     * créateur — il suit ses propres campagnes avec sa propre fiche — sans perdre
+     * le back-office. `isCreator()` reste le rôle au sens strict.
+     */
+    public function canBeCreator(): bool
+    {
+        return $this->isCreator() || $this->role->isStaff();
+    }
+
     /** Fiche créateur pilotée par ce compte. */
     public function creator(): HasOne
     {

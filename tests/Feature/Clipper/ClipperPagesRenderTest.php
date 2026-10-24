@@ -161,17 +161,22 @@ class ClipperPagesRenderTest extends TestCase
     }
 
     #[Test]
-    public function closed_campaigns_are_hidden_unless_asked_for(): void
+    public function finished_campaigns_move_to_the_past_section_instead_of_the_main_list(): void
     {
         $this->campaign(['title' => 'Campagne ouverte']);
         $this->campaign(['title' => 'Campagne terminée', 'status' => CampaignStatus::Completed]);
 
-        Livewire::actingAs($this->clipper())
+        $page = Livewire::actingAs($this->clipper())
             ->test(CampaignCatalogue::class)
             ->assertSee('Campagne ouverte')
-            ->assertDontSee('Campagne terminée')
-            ->set('onlyOpen', false)
-            ->assertSee('Campagne terminée');
+            ->assertSee('Campagnes passées');
+
+        // Jamais mêlée aux campagnes ouvertes, mais toujours consultable dans sa propre section.
+        $this->assertFalse($page->viewData('campaigns')->contains('title', 'Campagne terminée'));
+        $this->assertTrue($page->viewData('past')->contains('title', 'Campagne terminée'));
+
+        // Le filtre « uniquement les campagnes ouvertes » ne la fait pas disparaître.
+        $page->set('onlyOpen', false)->assertSee('Campagne terminée');
     }
 
     #[Test]

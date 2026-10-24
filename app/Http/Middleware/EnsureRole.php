@@ -26,8 +26,12 @@ class EnsureRole
 
         $allowed = array_map(fn (string $role) => UserRole::from($role), $roles);
 
-        // L'espace clippeur est aussi celui du personnel (User::canClip).
+        // Les espaces clippeur et créateur sont aussi ceux du personnel (User::canClip, canBeCreator).
         if (in_array(UserRole::Clipper, $allowed, true) && $user->canClip()) {
+            return $next($request);
+        }
+
+        if (in_array(UserRole::Creator, $allowed, true) && $user->canBeCreator()) {
             return $next($request);
         }
 
