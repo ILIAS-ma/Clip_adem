@@ -94,6 +94,7 @@ class ClipPicker
                             && $clip->campaign_id === $campaign->getKey()
                             && $clip->user_id === $clipper->getKey()
                             && $clip->earned_cents === 0
+                            && ! $campaign->hasEnded()
                             && ! $withMoney->has($clip->id),
                     ];
                 }, $videos),

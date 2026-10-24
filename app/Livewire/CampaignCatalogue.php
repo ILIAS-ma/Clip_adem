@@ -61,6 +61,8 @@ class CampaignCatalogue extends Component
         $campaigns = Campaign::query()
             ->visibleToClippers()
             ->with(['creator', 'rates'])
+            // Une campagne dont la date de fin est passée reste dans la liste, étiquetée
+            // « Terminée » : c'est par là que le clippeur retrouve ses résultats.
             ->when($this->onlyOpen, fn ($q) => $q->where('status', CampaignStatus::Active))
             ->when($this->search, fn ($q) => $q->where(function ($query) {
                 $query->where('title', 'like', "%{$this->search}%")
@@ -76,9 +78,9 @@ class CampaignCatalogue extends Component
                 fn ($r) => $r->where('is_enabled', true)
                     ->where('rate_per_1k_cents', '>=', (int) round((float) $this->minRate * 100)),
             ))
-            // Les campagnes actives d'abord : une campagne épuisée reste
+            // Les campagnes en cours d'abord : une campagne épuisée ou terminée reste
             // consultable mais n'a plus rien à proposer.
-            ->orderByRaw('CASE WHEN status = ? THEN 0 ELSE 1 END', [CampaignStatus::Active->value])
+            ->orderByRaw('CASE WHEN status = ? AND (ends_at IS NULL OR ends_at >= ?) THEN 0 ELSE 1 END', [CampaignStatus::Active->value, now()])
             ->orderByDesc('created_at')
             ->paginate(12);
 

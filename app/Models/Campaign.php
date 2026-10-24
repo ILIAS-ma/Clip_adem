@@ -182,6 +182,19 @@ class Campaign extends Model
             || ($this->ends_at !== null && now()->gt($this->ends_at));
     }
 
+    /**
+     * La campagne est-elle terminée ? Date de fin dépassée, ou clôturée à la main.
+     *
+     * Ce n'est pas « n'accepte plus de clips » : une campagne payée aux vues peut
+     * fermer parce que son budget est épuisé, sans être terminée. Ici, c'est la
+     * fin : on consulte les résultats, on ne soumet ni ne retire plus rien.
+     */
+    public function hasEnded(): bool
+    {
+        return $this->status === CampaignStatus::Completed
+            || ($this->ends_at !== null && now()->gt($this->ends_at));
+    }
+
     /** Places de prime de lancement restantes, ou null sans prime. */
     public function launchBonusSlotsLeft(): ?int
     {

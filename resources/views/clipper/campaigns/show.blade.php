@@ -6,7 +6,7 @@
     $bestRate = $platforms->max('rate_per_1k_cents');
     $minClips = (int) $campaign->min_clips_per_clipper;
     $valides = $minClips > 0 ? $campaign->payableClipCountFor(auth()->id()) : 0;
-    $isOver = $campaign->ends_at && $campaign->ends_at->isPast();
+    $isOver = $campaign->hasEnded();
     /*
      * « Rejoint » ne veut pas dire « peut poster » : un compte lié avec lequel on a
      * rejoint peut être devenu inutilisable (délié, jeton mort). Ce qui compte, c'est
@@ -107,6 +107,20 @@
             <div class="alert-ok">{{ session('status') }}</div>
         @endif
 
+        {{-- Campagne finie : on le dit d'emblée, et on rappelle ce qui reste possible. --}}
+        @if ($isOver)
+            <div class="rounded-2xl border border-ink-600 bg-ink-900 p-4">
+                <p class="font-display text-lg font-bold text-ink-50">Cette campagne est terminée</p>
+                <p class="mt-1 text-sm leading-relaxed text-ink-300">
+                    @if ($campaign->ends_at)
+                        Elle s'est arrêtée le {{ $campaign->ends_at->format('d/m/Y à H\hi') }}.
+                    @endif
+                    Tu peux toujours consulter {{ $campaign->isContest() ? 'le classement final et ' : '' }}tes statistiques,
+                    mais il n'est plus possible de soumettre ni de retirer des clips.
+                </p>
+            </div>
+        @endif
+
         @if ($opensAt)
             <div class="{{ $isOpen ? 'alert-ok' : 'alert-warn' }} text-sm">
                 @if ($isOpen)
@@ -142,7 +156,7 @@
                     @if ($campaign->isContest())
                         <button type="button" role="tab" @click="tab = 'classement'" :aria-selected="tab === 'classement'"
                                 :class="tab === 'classement' ? 'bg-ink-50 text-ink-950' : 'text-ink-300 hover:text-ink-50'"
-                                class="flex-1 rounded-xl px-3 py-2 text-sm font-semibold transition">Classement</button>
+                                class="flex-1 rounded-xl px-3 py-2 text-sm font-semibold transition">{{ $isOver ? 'Classement final' : 'Classement' }}</button>
                     @endif
                     <button type="button" role="tab" @click="tab = 'brief'" :aria-selected="tab === 'brief'"
                             :class="tab === 'brief' ? 'bg-ink-50 text-ink-950' : 'text-ink-300 hover:text-ink-50'"

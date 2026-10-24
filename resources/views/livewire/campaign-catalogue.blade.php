@@ -111,7 +111,8 @@
                     $left = $remaining[$campaign->id];
                     // Un classement n'a pas de budget qui s'épuise : il ferme à sa date de fin.
                     $exhausted = ! $campaign->isContest() && $left <= 0;
-                    $closed = $exhausted || $campaign->status->value !== 'active';
+                    $ended = $campaign->hasEnded();
+                    $closed = $ended || $exhausted || $campaign->status->value !== 'active';
                     $best = $campaign->rates->where('is_enabled', true)->max('rate_per_1k_cents');
                 @endphp
 
@@ -141,7 +142,7 @@
                             'chip-ok' => ! $closed,
                             'chip-danger' => $exhausted,
                             'chip-neutral' => $closed && ! $exhausted,
-                        ])>{{ $exhausted ? 'Épuisée' : $campaign->status->label() }}</span>
+                        ])>{{ $ended ? 'Terminée' : ($exhausted ? 'Épuisée' : $campaign->status->label()) }}</span>
                     </div>
 
                     {{-- Le cachet est le premier critère de choix : il mérite
@@ -185,7 +186,7 @@
 
                     @if ($campaign->isContest())
                         <p class="mt-auto pt-5 text-sm text-ink-400">
-                            {{ $campaign->ends_at ? 'Classement arrêté le '.$campaign->ends_at->format('d/m/Y à H:i') : 'Date de fin à venir' }}
+                            {{ $ended ? 'Terminée le '.$campaign->ends_at?->format('d/m/Y').' · résultats à consulter' : ($campaign->ends_at ? 'Classement arrêté le '.$campaign->ends_at->format('d/m/Y à H:i') : 'Date de fin à venir') }}
                         </p>
                     @else
                         <x-budget-bar class="mt-auto pt-5" :campaign="$campaign" :remaining="$left" />

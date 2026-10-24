@@ -92,6 +92,11 @@ class ClipSubmissionRefused extends RuntimeException
         ));
     }
 
+    public static function campaignEnded(): self
+    {
+        return new self('La campagne est terminée : tes clips ne peuvent plus être modifiés.');
+    }
+
     public static function cannotWithdraw(): self
     {
         return new self("Ce clip a déjà rapporté de l'argent : il ne peut plus être retiré.");

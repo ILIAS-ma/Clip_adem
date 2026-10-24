@@ -102,6 +102,11 @@ class ClipSubmissionService
     {
         abort_unless($clip->user_id === $clipper->getKey(), 403);
 
+        // Une fois la campagne finie, le classement est figé : retirer un clip le modifierait.
+        if ($clip->campaign?->hasEnded()) {
+            throw ClipSubmissionRefused::campaignEnded();
+        }
+
         if ($clip->earned_cents > 0 || BudgetTransaction::where('clip_id', $clip->getKey())->exists()) {
             throw ClipSubmissionRefused::cannotWithdraw();
         }
