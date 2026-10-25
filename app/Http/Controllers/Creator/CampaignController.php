@@ -35,6 +35,8 @@ class CampaignController extends Controller
 
         $clips = Clip::where('campaign_id', $campaign->getKey())
             ->where('status', ClipStatus::Approved)
+            // Les mêmes clips que ceux du classement : hors fenêtre de publication, ils ne comptent pas.
+            ->whereRaw(...Campaign::postingWindowSql('clips'))
             ->with('user')
             ->orderByDesc('views_total')
             ->get();

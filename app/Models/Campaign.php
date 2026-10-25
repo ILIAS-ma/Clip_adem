@@ -10,6 +10,8 @@ use App\Enums\ContestMetric;
 use App\Enums\Platform;
 use App\Exceptions\InvalidCampaignTransition;
 use App\Support\Campaigns\Reward;
+use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -180,6 +182,67 @@ class Campaign extends Model
     {
         return $this->status === CampaignStatus::Completed
             || ($this->ends_at !== null && now()->gt($this->ends_at));
+    }
+
+    /**
+     * Cette campagne n'accepte-t-elle que les vidéos publiées pendant sa durée ?
+     *
+     * Seulement celles qui commencent après la date de mise en place de la règle
+     * (clipping.posting_window.enforced_from) : les campagnes d'avant ont été jouées
+     * et payées sans elle, on ne réécrit pas leur classement.
+     */
+    public function enforcesPostingWindow(): bool
+    {
+        return $this->starts_at !== null
+            && $this->starts_at->gte(Carbon::parse((string) config('clipping.posting_window.enforced_from')));
+    }
+
+    /**
+     * Pourquoi cette date de publication ne compte pas, ou null si elle compte.
+     *
+     * Une date inconnue passe : on ne refuse pas sur ce qu'on ne sait pas, le
+     * relevé suivant la donnera et la règle s'appliquera alors.
+     */
+    public function postingWindowViolation(?CarbonInterface $postedAt): ?string
+    {
+        if (! $this->enforcesPostingWindow() || $postedAt === null) {
+            return null;
+        }
+
+        if ($postedAt->lt($this->starts_at)) {
+            return sprintf(
+                'Cette vidéo a été publiée le %s, avant le début de la campagne (%s). Seules les vidéos publiées pendant la campagne comptent.',
+                $postedAt->copy()->timezone(config('app.timezone'))->format('d/m à H\hi'),
+                $this->starts_at->format('d/m à H\hi'),
+            );
+        }
+
+        if ($this->ends_at !== null && $postedAt->gt($this->ends_at)) {
+            return sprintf(
+                'Cette vidéo a été publiée le %s, après la fin de la campagne (%s).',
+                $postedAt->copy()->timezone(config('app.timezone'))->format('d/m à H\hi'),
+                $this->ends_at->format('d/m à H\hi'),
+            );
+        }
+
+        return null;
+    }
+
+    /**
+     * La même règle, en SQL, pour les calculs qui lisent les clips en bloc
+     * (classement, statistiques) : « ce clip n'est pas exclu par la fenêtre ».
+     *
+     * @return array{0: string, 1: list<string>} le morceau de requête et ses valeurs
+     */
+    public static function postingWindowSql(string $clipTable = 'clips'): array
+    {
+        return [
+            "NOT EXISTS (SELECT 1 FROM campaigns win WHERE win.id = {$clipTable}.campaign_id"
+            .' AND win.starts_at IS NOT NULL AND win.starts_at >= ?'
+            ." AND {$clipTable}.posted_at IS NOT NULL"
+            ." AND ({$clipTable}.posted_at < win.starts_at OR (win.ends_at IS NOT NULL AND {$clipTable}.posted_at > win.ends_at)))",
+            [Carbon::parse((string) config('clipping.posting_window.enforced_from'))->toDateTimeString()],
+        ];
     }
 
     /**

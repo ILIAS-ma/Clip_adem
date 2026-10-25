@@ -145,6 +145,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Fenêtre de publication
+    |--------------------------------------------------------------------------
+    |
+    | Une vidéo publiée avant le début d'une campagne — ou après sa fin — n'y
+    | compte pas : elle a été faite pour autre chose, et la soumettre est le moyen
+    | le plus simple de se faire passer pour quelqu'un qui a travaillé.
+    |
+    | La règle ne vaut que pour les campagnes qui commencent à cette date ou
+    | après : celles d'avant ont été jouées, et payées, sous d'autres règles.
+    |
+    */
+
+    'posting_window' => [
+        'enforced_from' => env('POSTING_WINDOW_FROM', '2026-10-25 00:00:00'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Vérification du numéro de téléphone
     |--------------------------------------------------------------------------
     |

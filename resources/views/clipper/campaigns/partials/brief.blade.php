@@ -115,6 +115,15 @@
             </div>
         @endif
 
+        @if ($campaign->enforcesPostingWindow())
+            {{-- La règle, dite avant qu'on ne publie : seules les vidéos faites pendant la campagne comptent. --}}
+            <div class="rounded-xl bg-amber-500/10 p-3 text-xs leading-relaxed text-amber-200 ring-1 ring-amber-500/30">
+                Seules les vidéos <strong>publiées à partir du {{ $campaign->starts_at->format('d/m à H\hi') }}</strong>
+                @if ($campaign->ends_at) et jusqu'au {{ $campaign->ends_at->format('d/m à H\hi') }} @endif
+                comptent. Une vidéo plus ancienne est refusée.
+            </div>
+        @endif
+
         @if ($campaign->ends_at)
             <div class="flex justify-between gap-2">
                 <dt class="text-ink-400">Fin</dt>

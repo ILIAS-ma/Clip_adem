@@ -10,6 +10,7 @@ use App\Models\SocialAccount;
 use App\Models\User;
 use App\Services\Social\SocialProviderManager;
 use App\Support\Social\RecentPost;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
@@ -88,7 +89,14 @@ class ClipPicker
                 'videos' => array_map(function (array $video) use ($taken, $withMoney, $campaign, $clipper) {
                     $clip = $taken->get($video['id']);
 
+                    $violation = $campaign->postingWindowViolation(
+                        filled($video['posted_at'] ?? null) ? Carbon::parse($video['posted_at']) : null,
+                    );
+
                     return $video + [
+                        // Publiée hors de la campagne : visible, mais pas sélectionnable.
+                        'eligible' => $violation === null,
+                        'ineligible_reason' => $violation,
                         'submitted' => $clip !== null,
                         'removable' => $clip !== null
                             && $clip->campaign_id === $campaign->getKey()

@@ -15,6 +15,7 @@ use App\Models\ModerationLog;
 use App\Models\SocialAccount;
 use App\Models\SocialSyncRun;
 use App\Services\Clips\ClipComplianceChecker;
+use App\Services\Moderation\ClipModerationService;
 use App\Support\Social\PostMetrics;
 use App\Support\Social\SyncOutcome;
 use Carbon\CarbonInterface;
@@ -426,6 +427,20 @@ class ClipSyncService
             // et la durée réelles, donc où la conformité devient vérifiable.
             if ($clip->compliance_status === ClipComplianceChecker::PENDING || $clip->compliance_status === null) {
                 $this->compliance->check($clip, $post);
+
+                /*
+                 * La date de publication réelle vient d'arriver, et c'est la seule qu'on
+                 * peut croire : une vidéo publiée avant le début de la campagne n'y compte
+                 * pas. On la refuse avec la raison, avant qu'elle ne soit créditée ni classée.
+                 * Seulement au premier relevé : un clip déjà jugé n'est pas rejugé à chaque passage.
+                 */
+                if ($violation = $clip->campaign?->postingWindowViolation($clip->refresh()->posted_at)) {
+                    app(ClipModerationService::class)->reject($clip, $violation);
+
+                    $synced++;
+
+                    continue;
+                }
             }
 
             /*

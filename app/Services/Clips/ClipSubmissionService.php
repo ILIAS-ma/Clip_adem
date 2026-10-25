@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Services\Moderation\ClipModerationService;
 use App\Support\Clips\ClipUrl;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -119,6 +120,14 @@ class ClipSubmissionService
     {
         if (! $this->budget->acceptsNewClips($campaign)) {
             throw ClipSubmissionRefused::campaignClosed();
+        }
+
+        // Une vidéo publiée avant le début de la campagne n'y compte pas : on la refuse ici,
+        // avant qu'elle n'entre au classement. Une date inconnue passe, le relevé la dira.
+        $postedAt = isset($details['posted_at']) ? Carbon::parse($details['posted_at']) : null;
+
+        if ($violation = $campaign->postingWindowViolation($postedAt)) {
+            throw new ClipSubmissionRefused($violation);
         }
 
         /*

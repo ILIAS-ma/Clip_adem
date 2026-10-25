@@ -59,6 +59,8 @@ class ContestService
             ->where('clips.status', ClipStatus::Approved->value)
             // Un compte banni ne monte pas sur un podium public.
             ->where('users.is_banned', false)
+            // Une vidéo publiée hors de la campagne n'y compte pas (voir Campaign::enforcesPostingWindow).
+            ->whereRaw(...Campaign::postingWindowSql('clips'))
             // Classement arrêté : un clip soumis après la fin n'entre plus.
             ->when($frozenAt, fn ($query) => $query->where('clips.submitted_at', '<=', $frozenAt))
             ->select('clips.id', 'clips.user_id', 'clips.submitted_at', 'users.name', $views)

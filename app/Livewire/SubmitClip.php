@@ -104,6 +104,10 @@ class SubmitClip extends Component
                             throw new ClipSubmissionRefused('Une vidéo n’est plus disponible. Actualisez la liste.');
                         }
 
+                        if (! ($video['eligible'] ?? true)) {
+                            throw new ClipSubmissionRefused($video['ineligible_reason'] ?? 'Cette vidéo ne compte pas pour cette campagne.');
+                        }
+
                         // Pas de demande à part : choisir une vidéo d'un compte qui n'a pas
                         // encore rejoint la campagne le fait rejoindre.
                         $participations->existing($this->campaign, $account)

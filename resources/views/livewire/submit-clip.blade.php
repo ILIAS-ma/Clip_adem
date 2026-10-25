@@ -66,6 +66,13 @@
 
             {{-- Grille --}}
             <div class="flex-1 overflow-y-auto px-3 py-3" data-picker-scroller>
+                @if ($campaign->enforcesPostingWindow())
+                    <p class="mb-3 rounded-xl bg-amber-500/10 p-3 text-xs leading-relaxed text-amber-200 ring-1 ring-amber-500/30">
+                        Seules les vidéos <strong>publiées à partir du {{ $campaign->starts_at->format('d/m à H\hi') }}</strong> comptent
+                        pour cette campagne. Les plus anciennes sont grisées.
+                    </p>
+                @endif
+
                 @if ($pickError)
                     <div class="alert-danger mb-3 text-sm">{{ $pickError }}</div>
                 @endif
@@ -103,7 +110,7 @@
                                                         @click="toggleRemove('{{ $key }}')"
                                                         :aria-pressed="removed.includes('{{ $key }}') ? 'false' : 'true'"
                                                         :class="removed.includes('{{ $key }}') ? 'ring-1 ring-ink-800' : 'ring-[3px] ring-brand-500'"
-                                                    @elseif ($video['submitted'])
+                                                    @elseif ($video['submitted'] || ! ($video['eligible'] ?? true))
                                                         disabled
                                                     @else
                                                         @click="toggle('{{ $key }}')"
@@ -138,6 +145,12 @@
                                                     <span class="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-brand-600/70 text-white">
                                                         <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.5 4.5L19 7.5" /></svg>
                                                         <span class="text-xs font-bold">Soumis</span>
+                                                    </span>
+                                                @elseif (! ($video['eligible'] ?? true))
+                                                    {{-- Publiée avant le début de la campagne : elle n'y compterait pas. --}}
+                                                    <span class="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-ink-950/75 px-1 text-center text-white" title="{{ $video['ineligible_reason'] }}">
+                                                        <svg class="h-6 w-6 text-ink-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l2.5 2.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                        <span class="text-[11px] font-bold leading-tight">Publiée avant le début</span>
                                                     </span>
                                                 @else
                                                     <span class="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full border-2 text-xs font-bold"

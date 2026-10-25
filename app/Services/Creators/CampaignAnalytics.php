@@ -3,6 +3,7 @@
 namespace App\Services\Creators;
 
 use App\Enums\ClipStatus;
+use App\Models\Campaign;
 use App\Models\Clip;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -70,7 +71,8 @@ class CampaignAnalytics
         $snapshots = fn () => DB::table('clip_view_snapshots as s')
             ->join('clips as c', 'c.id', '=', 's.clip_id')
             ->whereIn('c.campaign_id', $ids)
-            ->where('c.status', ClipStatus::Approved->value);
+            ->where('c.status', ClipStatus::Approved->value)
+            ->whereRaw(...Campaign::postingWindowSql('c'));
 
         $first = $snapshots()->min('s.captured_at');
 
@@ -291,9 +293,11 @@ class CampaignAnalytics
     /** Les clips validés des campagnes demandées, en modèles. */
     protected function clips(array $ids)
     {
+        // Les mêmes clips que ceux du classement : une vidéo publiée hors de la campagne n'y compte pas.
         return Clip::query()
             ->whereIn('clips.campaign_id', $ids)
-            ->where('clips.status', ClipStatus::Approved->value);
+            ->where('clips.status', ClipStatus::Approved->value)
+            ->whereRaw(...Campaign::postingWindowSql('clips'));
     }
 
     /** La même chose en lignes brutes : un agrégat n'a que faire des conversions du modèle. */
