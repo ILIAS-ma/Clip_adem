@@ -71,26 +71,26 @@ class SyncCadenceTest extends TestCase
     }
 
     #[Test]
-    public function a_clip_from_this_morning_is_read_every_half_hour(): void
+    public function a_clip_from_this_morning_is_read_every_quarter_hour(): void
     {
-        $this->assertFalse($this->isDue($this->clip(ageHours: 6, syncedMinutesAgo: 20)));
+        $this->assertFalse($this->isDue($this->clip(ageHours: 6, syncedMinutesAgo: 10)));
         $this->assertTrue($this->isDue($this->clip(ageHours: 6, syncedMinutesAgo: 40)));
     }
 
     #[Test]
-    public function a_clip_from_last_week_is_still_read_every_half_hour(): void
+    public function a_clip_from_last_week_is_still_read_every_quarter_hour(): void
     {
         // Le classement se joue sur les vues : un clip vieux de quatre jours qui
         // décolle doit se voir aussi vite qu'un clip du jour.
-        $this->assertFalse($this->isDue($this->clip(ageHours: 96, syncedMinutesAgo: 20)));
-        $this->assertTrue($this->isDue($this->clip(ageHours: 96, syncedMinutesAgo: 35)));
+        $this->assertFalse($this->isDue($this->clip(ageHours: 96, syncedMinutesAgo: 10)));
+        $this->assertTrue($this->isDue($this->clip(ageHours: 96, syncedMinutesAgo: 20)));
     }
 
     #[Test]
-    public function a_clip_is_read_every_half_hour_until_the_end_of_the_tracking(): void
+    public function a_clip_is_read_every_quarter_hour_until_the_end_of_the_tracking(): void
     {
-        $this->assertFalse($this->isDue($this->clip(ageHours: 24 * 20, syncedMinutesAgo: 20)));
-        $this->assertTrue($this->isDue($this->clip(ageHours: 24 * 20, syncedMinutesAgo: 35)));
+        $this->assertFalse($this->isDue($this->clip(ageHours: 24 * 20, syncedMinutesAgo: 10)));
+        $this->assertTrue($this->isDue($this->clip(ageHours: 24 * 20, syncedMinutesAgo: 20)));
     }
 
     #[Test]
