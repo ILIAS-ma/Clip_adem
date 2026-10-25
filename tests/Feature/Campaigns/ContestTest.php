@@ -297,8 +297,9 @@ class ContestTest extends TestCase
     }
 
     #[Test]
-    public function a_contest_promising_money_still_needs_it_funded(): void
+    public function a_contest_promising_money_goes_live_without_any_funding_recorded(): void
     {
+        // Même avec l'encaissement exigé partout ailleurs : un classement n'en a pas besoin.
         config()->set('clipping.onboarding.require_funded_campaigns', true);
 
         $campaign = Campaign::factory()->contest([10_000, 'PS5'])->create([
@@ -307,6 +308,23 @@ class ContestTest extends TestCase
         ]);
 
         $this->assertSame(10_000, $campaign->prizePoolCents());
+        $this->assertSame(0, $campaign->fundedCents());
+
+        $campaign->transitionTo(CampaignStatus::Active);
+
+        $this->assertSame(CampaignStatus::Active, $campaign->fresh()->status);
+    }
+
+    #[Test]
+    public function a_campaign_paid_per_view_still_needs_its_budget_funded(): void
+    {
+        config()->set('clipping.onboarding.require_funded_campaigns', true);
+
+        $campaign = Campaign::factory()->withRate(Platform::TikTok)->create([
+            'status' => CampaignStatus::Draft,
+            'brief' => 'Payée aux vues.',
+            'budget_total_cents' => 100_000,
+        ]);
 
         $this->expectException(InvalidCampaignTransition::class);
         $this->expectExceptionMessage('pas couvert');

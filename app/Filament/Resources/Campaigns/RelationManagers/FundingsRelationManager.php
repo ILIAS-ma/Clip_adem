@@ -37,7 +37,8 @@ class FundingsRelationManager extends RelationManager
 
     public static function canViewForRecord($ownerRecord, string $pageClass): bool
     {
-        return auth()->user()?->isSuperAdmin() ?? false;
+        // Pas d'encaissement sur un classement : ses prix sont annoncés, pas consommés aux vues.
+        return (auth()->user()?->isSuperAdmin() ?? false) && ! $ownerRecord->isContest();
     }
 
     public function form(Schema $schema): Schema

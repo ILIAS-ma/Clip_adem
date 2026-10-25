@@ -30,6 +30,19 @@ class CampaignBudgetOverview extends StatsOverviewWidget
         $views = (int) Clip::where('campaign_id', $campaign->getKey())->sum('views_total');
         $clips = Clip::where('campaign_id', $campaign->getKey())->count();
 
+        // Un classement distribue des prix annoncés : ni « consommé », ni « restant », ni CPM.
+        if ($campaign->isContest()) {
+            return [
+                Stat::make('Budget total', static::euros($campaign->budget_total_cents))
+                    ->description($campaign->creator?->name)
+                    ->color('gray'),
+
+                Stat::make('Vues générées', number_format($views, 0, ',', ' '))
+                    ->description(sprintf('%d clip%s', $clips, $clips > 1 ? 's' : ''))
+                    ->color('gray'),
+            ];
+        }
+
         return [
             Stat::make('Budget total', static::euros($campaign->budget_total_cents))
                 ->description($campaign->creator?->name)

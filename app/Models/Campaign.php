@@ -435,7 +435,13 @@ class Campaign extends Model
          * back-office sans saisir d'encaissement — mais à rétablir avant
          * l'ouverture, sous peine de devoir de l'argent qu'on n'a pas.
          */
-        if ($needsBudget && config('clipping.onboarding.require_funded_campaigns') && $this->fundedCents() < $this->budget_total_cents) {
+        /*
+         * L'encaissement ne se demande qu'à une campagne payée aux vues, où le budget
+         * est promis aux clippeurs au fil des vues. Un classement distribue des prix
+         * annoncés d'avance : il n'a ni « consommé » ni « restant » à surveiller, ni
+         * encaissement à enregistrer pour s'ouvrir.
+         */
+        if ($needsBudget && ! $this->isContest() && config('clipping.onboarding.require_funded_campaigns') && $this->fundedCents() < $this->budget_total_cents) {
             throw InvalidCampaignTransition::because(sprintf(
                 'le budget n’est pas couvert : %s € encaissés pour %s € engagés. '
                 .'Enregistrez l’encaissement du créateur avant d’activer.',
