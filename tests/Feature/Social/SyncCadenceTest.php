@@ -78,17 +78,26 @@ class SyncCadenceTest extends TestCase
     }
 
     #[Test]
-    public function a_clip_from_last_week_keeps_the_slower_pace(): void
+    public function a_clip_from_last_week_is_still_read_every_half_hour(): void
     {
-        // Sa courbe est plate : le relever toutes les demi-heures rendrait le
-        // même nombre en consommant le quota des clips récents.
-        $this->assertFalse($this->isDue($this->clip(ageHours: 96, syncedMinutesAgo: 60)));
-        $this->assertTrue($this->isDue($this->clip(ageHours: 96, syncedMinutesAgo: 200)));
+        // Le classement se joue sur les vues : un clip vieux de quatre jours qui
+        // décolle doit se voir aussi vite qu'un clip du jour.
+        $this->assertFalse($this->isDue($this->clip(ageHours: 96, syncedMinutesAgo: 20)));
+        $this->assertTrue($this->isDue($this->clip(ageHours: 96, syncedMinutesAgo: 35)));
     }
 
     #[Test]
-    public function a_month_old_clip_is_read_once_a_day_at_most(): void
+    public function a_clip_is_read_every_half_hour_until_the_end_of_the_tracking(): void
     {
+        $this->assertFalse($this->isDue($this->clip(ageHours: 24 * 20, syncedMinutesAgo: 20)));
+        $this->assertTrue($this->isDue($this->clip(ageHours: 24 * 20, syncedMinutesAgo: 35)));
+    }
+
+    #[Test]
+    public function a_clip_that_earns_nothing_is_read_once_a_day_at_most(): void
+    {
+        $this->campaign->forceFill(['spent_cents' => 1_000_000])->save();
+
         $this->assertFalse($this->isDue($this->clip(ageHours: 24 * 20, syncedMinutesAgo: 60 * 12)));
         $this->assertTrue($this->isDue($this->clip(ageHours: 24 * 20, syncedMinutesAgo: 60 * 25)));
     }

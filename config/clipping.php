@@ -265,7 +265,11 @@ return [
          * mesurer en sandbox avant de resserrer davantage, `SocialSyncRun` le
          * journalise à chaque passage.
          */
-        'hot_window_hours' => 48,
+        // Toute la durée du suivi (30 jours, voir `stop_after_days`) : les vues sont
+        // relevées toutes les 30 minutes tant que le clip est suivi. Les paliers
+        // « fresh » et « mature » ci-dessous ne servent plus qu'en cas de retour
+        // à une cadence dégressive, en réduisant cette fenêtre.
+        'hot_window_hours' => 720,
         'hot_interval_minutes' => 30,
 
         // Un clip publié depuis moins de N heures est relevé toutes les

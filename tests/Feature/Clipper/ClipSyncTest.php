@@ -199,23 +199,19 @@ class ClipSyncTest extends TestCase
     }
 
     #[Test]
-    public function a_fresh_clip_is_due_more_often_than_an_old_one(): void
+    public function every_followed_clip_is_due_every_half_hour_whatever_its_age(): void
     {
         $campaign = $this->campaign();
 
-        $fresh = $this->clip($campaign, [
-            'posted_at' => now()->subDay(),
-            'last_synced_at' => now()->subHours(4),
-        ]);
-        $old = $this->clip($campaign, [
-            'posted_at' => now()->subDays(20),
-            'last_synced_at' => now()->subHours(4),
-        ]);
+        $fresh = $this->clip($campaign, ['posted_at' => now()->subDay(), 'last_synced_at' => now()->subHour()]);
+        $old = $this->clip($campaign, ['posted_at' => now()->subDays(20), 'last_synced_at' => now()->subHour()]);
+        $justRead = $this->clip($campaign, ['posted_at' => now()->subDays(20), 'last_synced_at' => now()->subMinutes(10)]);
 
         $due = $this->sync->dueClips(Platform::TikTok)->pluck('id');
 
-        $this->assertTrue($due->contains($fresh->getKey()), 'Un clip récent est relevé toutes les 3 h.');
-        $this->assertFalse($due->contains($old->getKey()), 'Un clip ancien attend 24 h entre deux relevés.');
+        $this->assertTrue($due->contains($fresh->getKey()));
+        $this->assertTrue($due->contains($old->getKey()), 'Un clip de 20 jours est relevé toutes les 30 minutes lui aussi.');
+        $this->assertFalse($due->contains($justRead->getKey()), 'Un clip relevé il y a 10 minutes attend son tour.');
     }
 
     #[Test]
