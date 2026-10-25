@@ -74,6 +74,22 @@
             </div>
         @endif
 
+        @if ($clip->status->value === 'rejected' && $clip->rejection_reason)
+            <div class="alert-danger">
+                <p class="font-semibold">Cette vidéo est refusée : elle ne compte pas dans la campagne</p>
+                <p class="mt-1 leading-relaxed">{{ $clip->rejection_reason }}</p>
+            </div>
+        @elseif ($clip->compliance_status === 'failed')
+            <div class="alert-warn">
+                <p class="font-semibold">Cette vidéo est comptée, mais une règle du brief n'est pas respectée</p>
+                <p class="mt-1 leading-relaxed">
+                    @foreach (collect($clip->compliance['checks'] ?? [])->where('passed', false) as $failedCheck)
+                        {{ $failedCheck['detail'] ?? $failedCheck['label'] }}
+                    @endforeach
+                </p>
+            </div>
+        @endif
+
         <div class="grid gap-6 lg:grid-cols-2">
 
             <div class="card p-6">

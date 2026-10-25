@@ -109,12 +109,18 @@
                                 <span @class([
                                     'chip-ok' => $clip->status->value === 'approved',
                                     'chip-wait' => $clip->status->value === 'pending_review',
-                                    'chip-neutral' => $clip->status->value === 'rejected',
+                                    'chip-danger' => $clip->status->value === 'rejected',
                                     'chip-danger' => $clip->status->value === 'invalidated',
                                 ])>{{ $clip->status->label() }}</span>
 
-                                @if ($clip->compliance_status === 'failed')
-                                    <span class="chip-danger">Brief non respecté</span>
+                                {{-- Un clip refusé a déjà son badge « Refusé » : un second badge rouge brouillerait le message. --}}
+                                @if ($clip->status->value === 'rejected')
+                                    <span class="chip-neutral">Ne compte pas</span>
+                                @elseif ($clip->compliance_status === 'failed')
+                                    @php
+                                        $failedLabels = collect($clip->compliance['checks'] ?? [])->where('passed', false)->pluck('label')->implode(' ');
+                                    @endphp
+                                    <span class="chip-wait">{{ str_contains($failedLabels, 'Hashtags') ? 'Hashtag manquant · vidéo comptée' : 'Brief à vérifier · vidéo comptée' }}</span>
                                 @elseif ($clip->compliance_status === 'passed')
                                     <span class="chip-ok">Conforme</span>
                                 @endif

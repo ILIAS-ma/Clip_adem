@@ -211,7 +211,7 @@ class Campaign extends Model
 
         if ($postedAt->lt($this->starts_at)) {
             return sprintf(
-                'Cette vidéo a été publiée le %s, avant le début de la campagne (%s). Seules les vidéos publiées pendant la campagne comptent.',
+                'Ta vidéo a été publiée le %s, avant le début de la campagne (%s). Elle ne compte donc pas : seules les vidéos publiées après le début de la campagne sont prises en compte. Ça ne dépend pas de tes hashtags. Publie une nouvelle vidéo maintenant et elle comptera.',
                 $postedAt->copy()->timezone(config('app.timezone'))->format('d/m à H\hi'),
                 $this->starts_at->format('d/m à H\hi'),
             );
@@ -219,7 +219,7 @@ class Campaign extends Model
 
         if ($this->ends_at !== null && $postedAt->gt($this->ends_at)) {
             return sprintf(
-                'Cette vidéo a été publiée le %s, après la fin de la campagne (%s).',
+                'Ta vidéo a été publiée le %s, après la fin de la campagne (%s). Elle ne compte donc pas : seules les vidéos publiées pendant la campagne sont prises en compte.',
                 $postedAt->copy()->timezone(config('app.timezone'))->format('d/m à H\hi'),
                 $this->ends_at->format('d/m à H\hi'),
             );

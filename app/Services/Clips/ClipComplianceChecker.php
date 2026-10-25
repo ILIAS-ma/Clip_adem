@@ -118,7 +118,7 @@ class ClipComplianceChecker
         return [
             'label' => 'Hashtags obligatoires présents',
             'passed' => $missing === [],
-            'detail' => $missing === [] ? null : 'Manquant : '.implode(', ', $missing),
+            'detail' => $missing === [] ? null : 'Hashtag obligatoire manquant dans la légende : '.implode(', ', $missing).". Ta vidéo est comptée pour l'instant, mais l'équipe peut l'écarter.",
         ];
     }
 
@@ -136,7 +136,7 @@ class ClipComplianceChecker
             'label' => 'Publié pendant la campagne',
             'passed' => ! $tooEarly && ! $tooLate,
             'detail' => match (true) {
-                $tooEarly => 'Publié avant le début de la campagne, le '.$metrics->postedAt->format('d/m/Y').'.',
+                $tooEarly => 'Publiée avant le début de la campagne, le '.$metrics->postedAt->format('d/m/Y').'.',
                 $tooLate => 'Publié après la fin de la campagne, le '.$metrics->postedAt->format('d/m/Y').'.',
                 default => null,
             },
