@@ -110,6 +110,10 @@ class ClippersTable
                 TernaryFilter::make('is_banned')
                     ->label('Banni'),
 
+                Filter::make('flagged')
+                    ->label('Signalés (clips hors campagne)')
+                    ->query(fn (Builder $query) => $query->flaggedForCheating()),
+
                 Filter::make('siret_pending')
                     ->label('SIRET à vérifier')
                     ->query(fn (Builder $query) => $query->pendingSiret()),

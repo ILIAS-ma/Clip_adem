@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ClipStatus;
+use App\Enums\ModerationAction;
 use App\Enums\Platform;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -47,6 +48,20 @@ class Clip extends Model
             'missing_checks' => 'integer',
             'featured_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Les clips signalés comme publiés hors de la campagne.
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeFlaggedOutsideWindow($query)
+    {
+        return $query->whereExists(fn ($log) => $log->selectRaw('1')
+            ->from('moderation_logs')
+            ->whereColumn('moderation_logs.subject_id', 'clips.id')
+            ->where('moderation_logs.subject_type', $this->getMorphClass())
+            ->where('moderation_logs.action', ModerationAction::ClipOutsideWindow->value));
     }
 
     /** Miniature de vitrine : la copie locale d'abord, l'originale à défaut. */

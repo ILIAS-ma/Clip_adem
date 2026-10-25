@@ -207,6 +207,10 @@ class ClipsRelationManager extends RelationManager
                     ->label('Publication disparue')
                     ->query(fn (Builder $query) => $query->where('missing_checks', '>=', Clip::MISSING_THRESHOLD)),
 
+                Filter::make('outside_window')
+                    ->label('Publiés hors campagne (signalés)')
+                    ->query(fn (Builder $query) => $query->flaggedOutsideWindow()),
+
                 Filter::make('suspicious')
                     ->label('Vues suspectes')
                     ->query(fn (Builder $query) => app(SuspiciousViewsDetector::class)->scopeSuspicious($query)),

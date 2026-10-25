@@ -13,6 +13,7 @@ enum ModerationAction: string
     case ClipInvalidated = 'clip_invalidated';
     case ClipDisappeared = 'clip_disappeared';
     case ClipNotOwned = 'clip_not_owned';
+    case ClipOutsideWindow = 'clip_outside_window';
     case CampaignFunded = 'campaign_funded';
     case ClipperBanned = 'clipper_banned';
     case ClipperUnbanned = 'clipper_unbanned';
@@ -31,6 +32,7 @@ enum ModerationAction: string
             self::ClipInvalidated => 'Clip invalidé',
             self::ClipDisappeared => 'Publication disparue',
             self::ClipNotOwned => 'Publication d’un autre compte',
+            self::ClipOutsideWindow => 'Vidéo publiée hors de la campagne',
             self::CampaignFunded => 'Encaissement enregistré',
             self::ClipperBanned => 'Clippeur banni',
             self::ClipperUnbanned => 'Clippeur débanni',
@@ -50,7 +52,7 @@ enum ModerationAction: string
             self::SiretVerified, self::BonusGranted => 'success',
             self::ClipRejected, self::PayoutCancelled, self::ClipDisappeared, self::PasswordResetLinkIssued,
             self::SiretRejected => 'warning',
-            self::ClipInvalidated, self::ClipperBanned, self::ClipNotOwned => 'danger',
+            self::ClipInvalidated, self::ClipperBanned, self::ClipNotOwned, self::ClipOutsideWindow => 'danger',
         };
     }
 }

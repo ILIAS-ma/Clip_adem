@@ -9,6 +9,7 @@ use App\Filament\Resources\Campaigns\CampaignResource;
 use App\Filament\Resources\Campaigns\Schemas\CampaignForm;
 use App\Filament\Widgets\CampaignBudgetOverview;
 use App\Models\Campaign;
+use App\Services\Campaigns\ContestReport;
 use App\Services\Campaigns\ContestService;
 use App\Support\Budget\CreditOutcome;
 use Filament\Actions\Action;
@@ -112,12 +113,10 @@ class EditCampaign extends EditRecord
             ->modalHeading(fn () => 'Classement · '.$this->getRecord()->title)
             ->modalSubmitAction(false)
             ->modalCancelActionLabel('Fermer')
+            ->modalWidth('5xl')
             ->modalContent(fn () => view('filament.campaigns.contest-standings', [
                 'campaign' => $this->getRecord(),
-                'boards' => collect(ContestMetric::cases())->map(fn (ContestMetric $metric) => [
-                    'metric' => $metric,
-                    'standings' => app(ContestService::class)->standings($this->getRecord(), 50, $metric),
-                ])->all(),
+                'report' => app(ContestReport::class)->for($this->getRecord()),
             ]));
     }
 

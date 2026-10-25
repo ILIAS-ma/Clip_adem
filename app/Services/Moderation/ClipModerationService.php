@@ -85,15 +85,21 @@ class ClipModerationService
      * Refus avant tout paiement : le clip n'a rien coûté, il n'y a rien à
      * rembourser. Pour un clip déjà crédité, c'est invalidate().
      */
-    public function reject(Clip $clip, string $reason, ?User $by = null): Clip
+    public function reject(Clip $clip, string $reason, ?User $by = null, ?ModerationAction $flag = null): Clip
     {
-        return DB::transaction(function () use ($clip, $reason, $by) {
+        return DB::transaction(function () use ($clip, $reason, $by, $flag) {
             $clip->forceFill([
                 'status' => ClipStatus::Rejected,
                 'rejection_reason' => $reason,
             ])->save();
 
             ModerationLog::record(ModerationAction::ClipRejected, $clip, $by, $reason);
+
+            // Un signalement : le refus est aussi inscrit à part, pour que l'équipe voie d'un coup
+            // d'œil qui essaie de faire compter ce qui ne compte pas (voir le tableau de bord).
+            if ($flag !== null) {
+                ModerationLog::record($flag, $clip, $by, $reason, ['campaign_id' => $clip->campaign_id]);
+            }
 
             $this->tellTheClipper($clip, $reason, wasPaid: false);
 

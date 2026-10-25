@@ -110,6 +110,10 @@ class ClipsTable
                     ->searchable()
                     ->preload(),
 
+                Filter::make('outside_window')
+                    ->label('Publiés hors campagne (signalés)')
+                    ->query(fn ($query) => $query->flaggedOutsideWindow()),
+
                 Filter::make('suspicious')
                     ->label('Vues suspectes')
                     ->query(fn ($query) => app(SuspiciousViewsDetector::class)->scopeSuspicious($query)),

@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Widgets\AdminList;
 use App\Filament\Widgets\BudgetConsumptionChart;
+use App\Filament\Widgets\FlaggedClippers;
 use App\Filament\Widgets\PlatformOverview;
 use App\Filament\Widgets\SpendPerCreator;
 use App\Filament\Widgets\TopClippers;
@@ -130,6 +131,7 @@ class AdminPanelProvider extends PanelProvider
              * sur le tableau de bord, où elle s'afficherait vide.
              */
             ->widgets([
+                FlaggedClippers::class,
                 PlatformOverview::class,
                 BudgetConsumptionChart::class,
                 SpendPerCreator::class,

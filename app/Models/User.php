@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\LegalStatus;
+use App\Enums\ModerationAction;
 use App\Enums\PayoutMethod;
 use App\Enums\PayoutStatus;
 use App\Enums\UserRole;
@@ -94,6 +95,24 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     public function isCreator(): bool
     {
         return $this->role === UserRole::Creator;
+    }
+
+    /**
+     * Les clippeurs signalés : au moins un de leurs clips a été refusé pour avoir été
+     * publié hors de la campagne.
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeFlaggedForCheating($query)
+    {
+        return $query->whereExists(fn ($clips) => $clips->selectRaw('1')
+            ->from('clips')
+            ->whereColumn('clips.user_id', 'users.id')
+            ->whereExists(fn ($log) => $log->selectRaw('1')
+                ->from('moderation_logs')
+                ->whereColumn('moderation_logs.subject_id', 'clips.id')
+                ->where('moderation_logs.subject_type', (new Clip)->getMorphClass())
+                ->where('moderation_logs.action', ModerationAction::ClipOutsideWindow->value)));
     }
 
     /**

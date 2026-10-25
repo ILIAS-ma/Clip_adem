@@ -171,6 +171,11 @@ class AdminPagesRenderTest extends TestCase
         $this->actingAs($this->admin());
 
         foreach (Filament::getPanel('admin')->getWidgets() as $widget) {
+            // Une carte qui se masque d'elle-même (rien à signaler) n'a rien à rendre.
+            if (! $widget::canView()) {
+                continue;
+            }
+
             Livewire::test($widget)->assertOk();
         }
     }

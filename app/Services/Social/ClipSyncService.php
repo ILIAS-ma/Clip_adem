@@ -435,7 +435,7 @@ class ClipSyncService
                  * Seulement au premier relevé : un clip déjà jugé n'est pas rejugé à chaque passage.
                  */
                 if ($violation = $clip->campaign?->postingWindowViolation($clip->refresh()->posted_at)) {
-                    app(ClipModerationService::class)->reject($clip, $violation);
+                    app(ClipModerationService::class)->reject($clip, $violation, null, ModerationAction::ClipOutsideWindow);
 
                     $synced++;
 
