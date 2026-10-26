@@ -61,6 +61,14 @@ class ClipModerationService
 
             ModerationLog::record(ModerationAction::ClipApproved, $clip, $by);
 
+            // Un clip revalidé à la main n'est plus un clip suspect : son auteur ne reste
+            // pas signalé pour une vidéo que l'équipe a jugée valable.
+            ModerationLog::query()
+                ->where('subject_type', $clip->getMorphClass())
+                ->where('subject_id', $clip->getKey())
+                ->where('action', ModerationAction::ClipOutsideWindow)
+                ->delete();
+
             return $clip;
         });
 

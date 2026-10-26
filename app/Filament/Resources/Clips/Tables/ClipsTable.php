@@ -11,6 +11,9 @@ use App\Services\Moderation\SuspiciousViewsDetector;
 use App\Services\Reporting\LandingShowcase;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -18,6 +21,8 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Str;
 
 class ClipsTable
 {
@@ -56,9 +61,12 @@ class ClipsTable
                             ClipStatus::Rejected => 'gray',
                             ClipStatus::Invalidated => 'danger',
                         })
-                    ->description(fn (Clip $record) => $record->hasDisappeared()
-                        ? 'Introuvable depuis le '.$record->missing_since?->format('d/m/Y')
-                        : null)
+                    ->description(fn (Clip $record) => match (true) {
+                        $record->hasDisappeared() => 'Introuvable depuis le '.$record->missing_since?->format('d/m/Y'),
+                        // Le motif sous le statut : pour valider à la main, il faut savoir pourquoi le clip a été écarté.
+                        $record->status === ClipStatus::Rejected && $record->rejection_reason => Str::limit($record->rejection_reason, 70),
+                        default => null,
+                    })
                     ->color(fn (ClipStatus $state) => match ($state) {
                         ClipStatus::Approved => 'success',
                         ClipStatus::PendingReview => 'warning',
@@ -110,6 +118,22 @@ class ClipsTable
                     ->searchable()
                     ->preload(),
 
+                Filter::make('submitted_between')
+                    ->label('Soumis entre')
+                    ->schema([
+                        DatePicker::make('from')->label('Soumis depuis le'),
+                        DatePicker::make('until')->label('Soumis jusqu’au'),
+                    ])
+                    ->query(fn ($query, array $data) => $query
+                        ->when($data['from'] ?? null, fn ($q, $date) => $q->where('submitted_at', '>=', $date.' 00:00:00'))
+                        ->when($data['until'] ?? null, fn ($q, $date) => $q->where('submitted_at', '<=', $date.' 23:59:59')))
+                    ->indicateUsing(function (array $data): array {
+                        return array_values(array_filter([
+                            ($data['from'] ?? null) ? 'Soumis depuis le '.date('d/m/Y', strtotime($data['from'])) : null,
+                            ($data['until'] ?? null) ? 'Soumis jusqu’au '.date('d/m/Y', strtotime($data['until'])) : null,
+                        ]));
+                    }),
+
                 Filter::make('outside_window')
                     ->label('Publiés hors campagne (signalés)')
                     ->query(fn ($query) => $query->flaggedOutsideWindow()),
@@ -136,6 +160,12 @@ class ClipsTable
                     ->query(fn ($query) => $query
                         ->where('missing_checks', '>=', Clip::MISSING_THRESHOLD)
                         ->orderByDesc('earned_cents')),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    static::bulkApproveAction(),
+                    static::bulkRejectAction(),
+                ]),
             ])
             ->recordActions([
                 ActionGroup::make([
@@ -239,6 +269,64 @@ class ClipsTable
                 app(ClipModerationService::class)->approve($record, auth()->user());
 
                 Notification::make()->success()->title('Clip validé')->send();
+            });
+    }
+
+    /** Validation à la main de plusieurs clips d'un coup, y compris des clips refusés par erreur. */
+    protected static function bulkApproveAction(): BulkAction
+    {
+        return BulkAction::make('bulkApprove')
+            ->label('Valider la sélection')
+            ->icon('heroicon-o-check-circle')
+            ->color('success')
+            ->requiresConfirmation()
+            ->modalHeading('Valider les clips sélectionnés')
+            ->modalDescription('Les clips deviennent rémunérables ou comptent au classement dès la prochaine synchronisation des vues. Un clip déjà validé est ignoré.')
+            ->deselectRecordsAfterCompletion()
+            ->action(function (Collection $records) {
+                $moderation = app(ClipModerationService::class);
+
+                $toApprove = $records->filter(fn (Clip $clip) => $clip->status !== ClipStatus::Approved);
+
+                $toApprove->each(fn (Clip $clip) => $moderation->approve($clip, auth()->user()));
+
+                Notification::make()->success()
+                    ->title($toApprove->count().' clip(s) validé(s)')
+                    ->body($records->count() - $toApprove->count() > 0
+                        ? ($records->count() - $toApprove->count()).' étai(en)t déjà validé(s).'
+                        : null)
+                    ->send();
+            });
+    }
+
+    /** Refus groupé : même motif pour tous, communiqué aux clippeurs. */
+    protected static function bulkRejectAction(): BulkAction
+    {
+        return BulkAction::make('bulkReject')
+            ->label('Refuser la sélection')
+            ->icon('heroicon-o-x-circle')
+            ->color('warning')
+            ->schema([
+                Textarea::make('reason')
+                    ->label('Motif communiqué aux clippeurs')
+                    ->required()
+                    ->rows(3),
+            ])
+            ->deselectRecordsAfterCompletion()
+            ->action(function (Collection $records, array $data) {
+                $moderation = app(ClipModerationService::class);
+
+                // Un clip déjà payé ne se refuse pas : il s'invalide, un par un, avec remboursement.
+                $refusable = $records->filter(fn (Clip $clip) => $clip->earned_cents === 0 && $clip->status !== ClipStatus::Rejected);
+
+                $refusable->each(fn (Clip $clip) => $moderation->reject($clip, $data['reason'], auth()->user()));
+
+                Notification::make()->success()
+                    ->title($refusable->count().' clip(s) refusé(s)')
+                    ->body($records->count() - $refusable->count() > 0
+                        ? ($records->count() - $refusable->count()).' ignoré(s) : déjà refusés ou déjà payés (à invalider un par un).'
+                        : null)
+                    ->send();
             });
     }
 
