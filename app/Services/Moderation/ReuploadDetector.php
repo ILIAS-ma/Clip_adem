@@ -24,6 +24,9 @@ class ReuploadDetector
     /** Longueur minimale du texte restant, hashtags et mentions retirés. */
     public const MIN_TEXT_LENGTH = 8;
 
+    /** Au-delà de ce nombre de vidéos du compte à la légende voisine, c'est un modèle, pas une reprise. */
+    public const MAX_SAME_CAPTION = 3;
+
     /** La légende sans hashtags, mentions ni ponctuation : ce qui a été écrit à la main. */
     public static function text(?string $caption): string
     {
@@ -45,6 +48,24 @@ class ReuploadDetector
 
         if ($post['duration'] === null || $post['posted_at'] === null || mb_strlen($text) < self::MIN_TEXT_LENGTH) {
             return null;
+        }
+
+        $history = is_array($history) ? $history : iterator_to_array($history, false);
+
+        // Une légende modèle, collée sur la plupart des vidéos du compte, ne désigne personne :
+        // à la longue, la durée seule suffit à faire coïncider n'importe quelle paire.
+        $sameText = 0;
+
+        foreach ($history as $other) {
+            if ($other['id'] === $post['id']) {
+                continue;
+            }
+
+            similar_text($text, static::text($other['caption'] ?? null), $percent);
+
+            if ($percent >= self::MIN_SIMILARITY && ++$sameText > self::MAX_SAME_CAPTION) {
+                return null;
+            }
         }
 
         $found = null;

@@ -195,6 +195,22 @@ class ReuploadDetectionTest extends TestCase
     }
 
     #[Test]
+    public function a_template_caption_repeated_on_many_videos_is_not_a_reupload(): void
+    {
+        // La même légende sur chaque vidéo, des durées qui se recoupent : du hasard, pas une reprise.
+        $videos = [];
+        foreach (range(1, 12) as $i) {
+            $videos[] = $this->video((string) (9000 + $i), 'Momo Rocma le meilleur #iplant', 20 + ($i % 3), now()->subDays(13 - $i));
+        }
+        $this->accountHas($videos);
+        $this->submitted('9012', now()->subDay(), 'Momo Rocma le meilleur #iplant');
+
+        Artisan::call('clips:detect-reuploads');
+
+        $this->assertSame(0, ModerationLog::where('action', ModerationAction::ClipSuspectedReupload)->count());
+    }
+
+    #[Test]
     public function a_caption_made_only_of_hashtags_proves_nothing(): void
     {
         $this->accountHas([
