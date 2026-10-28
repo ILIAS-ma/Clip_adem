@@ -166,6 +166,16 @@ class CampaignForm
                             .'10 clips à 40 vues ne battent pas 3 clips qui marchent. Le classement des vues, lui, compte tout.')
                         ->columnSpanFull(),
 
+                    TextInput::make('max_clips_per_submission')
+                        ->label('Vidéos maximum par envoi')
+                        ->numeric()
+                        ->integer()
+                        ->minValue(1)
+                        ->suffix('vidéos')
+                        ->helperText('Vide = pas de limite. Un clippeur qui choisit plus de vidéos que ce nombre doit les envoyer en plusieurs fois : '
+                            .'ça évite de déverser des dizaines de vidéos d’un coup, surtout à la fin d’un classement.')
+                        ->columnSpanFull(),
+
                     // En classement, le budget est exactement la somme des prix,
                     // recalculée à l'enregistrement (voir withContestBudget()) :
                     // le saisir à part permettrait de promettre plus que ce qui

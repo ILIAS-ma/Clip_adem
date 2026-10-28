@@ -87,6 +87,21 @@ class SubmitClip extends Component
         $removed = 0;
         $refusals = [];
 
+        // Une limite d'envoi propre à la campagne : refusée en bloc, sans rien enregistrer à moitié.
+        $limit = $this->campaign->submissionBatchLimit();
+
+        if ($limit !== null && count(array_unique($add)) > $limit) {
+            $this->loadVideos($picker);
+            $this->pickError = sprintf(
+                'Cette campagne limite chaque envoi à %d vidéos : tu en as choisi %d. Enregistre-en %d, puis choisis les suivantes.',
+                $limit,
+                count(array_unique($add)),
+                $limit,
+            );
+
+            return;
+        }
+
         foreach (['add' => array_unique($add), 'remove' => array_unique($remove)] as $action => $keys) {
             foreach ($keys as $key) {
                 [$accountId, $postId] = array_pad(explode(':', (string) $key, 2), 2, '');

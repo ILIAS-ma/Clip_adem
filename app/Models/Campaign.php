@@ -22,7 +22,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 
 #[Fillable([
-    'creator_id', 'category_id', 'mode', 'contest_prizes', 'contest_post_prizes', 'contest_post_min_views', 'title', 'cover_path', 'slug', 'brief', 'required_hashtags',
+    'creator_id', 'category_id', 'mode', 'contest_prizes', 'contest_post_prizes', 'contest_post_min_views', 'max_clips_per_submission', 'title', 'cover_path', 'slug', 'brief', 'required_hashtags',
     'status', 'currency', 'budget_total_cents', 'min_views_per_clip',
     'min_clips_per_clipper', 'max_payout_per_clip_cents',
     'launch_bonus_cents', 'launch_bonus_slots',
@@ -45,6 +45,7 @@ class Campaign extends Model
             'contest_prizes' => 'array',
             'contest_post_prizes' => 'array',
             'contest_post_min_views' => 'integer',
+            'max_clips_per_submission' => 'integer',
             'prizes_paid_at' => 'datetime',
             'contest_winners' => 'array',
             'required_hashtags' => 'array',
@@ -161,6 +162,14 @@ class Campaign extends Model
     public function postMinViews(): int
     {
         return max(0, (int) ($this->contest_post_min_views ?? 1000));
+    }
+
+    /** Vidéos qu'un clippeur peut envoyer d'un coup, ou null s'il n'y a pas de limite. */
+    public function submissionBatchLimit(): ?int
+    {
+        $limit = (int) ($this->max_clips_per_submission ?? 0);
+
+        return $limit > 0 ? $limit : null;
     }
 
     /** L'argent promis sur les deux classements, seule part qui pèse sur le budget. */
