@@ -64,6 +64,20 @@ class Clip extends Model
             ->where('moderation_logs.action', ModerationAction::ClipOutsideWindow->value));
     }
 
+    /**
+     * Clips qui ressemblent à une vidéo plus ancienne du même compte (reprise probable).
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeSuspectedReupload($query)
+    {
+        return $query->whereExists(fn ($log) => $log->selectRaw('1')
+            ->from('moderation_logs')
+            ->whereColumn('moderation_logs.subject_id', 'clips.id')
+            ->where('moderation_logs.subject_type', $this->getMorphClass())
+            ->where('moderation_logs.action', ModerationAction::ClipSuspectedReupload->value));
+    }
+
     /** Miniature de vitrine : la copie locale d'abord, l'originale à défaut. */
     public function showcaseThumbnailUrl(): ?string
     {

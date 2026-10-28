@@ -211,6 +211,10 @@ class ClipsRelationManager extends RelationManager
                     ->label('Publiés hors campagne (signalés)')
                     ->query(fn (Builder $query) => $query->flaggedOutsideWindow()),
 
+                Filter::make('suspected_reupload')
+                    ->label('Reprises probables (à vérifier)')
+                    ->query(fn (Builder $query) => $query->suspectedReupload()),
+
                 Filter::make('suspicious')
                     ->label('Vues suspectes')
                     ->query(fn (Builder $query) => app(SuspiciousViewsDetector::class)->scopeSuspicious($query)),

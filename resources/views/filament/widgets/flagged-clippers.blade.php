@@ -4,7 +4,7 @@
     <x-filament::section icon="heroicon-o-exclamation-triangle" icon-color="danger">
         <x-slot name="heading">Clippeurs signalés</x-slot>
         <x-slot name="description">
-            Ces clippeurs ont soumis des vidéos publiées avant le début d'une campagne : elles ont été refusées et ne comptent pas au classement.
+            Vidéos publiées avant le début d'une campagne (refusées, elles ne comptent pas) ou qui ressemblent à une vidéo plus ancienne du même compte (reprise probable, à vérifier à la main : le clip reste validé).
         </x-slot>
 
         <div class="overflow-x-auto">
@@ -13,6 +13,7 @@
                     <tr class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
                         <th class="py-2 text-left font-medium">Clippeur</th>
                         <th class="py-2 text-right font-medium">Clips refusés</th>
+                        <th class="py-2 text-right font-medium">Reprises à vérifier</th>
                         <th class="py-2 pl-6 text-left font-medium">Campagne</th>
                         <th class="py-2 text-right font-medium">Dernier signalement</th>
                     </tr>
@@ -33,7 +34,8 @@
                                     <span class="ml-1 text-xs font-medium text-danger-600 dark:text-danger-400">banni</span>
                                 @endif
                             </td>
-                            <td class="py-2 text-right font-semibold tabular-nums text-danger-600 dark:text-danger-400">{{ $row->clips }}</td>
+                            <td class="py-2 text-right font-semibold tabular-nums text-danger-600 dark:text-danger-400">{{ $row->refused }}</td>
+                            <td class="py-2 text-right font-semibold tabular-nums text-warning-600 dark:text-warning-400">{{ $row->reuploads }}</td>
                             <td class="py-2 pl-6 text-gray-500 dark:text-gray-400">{{ $row->campaigns }}</td>
                             <td class="py-2 text-right tabular-nums text-gray-500 dark:text-gray-400">{{ Carbon::parse($row->last_at)->format('d/m/Y H:i') }}</td>
                         </tr>

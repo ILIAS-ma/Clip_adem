@@ -112,7 +112,10 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
                 ->from('moderation_logs')
                 ->whereColumn('moderation_logs.subject_id', 'clips.id')
                 ->where('moderation_logs.subject_type', (new Clip)->getMorphClass())
-                ->where('moderation_logs.action', ModerationAction::ClipOutsideWindow->value)));
+                ->whereIn('moderation_logs.action', [
+                    ModerationAction::ClipOutsideWindow->value,
+                    ModerationAction::ClipSuspectedReupload->value,
+                ])));
     }
 
     /**

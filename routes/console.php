@@ -35,6 +35,14 @@ Schedule::command('clips:sync')
     ->withoutOverlapping()
     ->runInBackground();
 
+// Une vidéo republiée a un nouvel identifiant et une nouvelle date : seule sa durée et sa
+// légende la trahissent. Chaque clip n'est contrôlé qu'une fois, donc un passage sans
+// nouveau clip ne coûte aucun appel à la plateforme.
+Schedule::command('clips:detect-reuploads')
+    ->everyThirtyMinutes()
+    ->withoutOverlapping()
+    ->runInBackground();
+
 // Avant l'expiration, pas après : un jeton mort ne se découvre sinon qu'au
 // moment où la synchronisation renvoie des 401.
 Schedule::command('social:refresh-tokens')

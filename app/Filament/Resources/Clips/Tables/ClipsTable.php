@@ -138,6 +138,10 @@ class ClipsTable
                     ->label('Publiés hors campagne (signalés)')
                     ->query(fn ($query) => $query->flaggedOutsideWindow()),
 
+                Filter::make('suspected_reupload')
+                    ->label('Reprises probables (à vérifier)')
+                    ->query(fn ($query) => $query->suspectedReupload()),
+
                 Filter::make('suspicious')
                     ->label('Vues suspectes')
                     ->query(fn ($query) => app(SuspiciousViewsDetector::class)->scopeSuspicious($query)),

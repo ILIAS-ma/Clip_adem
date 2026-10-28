@@ -38,9 +38,10 @@ class FlaggedClippers extends Widget
             ->join('users as u', 'u.id', '=', 'c.user_id')
             ->join('campaigns as ca', 'ca.id', '=', 'c.campaign_id')
             ->where('log.subject_type', (new Clip)->getMorphClass())
-            ->where('log.action', ModerationAction::ClipOutsideWindow->value)
+            ->whereIn('log.action', [ModerationAction::ClipOutsideWindow->value, ModerationAction::ClipSuspectedReupload->value])
             ->groupBy('u.id', 'u.name', 'u.pseudo', 'u.role', 'u.is_banned')
             ->selectRaw('u.id, u.name, u.pseudo, u.role, u.is_banned, COUNT(*) as clips, MAX(log.created_at) as last_at')
+            ->selectRaw('SUM(log.action = ?) as refused, SUM(log.action = ?) as reuploads', [ModerationAction::ClipOutsideWindow->value, ModerationAction::ClipSuspectedReupload->value])
             ->selectRaw("GROUP_CONCAT(DISTINCT ca.title ORDER BY ca.title SEPARATOR ' · ') as campaigns")
             ->orderByDesc('clips')
             ->orderByDesc('last_at')
@@ -53,6 +54,8 @@ class FlaggedClippers extends Widget
                 'pseudo' => $row->pseudo,
                 'banned' => (bool) $row->is_banned,
                 'clips' => (int) $row->clips,
+                'refused' => (int) $row->refused,
+                'reuploads' => (int) $row->reuploads,
                 'campaigns' => (string) $row->campaigns,
                 'last_at' => $row->last_at,
                 'url' => $row->role === UserRole::Clipper->value
