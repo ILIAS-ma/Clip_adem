@@ -22,7 +22,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 
 #[Fillable([
-    'creator_id', 'category_id', 'mode', 'contest_prizes', 'contest_post_prizes', 'contest_post_min_views', 'max_clips_per_submission', 'title', 'cover_path', 'slug', 'brief', 'required_hashtags',
+    'creator_id', 'category_id', 'mode', 'contest_prizes', 'contest_post_prizes', 'contest_post_min_views', 'max_clips_per_submission', 'max_clips_per_hour', 'title', 'cover_path', 'slug', 'brief', 'required_hashtags',
     'status', 'currency', 'budget_total_cents', 'min_views_per_clip',
     'min_clips_per_clipper', 'max_payout_per_clip_cents',
     'launch_bonus_cents', 'launch_bonus_slots',
@@ -46,6 +46,7 @@ class Campaign extends Model
             'contest_post_prizes' => 'array',
             'contest_post_min_views' => 'integer',
             'max_clips_per_submission' => 'integer',
+            'max_clips_per_hour' => 'integer',
             'prizes_paid_at' => 'datetime',
             'contest_winners' => 'array',
             'required_hashtags' => 'array',
@@ -168,6 +169,14 @@ class Campaign extends Model
     public function submissionBatchLimit(): ?int
     {
         $limit = (int) ($this->max_clips_per_submission ?? 0);
+
+        return $limit > 0 ? $limit : null;
+    }
+
+    /** Vidéos qu'un clippeur peut soumettre par heure glissante, ou null s'il n'y a pas de limite. */
+    public function hourlySubmissionLimit(): ?int
+    {
+        $limit = (int) ($this->max_clips_per_hour ?? 0);
 
         return $limit > 0 ? $limit : null;
     }

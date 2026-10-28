@@ -176,6 +176,16 @@ class CampaignForm
                             .'ça évite de déverser des dizaines de vidéos d’un coup, surtout à la fin d’un classement.')
                         ->columnSpanFull(),
 
+                    TextInput::make('max_clips_per_hour')
+                        ->label('Vidéos maximum par heure et par clippeur')
+                        ->numeric()
+                        ->integer()
+                        ->minValue(1)
+                        ->suffix('par heure')
+                        ->helperText('Vide = pas de limite. Compté sur les 60 dernières minutes : un clippeur qui a atteint la limite '
+                            .'doit attendre qu’une de ses soumissions ait plus d’une heure avant d’en ajouter une autre.')
+                        ->columnSpanFull(),
+
                     // En classement, le budget est exactement la somme des prix,
                     // recalculée à l'enregistrement (voir withContestBudget()) :
                     // le saisir à part permettrait de promettre plus que ce qui

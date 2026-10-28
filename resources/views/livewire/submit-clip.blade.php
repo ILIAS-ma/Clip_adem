@@ -13,12 +13,12 @@
         loaded: false,
         selected: [],
         removed: [],
-        limit: @js($campaign->submissionBatchLimit()),
+        limit: @js($this->allowance()),
         toggle(key) {
             const i = this.selected.indexOf(key);
             if (i !== -1) { this.selected.splice(i, 1); return; }
             // Limite d'envoi de la campagne : on ne dépasse pas, le bouton l'explique.
-            if (this.limit && this.selected.length >= this.limit) { return; }
+            if (this.limit !== null && this.selected.length >= this.limit) { return; }
             this.selected.push(key);
         },
         // Un clip déjà soumis se décoche pour être retiré, et se recoche pour être gardé.
@@ -29,7 +29,7 @@
         get changes() { return this.selected.length + this.removed.length; },
         label() {
             const parts = [];
-            if (this.limit && this.selected.length >= this.limit) parts.push('limite de ' + this.limit + ' atteinte');
+            if (this.limit !== null && this.selected.length >= this.limit) parts.push(this.limit === 0 ? 'limite horaire atteinte' : 'limite de ' + this.limit + ' atteinte');
             else if (this.selected.length) parts.push(this.selected.length + (this.selected.length > 1 ? ' ajoutées' : ' ajoutée'));
             if (this.removed.length) parts.push(this.removed.length + (this.removed.length > 1 ? ' retirées' : ' retirée'));
             return parts.length ? 'Enregistrer · ' + parts.join(' · ') : 'Touchez une vidéo pour la choisir';

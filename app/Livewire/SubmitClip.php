@@ -81,23 +81,60 @@ class SubmitClip extends Component
      * @param  list<string>  $add  « compte:vidéo » à soumettre
      * @param  list<string>  $remove  « compte:vidéo » à retirer
      */
+    /** Ce que le clippeur peut envoyer maintenant, pour la grille ; null = sans limite. */
+    public function allowance(): ?int
+    {
+        return app(ClipSubmissionService::class)->allowance($this->campaign, auth()->user());
+    }
+
+    protected function allowanceMessage(ClipSubmissionService $clips, int $wanted, int $allowance): string
+    {
+        $campaign = $this->campaign;
+        $perHour = $campaign->hourlySubmissionLimit();
+        $hourlyLeft = $perHour !== null ? max(0, $perHour - $clips->submittedInLastHour($campaign, auth()->user())) : null;
+
+        if ($hourlyLeft === 0) {
+            $next = $clips->nextSlotAt($campaign, auth()->user());
+
+            return sprintf(
+                'Cette campagne limite les envois à %d vidéo%s par heure. Tu pourras en envoyer une autre %s.',
+                $perHour,
+                $perHour > 1 ? 's' : '',
+                $next ? 'à '.$next->timezone(config('app.timezone'))->format('H\hi') : 'dans moins d’une heure',
+            );
+        }
+
+        if ($perHour !== null && $hourlyLeft < ($campaign->submissionBatchLimit() ?? PHP_INT_MAX)) {
+            return sprintf(
+                'Cette campagne limite les envois à %d vidéo%s par heure : tu peux en envoyer %d maintenant, et tu en as choisi %d.',
+                $perHour,
+                $perHour > 1 ? 's' : '',
+                $allowance,
+                $wanted,
+            );
+        }
+
+        return sprintf(
+            'Cette campagne limite chaque envoi à %d vidéos : tu en as choisi %d. Enregistre-en %d, puis choisis les suivantes.',
+            $allowance,
+            $wanted,
+            $allowance,
+        );
+    }
+
     public function save(array $add, array $remove, ClipSubmissionService $clips, ClipPicker $picker, ParticipationService $participations): void
     {
         $added = 0;
         $removed = 0;
         $refusals = [];
 
-        // Une limite d'envoi propre à la campagne : refusée en bloc, sans rien enregistrer à moitié.
-        $limit = $this->campaign->submissionBatchLimit();
+        // Les limites de la campagne (par envoi, par heure) : refusées en bloc, sans rien enregistrer à moitié.
+        $wanted = count(array_unique($add));
+        $allowance = $clips->allowance($this->campaign, auth()->user());
 
-        if ($limit !== null && count(array_unique($add)) > $limit) {
+        if ($allowance !== null && $wanted > $allowance) {
             $this->loadVideos($picker);
-            $this->pickError = sprintf(
-                'Cette campagne limite chaque envoi à %d vidéos : tu en as choisi %d. Enregistre-en %d, puis choisis les suivantes.',
-                $limit,
-                count(array_unique($add)),
-                $limit,
-            );
+            $this->pickError = $this->allowanceMessage($clips, $wanted, $allowance);
 
             return;
         }

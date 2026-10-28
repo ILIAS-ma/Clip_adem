@@ -10,6 +10,7 @@ use App\Models\Campaign;
 use App\Models\Clip;
 use App\Models\SocialAccount;
 use App\Models\User;
+use App\Services\Clips\ClipSubmissionService;
 use App\Services\Clips\ParticipationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -28,13 +29,14 @@ class SubmissionBatchLimitTest extends TestCase
         config()->set('services.tiktok.client_key', null);
     }
 
-    protected function picker(?int $limit): array
+    protected function picker(?int $limit, ?int $perHour = null): array
     {
         $campaign = Campaign::factory()->contest([10_000])->create([
             'status' => CampaignStatus::Active,
             'starts_at' => now()->subHours(150),
             'ends_at' => now()->addDays(5),
             'max_clips_per_submission' => $limit,
+            'max_clips_per_hour' => $perHour,
         ]);
         $clipper = User::factory()->create([
             'role' => UserRole::Clipper, 'email_verified_at' => now(), 'pseudo' => 'lea'.fake()->unique()->numberBetween(1, 9999),
@@ -84,6 +86,63 @@ class SubmissionBatchLimitTest extends TestCase
 
         $this->assertSame(8, Clip::count());
         $this->assertNull($campaign->submissionBatchLimit());
+    }
+
+    #[Test]
+    public function one_video_per_hour_lets_the_first_through_and_blocks_the_second_with_the_time_to_wait(): void
+    {
+        [$campaign, $page, $keys] = $this->picker(8, 1);
+
+        $page->call('save', $keys->take(1)->all(), [])->assertRedirect(route('campaigns.show', $campaign));
+        $this->assertSame(1, Clip::count());
+
+        $second = $page->call('loadVideos')->call('save', $keys->slice(1, 1)->all(), [])->assertNoRedirect();
+
+        $this->assertSame(1, Clip::count());
+        $this->assertStringContainsString('1 vidéo par heure', (string) $second->get('pickError'));
+        $this->assertStringContainsString('Tu pourras en envoyer une autre à', (string) $second->get('pickError'));
+    }
+
+    #[Test]
+    public function the_hourly_limit_frees_up_once_the_last_submission_is_over_an_hour_old(): void
+    {
+        [$campaign, $page, $keys] = $this->picker(8, 1);
+
+        $page->call('save', $keys->take(1)->all(), []);
+        Clip::query()->update(['submitted_at' => now()->subMinutes(61)]);
+
+        $page->call('loadVideos')->call('save', $keys->slice(1, 1)->all(), [])->assertRedirect(route('campaigns.show', $campaign));
+
+        $this->assertSame(2, Clip::count());
+    }
+
+    #[Test]
+    public function several_videos_per_hour_count_what_is_left(): void
+    {
+        [, $page, $keys] = $this->picker(null, 3);
+
+        $page->call('save', $keys->take(2)->all(), []);
+        $this->assertSame(2, Clip::count());
+
+        $refused = $page->call('loadVideos')->call('save', $keys->slice(2, 2)->all(), []);
+
+        $this->assertSame(2, Clip::count());
+        $this->assertStringContainsString('tu peux en envoyer 1 maintenant', (string) $refused->get('pickError'));
+    }
+
+    #[Test]
+    public function the_hourly_limit_is_per_clipper_not_shared(): void
+    {
+        [$campaign, , $keys] = $this->picker(null, 1);
+
+        $other = User::factory()->create([
+            'role' => UserRole::Clipper, 'email_verified_at' => now(), 'pseudo' => 'autre'.fake()->unique()->numberBetween(1, 9999),
+            'country' => 'FR', 'paypal_email' => fake()->unique()->safeEmail(),
+        ]);
+
+        $this->assertNull(app(ClipSubmissionService::class)->nextSlotAt($campaign, $other));
+        $this->assertSame(1, app(ClipSubmissionService::class)->allowance($campaign, $other));
+        $this->assertNotEmpty($keys);
     }
 
     #[Test]

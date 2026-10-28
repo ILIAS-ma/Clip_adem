@@ -99,6 +99,53 @@ class ClipSubmissionService
      *
      * @throws ClipSubmissionRefused
      */
+    /**
+     * Combien de vidéos ce clippeur peut envoyer maintenant sur cette campagne, ou null
+     * s'il n'y a aucune limite : la plus petite de la limite par envoi et de ce qu'il
+     * reste de la cadence horaire (soumissions des 60 dernières minutes déduites).
+     */
+    public function allowance(Campaign $campaign, User $clipper): ?int
+    {
+        $perBatch = $campaign->submissionBatchLimit();
+        $perHour = $campaign->hourlySubmissionLimit();
+
+        if ($perHour !== null) {
+            $perHour = max(0, $perHour - $this->submittedInLastHour($campaign, $clipper));
+        }
+
+        return match (true) {
+            $perBatch !== null && $perHour !== null => min($perBatch, $perHour),
+            default => $perBatch ?? $perHour,
+        };
+    }
+
+    public function submittedInLastHour(Campaign $campaign, User $clipper): int
+    {
+        return Clip::where('campaign_id', $campaign->getKey())
+            ->where('user_id', $clipper->getKey())
+            ->where('submitted_at', '>', now()->subHour())
+            ->count();
+    }
+
+    /** Quand la prochaine place se libère, si la cadence horaire est atteinte. */
+    public function nextSlotAt(Campaign $campaign, User $clipper): ?Carbon
+    {
+        $limit = $campaign->hourlySubmissionLimit();
+
+        if ($limit === null) {
+            return null;
+        }
+
+        $times = Clip::where('campaign_id', $campaign->getKey())
+            ->where('user_id', $clipper->getKey())
+            ->where('submitted_at', '>', now()->subHour())
+            ->orderBy('submitted_at')
+            ->pluck('submitted_at');
+
+        // La place se libère quand la plus ancienne des soumissions qui comptent a une heure.
+        return $times->count() >= $limit ? $times[$times->count() - $limit]->copy()->addHour() : null;
+    }
+
     public function withdraw(Clip $clip, User $clipper): void
     {
         abort_unless($clip->user_id === $clipper->getKey(), 403);
