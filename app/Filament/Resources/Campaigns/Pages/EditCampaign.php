@@ -9,6 +9,7 @@ use App\Filament\Resources\Campaigns\CampaignResource;
 use App\Filament\Resources\Campaigns\Schemas\CampaignForm;
 use App\Filament\Widgets\CampaignBudgetOverview;
 use App\Models\Campaign;
+use App\Services\Campaigns\CampaignStats;
 use App\Services\Campaigns\ContestReport;
 use App\Services\Campaigns\ContestService;
 use App\Support\Budget\CreditOutcome;
@@ -50,6 +51,7 @@ class EditCampaign extends EditRecord
                 ->color('primary'),
 
             $this->standingsAction(),
+            $this->exportStatsAction(),
             $this->awardRewardsAction(),
 
             DeleteAction::make(),
@@ -100,6 +102,21 @@ class EditCampaign extends EditRecord
                 }))
             ->values()
             ->all();
+    }
+
+    /** Toutes les statistiques de la campagne dans un classeur Excel : classements, clippeurs, clips, modération. */
+    protected function exportStatsAction(): Action
+    {
+        return Action::make('exportStats')
+            ->label('Exporter (Excel)')
+            ->icon('heroicon-o-arrow-down-tray')
+            ->color('gray')
+            ->action(function () {
+                $stats = app(CampaignStats::class);
+                $campaign = $this->getRecord();
+
+                return response()->download($stats->export($campaign), $stats->filename($campaign))->deleteFileAfterSend(true);
+            });
     }
 
     /** Le classement en cours (ou arrêté), tel que le voient les clippeurs. */
