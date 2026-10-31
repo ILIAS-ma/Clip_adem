@@ -13,6 +13,7 @@ use App\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Common\Entity\Style\Color;
 use OpenSpout\Common\Entity\Style\Style;
@@ -153,7 +154,8 @@ class CampaignStats
 
     public function filename(Campaign $campaign): string
     {
-        return 'stats-'.($campaign->slug ?: 'campagne-'.$campaign->getKey()).'-'.now()->format('Y-m-d').'.xlsx';
+        // Le titre, pas l'identifiant technique : « DJIBRIL94 x LIGUE1 » se lit, son slug non.
+        return 'stats-'.(Str::slug($campaign->title) ?: 'campagne-'.$campaign->getKey()).'-'.now()->format('Y-m-d').'.xlsx';
     }
 
     // ------------------------------------------------------------------

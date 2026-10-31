@@ -194,7 +194,7 @@ class CampaignStatsExportTest extends TestCase
             ->assertSee('Augustin Cha')
             ->assertSee('70 900')
             ->call('export')
-            ->assertFileDownloaded('stats-'.$this->campaign->slug.'-'.now()->format('Y-m-d').'.xlsx');
+            ->assertFileDownloaded('stats-djibril94-x-ligue1-'.now()->format('Y-m-d').'.xlsx');
     }
 
     #[Test]
