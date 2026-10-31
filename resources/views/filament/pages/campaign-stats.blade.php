@@ -71,12 +71,9 @@
                                 <tr class="text-gray-500 dark:text-gray-400" style="text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;">
                                     <th style="padding:.4rem .6rem .4rem 0;">Clippeur</th>
                                     <th style="padding:.4rem .6rem;text-align:right;">Soumis</th>
-                                    <th style="padding:.4rem .6rem;text-align:right;">Validés</th>
-                                    <th style="padding:.4rem .6rem;text-align:right;">Refusés</th>
                                     <th style="padding:.4rem .6rem;text-align:right;">Vues</th>
                                     <th style="padding:.4rem .6rem;text-align:right;">Moy. / clip</th>
-                                    <th style="padding:.4rem .6rem;text-align:right;">Meilleur clip</th>
-                                    <th style="padding:.4rem 0 .4rem .6rem;text-align:right;">Signalés</th>
+                                    <th style="padding:.4rem 0 .4rem .6rem;text-align:right;">Meilleur clip</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -86,12 +83,9 @@
                                             {{ $row['name'] }}@if ($row['pseudo'] && $row['pseudo'] !== $row['name'])<span class="text-gray-500 dark:text-gray-400" style="font-weight:400;"> · {{ $row['pseudo'] }}</span>@endif
                                         </td>
                                         <td style="padding:.5rem .6rem;text-align:right;font-variant-numeric:tabular-nums;">{{ $row['submitted'] }}</td>
-                                        <td style="padding:.5rem .6rem;text-align:right;font-variant-numeric:tabular-nums;">{{ $row['approved'] }}</td>
-                                        <td style="padding:.5rem .6rem;text-align:right;font-variant-numeric:tabular-nums;">{{ $row['rejected'] ?: '—' }}</td>
                                         <td style="padding:.5rem .6rem;text-align:right;font-variant-numeric:tabular-nums;font-weight:700;">{{ number_format($row['views'], 0, ',', ' ') }}</td>
                                         <td style="padding:.5rem .6rem;text-align:right;font-variant-numeric:tabular-nums;">{{ number_format($row['average'], 0, ',', ' ') }}</td>
-                                        <td style="padding:.5rem .6rem;text-align:right;font-variant-numeric:tabular-nums;">{{ number_format($row['best'], 0, ',', ' ') }}</td>
-                                        <td style="padding:.5rem 0 .5rem .6rem;text-align:right;{{ $row['flags'] ? 'color:rgb(var(--danger-500));font-weight:700;' : '' }}">{{ $row['flags'] ?: '—' }}</td>
+                                        <td style="padding:.5rem 0 .5rem .6rem;text-align:right;font-variant-numeric:tabular-nums;">{{ number_format($row['best'], 0, ',', ' ') }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -108,16 +102,11 @@
                                     {{ number_format($row['views'], 0, ',', ' ') }} <span class="text-gray-500 dark:text-gray-400" style="font-size:.8rem;font-weight:500;">vues</span>
                                 </div>
                                 <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.4rem;font-size:.8rem;">
-                                    <div><div class="text-gray-500 dark:text-gray-400">Validés</div><strong>{{ $row['approved'] }}</strong> <span class="text-gray-500 dark:text-gray-400">/ {{ $row['submitted'] }}</span></div>
+                                    <div><div class="text-gray-500 dark:text-gray-400">Clips</div><strong>{{ $row['submitted'] }}</strong></div>
                                     <div><div class="text-gray-500 dark:text-gray-400">Moy. / clip</div><strong>{{ number_format($row['average'], 0, ',', ' ') }}</strong></div>
                                     <div><div class="text-gray-500 dark:text-gray-400">Meilleur</div><strong>{{ number_format($row['best'], 0, ',', ' ') }}</strong></div>
                                 </div>
-                                @if ($row['rejected'] || $row['flags'])
-                                    <div style="margin-top:.5rem;display:flex;flex-wrap:wrap;gap:.4rem;font-size:.75rem;font-weight:600;">
-                                        @if ($row['rejected'])<span style="padding:.15rem .5rem;border-radius:999px;background:rgba(128,128,128,.2);">{{ $row['rejected'] }} refusé{{ $row['rejected'] > 1 ? 's' : '' }}</span>@endif
-                                        @if ($row['flags'])<span style="padding:.15rem .5rem;border-radius:999px;background:rgba(var(--danger-500),.15);color:rgb(var(--danger-500));">⚠ {{ $row['flags'] }} signalé{{ $row['flags'] > 1 ? 's' : '' }}</span>@endif
-                                    </div>
-                                @endif
+
                             </div>
                         @endforeach
                     </div>
