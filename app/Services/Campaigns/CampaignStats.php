@@ -167,11 +167,9 @@ class CampaignStats
 
         return [
             ['label' => 'Clippeurs', 'value' => $this->number($clips->pluck('user_id')->unique()->count())],
-            ['label' => 'Clips validés', 'value' => $this->number($counted->count())],
+            ['label' => 'Clips', 'value' => $this->number($counted->count())],
             ['label' => 'Vues', 'value' => $this->number($views)],
             ['label' => 'Vues par clip', 'value' => $this->number($counted->count() ? intdiv($views, $counted->count()) : 0)],
-            ['label' => 'Clips refusés', 'value' => $this->number($clips->where('status', ClipStatus::Rejected)->count())],
-            ['label' => 'Signalés', 'value' => $this->number($flags->count())],
         ];
     }
 
