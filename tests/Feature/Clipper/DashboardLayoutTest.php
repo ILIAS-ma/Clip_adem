@@ -102,9 +102,10 @@ class DashboardLayoutTest extends TestCase
         Campaign::factory()->create(['title' => 'Campagne terminée', 'status' => CampaignStatus::Active, 'starts_at' => now()->subDays(9), 'ends_at' => now()->subDay()]);
         CampaignParticipation::factory()->create(['campaign_id' => $joined->id, 'user_id' => $clipper->id]);
 
-        // Le parcours « Pour démarrer » est terminé : compte lié, campagne rejointe, clip publié, minimum atteint.
+        // Le parcours « Pour démarrer » est terminé : compte lié, campagne rejointe, clip publié. Le solde est
+        // à zéro : atteindre le minimum de retrait n'est pas une étape de démarrage, il ne doit pas bloquer la liste.
         SocialAccount::factory()->create(['user_id' => $clipper->id, 'platform' => Platform::TikTok]);
-        Clip::factory()->create(['campaign_id' => $joined->id, 'user_id' => $clipper->id, 'earned_cents' => 5_000]);
+        Clip::factory()->create(['campaign_id' => $joined->id, 'user_id' => $clipper->id, 'earned_cents' => 0]);
 
         $this->actingAs($clipper)
             ->get(route('dashboard'))

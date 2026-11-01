@@ -102,9 +102,8 @@
                     : ['fait' => $clips->isNotEmpty(), 'titre' => 'Publier votre premier clip',
                        'detail' => 'Publiez-le sur votre compte, puis collez son lien sur la campagne.',
                        'lien' => route('campaigns.index'), 'action' => 'Campagnes', 'navigate' => true],
-                ['fait' => $manque === 0, 'titre' => 'Atteindre '.Money::euros($minimum),
-                 'detail' => 'Le minimum pour demander un retrait PayPal.',
-                 'lien' => route('earnings.index'), 'action' => 'Revenus', 'navigate' => true],
+                // Atteindre le minimum de retrait n'est pas une étape de démarrage : la barre du solde le dit déjà, et
+                // garder « Pour démarrer » ouvert jusque-là cachait les campagnes en cours à un clippeur déjà actif.
             ];
             $faites = collect($etapes)->where('fait', true)->count();
             $prochaine = collect($etapes)->search(fn ($e) => ! $e['fait']);
@@ -112,8 +111,8 @@
 
         <div class="grid gap-4 lg:grid-cols-5">
 
-            {{-- Le solde, et en dessous les trois chiffres qui l'expliquent :
-                 une seule carte au lieu de quatre, sans vide au milieu. --}}
+            {{-- Le solde, et en dessous les deux chiffres qui l'expliquent (vues, total généré) :
+                 une seule carte d'argent, prix à recevoir compris. --}}
             <div class="hero-balance card relative flex flex-col overflow-hidden lg:col-span-3">
                 <div class="flex-1 p-7 sm:p-8">
                     <p class="text-sm font-medium text-ink-300">Solde retirable</p>
