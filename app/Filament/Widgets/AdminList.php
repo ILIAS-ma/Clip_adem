@@ -17,7 +17,7 @@ class AdminList extends Widget
 {
     protected string $view = 'filament.widgets.admin-list';
 
-    protected static ?int $sort = 5;
+    protected static ?int $sort = 8;
 
     protected int|string|array $columnSpan = 'full';
 

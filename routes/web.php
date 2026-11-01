@@ -9,6 +9,7 @@ use App\Http\Controllers\Clipper\EarningsController;
 use App\Http\Controllers\Clipper\LeaderboardController;
 use App\Http\Controllers\Clipper\LegalStatusController;
 use App\Http\Controllers\Clipper\PayoutMethodController;
+use App\Http\Controllers\Clipper\PrizeClaimController;
 use App\Http\Controllers\Clipper\ProfileCompletionController;
 use App\Http\Controllers\Clipper\ReferralController;
 use App\Http\Controllers\Clipper\SocialAccountController;
@@ -308,6 +309,9 @@ Route::middleware(['auth', 'not.banned', 'role:clipper'])->group(function () use
             ->name('accounts.destroy');
 
         Route::get('/revenus', [EarningsController::class, 'index'])->name('earnings.index');
+        Route::post('/revenus/prix/{campaign}/reclamer', [PrizeClaimController::class, 'store'])
+            ->middleware('throttle:10,1')
+            ->name('prizes.claim');
 
         Route::get('/parrainage', ReferralController::class)->name('referrals.index');
 

@@ -6,6 +6,7 @@ use App\Contracts\CampaignBudgetService;
 use App\Http\Controllers\Controller;
 use App\Models\BudgetTransaction;
 use App\Models\Clip;
+use App\Services\Clippers\ClipperPrizes;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -31,6 +32,7 @@ class EarningsController extends Controller
             ),
 
             'balanceCents' => $clipper->availableBalanceCents(),
+            'prizes' => app(ClipperPrizes::class)->for($clipper),
             'lockedCents' => $clipper->lockedPayoutCents(),
             'minimumCents' => config('clipping.payouts.minimum_cents'),
 

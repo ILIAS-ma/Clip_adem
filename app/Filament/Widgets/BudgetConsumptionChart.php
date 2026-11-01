@@ -16,9 +16,11 @@ class BudgetConsumptionChart extends ChartWidget
 {
     protected ?string $heading = 'Consommation du budget (30 jours)';
 
-    protected static ?int $sort = 2;
+    protected static ?int $sort = 4;
 
     protected int|string|array $columnSpan = 'full';
+
+    protected ?string $maxHeight = '260px';
 
     protected function getType(): string
     {

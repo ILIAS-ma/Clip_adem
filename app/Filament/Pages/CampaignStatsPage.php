@@ -7,6 +7,7 @@ use App\Services\Campaigns\CampaignStats;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
+use Livewire\Attributes\Url;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
@@ -29,6 +30,8 @@ class CampaignStatsPage extends Page
 
     protected string $view = 'filament.pages.campaign-stats';
 
+    // Dans l'adresse : le tableau de bord ouvre directement la campagne choisie.
+    #[Url]
     public ?int $campaignId = null;
 
     public static function canAccess(): bool
@@ -39,7 +42,7 @@ class CampaignStatsPage extends Page
     public function mount(): void
     {
         // La campagne en cours la plus récente, à défaut la dernière créée.
-        $this->campaignId = (Campaign::query()->orderByDesc('starts_at')->orderByDesc('id')->value('id'));
+        $this->campaignId ??= Campaign::query()->orderByDesc('starts_at')->orderByDesc('id')->value('id');
     }
 
     /** @return array<int, string> */

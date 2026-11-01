@@ -9,7 +9,7 @@
     // Médailles : or, argent, bronze — le même repère que sur le site des clippeurs.
     $medals = [1 => ['#F5C542', '#4a3500'], 2 => ['#CBD5E1', '#1e293b'], 3 => ['#CD7F32', '#ffffff']];
     $card = 'border:1px solid rgba(128,128,128,.25);background:rgba(128,128,128,.07);border-radius:.85rem;';
-    $muted = 'color:rgb(var(--gray-500));';
+    $muted = 'color:var(--gray-500);';
 @endphp
 
 {{--
@@ -39,8 +39,8 @@
             ['Récompenses', $stats['prize_pool_cents'] > 0 ? number_format($stats['prize_pool_cents'] / 100, 0, ',', ' ').' €' : 'Lots', null],
             ['Clips écartés', number_format($stats['refused'], 0, ',', ' '), $stats['refused'] > 0 ? 'danger' : null],
         ] as [$label, $value, $tone])
-            <div style="{{ $card }}padding:.85rem 1rem;{{ $tone === 'danger' ? 'border-color:rgb(var(--danger-500));background:rgba(var(--danger-500),.1);' : '' }}">
-                <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;{{ $tone === 'danger' ? 'color:rgb(var(--danger-500));' : $muted }}">{{ $label }}</div>
+            <div style="{{ $card }}padding:.85rem 1rem;{{ $tone === 'danger' ? 'border-color:var(--danger-500);background:color-mix(in oklab, var(--danger-500) 10%, transparent);' : '' }}">
+                <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;{{ $tone === 'danger' ? 'color:var(--danger-500);' : $muted }}">{{ $label }}</div>
                 <div style="font-size:1.55rem;font-weight:700;line-height:1.2;margin-top:.15rem;font-variant-numeric:tabular-nums;">{{ $value }}</div>
                 @if ($label === 'Clips écartés')
                     <div style="font-size:.72rem;{{ $muted }}">publiés hors campagne</div>
@@ -51,8 +51,8 @@
 
     {{-- Les signalés : ceux dont des clips ont été refusés parce qu'ils n'ont pas été faits pendant la campagne --}}
     @if ($flagged !== [])
-        <div style="border:1px solid rgb(var(--danger-500));background:rgba(var(--danger-500),.08);border-radius:.85rem;padding:.9rem 1rem;">
-            <div style="font-weight:700;color:rgb(var(--danger-500));">
+        <div style="border:1px solid var(--danger-500);background:color-mix(in oklab, var(--danger-500) 8%, transparent);border-radius:.85rem;padding:.9rem 1rem;">
+            <div style="font-weight:700;color:var(--danger-500);">
                 ⚠ {{ count($flagged) }} clippeur{{ count($flagged) > 1 ? 's' : '' }} signalé{{ count($flagged) > 1 ? 's' : '' }}
             </div>
             <p class="text-sm text-gray-500 dark:text-gray-400" style="margin:.2rem 0 .6rem;">
@@ -68,7 +68,7 @@
                                 <span style="font-weight:600;">{{ $person->name }}</span>
                             @endif
                             @if ($person->pseudo)<span style="{{ $muted }}"> · {{ $person->pseudo }}</span>@endif
-                            @if ($person->banned)<span style="color:rgb(var(--danger-500));font-weight:600;"> · banni</span>@endif
+                            @if ($person->banned)<span style="color:var(--danger-500);font-weight:600;"> · banni</span>@endif
                         </span>
                         <span style="font-size:.85rem;{{ $muted }}">
                             {{ $person->count }} clip{{ $person->count > 1 ? 's' : '' }} refusé{{ $person->count > 1 ? 's' : '' }}
@@ -85,7 +85,7 @@
         @foreach ($boards as $b)
             <button type="button" x-on:click="board = @js($b['metric']->value)"
                     :style="board === @js($b['metric']->value)
-                        ? 'background:rgb(var(--primary-600));color:#fff;border-color:rgb(var(--primary-600));'
+                        ? 'background:var(--primary-600);color:#fff;border-color:var(--primary-600);'
                         : 'background:transparent;border-color:rgba(128,128,128,.35);'"
                     style="padding:.45rem 1rem;border-radius:999px;border:1px solid;font-size:.875rem;font-weight:600;cursor:pointer;">
                 {{ $b['metric']->title() }}
@@ -129,10 +129,10 @@
                             </div>
                             <div style="margin-top:.65rem;display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;">
                                 @if ($row->reward)
-                                    <span style="padding:.2rem .6rem;border-radius:999px;background:rgba(var(--primary-500),.15);color:rgb(var(--primary-600));font-size:.8rem;font-weight:700;">{{ $row->reward }}</span>
+                                    <span style="padding:.2rem .6rem;border-radius:999px;background:color-mix(in oklab, var(--primary-500) 15%, transparent);color:var(--primary-600);font-size:.8rem;font-weight:700;">{{ $row->reward }}</span>
                                 @endif
                                 @if ($row->flagged > 0)
-                                    <span style="padding:.2rem .6rem;border-radius:999px;background:rgba(var(--danger-500),.15);color:rgb(var(--danger-500));font-size:.75rem;font-weight:700;">
+                                    <span style="padding:.2rem .6rem;border-radius:999px;background:color-mix(in oklab, var(--danger-500) 15%, transparent);color:var(--danger-500);font-size:.75rem;font-weight:700;">
                                         ⚠ {{ $row->flagged }} refusé{{ $row->flagged > 1 ? 's' : '' }}
                                     </span>
                                 @endif
@@ -167,12 +167,12 @@
                                             @endif
                                             @if ($row->pseudo)<span style="{{ $muted }}"> · {{ $row->pseudo }}</span>@endif
                                             @if ($row->flagged > 0)
-                                                <span style="margin-left:.35rem;padding:.1rem .45rem;border-radius:999px;background:rgba(var(--danger-500),.15);color:rgb(var(--danger-500));font-size:.7rem;font-weight:700;">⚠ {{ $row->flagged }}</span>
+                                                <span style="margin-left:.35rem;padding:.1rem .45rem;border-radius:999px;background:color-mix(in oklab, var(--danger-500) 15%, transparent);color:var(--danger-500);font-size:.7rem;font-weight:700;">⚠ {{ $row->flagged }}</span>
                                             @endif
                                         </td>
                                         <td style="padding:.55rem .6rem;">
                                             <div style="height:.45rem;border-radius:999px;background:rgba(128,128,128,.2);overflow:hidden;">
-                                                <div style="height:100%;border-radius:999px;background:rgb(var(--primary-500));width:{{ max(2, (int) round($row->score / $b['leader'] * 100)) }}%;"></div>
+                                                <div style="height:100%;border-radius:999px;background:var(--primary-500);width:{{ max(2, (int) round($row->score / $b['leader'] * 100)) }}%;"></div>
                                             </div>
                                         </td>
                                         <td style="padding:.55rem .6rem;text-align:right;font-variant-numeric:tabular-nums;{{ $metric === ContestMetric::Posts ? 'font-weight:700;' : '' }}">{{ $row->clips }}</td>

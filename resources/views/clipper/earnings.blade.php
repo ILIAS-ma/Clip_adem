@@ -38,6 +38,8 @@
                     :hint="'Minimum '.Money::euros($minimumCents)" />
         </div>
 
+        @include('clipper.partials.prizes')
+
         <div class="grid gap-6 lg:grid-cols-3">
 
             <div class="card p-6">

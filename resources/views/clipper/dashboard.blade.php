@@ -117,6 +117,8 @@
             $prochaine = collect($etapes)->search(fn ($e) => ! $e['fait']);
         @endphp
 
+        @include('clipper.partials.prizes')
+
         <div class="grid gap-4 lg:grid-cols-5">
 
             {{-- Le solde, et en dessous les trois chiffres qui l'expliquent :

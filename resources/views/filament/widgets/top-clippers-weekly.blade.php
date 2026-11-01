@@ -4,37 +4,25 @@
         <x-slot name="description">Vues gagnées cette semaine, invalidations déduites</x-slot>
 
         @if ($clippers->isEmpty())
-            <p class="text-sm text-gray-500 dark:text-gray-400">
-                Aucune vue créditée cette semaine.
-            </p>
+            <p class="ad-empty">Aucune vue créditée cette semaine.</p>
         @else
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
+            <div class="ad-wrap">
+                <table class="ad-table">
                     <thead>
-                        <tr class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                            <th class="py-2 text-left font-medium">#</th>
-                            <th class="py-2 text-left font-medium">Clippeur</th>
-                            <th class="py-2 text-right font-medium">Vues (7j)</th>
+                        <tr>
+                            <th>Clippeur</th>
+                            <th class="r">Vues (7 j)</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-ink-700">
+                    <tbody>
                         @foreach ($clippers as $clipper)
                             <tr>
-                                <td class="py-2 text-gray-500 dark:text-gray-400 tabular-nums">
-                                    {{ $loop->iteration }}
+                                <td class="main">
+                                    <span class="ad-muted" style="font-weight:400;">{{ $loop->iteration }}.</span>
+                                    <a href="{{ $resourceUrl($clipper->id) }}" class="ad-link">{{ $clipper->name }}</a>
+                                    @if ($clipper->is_banned)<span class="ad-bad">banni</span>@endif
                                 </td>
-                                <td class="py-2">
-                                    <a href="{{ $resourceUrl($clipper->id) }}"
-                                       class="font-medium text-primary-600 hover:underline dark:text-primary-400">
-                                        {{ $clipper->name }}
-                                    </a>
-                                    @if ($clipper->is_banned)
-                                        <span class="ml-1 text-xs font-medium text-danger-600 dark:text-danger-400">banni</span>
-                                    @endif
-                                </td>
-                                <td class="py-2 text-right font-medium tabular-nums">
-                                    {{ number_format($clipper->views, 0, ',', ' ') }}
-                                </td>
+                                <td class="r" data-label="Vues (7 j)"><strong>{{ number_format($clipper->views, 0, ',', ' ') }}</strong></td>
                             </tr>
                         @endforeach
                     </tbody>

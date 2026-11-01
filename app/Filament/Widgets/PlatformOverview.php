@@ -8,9 +8,12 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class PlatformOverview extends StatsOverviewWidget
 {
-    protected static ?int $sort = 1;
+    protected static ?int $sort = 3;
 
     protected int|string|array $columnSpan = 'full';
+
+    // Deux par ligne sur téléphone : quatre tuiles pleine largeur font un écran de défilement pour rien.
+    protected int|array|null $columns = ['default' => 2, 'lg' => 4];
 
     protected function getStats(): array
     {

@@ -9,6 +9,7 @@ use App\Models\Campaign;
 use App\Models\Clip;
 use App\Models\Message;
 use App\Notifications\BonusGranted;
+use App\Services\Clippers\ClipperPrizes;
 use App\Services\Clippers\ClipperProgressionService;
 use App\Services\Clips\ParticipationService;
 use Illuminate\Http\Request;
@@ -38,6 +39,9 @@ class DashboardController extends Controller
             // Ce qui reste à toucher : le solde fait autorité, jamais un calcul
             // refait dans la vue.
             'balanceCents' => $clipper->availableBalanceCents(),
+
+            // Les prix de classement, du provisoire au versé : un solde à zéro ne dit pas qu'on n'a rien gagné.
+            'prizes' => app(ClipperPrizes::class)->for($clipper),
 
             // Vues comptées mais non rémunérées, toutes campagnes confondues.
             // Les afficher évite qu'un clippeur dont les gains stagnent conclue

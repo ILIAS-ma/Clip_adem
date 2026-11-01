@@ -10,7 +10,7 @@ class TopClippers extends Widget
 {
     protected string $view = 'filament.widgets.top-clippers';
 
-    protected static ?int $sort = 3;
+    protected static ?int $sort = 5;
 
     protected int|string|array $columnSpan = 1;
 

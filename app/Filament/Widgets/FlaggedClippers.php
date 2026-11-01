@@ -22,7 +22,7 @@ class FlaggedClippers extends Widget
     protected string $view = 'filament.widgets.flagged-clippers';
 
     // Avant tout le reste : c'est ce qui demande une décision.
-    protected static ?int $sort = 0;
+    protected static ?int $sort = 1;
 
     protected int|string|array $columnSpan = 'full';
 

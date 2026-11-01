@@ -2,9 +2,11 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Widgets\ActionRequired;
 use App\Filament\Widgets\AdminList;
 use App\Filament\Widgets\BudgetConsumptionChart;
 use App\Filament\Widgets\FlaggedClippers;
+use App\Filament\Widgets\LiveCampaigns;
 use App\Filament\Widgets\PlatformOverview;
 use App\Filament\Widgets\SpendPerCreator;
 use App\Filament\Widgets\TopClippers;
@@ -125,13 +127,17 @@ class AdminPanelProvider extends PanelProvider
             // La connexion temps réel de la messagerie, dans la tête : elle
             // doit exister avant que Livewire n'abonne la boîte de réception.
             ->renderHook(PanelsRenderHook::HEAD_END, fn () => Blade::render("@vite('resources/js/echo.js')"))
+            // Les styles communs des widgets : sans thème compilé, les classes Tailwind d'une vue ne s'appliquent pas.
+            ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('filament.partials.admin-dashboard-css')->render())
             /*
              * Enregistrement explicite plutôt qu'auto-découverte :
              * CampaignBudgetOverview attend une campagne et n'a rien à faire
              * sur le tableau de bord, où elle s'afficherait vide.
              */
             ->widgets([
+                ActionRequired::class,
                 FlaggedClippers::class,
+                LiveCampaigns::class,
                 PlatformOverview::class,
                 BudgetConsumptionChart::class,
                 SpendPerCreator::class,

@@ -16,7 +16,7 @@ class TopClippersWeekly extends Widget
 {
     protected string $view = 'filament.widgets.top-clippers-weekly';
 
-    protected static ?int $sort = 4;
+    protected static ?int $sort = 7;
 
     protected int|string|array $columnSpan = 1;
 
