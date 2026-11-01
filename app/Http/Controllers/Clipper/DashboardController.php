@@ -20,6 +20,7 @@ class DashboardController extends Controller
     public function __invoke(Request $request, CampaignBudgetService $budget, ParticipationService $participations): View
     {
         $clipper = $request->user();
+        $joinedIds = $clipper->participations()->pluck('campaign_id')->all();
 
         $clips = Clip::where('user_id', $clipper->getKey())
             ->with('campaign.creator')
@@ -49,6 +50,22 @@ class DashboardController extends Controller
             'unpaidViews' => $clips->sum(fn (Clip $clip) => $clip->unpaidViews()),
 
             'openCampaigns' => Campaign::where('status', CampaignStatus::Active)->count(),
+
+            // Les campagnes ouvertes, celles qui finissent le plus tôt d'abord, avec le fait d'en être ou non :
+            // ce qu'il y a à faire maintenant, au lieu d'un compteur.
+            'activeCampaigns' => Campaign::visibleToClippers()
+                ->where('status', CampaignStatus::Active)
+                ->where(fn ($q) => $q->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
+                // Une campagne dont la date est passée n'est plus « en cours », même si son statut n'a pas encore été clos.
+                ->where(fn ($q) => $q->whereNull('ends_at')->orWhere('ends_at', '>', now()))
+                ->with('creator')
+                ->orderByRaw('ends_at IS NULL, ends_at')
+                ->limit(4)
+                ->get()
+                ->map(fn (Campaign $campaign) => [
+                    'campaign' => $campaign,
+                    'joined' => in_array($campaign->getKey(), $joinedIds, true),
+                ]),
             'accountsCount' => $clipper->socialAccounts()->count(),
 
             // Pour le parcours « Pour démarrer » et les raccourcis.

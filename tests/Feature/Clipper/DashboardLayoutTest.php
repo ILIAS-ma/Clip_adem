@@ -2,7 +2,13 @@
 
 namespace Tests\Feature\Clipper;
 
+use App\Enums\CampaignStatus;
+use App\Enums\Platform;
 use App\Enums\UserRole;
+use App\Models\Campaign;
+use App\Models\CampaignParticipation;
+use App\Models\Clip;
+use App\Models\SocialAccount;
 use App\Models\User;
 use App\Support\Money;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -71,8 +77,8 @@ class DashboardLayoutTest extends TestCase
             ->get(route('dashboard'))
             ->assertSuccessful()
             ->assertSee('Vues cumulées')
-            ->assertSee('Gains validés')
-            ->assertSee('Comptes liés');
+            ->assertSee('Total généré')
+            ->assertDontSee('Comptes liés');
     }
 
     #[Test]
@@ -85,5 +91,58 @@ class DashboardLayoutTest extends TestCase
             ->assertSuccessful();
 
         $this->assertSame('/revenus', route('earnings.index', absolute: false));
+    }
+
+    #[Test]
+    public function running_campaigns_are_listed_with_their_deadline_and_whether_you_joined(): void
+    {
+        $clipper = $this->clipper();
+        $joined = Campaign::factory()->create(['title' => 'Campagne rejointe', 'status' => CampaignStatus::Active, 'starts_at' => now()->subDay(), 'ends_at' => now()->addDays(3)]);
+        Campaign::factory()->create(['title' => 'Campagne à rejoindre', 'status' => CampaignStatus::Active, 'starts_at' => now()->subDay(), 'ends_at' => now()->addDays(5)]);
+        Campaign::factory()->create(['title' => 'Campagne terminée', 'status' => CampaignStatus::Active, 'starts_at' => now()->subDays(9), 'ends_at' => now()->subDay()]);
+        CampaignParticipation::factory()->create(['campaign_id' => $joined->id, 'user_id' => $clipper->id]);
+
+        // Le parcours « Pour démarrer » est terminé : compte lié, campagne rejointe, clip publié, minimum atteint.
+        SocialAccount::factory()->create(['user_id' => $clipper->id, 'platform' => Platform::TikTok]);
+        Clip::factory()->create(['campaign_id' => $joined->id, 'user_id' => $clipper->id, 'earned_cents' => 5_000]);
+
+        $this->actingAs($clipper)
+            ->get(route('dashboard'))
+            ->assertSuccessful()
+            ->assertSee('Campagnes en cours')
+            ->assertSee('Campagne rejointe')
+            ->assertSee('Rejointe')
+            ->assertSee('Campagne à rejoindre')
+            ->assertSee('À rejoindre')
+            ->assertDontSee('Campagne terminée');
+    }
+
+    #[Test]
+    public function the_account_alert_only_shows_when_something_blocks(): void
+    {
+        $clipper = $this->clipper();
+
+        // Aucun compte lié : l'alerte le dit, une seule fois, avec l'action.
+        $this->actingAs($clipper)->get(route('dashboard'))->assertSee('Liez votre compte TikTok');
+
+        SocialAccount::factory()->create(['user_id' => $clipper->id, 'platform' => Platform::TikTok]);
+
+        $this->actingAs($clipper)->get(route('dashboard'))->assertDontSee('Liez votre compte TikTok')->assertDontSee('à reconnecter');
+
+        SocialAccount::query()->update(['needs_reconnect' => true]);
+
+        $this->actingAs($clipper)->get(route('dashboard'))->assertSee('à reconnecter');
+    }
+
+    #[Test]
+    public function the_balance_is_the_only_big_money_figure(): void
+    {
+        // Un solde, un total : plus de « gains validés » à côté, qui ressemblait à un troisième montant.
+        $this->actingAs($this->clipper())
+            ->get(route('dashboard'))
+            ->assertSuccessful()
+            ->assertSee('Solde retirable')
+            ->assertSee('Total généré')
+            ->assertDontSee('Gains validés');
     }
 }

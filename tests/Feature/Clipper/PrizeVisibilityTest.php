@@ -116,11 +116,19 @@ class PrizeVisibilityTest extends TestCase
         $this->actingAs($winner)
             ->get(route('dashboard'))
             ->assertSuccessful()
-            ->assertSee('Mes gains')
             ->assertSee('Total généré')
-            ->assertSee('Prix à recevoir')
+            ->assertSee('de prix à recevoir')
             ->assertSee('70,00')
+            ->assertSee('Détail des prix de classement')
             ->assertSee('À verser')
+            ->assertSee('Réclamer · Momo Rocma');
+
+        // La page Revenus garde le détail complet, avec son bouton.
+        $this->actingAs($winner)
+            ->get(route('earnings.index'))
+            ->assertSuccessful()
+            ->assertSee('Prix de classement')
+            ->assertSee('à recevoir')
             ->assertSee('Réclamer mes prix · Momo Rocma');
     }
 
@@ -162,7 +170,8 @@ class PrizeVisibilityTest extends TestCase
         $this->actingAs($this->clipper('nobody'))
             ->get(route('dashboard'))
             ->assertSuccessful()
-            ->assertDontSee('Prix à recevoir');
+            ->assertDontSee('prix à recevoir')
+            ->assertDontSee('Détail des prix');
     }
 
     #[Test]

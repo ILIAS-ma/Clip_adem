@@ -14,49 +14,19 @@
 --}}
 @if ($prizes['rows'] !== [] || $prizes['total_cents'] > 0)
     <div class="card">
-        <div class="border-b border-ink-700 px-6 py-4">
-            <h2 class="font-display text-lg font-bold text-ink-50">Mes gains</h2>
-            <p class="mt-0.5 text-sm text-ink-400">Ce que vous avez généré sur toutes vos campagnes.</p>
+        {{-- Le solde, les gains validés et le reste sont déjà dans les tuiles au-dessus : ici, seulement les prix. --}}
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-ink-700 px-6 py-4">
+            <div>
+                <h2 class="font-display text-lg font-bold text-ink-50">Prix de classement</h2>
+                <p class="mt-0.5 text-sm text-ink-400">Ce que vous avez gagné sur vos campagnes en classement.</p>
+            </div>
+            @if ($prizes['pending_cents'] > 0)
+                <span class="chip-wait">{{ Money::euros($prizes['pending_cents']) }} à recevoir</span>
+            @endif
         </div>
 
-        <dl class="grid grid-cols-3 divide-x divide-ink-700 border-b border-ink-700">
-            <div class="min-w-0 px-4 py-4 sm:px-6">
-                <dt class="text-xs text-ink-400">Total généré</dt>
-                <dd class="mt-1 whitespace-nowrap font-display text-xl font-bold tabular text-brand-400 sm:text-2xl">{{ Money::euros($prizes['total_cents']) }}</dd>
-            </div>
-            <div class="min-w-0 px-4 py-4 sm:px-6">
-                <dt class="text-xs text-ink-400">Déjà versé</dt>
-                <dd class="mt-1 whitespace-nowrap font-display text-xl font-bold tabular text-ink-50 sm:text-2xl">{{ Money::euros($prizes['credited_cents']) }}</dd>
-            </div>
-            <div class="min-w-0 px-4 py-4 sm:px-6">
-                <dt class="text-xs text-ink-400">Prix à recevoir</dt>
-                <dd class="mt-1 whitespace-nowrap font-display text-xl font-bold tabular text-ink-50 sm:text-2xl">{{ Money::euros($prizes['pending_cents']) }}</dd>
-            </div>
-        </dl>
-
         @if ($prizes['rows'] !== [])
-            <ul class="divide-y divide-ink-700">
-                @foreach ($prizes['rows'] as $row)
-                    <li class="flex items-center justify-between gap-4 px-6 py-3.5">
-                        <div class="min-w-0">
-                            <p class="truncate text-sm font-semibold text-ink-100">{{ $row['campaign'] }}</p>
-                            <p class="mt-0.5 text-xs text-ink-400">{{ $row['board'] }} · {{ $row['rank'] === 1 ? '1re' : $row['rank'].'e' }} place</p>
-                        </div>
-                        <div class="flex shrink-0 items-center gap-3">
-                            <span class="font-display text-base font-bold tabular text-ink-50">{{ $row['reward'] }}</span>
-                            <span @class([
-                                'chip-ok' => $row['state'] === 'awarded',
-                                'chip-wait' => $row['state'] === 'pending',
-                                'chip-neutral' => $row['state'] === 'live',
-                            ])>{{ match ($row['state']) {
-                                'awarded' => 'Versé',
-                                'pending' => 'À verser',
-                                default => 'Provisoire',
-                            } }}</span>
-                        </div>
-                    </li>
-                @endforeach
-            </ul>
+            @include('clipper.partials.prize-rows')
         @endif
 
         @if ($prizes['live_cents'] > 0)

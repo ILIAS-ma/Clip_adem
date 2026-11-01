@@ -51,27 +51,20 @@
             </div>
         @endforeach
 
-        {{-- L'état du compte en quelques pastilles, avant de lire quoi que ce
-             soit : on sait tout de suite si l'on est en mesure de participer
-             ou s'il manque quelque chose. --}}
-        <div class="status-row">
-            <span class="pill is-ok">{{ $progression->level->label() }}</span>
-
-            <span @class(['pill', 'is-bad' => $accountsCount === 0, 'is-ok' => $accountsCount > 0])>
-                {{ $accountsCount }} compte{{ $accountsCount > 1 ? 's' : '' }} lié{{ $accountsCount > 1 ? 's' : '' }}
-            </span>
-
-            @if ($needsReconnect > 0)
-                <span class="pill is-bad">{{ $needsReconnect }} à reconnecter</span>
-            @endif
-
-            <span class="pill">{{ $openCampaigns }} campagne{{ $openCampaigns > 1 ? 's' : '' }} ouverte{{ $openCampaigns > 1 ? 's' : '' }}</span>
-            <span class="pill">{{ $clips->count() }} clip{{ $clips->count() > 1 ? 's' : '' }}</span>
-
-            @if ($unpaidViews > 0)
-                <span class="pill">{{ Money::views($unpaidViews) }} vues non rémunérées</span>
-            @endif
-        </div>
+        {{-- Seulement ce qui bloque. Le niveau est plus bas, le nombre de clips et de campagnes
+             se lit dans le reste de la page : des pastilles partout noyaient l'alerte utile. --}}
+        @if ($accountsCount === 0 || $needsReconnect > 0)
+            <div class="alert-warn flex flex-wrap items-center justify-between gap-3">
+                <p class="text-sm font-semibold">
+                    @if ($accountsCount === 0)
+                        Liez votre compte TikTok pour que vos vues soient comptées.
+                    @else
+                        {{ $needsReconnect }} compte{{ $needsReconnect > 1 ? 's' : '' }} à reconnecter : vos vues ne sont plus relevées.
+                    @endif
+                </p>
+                <a href="{{ route('accounts.index') }}" wire:navigate class="btn-brand px-3 py-1.5 text-xs">{{ $accountsCount === 0 ? 'Lier' : 'Reconnecter' }}</a>
+            </div>
+        @endif
 
         @php
             $minimum = (int) config('clipping.payouts.minimum_cents');
@@ -117,8 +110,6 @@
             $prochaine = collect($etapes)->search(fn ($e) => ! $e['fait']);
         @endphp
 
-        @include('clipper.partials.prizes')
-
         <div class="grid gap-4 lg:grid-cols-5">
 
             {{-- Le solde, et en dessous les trois chiffres qui l'expliquent :
@@ -129,6 +120,33 @@
 
                     <p class="mt-2 font-display text-5xl font-extrabold tabular leading-none text-brand-400 sm:text-6xl"
                        data-count-up>{{ Money::euros($balanceCents) }}</p>
+
+                    {{-- Les prix d'un classement terminé : acquis, pas encore versés. Au même endroit que le
+                         solde, pour qu'il n'y ait pas deux cartes d'argent avec deux chiffres différents. --}}
+                    @if ($prizes['claimable'] !== [])
+                        <div class="mt-5 rounded-xl border border-brand-500/40 bg-brand-500/5 p-4">
+                            <p class="text-sm font-semibold text-ink-50">
+                                @if ($prizes['pending_cents'] > 0)
+                                    + {{ Money::euros($prizes['pending_cents']) }} de prix à recevoir
+                                @else
+                                    Des prix vous attendent
+                                @endif
+                            </p>
+                            <p class="mt-0.5 text-xs text-ink-300">Classement terminé : l'équipe les verse après vérification.</p>
+                            <div class="mt-3 flex flex-wrap items-center gap-2">
+                                @foreach ($prizes['claimable'] as $claim)
+                                    @if ($claim['claimed'])
+                                        <span class="chip-wait">Demande envoyée · {{ $claim['title'] }}</span>
+                                    @else
+                                        <form method="POST" action="{{ route('prizes.claim', $claim['campaign_id']) }}">
+                                            @csrf
+                                            <button type="submit" class="btn-brand px-3 py-1.5 text-xs">Réclamer · {{ $claim['title'] }}</button>
+                                        </form>
+                                    @endif
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
 
                     @if ($manque > 0)
                         <div class="mt-6 max-w-sm">
@@ -151,23 +169,26 @@
                     @endif
                 </div>
 
-                <dl class="grid grid-cols-3 divide-x divide-ink-700 border-t border-ink-700 bg-ink-900/60">
-                    <div class="min-w-0 px-3 py-3 sm:px-7 sm:py-4">
+                <dl class="grid grid-cols-2 divide-x divide-ink-700 border-t border-ink-700 bg-ink-900/60">
+                    <div class="min-w-0 px-4 py-3 sm:px-7 sm:py-4">
                         <dt class="text-xs text-ink-400">Vues cumulées</dt>
                         <dd class="mt-1 font-display text-lg font-bold tabular text-ink-50 sm:text-xl">{{ Money::views($views) }}</dd>
-                        @if ($unpaidViews > 0)
-                            <dd class="mt-0.5 text-[11px] text-ink-500">{{ Money::views($unpaidViews) }} non rémunérées</dd>
-                        @endif
                     </div>
-                    <div class="min-w-0 px-3 py-3 sm:px-7 sm:py-4">
-                        <dt class="text-xs text-ink-400">Gains validés</dt>
-                        <dd class="mt-1 whitespace-nowrap font-display text-lg font-bold tabular text-brand-400 sm:text-xl">{{ Money::euros($earnedCents) }}</dd>
-                    </div>
-                    <div class="min-w-0 px-3 py-3 sm:px-7 sm:py-4">
-                        <dt class="text-xs text-ink-400">Comptes liés</dt>
-                        <dd @class(['mt-1 font-display text-lg font-bold tabular sm:text-xl', 'text-brand-400' => $accountsCount === 0, 'text-ink-50' => $accountsCount > 0])>{{ $accountsCount }}</dd>
+                    <div class="min-w-0 px-4 py-3 sm:px-7 sm:py-4">
+                        <dt class="text-xs text-ink-400">Total généré</dt>
+                        <dd class="mt-1 whitespace-nowrap font-display text-lg font-bold tabular text-brand-400 sm:text-xl">{{ Money::euros($prizes['total_cents']) }}</dd>
+                        <dd class="mt-0.5 text-[11px] text-ink-500">toutes campagnes, prix compris</dd>
                     </div>
                 </dl>
+
+                @if ($prizes['rows'] !== [])
+                    <details class="border-t border-ink-700 bg-ink-900/60">
+                        <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-ink-300 sm:px-7">
+                            Détail des prix de classement ({{ count($prizes['rows']) }})
+                        </summary>
+                        @include('clipper.partials.prize-rows')
+                    </details>
+                @endif
             </div>
 
             {{-- Pour démarrer : tant que tout n'est pas fait. Ensuite, la place
@@ -211,21 +232,36 @@
                         @endforeach
                     </ol>
                 @else
-                    <h2 class="font-display text-lg font-bold text-ink-50">Tout est prêt</h2>
-                    <p class="mt-2 text-sm text-ink-300">
-                        Compte lié, campagne rejointe, clips publiés : continuez sur votre lancée.
-                    </p>
-                    @if ($studioOn)
-                        <a href="{{ url('/fetchclip') }}" class="btn-brand mt-auto self-start">Ouvrir Echo Studio</a>
+                    <div class="flex items-baseline justify-between gap-3">
+                        <h2 class="font-display text-lg font-bold text-ink-50">Campagnes en cours</h2>
+                        <a href="{{ route('campaigns.index') }}" wire:navigate class="text-sm font-semibold text-ink-300 underline-offset-2 hover:text-ink-50 hover:underline">Tout voir</a>
+                    </div>
+
+                    @if ($activeCampaigns->isEmpty())
+                        <p class="mt-3 text-sm text-ink-300">Aucune campagne ouverte pour l'instant.</p>
                     @else
-                        <a href="{{ route('campaigns.index') }}" wire:navigate class="btn-brand mt-auto self-start">Voir les campagnes</a>
+                        <ul class="mt-3 divide-y divide-ink-700">
+                            @foreach ($activeCampaigns as $item)
+                                <li>
+                                    <a href="{{ route('campaigns.show', $item['campaign']) }}" wire:navigate class="flex items-center justify-between gap-3 py-3">
+                                        <span class="min-w-0">
+                                            <span class="block truncate text-sm font-semibold text-ink-50">{{ $item['campaign']->title }}</span>
+                                            <span class="block text-xs text-ink-400">
+                                                {{ $item['campaign']->ends_at ? 'Se termine '.$item['campaign']->ends_at->diffForHumans() : 'Sans date de fin' }}
+                                            </span>
+                                        </span>
+                                        <span @class(['flex-none', 'chip-ok' => $item['joined'], 'chip-neutral' => ! $item['joined']])>{{ $item['joined'] ? 'Rejointe' : 'À rejoindre' }}</span>
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
                     @endif
                 @endif
             </div>
         </div>
 
-        {{-- Les trois endroits où l'on va tous les jours. --}}
-        <div class="grid grid-cols-3 gap-2 sm:gap-4">
+        {{-- Les deux endroits où l'on va en plus des campagnes. --}}
+        <div class="grid grid-cols-2 gap-2 sm:gap-4">
             @foreach ([
                 $studioOn
                     ? ['href' => url('/fetchclip'), 'navigate' => false, 'titre' => 'Echo Studio',
@@ -235,9 +271,6 @@
                     : ['href' => route('training.index'), 'navigate' => true, 'titre' => 'Formation',
                        'texte' => 'Les formats qui marchent et les règles, en quelques minutes.',
                        'icone' => 'M12 14l9-5-9-5-9 5 9 5zm0 0v6m-6-9.2V16c0 1.1 2.7 3 6 3s6-1.9 6-3v-5.2'],
-                ['href' => route('campaigns.index'), 'navigate' => true, 'titre' => 'Campagnes',
-                 'texte' => $openCampaigns > 0 ? $openCampaigns.' ouverte'.($openCampaigns > 1 ? 's' : '').' en ce moment.' : 'Aucune ouverte pour l\'instant.',
-                 'icone' => 'M3 10v4a1 1 0 001 1h3l5 4V5L7 9H4a1 1 0 00-1 1zm13.5-3a5 5 0 010 10'],
                 ['href' => route('messages.index'), 'navigate' => true, 'titre' => 'Messages',
                  'texte' => $unreadMessages > 0 ? $unreadMessages.' réponse'.($unreadMessages > 1 ? 's' : '').' de l\'équipe à lire.' : 'Une question ? L\'équipe vous répond ici.',
                  'icone' => 'M8 10h8M8 14h5m-9 6l2.5-3H18a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v14z',
@@ -260,50 +293,6 @@
                     <span class="hidden self-center text-ink-600 transition group-hover:translate-x-0.5 group-hover:text-ink-200 sm:inline" aria-hidden="true">→</span>
                 </a>
             @endforeach
-        </div>
-
-        <div class="grid gap-6 lg:grid-cols-3">
-            <x-level-card class="lg:col-span-2" :progression="$progression" />
-
-            <div class="card p-5 sm:p-6" x-data="{ open: false }">
-                <button type="button" @click="open = ! open" class="flex w-full items-center justify-between text-left lg:pointer-events-none">
-                    <span class="text-sm font-medium text-ink-300">Comment gagner de l'XP</span>
-                    <span class="text-ink-500 lg:hidden" x-text="open ? '−' : '+'" aria-hidden="true">+</span>
-                </button>
-                <div x-show="open" x-cloak class="lg:!block">
-                <ul class="mt-4 space-y-3 text-sm">
-                    <li class="flex items-baseline justify-between gap-3">
-                        <span class="text-ink-300">Chaque vue rémunérée</span>
-                        <span class="font-semibold tabular text-ink-50">1 XP</span>
-                    </li>
-                    <li class="flex items-baseline justify-between gap-3">
-                        <span class="text-ink-300">Clip validé</span>
-                        <span class="font-semibold tabular text-brand-400">
-                            +{{ number_format(config('clipping.progression.xp_per_approved_clip'), 0, ',', ' ') }}
-                        </span>
-                    </li>
-                    <li class="flex items-baseline justify-between gap-3">
-                        <span class="text-ink-300">Nouvelle campagne rejointe</span>
-                        <span class="font-semibold tabular text-brand-400">
-                            +{{ number_format(config('clipping.progression.xp_per_campaign'), 0, ',', ' ') }}
-                        </span>
-                    </li>
-                    <li class="flex items-baseline justify-between gap-3 border-t border-ink-700 pt-3">
-                        <span class="text-ink-300">Clip invalidé</span>
-                        <span class="font-semibold tabular text-red-400">
-                            −{{ number_format(config('clipping.progression.xp_penalty_per_invalidated_clip'), 0, ',', ' ') }}
-                        </span>
-                    </li>
-                </ul>
-
-                {{-- Seules les vues réellement payées comptent : dit d'emblée,
-                     ça enlève tout intérêt à gonfler ses compteurs. --}}
-                <p class="hint mt-4 border-t border-ink-700 pt-4">
-                    Seules les vues effectivement rémunérées comptent. Un clip invalidé perd les
-                    siennes.
-                </p>
-                </div>
-            </div>
         </div>
 
         @if ($upcomingCampaigns->isNotEmpty())
@@ -370,6 +359,51 @@
                     @endforeach
                 </ul>
             @endif
+        </div>
+
+
+        <div class="grid gap-6 lg:grid-cols-3">
+            <x-level-card class="lg:col-span-2" :progression="$progression" />
+
+            <div class="card p-5 sm:p-6" x-data="{ open: false }">
+                <button type="button" @click="open = ! open" class="flex w-full items-center justify-between text-left lg:pointer-events-none">
+                    <span class="text-sm font-medium text-ink-300">Comment gagner de l'XP</span>
+                    <span class="text-ink-500 lg:hidden" x-text="open ? '−' : '+'" aria-hidden="true">+</span>
+                </button>
+                <div x-show="open" x-cloak class="lg:!block">
+                <ul class="mt-4 space-y-3 text-sm">
+                    <li class="flex items-baseline justify-between gap-3">
+                        <span class="text-ink-300">Chaque vue rémunérée</span>
+                        <span class="font-semibold tabular text-ink-50">1 XP</span>
+                    </li>
+                    <li class="flex items-baseline justify-between gap-3">
+                        <span class="text-ink-300">Clip validé</span>
+                        <span class="font-semibold tabular text-brand-400">
+                            +{{ number_format(config('clipping.progression.xp_per_approved_clip'), 0, ',', ' ') }}
+                        </span>
+                    </li>
+                    <li class="flex items-baseline justify-between gap-3">
+                        <span class="text-ink-300">Nouvelle campagne rejointe</span>
+                        <span class="font-semibold tabular text-brand-400">
+                            +{{ number_format(config('clipping.progression.xp_per_campaign'), 0, ',', ' ') }}
+                        </span>
+                    </li>
+                    <li class="flex items-baseline justify-between gap-3 border-t border-ink-700 pt-3">
+                        <span class="text-ink-300">Clip invalidé</span>
+                        <span class="font-semibold tabular text-red-400">
+                            −{{ number_format(config('clipping.progression.xp_penalty_per_invalidated_clip'), 0, ',', ' ') }}
+                        </span>
+                    </li>
+                </ul>
+
+                {{-- Seules les vues réellement payées comptent : dit d'emblée,
+                     ça enlève tout intérêt à gonfler ses compteurs. --}}
+                <p class="hint mt-4 border-t border-ink-700 pt-4">
+                    Seules les vues effectivement rémunérées comptent. Un clip invalidé perd les
+                    siennes.
+                </p>
+                </div>
+            </div>
         </div>
 
     </div>
