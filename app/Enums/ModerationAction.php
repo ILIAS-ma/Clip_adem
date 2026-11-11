@@ -18,6 +18,8 @@ enum ModerationAction: string
     case CampaignFunded = 'campaign_funded';
     case ClipperBanned = 'clipper_banned';
     case ClipperUnbanned = 'clipper_unbanned';
+    case PhoneExemptionGranted = 'phone_exemption_granted';
+    case PhoneExemptionRemoved = 'phone_exemption_removed';
     case PayoutApproved = 'payout_approved';
     case PayoutCancelled = 'payout_cancelled';
     case PasswordResetLinkIssued = 'password_reset_link_issued';
@@ -38,6 +40,8 @@ enum ModerationAction: string
             self::CampaignFunded => 'Encaissement enregistré',
             self::ClipperBanned => 'Clippeur banni',
             self::ClipperUnbanned => 'Clippeur débanni',
+            self::PhoneExemptionGranted => 'Compte dispensé de numéro de téléphone',
+            self::PhoneExemptionRemoved => 'Numéro de téléphone de nouveau exigé',
             self::PayoutApproved => 'Retrait validé',
             self::PayoutCancelled => 'Retrait annulé',
             self::PasswordResetLinkIssued => 'Lien de réinitialisation créé',
@@ -53,7 +57,7 @@ enum ModerationAction: string
             self::ClipApproved, self::ClipperUnbanned, self::PayoutApproved, self::CampaignFunded,
             self::SiretVerified, self::BonusGranted => 'success',
             self::ClipRejected, self::PayoutCancelled, self::ClipDisappeared, self::PasswordResetLinkIssued,
-            self::SiretRejected, self::ClipSuspectedReupload => 'warning',
+            self::SiretRejected, self::ClipSuspectedReupload, self::PhoneExemptionGranted, self::PhoneExemptionRemoved => 'warning',
             self::ClipInvalidated, self::ClipperBanned, self::ClipNotOwned, self::ClipOutsideWindow => 'danger',
         };
     }

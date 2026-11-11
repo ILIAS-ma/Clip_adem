@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Clippers\Pages;
 
+use App\Filament\Actions\PhoneExemptionActions;
 use App\Filament\Actions\SiretActions;
 use App\Filament\Resources\Clippers\ClipperResource;
 use Filament\Resources\Pages\ViewRecord;
@@ -15,6 +16,7 @@ class ViewClipper extends ViewRecord
         return [
             SiretActions::verify(),
             SiretActions::reject(),
+            PhoneExemptionActions::toggle(),
         ];
     }
 }

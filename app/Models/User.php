@@ -44,6 +44,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         return [
             'email_verified_at' => 'datetime',
             'phone_verified_at' => 'datetime',
+            'phone_exempt_at' => 'datetime',
             'phone_code_sent_at' => 'datetime',
             // Jamais en clair : une fuite de la base donnerait sinon un
             // accès immédiat à tout compte en cours de vérification.
@@ -265,10 +266,21 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         return $this->hasMany(ReferralCommission::class, 'referrer_id');
     }
 
-    /** Le numéro de téléphone a-t-il été confirmé par code ? */
+    /**
+     * Le compte peut-il entrer sans autre vérification de téléphone ?
+     *
+     * Oui si le numéro a été confirmé par code, ou si le super-admin a dispensé ce compte
+     * de numéro (voir isPhoneExempt()).
+     */
     public function hasVerifiedPhone(): bool
     {
-        return $this->phone !== null && $this->phone_verified_at !== null;
+        return $this->isPhoneExempt() || ($this->phone !== null && $this->phone_verified_at !== null);
+    }
+
+    /** Dispensé de numéro par le super-admin : un second compte, un clippeur de confiance sans ligne. */
+    public function isPhoneExempt(): bool
+    {
+        return $this->phone_exempt_at !== null;
     }
 
     public function isStaff(): bool

@@ -86,12 +86,25 @@ class PhoneAtRegistrationTest extends TestCase
     }
 
     #[Test]
-    public function one_cannot_register_without_a_number(): void
+    public function one_can_register_without_a_number(): void
     {
+        // Le numéro est facultatif : l'adresse e-mail suffit pour ouvrir un compte.
         $this->post(route('register'), $this->inscription(['phone' => '']))
-            ->assertSessionHasErrors('phone');
+            ->assertSessionHasNoErrors();
 
-        $this->assertDatabaseMissing('users', ['email' => 'maya@clip.test']);
+        $this->assertDatabaseHas('users', ['email' => 'maya@clip.test', 'phone' => null]);
+    }
+
+    #[Test]
+    public function two_accounts_can_both_be_created_without_a_number(): void
+    {
+        // Le numéro est unique, mais « pas de numéro » n'est pas un numéro : un second compte passe.
+        $this->post(route('register'), $this->inscription(['phone' => '']))->assertSessionHasNoErrors();
+        auth()->logout();
+
+        $this->post(route('register'), $this->inscription(['phone' => '', 'email' => 'second@clip.test']))->assertSessionHasNoErrors();
+
+        $this->assertSame(2, User::whereNull('phone')->count());
     }
 
     #[Test]

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Clippers\Pages;
 
+use App\Filament\Actions\PhoneExemptionActions;
 use App\Filament\Resources\Clippers\ClipperResource;
 use Filament\Resources\Pages\ListRecords;
 
@@ -11,6 +12,8 @@ class ListClippers extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [];
+        return [
+            PhoneExemptionActions::create(),
+        ];
     }
 }

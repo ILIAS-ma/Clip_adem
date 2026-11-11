@@ -87,15 +87,14 @@
         </div>
 
         {{--
-            Le numéro est demandé ici, pas plus tard.
+            Le numéro est facultatif : l'adresse e-mail suffit pour ouvrir un compte.
 
-            C'est le seul identifiant qu'on ne multiplie pas à volonté : une
-            adresse jetable s'obtient en dix secondes, une ligne téléphonique
-            non. Le réclamer après coup reviendrait à laisser entrer dix
-            comptes avant de poser la question.
+            Saisi, il est quand même contrôlé (lisible, pas déjà pris par un autre compte).
+            Un second compte peut donc se créer sans numéro, ce que l'unicité du numéro
+            interdisait quand il était obligatoire.
         --}}
         <div>
-            <x-input-label for="phone" value="Numéro de téléphone" />
+            <x-input-label for="phone" value="Numéro de téléphone (facultatif)" />
 
             <div class="mt-1.5 grid gap-3 sm:grid-cols-[8.5rem_1fr]">
                 <select id="phone_country" name="phone_country" class="field">
@@ -107,13 +106,12 @@
                 </select>
 
                 <x-text-input id="phone" type="tel" name="phone" inputmode="tel"
-                              :value="old('phone')" required autocomplete="tel"
+                              :value="old('phone')" autocomplete="tel"
                               placeholder="06 12 34 56 78" />
             </div>
 
             <p class="hint">
-                Un code de confirmation y sera envoyé. Il ne sert qu'à confirmer que ce compte
-                est tenu par une personne : ni démarchage, ni transmission à un tiers.
+                Tu peux laisser ce champ vide. Il ne sert qu'à te joindre : ni démarchage, ni transmission à un tiers.
             </p>
             <x-input-error :messages="$errors->get('phone')" class="mt-2" />
             <x-input-error :messages="$errors->get('phone_country')" class="mt-2" />

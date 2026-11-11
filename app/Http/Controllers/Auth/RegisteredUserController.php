@@ -64,15 +64,13 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
 
             /*
-             * Le numéro est demandé dès l'inscription, pas plus tard : c'est
-             * le seul identifiant réellement coûteux à multiplier, et le
-             * réclamer après coup revient à laisser entrer dix comptes avant
-             * de poser la question. Il n'est pas vérifié ici — l'envoi d'un
-             * SMS pendant la création du compte ferait échouer l'inscription
-             * entière si le prestataire ne répond pas.
+             * Le numéro est facultatif : l'adresse e-mail suffit pour ouvrir un compte. Saisi, il reste
+             * contrôlé plus bas (lisible, pas déjà pris), ce qui interdit seulement de le réutiliser
+             * sur deux comptes. Il n'est pas vérifié ici — l'envoi d'un SMS pendant la création du
+             * compte ferait échouer l'inscription entière si le prestataire ne répond pas.
              */
-            'phone' => ['required', 'string', 'max:25'],
-            'phone_country' => ['required', 'string', 'size:2', Rule::in(array_keys(PhoneNumber::INDICATIFS))],
+            'phone' => ['nullable', 'string', 'max:25'],
+            'phone_country' => ['nullable', 'required_with:phone', 'string', 'size:2', Rule::in(array_keys(PhoneNumber::INDICATIFS))],
 
             // L'inscription publique ne peut créer qu'un clippeur ou un
             // créateur : les rôles du back-office ne se donnent pas par
@@ -91,25 +89,30 @@ class RegisteredUserController extends Controller
             ],
         ]);
 
-        $numero = PhoneNumber::normalise($validated['phone'], $validated['phone_country']);
+        // Sans numéro : le compte naît sans, c'est permis. Avec : il doit être lisible et libre.
+        $numero = null;
 
-        if ($numero === null) {
-            throw ValidationException::withMessages([
-                'phone' => 'Ce numéro ne peut pas être lu. Vérifiez-le.',
-            ]);
-        }
+        if (filled($validated['phone'] ?? null)) {
+            $numero = PhoneNumber::normalise($validated['phone'], $validated['phone_country']);
 
-        /*
-         * Unicité vérifiée ici en plus de la contrainte de base : celle-ci
-         * lèverait une QueryException, c'est-à-dire une page d'erreur, là où
-         * la personne attend simplement qu'on lui dise que ce numéro est déjà
-         * pris. Le message reste vague sur le compte concerné — préciser
-         * permettrait de savoir qui est inscrit.
-         */
-        if (User::where('phone', $numero)->exists()) {
-            throw ValidationException::withMessages([
-                'phone' => 'Ce numéro est déjà utilisé par un autre compte.',
-            ]);
+            if ($numero === null) {
+                throw ValidationException::withMessages([
+                    'phone' => 'Ce numéro ne peut pas être lu. Vérifiez-le.',
+                ]);
+            }
+
+            /*
+             * Unicité vérifiée ici en plus de la contrainte de base : celle-ci
+             * lèverait une QueryException, c'est-à-dire une page d'erreur, là où
+             * la personne attend simplement qu'on lui dise que ce numéro est déjà
+             * pris. Le message reste vague sur le compte concerné — préciser
+             * permettrait de savoir qui est inscrit.
+             */
+            if (User::where('phone', $numero)->exists()) {
+                throw ValidationException::withMessages([
+                    'phone' => 'Ce numéro est déjà utilisé par un autre compte.',
+                ]);
+            }
         }
 
         $user = User::create([
