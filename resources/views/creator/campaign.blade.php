@@ -7,6 +7,20 @@
     // Un créateur peut suivre ses statistiques sans voir l'argent mis pour les clippeurs :
     // budget, prix, coût des clips. Réglage de sa fiche, faux par défaut.
     $hideBudget = $creator->hidesBudget();
+
+    /*
+     * Le brief est un texte libre, écrit à la main pour les clippeurs : il annonce souvent la cagnotte et
+     * les prix (« Cagnotte : 250 € », « 1er : 80 € »). Pour un créateur sans budget, les lignes qui parlent
+     * d'argent sont retirées ; le reste du brief (contenu à clipper, règles, hashtags) reste lisible.
+     */
+    $brief = $campaign->brief;
+
+    if ($hideBudget && filled($brief)) {
+        $brief = collect(preg_split('/\R/u', $brief))
+            ->reject(fn ($line) => preg_match('/€|euros?\b|\bcagnotte\b|\bprix\b|\brécompenses?\b/iu', $line))
+            ->implode("\n");
+        $brief = trim(preg_replace("/\n{3,}/", "\n\n", $brief));
+    }
 @endphp
 
 <x-app-layout>
@@ -166,10 +180,10 @@
                     @endif
                 </div>
 
-                @if ($campaign->brief)
+                @if (filled($brief))
                     <div class="card p-5 sm:p-6">
                         <h2 class="font-display text-lg font-bold text-ink-50">Le brief donné aux clippeurs</h2>
-                        <p class="mt-3 whitespace-pre-line leading-relaxed text-ink-200">{{ $campaign->brief }}</p>
+                        <p class="mt-3 whitespace-pre-line leading-relaxed text-ink-200">{{ $brief }}</p>
 
                         @if ($campaign->required_hashtags)
                             <div class="mt-4 flex flex-wrap gap-1.5">

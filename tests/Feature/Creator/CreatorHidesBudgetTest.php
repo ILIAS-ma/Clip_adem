@@ -112,6 +112,37 @@ class CreatorHidesBudgetTest extends TestCase
     }
 
     #[Test]
+    public function the_brief_keeps_its_content_but_loses_the_lines_that_announce_money(): void
+    {
+        // Le brief est du texte libre : il annonce souvent la cagnotte et les prix.
+        $brief = "🎯 Le contenu à clipper : les meilleurs moments du live.\n💰 Cagnotte : 250 €\n🏆 Classement VUES (215 €)\n🥇 1er : 80 €\n📋 Règles : une vidéo par jour, hashtag obligatoire.";
+
+        $hidden = $this->creatorUser(hideBudget: true);
+        $campaign = $this->contest($hidden->creator);
+        $campaign->forceFill(['brief' => $brief])->save();
+
+        $this->actingAs($hidden)
+            ->get(route('creator.campaigns.show', $campaign))
+            ->assertSuccessful()
+            ->assertSee('Le contenu à clipper')
+            ->assertSee('une vidéo par jour')
+            ->assertDontSee('Cagnotte')
+            ->assertDontSee('250 €')
+            ->assertDontSee('80 €');
+
+        // Un créateur qui voit le budget lit le brief tel quel.
+        $visible = $this->creatorUser(hideBudget: false);
+        $other = $this->contest($visible->creator);
+        $other->forceFill(['brief' => $brief])->save();
+
+        $this->actingAs($visible)
+            ->get(route('creator.campaigns.show', $other))
+            ->assertSuccessful()
+            ->assertSee('Cagnotte : 250 €')
+            ->assertSee('1er : 80 €');
+    }
+
+    #[Test]
     public function another_creator_still_sees_the_budget_and_the_prizes(): void
     {
         $user = $this->creatorUser(hideBudget: false);
