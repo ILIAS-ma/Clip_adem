@@ -74,8 +74,9 @@ class CreatorSpaceTest extends TestCase
     // ------------------------------------------------------------------
 
     #[Test]
-    public function registration_can_create_a_creator_account(): void
+    public function registration_can_no_longer_create_a_creator_account(): void
     {
+        // Les comptes créateur sont ouverts par l'équipe, pas depuis le formulaire public.
         $this->post('/register', [
             'first_name' => 'Nayra',
             'last_name' => 'Diallo',
@@ -85,9 +86,9 @@ class CreatorSpaceTest extends TestCase
             'password' => 'motdepasse-solide',
             'password_confirmation' => 'motdepasse-solide',
             'role' => 'creator',
-        ])->assertRedirect('/createur');
+        ])->assertSessionHasErrors('role');
 
-        $this->assertSame(UserRole::Creator, User::where('email', 'nayra@exemple.test')->sole()->role);
+        $this->assertDatabaseMissing('users', ['email' => 'nayra@exemple.test']);
     }
 
     #[Test]

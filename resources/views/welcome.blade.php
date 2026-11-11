@@ -133,17 +133,13 @@
                     et touchez un cachet à chaque palier de vues — jusqu'à épuisement du budget.
                 </p>
 
-                {{-- Un seul CTA fort (clippeur, le public principal), un
-                     second en retrait (créateur), et le retour visiteur
-                     glissé en simple lien plutôt que noyé dans la rangée. --}}
+                {{-- Un seul CTA fort (clippeur), et le retour visiteur glissé en simple lien
+                     plutôt que noyé dans la rangée. Les créateurs ne s'inscrivent pas : l'équipe
+                     ouvre leur compte. --}}
                 <div class="animate-fade-slide-in-4 mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4" style="animation-delay: .7s">
                     <a href="{{ route('register') }}"
                        class="inline-flex items-center gap-2 rounded-full bg-brand-500 px-7 py-3.5 text-base font-semibold text-ink-950 shadow-glow transition-transform hover:-translate-y-0.5 hover:bg-brand-400">
                         Je suis clippeur
-                    </a>
-                    <a href="{{ route('register', ['profil' => 'creator']) }}"
-                       class="inline-flex items-center gap-2 rounded-full bg-ink-50/10 px-7 py-3.5 text-base font-medium text-ink-50 ring-1 ring-ink-50/15 backdrop-blur transition-colors hover:bg-ink-50/15">
-                        Je suis créateur
                     </a>
                 </div>
 
@@ -312,7 +308,6 @@
                     <p class="mx-auto mt-3 max-w-lg text-ink-200">Le budget des campagnes part au premier arrivé — inscrivez-vous et publiez avant qu'il ne s'épuise.</p>
                     <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
                         <a href="{{ route('register') }}" class="btn-brand px-7 py-3.5 text-base shadow-glow">Je suis clippeur</a>
-                        <a href="{{ route('register', ['profil' => 'creator']) }}" class="btn border border-ink-600 px-7 py-3.5 text-base text-ink-100 hover:bg-ink-800">Je suis créateur</a>
                     </div>
                 </div>
             </div>

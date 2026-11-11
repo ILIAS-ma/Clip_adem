@@ -49,16 +49,14 @@
         <x-primary-button class="w-full">Se connecter</x-primary-button>
     </form>
 
-    {{-- La connexion n'étant plus la racine, ce sont ici les seules portes
-         d'entrée visibles pour qui arrive directement sur /login : sans
-         elles, un créateur n'aurait aucun moyen de s'inscrire depuis cet
-         écran. --}}
+    {{-- La connexion n'étant plus la racine, c'est ici la seule porte d'entrée visible pour qui
+         arrive directement sur /login. Les comptes créateur ne s'ouvrent pas depuis ce formulaire :
+         l'équipe les crée. --}}
     <div class="mt-8 border-t border-ink-700 pt-6">
         <p class="text-center text-sm font-medium text-ink-200">Pas encore de compte ?</p>
 
-        <div class="mt-3 grid grid-cols-2 gap-3">
-            <a href="{{ route('register') }}" class="btn-ghost">Je suis clippeur</a>
-            <a href="{{ route('register', ['profil' => 'creator']) }}" class="btn-ghost">Je suis créateur</a>
+        <div class="mt-3">
+            <a href="{{ route('register') }}" class="btn-ghost w-full justify-center">Je suis clippeur</a>
         </div>
 
         <p class="mt-4 text-center text-sm">

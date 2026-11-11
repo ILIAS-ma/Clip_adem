@@ -36,9 +36,8 @@ class GoogleController extends Controller
 
         // Le rôle voulu et le code de parrainage doivent survivre à l'aller-
         // retour chez Google : ils ne reviendront pas dans le retour d'appel.
-        $request->session()->put('google.role', $request->query('profil') === UserRole::Creator->value
-            ? UserRole::Creator->value
-            : UserRole::Clipper->value);
+        // Toujours clippeur : un compte créateur ne s'ouvre pas par inscription, même avec « ?profil=creator ».
+        $request->session()->put('google.role', UserRole::Clipper->value);
 
         return redirect()->away($this->google->redirectUrl($state));
     }
@@ -129,12 +128,13 @@ class GoogleController extends Controller
             return null;
         }
 
-        $role = UserRole::tryFrom((string) $request->session()->pull('google.role')) ?? UserRole::Clipper;
+        // On s'inscrit clippeur, jamais autrement : une ancienne session « créateur » ne donne plus ce rôle.
+        $request->session()->forget('google.role');
 
         $user = User::create([
             'name' => $profile->displayName(),
             'email' => $profile->email,
-            'role' => in_array($role, [UserRole::Clipper, UserRole::Creator], true) ? $role : UserRole::Clipper,
+            'role' => UserRole::Clipper,
             // Pas de mot de passe : ce compte n'existe que par Google, et en
             // inventer un que personne ne connaît n'aiderait personne.
             'password' => null,

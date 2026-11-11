@@ -8,7 +8,7 @@
 
     <x-google-button :role="$role->value" label="S’inscrire avec Google" />
 
-    <form method="POST" action="{{ route('register') }}" class="space-y-5" x-data="{ role: '{{ old('role', $role->value) }}' }">
+    <form method="POST" action="{{ route('register') }}" class="space-y-5">
         @csrf
 
         @if ($parrain = request('parrain'))
@@ -28,29 +28,9 @@
             <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
         </div>
 
-        <fieldset>
-            <legend class="label mb-2">Je suis…</legend>
-
-            <div class="grid grid-cols-2 gap-3">
-                @foreach ([
-                    [UserRole::Clipper, 'Clippeur', 'Je publie des clips et je suis payé aux vues'],
-                    [UserRole::Creator, 'Créateur', 'Je suis promu et je suis les statistiques'],
-                ] as [$option, $title, $description])
-                    <label class="cursor-pointer">
-                        <input type="radio" name="role" value="{{ $option->value }}"
-                               x-model="role" class="peer sr-only">
-                        <span class="block h-full rounded-2xl border-2 border-ink-700 p-4 transition
-                                     peer-checked:border-ink-700 peer-checked:bg-ink-800
-                                     peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500 peer-focus-visible:ring-offset-2">
-                            <span class="block font-display text-base font-bold text-ink-50">{{ $title }}</span>
-                            <span class="mt-1 block text-xs leading-relaxed text-ink-200">{{ $description }}</span>
-                        </span>
-                    </label>
-                @endforeach
-            </div>
-
-            <x-input-error :messages="$errors->get('role')" class="mt-2" />
-        </fieldset>
+        {{-- On s'inscrit clippeur : les comptes créateur sont ouverts par l'équipe, pas depuis ce formulaire. --}}
+        <input type="hidden" name="role" value="{{ UserRole::Clipper->value }}" />
+        <x-input-error :messages="$errors->get('role')" class="mt-2" />
 
         <div>
             <div class="grid grid-cols-2 gap-3">
@@ -70,11 +50,8 @@
             {{-- Le nom réel sert aux versements ; le pseudo ou le nom de scène
                  est demandé à l'étape suivante, pour ne pas avoir à s'exposer
                  publiquement afin d'être payé. --}}
-            <p class="hint" x-show="role === 'clipper'">
+            <p class="hint">
                 Utilisé pour vos versements. Votre pseudo public sera choisi à l'étape suivante.
-            </p>
-            <p class="hint" x-show="role === 'creator'" x-cloak>
-                Votre nom réel. Votre nom de scène sera choisi à l'étape suivante.
             </p>
         </div>
 

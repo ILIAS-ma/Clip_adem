@@ -26,13 +26,8 @@ class RegisteredUserController extends Controller
 
     public function create(Request $request): View
     {
-        return view('auth.register', [
-            // Le choix arrive en paramètre depuis la page d'accueil, sinon
-            // clippeur par défaut : c'est le parcours le plus fréquent.
-            'role' => $request->query('profil') === UserRole::Creator->value
-                ? UserRole::Creator
-                : UserRole::Clipper,
-        ]);
+        // On s'inscrit clippeur, toujours : un ancien lien « ?profil=creator » ouvre le même formulaire.
+        return view('auth.register', ['role' => UserRole::Clipper]);
     }
 
     /**
@@ -72,10 +67,9 @@ class RegisteredUserController extends Controller
             'phone' => ['nullable', 'string', 'max:25'],
             'phone_country' => ['nullable', 'required_with:phone', 'string', 'size:2', Rule::in(array_keys(PhoneNumber::INDICATIFS))],
 
-            // L'inscription publique ne peut créer qu'un clippeur ou un
-            // créateur : les rôles du back-office ne se donnent pas par
-            // formulaire, même en trafiquant la requête.
-            'role' => ['required', Rule::in([UserRole::Clipper->value, UserRole::Creator->value])],
+            // L'inscription publique ne crée qu'un clippeur : les comptes créateur et les rôles du
+            // back-office ne se donnent pas par formulaire, même en trafiquant la requête.
+            'role' => ['required', Rule::in([UserRole::Clipper->value])],
 
             // `requiredIf` et non `required` : sans clé de site, le widget
             // Cloudflare ne s'affiche pas, donc aucun jeton n'est envoyé et

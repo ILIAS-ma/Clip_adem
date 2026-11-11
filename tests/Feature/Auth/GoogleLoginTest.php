@@ -162,25 +162,25 @@ class GoogleLoginTest extends TestCase
     }
 
     #[Test]
-    public function the_chosen_role_survives_the_round_trip(): void
+    public function google_sign_up_never_makes_a_creator_even_with_the_old_link(): void
     {
-        // Le rôle est choisi avant de partir chez Google et ne revient pas dans
-        // le retour d'appel : sans la session, tout le monde reviendrait
-        // clippeur.
+        // Les comptes créateur sont ouverts par l'équipe : ni « ?profil=creator » ni une session
+        // ancienne ne donnent ce rôle.
         $this->mock(GoogleAuthProvider::class, function ($mock) {
             $mock->shouldReceive('isConfigured')->andReturn(true);
             $mock->shouldReceive('redirectUrl')->andReturn('https://accounts.google.com/');
             $mock->shouldReceive('profileFrom')->andReturn($this->profile());
         });
 
-        $this->get(route('google.redirect', ['profil' => UserRole::Creator->value]));
+        $this->get(route('google.redirect', ['profil' => UserRole::Creator->value]))
+            ->assertSessionHas('google.role', UserRole::Clipper->value);
 
         $this->withSession([
             'google.state' => 'un-etat',
             'google.role' => UserRole::Creator->value,
         ])->get(route('google.callback', ['state' => 'un-etat', 'code' => 'un-code']));
 
-        $this->assertSame(UserRole::Creator, User::where('email', 'maya@gmail.test')->sole()->role);
+        $this->assertSame(UserRole::Clipper, User::where('email', 'maya@gmail.test')->sole()->role);
     }
 
     #[Test]
