@@ -47,7 +47,7 @@ class DashboardLayoutTest extends TestCase
         $this->actingAs($this->clipper())
             ->get(route('dashboard'))
             ->assertSuccessful()
-            ->assertSee('Solde retirable')
+            ->assertSee('Total gagné')
             ->assertSee('hero-balance', escape: false);
     }
 
@@ -69,15 +69,14 @@ class DashboardLayoutTest extends TestCase
     }
 
     #[Test]
-    public function the_supporting_figures_are_still_there(): void
+    public function the_dashboard_keeps_a_single_money_figure(): void
     {
-        // La hiérarchie ne doit rien supprimer : ces chiffres expliquent le
-        // solde, les retirer rendrait le principal inexplicable.
+        // Un seul chiffre : le total gagné. Les détails d'argent sont sur la page Revenus.
         $this->actingAs($this->clipper())
             ->get(route('dashboard'))
             ->assertSuccessful()
-            ->assertSee('Vues cumulées')
-            ->assertSee('Total généré')
+            ->assertSee('Total gagné')
+            ->assertDontSee('Vues cumulées')
             ->assertDontSee('Comptes liés');
     }
 
@@ -136,14 +135,14 @@ class DashboardLayoutTest extends TestCase
     }
 
     #[Test]
-    public function the_balance_is_the_only_big_money_figure(): void
+    public function the_total_earned_is_the_only_big_money_figure(): void
     {
-        // Un solde, un total : plus de « gains validés » à côté, qui ressemblait à un troisième montant.
         $this->actingAs($this->clipper())
             ->get(route('dashboard'))
             ->assertSuccessful()
-            ->assertSee('Solde retirable')
-            ->assertSee('Total généré')
+            ->assertSee('Total gagné')
+            ->assertDontSee('Solde retirable')
+            ->assertDontSee('Total généré')
             ->assertDontSee('Gains validés');
     }
 }

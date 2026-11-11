@@ -116,7 +116,7 @@ class PrizeVisibilityTest extends TestCase
         $this->actingAs($winner)
             ->get(route('dashboard'))
             ->assertSuccessful()
-            ->assertSee('Total généré')
+            ->assertSee('Total gagné')
             ->assertSee('de prix à recevoir')
             ->assertSee('70,00')
             ->assertSee('Détail des prix de classement')

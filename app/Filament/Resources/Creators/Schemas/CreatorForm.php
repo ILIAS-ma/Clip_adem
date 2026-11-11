@@ -84,6 +84,11 @@ class CreatorForm
                         ->helperText('Une fiche inactive n\'apparaît plus dans le sélecteur de création de campagne.')
                         ->default(true),
 
+                    Toggle::make('hide_budget')
+                        ->label('Masquer le budget et les récompenses à ce créateur')
+                        ->helperText('Il voit toutes ses statistiques (vues, clips, clippeurs, classement), mais ni le budget engagé, ni les prix, ni ce que rapportent les clips.')
+                        ->default(false),
+
                     Textarea::make('internal_notes')
                         ->label('Notes internes')
                         ->helperText('Jamais visible par les clippeurs.')

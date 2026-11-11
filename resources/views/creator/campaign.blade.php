@@ -3,6 +3,10 @@
 
     $ended = $campaign->hasEnded();
     $cover = $campaign->coverUrl();
+
+    // Un créateur peut suivre ses statistiques sans voir l'argent mis pour les clippeurs :
+    // budget, prix, coût des clips. Réglage de sa fiche, faux par défaut.
+    $hideBudget = $creator->hidesBudget();
 @endphp
 
 <x-app-layout>
@@ -52,19 +56,21 @@
             <x-stat label="Meilleur clip" :value="Money::compactViews($overview['best'])" hint="vues sur un seul clip" />
             <x-stat label="Moyenne / clip" :value="Money::compactViews($overview['average'])" hint="vues par clip" />
 
-            @if ($campaign->isContest())
-                <x-stat label="Récompenses" :value="$campaign->prizePoolCents() > 0 ? Money::wholeEuros($campaign->prizePoolCents()) : 'Lots'" />
-            @else
-                <x-stat label="Dépensé" :value="Money::euros($campaign->spent_cents)"
-                        :hint="$campaign->consumedPercent().' % de '.Money::euros($campaign->budget_total_cents)" />
-            @endif
+            @unless ($hideBudget)
+                @if ($campaign->isContest())
+                    <x-stat label="Récompenses" :value="$campaign->prizePoolCents() > 0 ? Money::wholeEuros($campaign->prizePoolCents()) : 'Lots'" />
+                @else
+                    <x-stat label="Dépensé" :value="Money::euros($campaign->spent_cents)"
+                            :hint="$campaign->consumedPercent().' % de '.Money::euros($campaign->budget_total_cents)" />
+                @endif
+            @endunless
         </div>
 
         {{-- Le podium officiel d'un classement terminé : ce qui a été annoncé et récompensé. --}}
         @if ($podium)
             <div class="card p-5 sm:p-6">
                 <h2 class="font-display text-lg font-bold text-ink-50">Le podium final</h2>
-                <p class="mt-0.5 text-sm text-ink-400">Le classement arrêté à la date de fin, avec les récompenses.</p>
+                <p class="mt-0.5 text-sm text-ink-400">Le classement arrêté à la date de fin{{ $hideBudget ? '.' : ', avec les récompenses.' }}</p>
 
                 <div class="mt-5 grid gap-6 lg:grid-cols-2">
                     @foreach ($podium as $key => $rows)
@@ -83,7 +89,7 @@
                                             <span class="block truncate font-semibold text-ink-50">{{ $row['name'] }}</span>
                                             <span class="block text-xs tabular text-ink-400">{{ $row['score'] }}</span>
                                         </span>
-                                        @if ($row['reward'])
+                                        @if ($row['reward'] && ! $hideBudget)
                                             <span class="flex-none rounded-full bg-brand-500/15 px-2.5 py-1 text-xs font-bold tabular text-brand-300">{{ $row['reward'] }}</span>
                                         @endif
                                     </li>
@@ -125,7 +131,7 @@
                                         <th class="px-5 py-3 text-left font-semibold sm:px-6">Clippeur</th>
                                         <th class="px-3 py-3 text-left font-semibold">Plateforme</th>
                                         <th class="px-3 py-3 text-right font-semibold">Vues</th>
-                                        @unless ($campaign->isContest())
+                                        @unless ($campaign->isContest() || $hideBudget)
                                             <th class="px-5 py-3 text-right font-semibold sm:px-6">Coût</th>
                                         @endunless
                                     </tr>
@@ -147,7 +153,7 @@
                                             <td class="px-3 py-3 text-right tabular text-ink-100">
                                                 {{ Money::views($clip->views_total) }}
                                             </td>
-                                            @unless ($campaign->isContest())
+                                            @unless ($campaign->isContest() || $hideBudget)
                                                 <td class="px-5 py-3 text-right font-semibold tabular text-ink-50 sm:px-6">
                                                     {{ Money::euros($clip->earned_cents) }}
                                                 </td>
@@ -178,16 +184,17 @@
 
             <div class="space-y-4 sm:space-y-6">
                 <div class="card p-5 sm:p-6">
-                    @unless ($campaign->isContest())
+                    @unless ($campaign->isContest() || $hideBudget)
                         <x-budget-bar :campaign="$campaign" :remaining="$remainingCents" />
                     @endunless
 
-                    <dl @class(['space-y-3 text-sm', 'mt-6 border-t border-ink-700 pt-5' => ! $campaign->isContest()])>
+                    <dl @class(['space-y-3 text-sm', 'mt-6 border-t border-ink-700 pt-5' => ! $campaign->isContest() && ! $hideBudget])>
+                        {{-- Les plateformes acceptées ; le tarif au millier de vues est de l'argent, il reste caché. --}}
                         @foreach ($campaign->rates->where('is_enabled', true) as $rate)
                             <div class="flex items-baseline justify-between gap-2">
                                 <dt class="text-ink-400">{{ $rate->platform->label() }}</dt>
                                 <dd class="font-display font-bold tabular text-ink-50">
-                                    @if ($campaign->isContest())
+                                    @if ($campaign->isContest() || $hideBudget)
                                         <span class="text-sm font-medium text-ink-300">acceptée</span>
                                     @else
                                         {{ Money::rate($rate->rate_per_1k_cents) }}<span class="text-xs font-medium text-ink-400"> /1000</span>
@@ -196,7 +203,7 @@
                             </div>
                         @endforeach
 
-                        @if ($campaign->isContest())
+                        @if ($campaign->isContest() && ! $hideBudget)
                             {{-- Le créateur finance des prix, pas des vues : il
                                  doit lire ce qu'il a promis, place par place. --}}
                             @forelse ($campaign->rewards() as $index => $reward)
@@ -228,7 +235,7 @@
                     </dl>
                 </div>
 
-                @if ($perPlatform->isNotEmpty() && ! $campaign->isContest())
+                @if ($perPlatform->isNotEmpty() && ! $campaign->isContest() && ! $hideBudget)
                     <div class="card p-5 sm:p-6">
                         <h2 class="font-display text-lg font-bold text-ink-50">Par plateforme</h2>
 

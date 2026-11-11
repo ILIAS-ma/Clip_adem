@@ -15,7 +15,7 @@ use Illuminate\Support\Str;
     'user_id', 'name', 'slug', 'kind', 'bio', 'avatar_path', 'spotify_url',
     'instagram_handle', 'tiktok_handle', 'youtube_handle',
     'twitch_handle', 'kick_handle', 'vod_url',
-    'internal_notes', 'is_active', 'created_by',
+    'internal_notes', 'is_active', 'hide_budget', 'created_by',
 ])]
 class Creator extends Model
 {
@@ -54,7 +54,14 @@ class Creator extends Model
         return [
             'kind' => CreatorKind::class,
             'is_active' => 'boolean',
+            'hide_budget' => 'boolean',
         ];
+    }
+
+    /** Ce créateur suit ses statistiques sans voir le budget ni les prix mis pour les clippeurs. */
+    public function hidesBudget(): bool
+    {
+        return (bool) $this->hide_budget;
     }
 
     /**

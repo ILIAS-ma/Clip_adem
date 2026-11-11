@@ -84,7 +84,7 @@
                     <p class="font-display text-base font-bold text-ink-50">Aucune campagne pour l'instant</p>
                     <p class="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-300">
                         Dès qu'une campagne sera lancée à votre nom, vous verrez ici les vues générées
-                        et le budget consommé, en temps réel.
+                        {{ auth()->user()->creator?->hidesBudget() ? 'et les statistiques' : 'et le budget consommé' }}, en temps réel.
                     </p>
                 </div>
             @else

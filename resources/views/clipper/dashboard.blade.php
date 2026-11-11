@@ -111,14 +111,17 @@
 
         <div class="grid gap-4 lg:grid-cols-5">
 
-            {{-- Le solde, et en dessous les deux chiffres qui l'expliquent (vues, total généré) :
-                 une seule carte d'argent, prix à recevoir compris. --}}
+            {{-- Une seule carte d'argent, un seul chiffre : le total gagné, prix à recevoir compris. --}}
             <div class="hero-balance card relative flex flex-col overflow-hidden lg:col-span-3">
                 <div class="flex-1 p-7 sm:p-8">
-                    <p class="text-sm font-medium text-ink-300">Solde retirable</p>
+                    <p class="text-sm font-medium text-ink-300">Total gagné</p>
 
+                    {{-- Un seul chiffre : tout ce qu'on a gagné sur les campagnes, prix à recevoir compris.
+                         Le détail (retirable, en attente, déjà versé) est sur la page Revenus. --}}
                     <p class="mt-2 font-display text-5xl font-extrabold tabular leading-none text-brand-400 sm:text-6xl"
-                       data-count-up>{{ Money::euros($balanceCents) }}</p>
+                       data-count-up>{{ Money::euros($prizes['total_cents']) }}</p>
+
+                    <p class="mt-1.5 text-sm text-ink-400">Sur toutes vos campagnes.</p>
 
                     {{-- Les prix d'un classement terminé : acquis, pas encore versés. Au même endroit que le
                          solde, pour qu'il n'y ait pas deux cartes d'argent avec deux chiffres différents. --}}
@@ -167,18 +170,6 @@
                         </div>
                     @endif
                 </div>
-
-                <dl class="grid grid-cols-2 divide-x divide-ink-700 border-t border-ink-700 bg-ink-900/60">
-                    <div class="min-w-0 px-4 py-3 sm:px-7 sm:py-4">
-                        <dt class="text-xs text-ink-400">Vues cumulées</dt>
-                        <dd class="mt-1 font-display text-lg font-bold tabular text-ink-50 sm:text-xl">{{ Money::views($views) }}</dd>
-                    </div>
-                    <div class="min-w-0 px-4 py-3 sm:px-7 sm:py-4">
-                        <dt class="text-xs text-ink-400">Total généré</dt>
-                        <dd class="mt-1 whitespace-nowrap font-display text-lg font-bold tabular text-brand-400 sm:text-xl">{{ Money::euros($prizes['total_cents']) }}</dd>
-                        <dd class="mt-0.5 text-[11px] text-ink-500">toutes campagnes, prix compris</dd>
-                    </div>
-                </dl>
 
                 @if ($prizes['rows'] !== [])
                     <details class="border-t border-ink-700 bg-ink-900/60">
