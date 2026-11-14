@@ -187,4 +187,78 @@
             @endif
         </div>
     @endforeach
+
+    {{-- Réservé au super-admin : ce que serait le classement si les vidéos non soumises comptaient --}}
+    @if ($showShadow ?? false)
+        <div style="border:1px dashed rgba(128,128,128,.55);border-radius:.85rem;padding:1rem;display:grid;gap:1rem;">
+            <div>
+                <div style="font-weight:700;">🔒 Classement avec les vidéos non soumises</div>
+                <p class="text-sm text-gray-500 dark:text-gray-400" style="margin:.25rem 0 0;">
+                    Visible par le super-admin seulement. Ces vidéos ne comptent pour personne tant que leur auteur ne les a pas soumises :
+                    c'est ce que le classement deviendrait s'ils le faisaient avant la fin.
+                    @if ($shadow)
+                        Calculé le {{ Illuminate\Support\Carbon::parse($shadow['computed_at'])->timezone(config('app.timezone'))->format('d/m à H\hi') }}
+                        (mis à jour chaque heure).
+                        @if ($shadow['unreadable'] > 0)
+                            {{ $shadow['unreadable'] }} compte(s) illisible(s) ne sont pas comptés.
+                        @endif
+                    @endif
+                </p>
+            </div>
+
+            @if (! $shadow)
+                <p class="text-sm text-gray-500 dark:text-gray-400" style="margin:0;">Pas encore calculé : le prochain calcul a lieu dans l'heure.</p>
+            @else
+                @foreach (['views' => 'Top vues', 'posts' => 'Top clips'] as $key => $title)
+                    <div>
+                        <div style="font-weight:600;margin-bottom:.4rem;">{{ $title }}</div>
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%;border-collapse:collapse;font-size:.875rem;">
+                                <thead>
+                                    <tr style="text-align:left;{{ $muted }}font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;">
+                                        <th style="padding:.35rem .6rem .35rem 0;">#</th>
+                                        <th style="padding:.35rem .6rem;">Clippeur</th>
+                                        <th style="padding:.35rem .6rem;text-align:right;">{{ $key === 'views' ? 'Vues' : 'Clips' }}</th>
+                                        <th style="padding:.35rem .6rem;text-align:right;">Dont non soumis</th>
+                                        <th style="padding:.35rem 0 .35rem .6rem;text-align:right;">Prix</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($shadow[$key] as $row)
+                                        @php
+                                            $total = $key === 'views' ? $row['total_views'] : $row['total_posts'];
+                                            $pending = $key === 'views' ? $row['un_views'] : $row['un_posts'];
+                                        @endphp
+                                        <tr style="border-top:1px solid rgba(128,128,128,.18);">
+                                            <td style="padding:.45rem .6rem .45rem 0;font-weight:700;">{{ $row['rank'] }}</td>
+                                            <td style="padding:.45rem .6rem;font-weight:600;">{{ $row['name'] }}</td>
+                                            <td style="padding:.45rem .6rem;text-align:right;font-variant-numeric:tabular-nums;font-weight:700;">{{ number_format($total, 0, ',', ' ') }}</td>
+                                            <td style="padding:.45rem .6rem;text-align:right;font-variant-numeric:tabular-nums;{{ $pending > 0 ? 'color:var(--warning-500);font-weight:600;' : $muted }}">
+                                                {{ $pending > 0 ? '+ '.number_format($pending, 0, ',', ' ') : '—' }}
+                                            </td>
+                                            <td style="padding:.45rem 0 .45rem .6rem;text-align:right;">{{ $row['reward'] ?? '—' }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @endforeach
+
+                @if ($shadow['gains'] !== [])
+                    <div>
+                        <div style="font-weight:600;margin-bottom:.4rem;">Gains si tout était soumis</div>
+                        <ul style="list-style:none;margin:0;padding:0;display:grid;gap:.25rem;font-size:.875rem;">
+                            @foreach ($shadow['gains'] as $gain)
+                                <li style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:.5rem;">
+                                    <span style="font-weight:600;">{{ $gain['name'] }}</span>
+                                    <span style="{{ $muted }}">{{ implode(' + ', $gain['parts']) }}{{ $gain['cents'] > 0 ? ' = '.number_format($gain['cents'] / 100, 0, ',', ' ').' €' : '' }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+            @endif
+        </div>
+    @endif
 </div>

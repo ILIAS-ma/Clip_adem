@@ -12,6 +12,7 @@ use App\Models\Campaign;
 use App\Services\Campaigns\CampaignStats;
 use App\Services\Campaigns\ContestReport;
 use App\Services\Campaigns\ContestService;
+use App\Services\Campaigns\ContestShadowStandings;
 use App\Support\Budget\CreditOutcome;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -134,6 +135,9 @@ class EditCampaign extends EditRecord
             ->modalContent(fn () => view('filament.campaigns.contest-standings', [
                 'campaign' => $this->getRecord(),
                 'report' => app(ContestReport::class)->for($this->getRecord()),
+                // Le classement qui compterait aussi les vidéos non soumises : le super-admin seul.
+                'showShadow' => auth()->user()?->isSuperAdmin() ?? false,
+                'shadow' => (auth()->user()?->isSuperAdmin() ?? false) ? ContestShadowStandings::cached($this->getRecord()) : null,
             ]));
     }
 
