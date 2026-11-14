@@ -241,16 +241,27 @@ class SidebarTest extends TestCase
     }
 
     #[Test]
-    public function the_referral_tab_is_gone_but_the_page_still_works(): void
+    public function the_referral_tab_is_back_in_the_menu_and_the_page_works(): void
     {
-        // Retiré de la navigation à la demande ; la page reste joignable
-        // pour les liens de parrainage déjà partagés.
+        // L'onglet avait été retiré de la navigation à la demande ; le parrainage est relancé
+        // (classement des parrains, conditions réglables par l'équipe), il y revient.
+        $this->actingAs($this->clipper());
+
+        $html = $this->get(route('dashboard'))->assertSuccessful()->getContent();
+
+        $this->assertStringContainsString(route('referrals.index', absolute: false).'"', $html);
+
+        $this->get(route('referrals.index'))->assertSuccessful();
+    }
+
+    #[Test]
+    public function the_referral_tab_disappears_when_the_team_switches_referrals_off(): void
+    {
+        config(['clipping.referrals.enabled' => false]);
         $this->actingAs($this->clipper());
 
         $html = $this->get(route('dashboard'))->assertSuccessful()->getContent();
 
         $this->assertStringNotContainsString(route('referrals.index', absolute: false).'"', $html);
-
-        $this->get(route('referrals.index'))->assertSuccessful();
     }
 }

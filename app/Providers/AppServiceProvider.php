@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Contracts\CampaignBudgetService;
 use App\Services\Budget\DatabaseCampaignBudgetService;
+use App\Services\Settings\SiteSettings;
 use App\View\Composers\NavigationComposer;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
@@ -44,6 +45,10 @@ class AppServiceProvider extends ServiceProvider
         );
 
         $this->trustConfiguredProxies();
+
+        // Les réglages que l'équipe change dans l'administration recouvrent la configuration : tout le reste
+        // du code continue de lire config(...) et obtient la valeur choisie.
+        $this->app->make(SiteSettings::class)->apply();
 
         // Livewire embarque son propre Alpine et ne l'injecte que sur les
         // pages qui rendent au moins un composant Livewire. Comme app.js

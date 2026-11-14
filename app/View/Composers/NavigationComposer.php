@@ -109,6 +109,14 @@ class NavigationComposer
                     'icon' => 'M4 20h4v-7H4v7zm6 0h4V5h-4v15zm6 0h4v-11h-4v11z',
                 ],
                 [
+                    // Le parrainage existait sans entrée dans le menu : la page n'était joignable que par un lien
+                    // caché au bas du classement. Le classement des parrains s'y trouve aussi.
+                    'route' => 'referrals.index',
+                    'pattern' => 'referrals.*',
+                    'label' => 'Parrainage',
+                    'icon' => 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z',
+                ],
+                [
                     'route' => 'achievements.index',
                     'pattern' => 'achievements.*',
                     'label' => 'Succès',
@@ -119,6 +127,11 @@ class NavigationComposer
         // Echo Studio en pause (clipping.studio.enabled) : son lien disparaît.
         if (! config('clipping.studio.enabled')) {
             $links = array_values(array_filter($links, fn (array $link) => ($link['url'] ?? null) !== '/fetchclip'));
+        }
+
+        // Parrainage désactivé par l'équipe : l'onglet disparaît aussi.
+        if (! config('clipping.referrals.enabled')) {
+            $links = array_values(array_filter($links, fn (array $link) => ($link['route'] ?? null) !== 'referrals.index'));
         }
 
         /*
