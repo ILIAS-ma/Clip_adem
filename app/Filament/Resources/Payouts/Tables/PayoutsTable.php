@@ -8,6 +8,7 @@ use App\Exceptions\PayoutRefused;
 use App\Models\Payout;
 use App\Services\Accounting\AccountingExport;
 use App\Services\Payouts\BankTransferExport;
+use App\Services\Payouts\PayoutRequestExport;
 use App\Services\Payouts\PayoutService;
 use App\Support\Iban;
 use Filament\Actions\Action;
@@ -122,6 +123,7 @@ class PayoutsTable
                 static::sendBatchAction(),
                 static::bankTransferFileAction(),
                 static::exportAction(),
+                static::requestSheetAction(),
             ])
             ->recordActions([
                 static::approveAction(),
@@ -407,6 +409,37 @@ class PayoutsTable
                 AccountingExport::PAYOUTS,
                 filled($data['from'] ?? null) ? Carbon::parse($data['from'])->startOfDay() : null,
                 filled($data['to'] ?? null) ? Carbon::parse($data['to'])->endOfDay() : null,
+            ));
+    }
+
+    /**
+     * La feuille de paiement, dans la forme du formulaire Google qu'elle remplace.
+     *
+     * Mêmes colonnes, même ordre, une ligne par demande : l'équipe paie en la
+     * lisant comme avant, sans avoir à réapprendre où regarder.
+     *
+     * Les dates portent sur l'horodateur — la date de demande — parce que
+     * c'est ainsi qu'une période de paiement se découpe.
+     */
+    protected static function requestSheetAction(): Action
+    {
+        return Action::make('requestSheet')
+            ->label('Tableau des demandes')
+            ->icon('heroicon-o-table-cells')
+            ->color('gray')
+            ->modalHeading('Tableau des demandes de retrait')
+            ->modalDescription(auth()->user()?->isSuperAdmin()
+                ? 'Le fichier contient les IBAN en clair.'
+                : 'Les IBAN y sont masqués : seul un super administrateur obtient le numéro complet.')
+            ->modalSubmitActionLabel('Télécharger')
+            ->schema([
+                DatePicker::make('from')->label('Du'),
+                DatePicker::make('to')->label('Au'),
+            ])
+            ->action(fn (array $data) => app(PayoutRequestExport::class)->download(
+                filled($data['from'] ?? null) ? Carbon::parse($data['from'])->startOfDay() : null,
+                filled($data['to'] ?? null) ? Carbon::parse($data['to'])->endOfDay() : null,
+                (bool) auth()->user()?->isSuperAdmin(),
             ));
     }
 }

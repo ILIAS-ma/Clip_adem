@@ -3,7 +3,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h1 class="font-display text-2xl font-bold text-ink-50">Mes revenus</h1>
-        <p class="mt-1 text-ink-300">
+        <p class="mt-1 text-sm text-ink-300 sm:text-base">
             @if ($clipper->hasPayoutDestination())
                 Versements par {{ $clipper->payoutMethod()->label() }}
                 sur <span class="tabular text-ink-100">{{ $clipper->payoutDestinationLabel() }}</span>
@@ -27,11 +27,17 @@
                     tone="money" hint="Définitivement acquis" />
 
             {{-- L'estimation vient du moteur de budget : reliquat et plafonds
-                 déjà appliqués, donc jamais une promesse intenable. --}}
-            <x-stat label="Estimé en attente" :value="Money::euros($pendingCents)"
+                 déjà appliqués, donc jamais une promesse intenable.
+                 « À venir » et non « en attente » : la carte suivante parle
+                 elle aussi d'attente, mais d'un virement, pas de vues. --}}
+            <x-stat label="Estimé à venir" :value="Money::euros($pendingCents)"
                     tone="brand" hint="Vues pas encore créditées" />
 
-            <x-stat label="Demandé ou versé" :value="Money::euros($lockedCents)" />
+            {{-- « Demandé ou versé » mélangeait l'argent en route et l'argent
+                 reçu. Seul le premier explique un solde qui vient de baisser ;
+                 le total déjà versé se lit sur la carte « Mes retraits ». --}}
+            <x-stat label="En attente de virement" :value="Money::euros($pendingPayoutCents)"
+                    :hint="$pendingPayoutCents > 0 ? 'Demandé, pas encore reçu' : 'Aucun retrait en cours'" />
 
             <x-stat label="Solde retirable" :value="Money::euros($balanceCents)"
                     tone="money" highlight
@@ -42,7 +48,7 @@
 
         <div class="grid gap-6 lg:grid-cols-3">
 
-            <div class="card p-6">
+            <div class="card p-4 sm:p-6">
                 <h2 class="font-display text-lg font-bold text-ink-50">Demander un retrait</h2>
 
                 @if ($clipper->hasPayoutDestination())
@@ -65,16 +71,25 @@
             </div>
 
             <div class="card lg:col-span-2">
-                <div class="border-b border-ink-700 px-6 py-4">
+                <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-ink-700 px-4 py-3.5 sm:px-6 sm:py-4">
                     <h2 class="font-display text-lg font-bold text-ink-50">Mes retraits</h2>
+
+                    {{-- Le cumul reçu, là où le clippeur regarde déjà ses virements,
+                         plutôt qu'une cinquième carte en haut de page. --}}
+                    @if ($paidPayoutCents > 0)
+                        <p class="text-sm text-ink-400">
+                            <span class="font-semibold tabular text-ink-100">{{ Money::euros($paidPayoutCents) }}</span>
+                            déjà versés
+                        </p>
+                    @endif
                 </div>
 
                 @if ($payouts->isEmpty())
-                    <p class="px-6 py-10 text-center text-sm text-ink-300">Aucun retrait demandé.</p>
+                    <p class="px-4 py-8 sm:px-6 sm:py-10 text-center text-sm text-ink-300">Aucun retrait demandé.</p>
                 @else
                     <ul class="divide-y divide-ink-700">
                         @foreach ($payouts as $payout)
-                            <li class="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
+                            <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-6 sm:py-4">
                                 <div>
                                     <p class="font-display font-bold tabular text-ink-50">
                                         {{ Money::euros($payout->amount_cents) }}
@@ -108,7 +123,7 @@
                     </ul>
 
                     @if ($payouts->hasPages())
-                        <div class="border-t border-ink-700 px-6 py-4">
+                        <div class="border-t border-ink-700 px-4 py-3.5 sm:px-6 sm:py-4">
                             {{ $payouts->onEachSide(1)->links() }}
                         </div>
                     @endif
@@ -117,20 +132,20 @@
         </div>
 
         <div class="card">
-            <div class="border-b border-ink-700 px-6 py-4">
+            <div class="border-b border-ink-700 px-4 py-3.5 sm:px-6 sm:py-4">
                 <h2 class="font-display text-lg font-bold text-ink-50">Historique des crédits</h2>
                 <p class="mt-0.5 text-sm text-ink-400">Chaque ligne correspond à des vues rémunérées.</p>
             </div>
 
             @if ($transactions->isEmpty())
-                <p class="px-6 py-10 text-center text-sm text-ink-300">Aucun crédit pour le moment.</p>
+                <p class="px-4 py-8 sm:px-6 sm:py-10 text-center text-sm text-ink-300">Aucun crédit pour le moment.</p>
             @else
                 {{-- Sous sm : une ligne de tableau à 4 colonnes force chaque
                      cellule à casser sur plusieurs lignes. Une carte par
                      transaction reste lisible sans défiler horizontalement. --}}
                 <ul class="divide-y divide-ink-700 sm:hidden">
                     @foreach ($transactions as $transaction)
-                        <li class="flex items-start justify-between gap-3 px-6 py-3">
+                        <li class="flex items-start justify-between gap-3 px-4 py-3 sm:px-6">
                             <div class="min-w-0">
                                 <p class="truncate text-ink-100">{{ $transaction->campaign?->title }}</p>
                                 <p class="mt-0.5 text-xs text-ink-400">

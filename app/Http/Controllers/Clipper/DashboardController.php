@@ -41,6 +41,12 @@ class DashboardController extends Controller
             // refait dans la vue.
             'balanceCents' => $clipper->availableBalanceCents(),
 
+            // Les deux moitiés de ce qui a quitté le solde. Sans elles, un
+            // clippeur qui demande 50 € voit son solde baisser d'autant sans
+            // rien trouver sur la page qui dise où l'argent est passé.
+            'pendingPayoutCents' => $clipper->pendingPayoutCents(),
+            'paidPayoutCents' => $clipper->paidPayoutCents(),
+
             // Les prix de classement, du provisoire au versé : un solde à zéro ne dit pas qu'on n'a rien gagné.
             'prizes' => app(ClipperPrizes::class)->for($clipper),
 

@@ -31,4 +31,18 @@ enum PayoutStatus: string
     {
         return in_array($this, [self::Requested, self::Approved, self::Processing, self::Paid], true);
     }
+
+    /**
+     * Demandé, pas encore reçu : l'argent a quitté le solde retirable mais
+     * n'est pas arrivé sur le compte du clippeur.
+     *
+     * Avec `Paid`, couvre exactement les statuts de `locksBalance()` : tout ce
+     * qui est immobilisé est soit en route, soit déjà arrivé. C'est la
+     * distinction qui manquait côté clippeur — « demandé ou versé » regroupait
+     * les deux, et un solde qui baisse sans explication passe pour une erreur.
+     */
+    public function awaitsTransfer(): bool
+    {
+        return in_array($this, [self::Requested, self::Approved, self::Processing], true);
+    }
 }

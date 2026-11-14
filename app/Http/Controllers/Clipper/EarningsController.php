@@ -33,7 +33,11 @@ class EarningsController extends Controller
 
             'balanceCents' => $clipper->availableBalanceCents(),
             'prizes' => app(ClipperPrizes::class)->for($clipper),
-            'lockedCents' => $clipper->lockedPayoutCents(),
+            // Séparés, pas regroupés sous « demandé ou versé » : pour le
+            // clippeur, un virement en route et un virement reçu n'ont rien à
+            // voir, et c'est le premier qui explique un solde qui a baissé.
+            'pendingPayoutCents' => $clipper->pendingPayoutCents(),
+            'paidPayoutCents' => $clipper->paidPayoutCents(),
             'minimumCents' => config('clipping.payouts.minimum_cents'),
 
             // Paginé : l'historique s'allonge indéfiniment, contrairement au

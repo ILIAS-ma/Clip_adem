@@ -328,12 +328,36 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     /** Montant déjà demandé ou versé, donc immobilisé, en centimes. */
     public function lockedPayoutCents(): int
     {
-        $locked = array_map(
+        return $this->sumPayoutsWhere(fn (PayoutStatus $status) => $status->locksBalance());
+    }
+
+    /**
+     * Demandé, pas encore reçu, en centimes : l'argent est en route.
+     *
+     * Avec {@see paidPayoutCents()}, redonne exactement
+     * {@see lockedPayoutCents()}. C'est ce que le clippeur cherche quand son
+     * solde a baissé sans qu'il ait rien reçu.
+     */
+    public function pendingPayoutCents(): int
+    {
+        return $this->sumPayoutsWhere(fn (PayoutStatus $status) => $status->awaitsTransfer());
+    }
+
+    /** Déjà versé depuis l'inscription, en centimes. */
+    public function paidPayoutCents(): int
+    {
+        return $this->sumPayoutsWhere(fn (PayoutStatus $status) => $status === PayoutStatus::Paid);
+    }
+
+    /** @param  callable(PayoutStatus): bool  $retenu */
+    protected function sumPayoutsWhere(callable $retenu): int
+    {
+        $statuts = array_map(
             fn (PayoutStatus $status) => $status->value,
-            array_filter(PayoutStatus::cases(), fn (PayoutStatus $status) => $status->locksBalance()),
+            array_filter(PayoutStatus::cases(), $retenu),
         );
 
-        return (int) $this->payouts()->whereIn('status', $locked)->sum('amount_cents');
+        return (int) $this->payouts()->whereIn('status', $statuts)->sum('amount_cents');
     }
 
     /**

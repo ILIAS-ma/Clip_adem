@@ -76,7 +76,7 @@ class ClipperEarningsTest extends TestCase
             ->get(route('earnings.index'))
             ->assertSuccessful()
             ->assertSee('Gains validés')
-            ->assertSee('Estimé en attente')
+            ->assertSee('Estimé à venir')
             ->assertSee('50,00 €');
     }
 
