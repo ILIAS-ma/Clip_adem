@@ -44,12 +44,15 @@
                 <p class="font-display text-lg font-bold text-ink-50">Pas encore classé</p>
                 <p class="mt-1 text-sm leading-relaxed text-ink-300">
                     Vous avez {{ $mine->referred }} filleul{{ $mine->referred > 1 ? 's' : '' }} inscrit{{ $mine->referred > 1 ? 's' : '' }}, mais aucun n'est encore actif.
-                    Un filleul compte dès qu'il a <strong class="text-ink-100">un clip validé</strong>.
+                    Un filleul compte quand il est <strong class="text-ink-100">vraiment actif</strong> :
+                    {{ $rule['clips'] }} clips validés, {{ number_format($rule['views'], 0, ',', ' ') }} vues
+                    et de l'activité sur {{ $rule['days'] }} jours différents.
                 </p>
             @else
                 <p class="font-display text-lg font-bold text-ink-50">Vous n'avez pas encore de filleul</p>
                 <p class="mt-1 text-sm leading-relaxed text-ink-300">
-                    Partagez votre lien : chaque ami qui publie un clip validé vous fait monter.
+                    Partagez votre lien : chaque ami qui devient actif vous fait monter
+                    ({{ $rule['clips'] }} clips validés et {{ number_format($rule['views'], 0, ',', ' ') }} vues).
                 </p>
             @endif
 
@@ -68,7 +71,8 @@
                 <h2 class="font-display text-lg font-bold text-ink-50">Le classement</h2>
                 <p class="mt-0.5 text-sm text-ink-400">
                     {{ $period === ReferrerLeaderboard::MONTH ? 'Les filleuls inscrits depuis le début du mois.' : 'Tous les filleuls depuis le début.' }}
-                    Seuls comptent ceux qui ont un clip validé.
+                    Seuls comptent les filleuls actifs : {{ $rule['clips'] }} clips validés,
+                    {{ number_format($rule['views'], 0, ',', ' ') }} vues, sur {{ $rule['days'] }} jours différents.
                 </p>
             </div>
 

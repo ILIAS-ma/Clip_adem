@@ -32,12 +32,29 @@ class ReferrerLeaderboardTest extends TestCase
         $filleul->forceFill(['referred_by' => $parrain->id, 'referred_at' => $referredAt ?? now()])->save();
 
         if ($active) {
-            Clip::factory()->create([
-                'campaign_id' => Campaign::factory()->create()->id, 'user_id' => $filleul->id, 'status' => ClipStatus::Approved,
-            ]);
+            $this->activity($filleul);
         }
 
         return $filleul;
+    }
+
+    /** De quoi être « actif » : le nombre de clips, de vues et de jours que demande la règle. */
+    protected function activity(User $user, ?int $clips = null, ?int $views = null, ?int $days = null): void
+    {
+        $rule = ReferrerLeaderboard::rule();
+        $clips ??= $rule['clips'];
+        $views ??= $rule['views'];
+        $days ??= $rule['days'];
+        $campaign = Campaign::factory()->create();
+
+        foreach (range(1, $clips) as $i) {
+            Clip::factory()->create([
+                'campaign_id' => $campaign->id, 'user_id' => $user->id, 'status' => ClipStatus::Approved,
+                'views_total' => intdiv($views, $clips) + 1,
+                // Répartis sur le nombre de jours demandé.
+                'submitted_at' => now()->subDays($i % $days),
+            ]);
+        }
     }
 
     protected function board(User $viewer, string $period = ReferrerLeaderboard::MONTH): array
@@ -67,7 +84,7 @@ class ReferrerLeaderboardTest extends TestCase
     }
 
     #[Test]
-    public function an_account_with_no_validated_clip_does_not_count_so_fake_sign_ups_do_not_climb(): void
+    public function an_account_with_no_activity_does_not_count_so_fake_sign_ups_do_not_climb(): void
     {
         $parrain = $this->clipper('farmer');
         foreach (range(1, 5) as $i) {
@@ -84,7 +101,69 @@ class ReferrerLeaderboardTest extends TestCase
         $this->actingAs($parrain)->get(route('referrals.leaderboard'))
             ->assertSuccessful()
             ->assertSee('Pas encore classé')
-            ->assertSee('un clip validé');
+            ->assertSee('vraiment actif')
+            ->assertSee('5 clips validés');
+    }
+
+    #[Test]
+    public function one_validated_clip_is_not_enough_however_many_views_it_has(): void
+    {
+        $parrain = $this->clipper('parrain');
+        $jetable = $this->filleul($parrain, active: false);
+        $this->activity($jetable, clips: 1, views: 500_000, days: 1);
+
+        $this->assertSame(0, $this->board($parrain)['mine']->active);
+        $this->assertCount(0, $this->board($parrain)['rows']);
+    }
+
+    #[Test]
+    public function enough_clips_in_a_single_day_do_not_count_either(): void
+    {
+        $parrain = $this->clipper('parrain');
+        $this->activity($this->filleul($parrain, active: false), clips: 8, views: 8_000, days: 1);
+
+        $this->assertSame(0, $this->board($parrain)['mine']->active);
+    }
+
+    #[Test]
+    public function clips_over_several_days_but_almost_no_views_do_not_count(): void
+    {
+        $parrain = $this->clipper('parrain');
+        $this->activity($this->filleul($parrain, active: false), clips: 6, views: 60, days: 3);
+
+        $this->assertSame(0, $this->board($parrain)['mine']->active);
+    }
+
+    #[Test]
+    public function a_referral_who_really_takes_part_counts_and_the_thresholds_can_be_changed(): void
+    {
+        $parrain = $this->clipper('parrain');
+        $this->activity($this->filleul($parrain, active: false), clips: 2, views: 300, days: 1);
+
+        // Avec le réglage par défaut (5 clips, 1 000 vues, 2 jours), ce filleul ne compte pas.
+        $this->assertSame(0, $this->board($parrain)['mine']->active);
+
+        // Réglage assoupli : il compte.
+        config()->set('clipping.referrals.active_min_clips', 2);
+        config()->set('clipping.referrals.active_min_views', 200);
+        config()->set('clipping.referrals.active_min_days', 1);
+
+        $this->assertSame(1, $this->board($parrain)['mine']->active);
+    }
+
+    #[Test]
+    public function the_page_states_the_rule_with_the_real_thresholds(): void
+    {
+        config()->set('clipping.referrals.active_min_clips', 7);
+        config()->set('clipping.referrals.active_min_views', 2500);
+        config()->set('clipping.referrals.active_min_days', 3);
+
+        $this->actingAs($this->clipper('viewer'))
+            ->get(route('referrals.leaderboard'))
+            ->assertSuccessful()
+            ->assertSee('7 clips validés')
+            ->assertSee('2 500 vues')
+            ->assertSee('3 jours différents');
     }
 
     #[Test]

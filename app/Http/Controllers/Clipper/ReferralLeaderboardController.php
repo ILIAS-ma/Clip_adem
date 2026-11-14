@@ -21,6 +21,7 @@ class ReferralLeaderboardController extends Controller
             'link' => $referrals->linkFor($user),
             'prize' => config('clipping.referrals.leaderboard_prize'),
             'viewerId' => $user->getKey(),
+            'rule' => ReferrerLeaderboard::rule(),
         ]);
     }
 }

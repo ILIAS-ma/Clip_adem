@@ -10,9 +10,10 @@ use Illuminate\Support\Facades\DB;
 /**
  * Le classement des parrains : qui a amené le plus de clippeurs qui participent vraiment.
  *
- * Un filleul compte comme « actif » quand il a au moins un clip validé. Un simple compte ouvert ne
- * rapporte rien à son parrain au classement : sans cette règle, quelques faux comptes suffiraient pour
- * monter. Les parrains et les filleuls bannis n'y figurent pas, et seul le pseudo est montré.
+ * Un filleul compte comme « actif » quand il participe vraiment : un nombre minimal de clips validés, de
+ * vues cumulées, et de l'activité sur plusieurs jours (voir rule()). Un simple compte ouvert, ou un compte
+ * qui poste un clip pour la forme, ne rapporte rien à son parrain au classement. Les parrains et les
+ * filleuls bannis n'y figurent pas, et seul le pseudo est montré.
  *
  * Le classement ne verse rien. S'il y a une récompense (« le meilleur parrain du mois »), c'est l'équipe
  * qui l'annonce (clipping.referrals.leaderboard_prize) et la verse à la main.
@@ -25,6 +26,20 @@ class ReferrerLeaderboard
 
     /** Combien de parrains sont affichés. */
     public const TOP = 20;
+
+    /**
+     * Ce qu'il faut pour qu'un filleul compte, tel que réglé dans la configuration.
+     *
+     * @return array{clips: int, views: int, days: int}
+     */
+    public static function rule(): array
+    {
+        return [
+            'clips' => max(1, (int) config('clipping.referrals.active_min_clips')),
+            'views' => max(0, (int) config('clipping.referrals.active_min_views')),
+            'days' => max(1, (int) config('clipping.referrals.active_min_days')),
+        ];
+    }
 
     public static function period(?string $value): string
     {
@@ -41,6 +56,7 @@ class ReferrerLeaderboard
     public function for(User $viewer, string $period): array
     {
         $since = $period === self::MONTH ? now()->startOfMonth() : null;
+        $rule = self::rule();
 
         $all = DB::table('users as filleul')
             ->join('users as parrain', 'parrain.id', '=', 'filleul.referred_by')
@@ -50,9 +66,11 @@ class ReferrerLeaderboard
             ->groupBy('parrain.id', 'parrain.pseudo')
             ->selectRaw(
                 'parrain.id as user_id, parrain.pseudo, COUNT(filleul.id) as referred, '
-                .'SUM(EXISTS (SELECT 1 FROM clips WHERE clips.user_id = filleul.id AND clips.status = ?)) as active, '
+                // Actif : assez de clips validés, assez de vues, et de l'activité sur plusieurs jours.
+                .'SUM(EXISTS (SELECT 1 FROM clips WHERE clips.user_id = filleul.id AND clips.status = ? '
+                .'HAVING COUNT(*) >= ? AND COALESCE(SUM(clips.views_total), 0) >= ? AND COUNT(DISTINCT DATE(clips.submitted_at)) >= ?)) as active, '
                 .'MIN(filleul.referred_at) as first_at',
-                [ClipStatus::Approved->value],
+                [ClipStatus::Approved->value, $rule['clips'], $rule['views'], $rule['days']],
             )
             ->get()
             ->map(fn (object $row) => (object) [

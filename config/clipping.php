@@ -336,6 +336,13 @@ return [
         // Ce que l'équipe annonce au meilleur parrain (« 20 € au meilleur parrain du mois »). Vide : rien
         // n'est affiché. Le classement ne verse jamais rien lui-même.
         'leaderboard_prize' => env('REFERRAL_LEADERBOARD_PRIZE'),
+
+        // Un filleul compte au classement des parrains quand il est vraiment actif : au moins ce nombre de
+        // clips validés, ces vues cumulées, et de l'activité sur ce nombre de jours différents. Un compte
+        // ouvert pour faire monter quelqu'un ne passe pas ces trois seuils d'un coup.
+        'active_min_clips' => (int) env('REFERRAL_ACTIVE_MIN_CLIPS', 5),
+        'active_min_views' => (int) env('REFERRAL_ACTIVE_MIN_VIEWS', 1000),
+        'active_min_days' => (int) env('REFERRAL_ACTIVE_MIN_DAYS', 2),
     ],
 
     /*
