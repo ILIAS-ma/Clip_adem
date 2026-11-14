@@ -50,6 +50,15 @@
                     hint="De leurs gains" />
         </div>
 
+        <a href="{{ route('referrals.leaderboard') }}" wire:navigate
+           class="card flex items-center justify-between gap-4 p-4 transition hover:border-brand-500/50 sm:p-5">
+            <span>
+                <span class="block font-display text-base font-bold text-ink-50">Classement des parrains</span>
+                <span class="mt-0.5 block text-sm text-ink-400">Voir qui amène le plus de clippeurs, et où vous en êtes.</span>
+            </span>
+            <span class="text-ink-500" aria-hidden="true">→</span>
+        </a>
+
         {{-- Dire d'où vient l'argent évite la question qui vient toujours :
              « est-ce que ça enlève quelque chose à mon filleul ? » --}}
         <div class="alert-ok">

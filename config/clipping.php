@@ -332,6 +332,10 @@ return [
         // serait plus prudente financièrement ; à trancher sur les chiffres
         // réels, pas à l'avance.
         'enabled' => env('REFERRALS_ENABLED', true),
+
+        // Ce que l'équipe annonce au meilleur parrain (« 20 € au meilleur parrain du mois »). Vide : rien
+        // n'est affiché. Le classement ne verse jamais rien lui-même.
+        'leaderboard_prize' => env('REFERRAL_LEADERBOARD_PRIZE'),
     ],
 
     /*

@@ -12,6 +12,7 @@ use App\Http\Controllers\Clipper\PayoutMethodController;
 use App\Http\Controllers\Clipper\PrizeClaimController;
 use App\Http\Controllers\Clipper\ProfileCompletionController;
 use App\Http\Controllers\Clipper\ReferralController;
+use App\Http\Controllers\Clipper\ReferralLeaderboardController;
 use App\Http\Controllers\Clipper\SocialAccountController;
 use App\Http\Controllers\Clipper\TrainingController;
 use App\Http\Controllers\Creator\CampaignController as CreatorCampaignController;
@@ -314,6 +315,7 @@ Route::middleware(['auth', 'not.banned', 'role:clipper'])->group(function () use
             ->name('prizes.claim');
 
         Route::get('/parrainage', ReferralController::class)->name('referrals.index');
+        Route::get('/parrainage/classement', ReferralLeaderboardController::class)->name('referrals.leaderboard');
 
         Route::get('/classement', [LeaderboardController::class, 'index'])->name('leaderboard.index');
         Route::get('/succes', [AchievementController::class, 'index'])->name('achievements.index');
