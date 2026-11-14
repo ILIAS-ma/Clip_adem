@@ -15,7 +15,7 @@
 @if ($prizes['rows'] !== [] || $prizes['total_cents'] > 0)
     <div class="card">
         {{-- Le solde, les gains validés et le reste sont déjà dans les tuiles au-dessus : ici, seulement les prix. --}}
-        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-ink-700 px-6 py-4">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-ink-700 px-4 py-3.5 sm:px-6 sm:py-4">
             <div>
                 <h2 class="font-display text-lg font-bold text-ink-50">Prix de classement</h2>
                 <p class="mt-0.5 text-sm text-ink-400">Ce que vous avez gagné sur vos campagnes en classement.</p>
@@ -30,13 +30,13 @@
         @endif
 
         @if ($prizes['live_cents'] > 0)
-            <p class="border-t border-ink-700 px-6 py-3 text-xs text-ink-400">
+            <p class="border-t border-ink-700 px-4 py-3 sm:px-6 text-xs text-ink-400">
                 Classements en cours : {{ Money::euros($prizes['live_cents']) }} si l'un d'eux s'arrêtait maintenant. La place peut encore changer.
             </p>
         @endif
 
         @if ($prizes['claimable'] !== [] || $canWithdraw)
-            <div class="flex flex-wrap items-center gap-3 border-t border-ink-700 px-6 py-4">
+            <div class="flex flex-wrap items-center gap-3 border-t border-ink-700 px-4 py-3.5 sm:px-6 sm:py-4">
                 @foreach ($prizes['claimable'] as $claim)
                     @if ($claim['claimed'])
                         <span class="chip-wait">Demande envoyée · {{ $claim['title'] }}</span>

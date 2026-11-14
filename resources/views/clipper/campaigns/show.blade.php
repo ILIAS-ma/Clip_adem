@@ -192,7 +192,7 @@
 
             {{-- Colonne d'action sur ordinateur, qui suit le défilement. --}}
             <aside class="hidden space-y-4 lg:sticky lg:top-24 lg:block lg:self-start">
-                <div class="card p-6">
+                <div class="card p-4 sm:p-6">
                     @if (! $joined)
                         @include('clipper.campaigns.partials.join', ['campaign' => $campaign, 'isOpen' => $isOpen, 'remainingCents' => $remainingCents, 'placement' => 'desktop'])
                     @else

@@ -43,7 +43,7 @@
             <div class="alert-ok">{{ session('status') }}</div>
         @endif
 
-        <div class="grid grid-cols-3 gap-2 sm:gap-4">
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4">
             <x-stat label="Vues" :value="Money::views($clip->views_total)"
                     :hint="Money::views($clip->paid_views).' rémunérées'" />
 
@@ -51,6 +51,7 @@
                     tone="money" hint="Inscrits au grand livre" />
 
             <x-stat label="En attente de crédit" :value="Money::euros($quote->payableCents)"
+                    class="col-span-2 sm:col-span-1"
                     :tone="$quote->payableCents > 0 ? 'money' : 'neutral'"
                     :hint="$quote->deltaViews > 0 ? Money::views($quote->deltaViews).' vues nouvelles' : 'Tout est crédité'" />
         </div>
@@ -92,7 +93,7 @@
 
         <div class="grid gap-6 lg:grid-cols-2">
 
-            <div class="card p-6">
+            <div class="card p-4 sm:p-6">
                 <h2 class="font-display text-lg font-bold text-ink-50">Conformité au brief</h2>
 
                 @if (! $clip->compliance || ! ($clip->compliance['checks'] ?? []))
@@ -131,7 +132,7 @@
                 @endif
             </div>
 
-            <div class="card p-6">
+            <div class="card p-4 sm:p-6">
                 <h2 class="font-display text-lg font-bold text-ink-50">Historique des relevés</h2>
 
                 @if ($snapshots->isEmpty())

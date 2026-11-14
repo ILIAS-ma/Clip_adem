@@ -12,7 +12,10 @@
             <span>© {{ date('Y') }} {{ config('app.name') }} — Payé pour vos clips</span>
         </div>
 
-        <nav class="flex flex-wrap gap-x-5 gap-y-2" aria-label="Liens légaux">
+        {{-- Deux colonnes sur téléphone : à la suite, les quatre liens
+             tombaient en trois + un et laissaient « Confidentialité » seule
+             sur sa ligne, sur toutes les pages. --}}
+        <nav class="grid grid-cols-2 gap-x-5 gap-y-2 sm:flex sm:flex-wrap" aria-label="Liens légaux">
             @auth
                 <a href="{{ route('messages.index') }}" class="hover:text-ink-200">Contacter l'équipe</a>
             @endauth

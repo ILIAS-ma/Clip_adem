@@ -2,7 +2,7 @@
     <x-slot name="header">
         <span class="chip-wait">Étape 2 sur 2</span>
         <h1 class="mt-3 font-display text-2xl font-bold text-ink-50">Complétez votre profil</h1>
-        <p class="mt-1 text-ink-300">Dernière étape avant de pouvoir rejoindre une campagne.</p>
+        <p class="mt-1 text-sm text-ink-300 sm:text-base">Dernière étape avant de pouvoir rejoindre une campagne.</p>
     </x-slot>
 
     <div class="mx-auto max-w-2xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
@@ -18,7 +18,7 @@
             </div>
         @endif
 
-        <div class="card p-6 sm:p-8">
+        <div class="card p-4 sm:p-8">
             <form method="POST" action="{{ route('profile.complete.update') }}" class="space-y-6">
                 @csrf
                 @method('PATCH')

@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h1 class="font-display text-2xl font-bold text-ink-50">Succès</h1>
-        <p class="mt-1 text-ink-300">
+        <p class="mt-1 text-sm text-ink-300 sm:text-base">
             {{ $achievements->where('unlocked', true)->count() }} / {{ $achievements->count() }} débloqués
         </p>
     </x-slot>

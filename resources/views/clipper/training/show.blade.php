@@ -5,7 +5,7 @@
                 <p class="text-xs font-semibold uppercase tracking-wide text-brand-400">Leçon {{ $number }} / {{ $lessons->count() }}</p>
                 <h1 class="mt-1 font-display text-2xl font-bold text-ink-50">{{ $lesson->title }}</h1>
                 @if ($lesson->summary)
-                    <p class="mt-1 text-ink-300">{{ $lesson->summary }}</p>
+                    <p class="mt-1 text-sm text-ink-300 sm:text-base">{{ $lesson->summary }}</p>
                 @endif
             </div>
 

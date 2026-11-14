@@ -3,7 +3,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h1 class="font-display text-2xl font-bold text-ink-50">Parrainage</h1>
-        <p class="mt-1 text-ink-300">
+        <p class="mt-1 text-sm text-ink-300 sm:text-base">
             Invitez d'autres clippeurs. Vous touchez {{ rtrim(rtrim(number_format($ratePercent, 1, ',', ' '), '0'), ',') }} %
             de ce qu'ils gagnent — sans que cela leur coûte quoi que ce soit.
         </p>
@@ -19,14 +19,18 @@
 
                 <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">Votre lien</p>
 
-                <div x-data="{ copied: false }" class="mt-3 flex flex-wrap items-center gap-3">
-                    <code class="min-w-0 flex-1 truncate rounded-xl border border-ink-700 bg-ink-900 px-4 py-3 text-sm text-brand-300">
+                <div x-data="{ copied: false }" class="mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+                    {{-- Sur téléphone, le lien prend sa propre ligne et se coupe
+                         où il faut : tronqué à côté du bouton, il ne montrait
+                         que le domaine — la seule chose qu'on vient chercher
+                         ici devenait illisible. Au-delà, il reprend une ligne. --}}
+                    <code class="min-w-0 break-all rounded-xl border border-ink-700 bg-ink-900 px-4 py-3 text-sm leading-snug text-brand-300 sm:flex-1 sm:truncate">
                         {{ $link }}
                     </code>
 
                     <button type="button"
                             @click="navigator.clipboard.writeText(@js($link)); copied = true; setTimeout(() => copied = false, 2000)"
-                            class="btn-primary shrink-0">
+                            class="btn-primary w-full shrink-0 sm:w-auto">
                         <span x-show="! copied">Copier</span>
                         <span x-show="copied" x-cloak>Copié</span>
                     </button>
@@ -39,7 +43,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-3 gap-2 sm:gap-4">
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4">
             <x-stat label="Filleuls" :value="(string) $filleuls->count()"
                     :hint="$filleuls->count() > 0 ? 'inscrits grâce à vous' : 'personne pour l’instant'" />
 
@@ -47,7 +51,7 @@
                     tone="money" highlight hint="Ajouté à votre solde" />
 
             <x-stat label="Commission" :value="rtrim(rtrim(number_format($ratePercent, 1, ',', ' '), '0'), ',').' %'"
-                    hint="De leurs gains" />
+                    class="col-span-2 sm:col-span-1" hint="De leurs gains" />
         </div>
 
         <a href="{{ route('referrals.leaderboard') }}" wire:navigate
@@ -79,13 +83,13 @@
             </div>
         @else
             <div class="card">
-                <div class="border-b border-ink-700 px-6 py-4">
+                <div class="border-b border-ink-700 px-4 py-3.5 sm:px-6 sm:py-4">
                     <h2 class="font-display text-lg font-bold text-ink-50">Mes filleuls</h2>
                 </div>
 
                 <ul class="divide-y divide-ink-700">
                     @foreach ($filleuls as $filleul)
-                        <li class="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
+                        <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-6 sm:py-4">
                             <div class="min-w-0">
                                 {{-- Le pseudo, jamais l'e-mail : un parrain n'a
                                      pas à récupérer les contacts de ses filleuls. --}}
@@ -109,13 +113,13 @@
 
         @if ($commissions->isNotEmpty())
             <div class="card">
-                <div class="border-b border-ink-700 px-6 py-4">
+                <div class="border-b border-ink-700 px-4 py-3.5 sm:px-6 sm:py-4">
                     <h2 class="font-display text-lg font-bold text-ink-50">Dernières commissions</h2>
                 </div>
 
                 <ul class="divide-y divide-ink-700">
                     @foreach ($commissions as $commission)
-                        <li class="flex items-center justify-between gap-3 px-6 py-3 text-sm">
+                        <li class="flex items-center justify-between gap-3 px-4 py-3 sm:px-6 text-sm">
                             <span class="text-ink-300">
                                 {{ $commission->referred?->displayName() ?? 'Filleul supprimé' }}
                                 <span class="text-ink-500">· {{ $commission->created_at->format('d/m/Y') }}</span>
@@ -127,7 +131,7 @@
                     @endforeach
                 </ul>
 
-                <p class="border-t border-ink-700 px-6 py-3 text-xs text-ink-500">
+                <p class="border-t border-ink-700 px-4 py-3 sm:px-6 text-xs text-ink-500">
                     Une ligne en rouge est une reprise : les vues d'un filleul ont été invalidées.
                 </p>
             </div>

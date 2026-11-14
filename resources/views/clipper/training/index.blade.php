@@ -3,7 +3,7 @@
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
                 <h1 class="font-display text-2xl font-bold text-ink-50">Formation</h1>
-                <p class="mt-1 text-ink-300">Tout ce que tu dois savoir pour être payé dès tes premiers clips.</p>
+                <p class="mt-1 text-sm text-ink-300 sm:text-base">Tout ce que tu dois savoir pour être payé dès tes premiers clips.</p>
             </div>
 
             @if ($lessons->isNotEmpty())
@@ -21,7 +21,7 @@
         @endif
 
         @if ($lessons->isEmpty())
-            <div class="card px-6 py-12 text-center text-sm text-ink-300">
+            <div class="card px-4 py-10 sm:px-6 sm:py-12 text-center text-sm text-ink-300">
                 Les leçons arrivent bientôt.
             </div>
         @else
@@ -30,7 +30,7 @@
                 $percent = (int) round($done / $lessons->count() * 100);
             @endphp
 
-            <div class="card p-6">
+            <div class="card p-4 sm:p-6">
                 <div class="flex flex-wrap items-center justify-between gap-4">
                     <div class="min-w-0 flex-1">
                         <div class="h-2 overflow-hidden rounded-full bg-ink-700" role="progressbar"

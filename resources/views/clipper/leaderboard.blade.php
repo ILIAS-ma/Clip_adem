@@ -3,25 +3,25 @@
 <x-app-layout>
     <x-slot name="header">
         <h1 class="font-display text-2xl font-bold text-ink-50">Classement</h1>
-        <p class="mt-1 text-ink-300">Les clippeurs qui rapportent le plus : cette semaine, sur la saison, depuis toujours et par catégorie.</p>
+        <p class="mt-1 text-sm text-ink-300 sm:text-base">Les clippeurs qui rapportent le plus : cette semaine, sur la saison, depuis toujours et par catégorie.</p>
     </x-slot>
 
     <div class="mx-auto max-w-5xl space-y-4 px-4 py-5 sm:space-y-6 sm:px-6 sm:py-8 lg:px-8">
 
         <div class="grid gap-6 lg:grid-cols-2">
             <div class="card">
-                <div class="border-b border-ink-700 px-6 py-4">
+                <div class="border-b border-ink-700 px-4 py-3.5 sm:px-6 sm:py-4">
                     <h2 class="font-display text-lg font-bold text-ink-50">Cette semaine</h2>
                     <p class="mt-0.5 text-sm text-ink-300">Vues gagnées sur les 7 derniers jours.</p>
                 </div>
 
                 @if ($topThisWeek->isEmpty())
-                    <p class="px-6 py-10 text-center text-sm text-ink-300">Personne n'a encore de vues créditées cette semaine.</p>
+                    <p class="px-4 py-8 sm:px-6 sm:py-10 text-center text-sm text-ink-300">Personne n'a encore de vues créditées cette semaine.</p>
                 @else
                     <ol class="divide-y divide-ink-700">
                         @foreach ($topThisWeek as $index => $row)
                             <li @class([
-                                'flex items-center gap-4 px-6 py-3.5',
+                                'flex items-center gap-3 px-4 py-3 sm:gap-4 sm:px-6 sm:py-3.5',
                                 'bg-brand-500/10' => $row->id === auth()->id(),
                             ])>
                                 <span class="w-6 flex-none text-sm font-semibold tabular text-ink-400">{{ $index + 1 }}</span>
@@ -39,18 +39,18 @@
             </div>
 
             <div class="card">
-                <div class="border-b border-ink-700 px-6 py-4">
+                <div class="border-b border-ink-700 px-4 py-3.5 sm:px-6 sm:py-4">
                     <h2 class="font-display text-lg font-bold text-ink-50">Depuis toujours</h2>
                     <p class="mt-0.5 text-sm text-ink-300">Gains cumulés sur toute la carrière.</p>
                 </div>
 
                 @if ($topAllTime->isEmpty())
-                    <p class="px-6 py-10 text-center text-sm text-ink-300">Aucun clip rémunéré pour le moment.</p>
+                    <p class="px-4 py-8 sm:px-6 sm:py-10 text-center text-sm text-ink-300">Aucun clip rémunéré pour le moment.</p>
                 @else
                     <ol class="divide-y divide-ink-700">
                         @foreach ($topAllTime as $index => $row)
                             <li @class([
-                                'flex items-center gap-4 px-6 py-3.5',
+                                'flex items-center gap-3 px-4 py-3 sm:gap-4 sm:px-6 sm:py-3.5',
                                 'bg-brand-500/10' => $row->id === auth()->id(),
                             ])>
                                 <span class="w-6 flex-none text-sm font-semibold tabular text-ink-400">{{ $index + 1 }}</span>
@@ -70,7 +70,7 @@
 
         @if ($season)
             <div class="card" id="saison">
-                <div class="border-b border-ink-700 px-6 py-4">
+                <div class="border-b border-ink-700 px-4 py-3.5 sm:px-6 sm:py-4">
                     <div class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
                         <div>
                             <h2 class="font-display text-lg font-bold text-ink-50">{{ $season->name }}</h2>
@@ -105,12 +105,12 @@
                 </div>
 
                 @if ($topInSeason->isEmpty())
-                    <p class="px-6 py-10 text-center text-sm text-ink-300">Personne n'a encore gagné pendant cette saison. La première place est libre.</p>
+                    <p class="px-4 py-8 sm:px-6 sm:py-10 text-center text-sm text-ink-300">Personne n'a encore gagné pendant cette saison. La première place est libre.</p>
                 @else
                     <ol class="divide-y divide-ink-700">
                         @foreach ($topInSeason as $index => $row)
                             <li @class([
-                                'flex items-center gap-4 px-6 py-3.5',
+                                'flex items-center gap-3 px-4 py-3 sm:gap-4 sm:px-6 sm:py-3.5',
                                 'bg-brand-500/10' => $row->id === auth()->id(),
                             ])>
                                 <span class="w-6 flex-none text-sm font-semibold tabular text-ink-400">{{ $index + 1 }}</span>
@@ -120,8 +120,10 @@
                                         <span class="text-xs font-normal text-brand-400">(vous)</span>
                                     @endif
                                 </span>
-                                <span class="w-24 flex-none text-right text-sm font-semibold tabular text-brand-400 sm:w-32">{{ Money::views($row->views) }} vues</span>
-                                <span class="w-24 flex-none text-right text-sm font-semibold tabular text-ink-50 sm:w-32">{{ Money::euros($row->earned_cents) }}</span>
+                                <span class="flex flex-none flex-col items-end leading-tight sm:flex-row sm:items-baseline sm:leading-normal">
+                                    <span class="text-sm font-semibold text-brand-400 tabular sm:w-32 sm:text-right">{{ Money::views($row->views) }} vues</span>
+                                    <span class="text-sm font-semibold text-ink-50 tabular sm:w-32 sm:text-right">{{ Money::euros($row->earned_cents) }}</span>
+                                </span>
                             </li>
                         @endforeach
                     </ol>
@@ -131,7 +133,7 @@
 
         @if ($topReferrers->isNotEmpty())
             <div class="card" id="parrains">
-                <div class="border-b border-ink-700 px-6 py-4">
+                <div class="border-b border-ink-700 px-4 py-3.5 sm:px-6 sm:py-4">
                     <h2 class="font-display text-lg font-bold text-ink-50">Top parrains</h2>
                     <p class="mt-0.5 text-sm text-ink-300">
                         Ceux qui gagnent le plus en faisant venir d'autres clippeurs.
@@ -142,7 +144,7 @@
                 <ol class="divide-y divide-ink-700">
                     @foreach ($topReferrers as $index => $row)
                         <li @class([
-                            'flex items-center gap-4 px-6 py-3.5',
+                            'flex items-center gap-3 px-4 py-3 sm:gap-4 sm:px-6 sm:py-3.5',
                             'bg-brand-500/10' => $row->id === auth()->id(),
                         ])>
                             <span class="w-6 flex-none text-sm font-semibold tabular text-ink-400">{{ $index + 1 }}</span>
@@ -152,8 +154,10 @@
                                     <span class="text-xs font-normal text-brand-400">(vous)</span>
                                 @endif
                             </span>
-                            <span class="w-24 flex-none text-right text-sm tabular text-ink-300 sm:w-32">{{ $row->referrals }} filleul{{ $row->referrals > 1 ? 's' : '' }}</span>
-                            <span class="w-24 flex-none text-right text-sm font-semibold tabular text-ink-50 sm:w-32">{{ Money::euros($row->earned_cents) }}</span>
+                            <span class="flex flex-none flex-col items-end leading-tight sm:flex-row sm:items-baseline sm:leading-normal">
+                                <span class="text-sm tabular text-ink-300 sm:w-32 sm:text-right">{{ $row->referrals }} filleul{{ $row->referrals > 1 ? 's' : '' }}</span>
+                                <span class="text-sm font-semibold tabular text-ink-50 sm:w-32 sm:text-right">{{ Money::euros($row->earned_cents) }}</span>
+                            </span>
                         </li>
                     @endforeach
                 </ol>
@@ -162,7 +166,7 @@
 
         @if ($categories->isNotEmpty())
             <div class="card" id="par-categorie">
-                <div class="border-b border-ink-700 px-6 py-4">
+                <div class="border-b border-ink-700 px-4 py-3.5 sm:px-6 sm:py-4">
                     <div class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
                         <div>
                             <h2 class="font-display text-lg font-bold text-ink-50">Par catégorie</h2>
@@ -192,9 +196,9 @@
                 </div>
 
                 @if ($topInCategory->isEmpty())
-                    <p class="px-6 py-10 text-center text-sm text-ink-300">Aucune vue ni aucun gain dans cette catégorie pour le moment.</p>
+                    <p class="px-4 py-8 sm:px-6 sm:py-10 text-center text-sm text-ink-300">Aucune vue ni aucun gain dans cette catégorie pour le moment.</p>
                 @else
-                    <div class="flex items-center gap-4 border-b border-ink-700 px-6 py-2 text-xs font-medium uppercase tracking-wide text-ink-400">
+                    <div class="hidden items-center gap-4 border-b border-ink-700 px-4 py-2 text-xs font-medium uppercase tracking-wide text-ink-400 sm:flex sm:px-6">
                         <span class="w-6 flex-none">#</span>
                         <span class="min-w-0 flex-1">Clippeur</span>
                         <span class="w-24 flex-none text-right sm:w-32">Vues</span>
@@ -203,7 +207,7 @@
                     <ol class="divide-y divide-ink-700">
                         @foreach ($topInCategory as $index => $row)
                             <li @class([
-                                'flex items-center gap-4 px-6 py-3.5',
+                                'flex items-center gap-3 px-4 py-3 sm:gap-4 sm:px-6 sm:py-3.5',
                                 'bg-brand-500/10' => $row->id === auth()->id(),
                             ])>
                                 <span class="w-6 flex-none text-sm font-semibold tabular text-ink-400">{{ $index + 1 }}</span>
@@ -213,8 +217,10 @@
                                         <span class="text-xs font-normal text-brand-400">(vous)</span>
                                     @endif
                                 </span>
-                                <span class="w-24 flex-none text-right text-sm font-semibold tabular text-brand-400 sm:w-32">{{ Money::views($row->views) }}</span>
-                                <span class="w-24 flex-none text-right text-sm font-semibold tabular text-ink-50 sm:w-32">{{ Money::euros($row->earned_cents) }}</span>
+                                <span class="flex flex-none flex-col items-end leading-tight sm:flex-row sm:items-baseline sm:leading-normal">
+                                    <span class="text-sm font-semibold text-brand-400 tabular sm:w-32 sm:text-right">{{ Money::views($row->views) }}<span class="sm:hidden"> vues</span></span>
+                                    <span class="text-sm font-semibold text-ink-50 tabular sm:w-32 sm:text-right">{{ Money::euros($row->earned_cents) }}</span>
+                                </span>
                             </li>
                         @endforeach
                     </ol>

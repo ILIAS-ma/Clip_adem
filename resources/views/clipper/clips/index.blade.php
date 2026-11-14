@@ -8,7 +8,7 @@
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
                 <h1 class="font-display text-2xl font-bold text-ink-50">Mes clips</h1>
-                <p class="mt-1 text-ink-300">
+                <p class="mt-1 text-sm text-ink-300 sm:text-base">
                     {{ $clips->count() }} clip{{ $clips->count() > 1 ? 's' : '' }} ·
                     {{ Money::euros($clips->sum('earned_cents')) }} gagnés
                 </p>
@@ -22,8 +22,8 @@
         {{-- Filtres en GET plutôt qu'en Livewire : l'URL reste partageable et
              le bouton retour du navigateur fonctionne, pour un simple filtre
              qui n'a pas besoin de réactivité. --}}
-        <form method="GET" class="card mb-4 grid grid-cols-3 items-end gap-2 p-3 sm:mb-6 sm:flex sm:flex-wrap sm:gap-4 sm:p-4">
-            <div class="min-w-0">
+        <form method="GET" class="card mb-4 grid grid-cols-2 items-end gap-2 p-3 sm:mb-6 sm:flex sm:flex-wrap sm:gap-4 sm:p-4">
+            <div class="col-span-2 min-w-0 sm:col-span-1">
                 <label for="campagne" class="label">Campagne</label>
                 <x-select id="campagne" name="campagne" class="w-full text-sm sm:w-auto" onchange="this.form.submit()">
                     <option value="">Toutes</option>
@@ -60,19 +60,19 @@
             </div>
 
             @if (array_filter($filters))
-                <a href="{{ route('clips.index') }}" wire:navigate class="col-span-3 text-sm font-medium text-ink-300 underline-offset-2 hover:text-ink-50 hover:underline">
+                <a href="{{ route('clips.index') }}" wire:navigate class="col-span-2 text-sm font-medium text-ink-300 underline-offset-2 hover:text-ink-50 hover:underline">
                     Réinitialiser
                 </a>
             @endif
         </form>
 
         @if ($clips->isEmpty() && array_filter($filters))
-            <div class="card px-6 py-16 text-center">
+            <div class="card px-4 py-12 sm:px-6 sm:py-16 text-center">
                 <p class="font-display text-lg font-bold text-ink-50">Aucun clip pour ces filtres</p>
                 <a href="{{ route('clips.index') }}" wire:navigate class="btn-ghost mt-6">Réinitialiser les filtres</a>
             </div>
         @elseif ($clips->isEmpty())
-            <div class="card px-6 py-16 text-center">
+            <div class="card px-4 py-12 sm:px-6 sm:py-16 text-center">
                 <p class="font-display text-lg font-bold text-ink-50">Aucun clip soumis</p>
                 <p class="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-300">
                     Rejoignez une campagne, publiez votre clip sur TikTok, puis choisissez-le
@@ -84,7 +84,7 @@
             <div class="space-y-3">
                 @foreach ($clips as $clip)
                     <a href="{{ route('clips.show', $clip) }}" wire:navigate
-                       class="flex items-center gap-3 card p-3 transition hover:-translate-y-0.5 hover:shadow-lifted sm:gap-4 sm:p-5">
+                       class="card flex flex-wrap items-center gap-x-3 gap-y-2 p-3 transition hover:-translate-y-0.5 hover:shadow-lifted sm:flex-nowrap sm:gap-4 sm:p-5">
                         <div class="h-16 w-12 flex-none overflow-hidden rounded-lg bg-ink-700">
                             @if ($clip->thumbnail_url)
                                 <img src="{{ $clip->thumbnail_url }}" alt="" loading="lazy" referrerpolicy="no-referrer" class="h-full w-full object-cover">
@@ -99,7 +99,7 @@
                             <p class="truncate text-xs font-semibold uppercase tracking-wide text-ink-400">
                                 {{ $clip->campaign?->creator?->name }}
                             </p>
-                            <p class="mt-0.5 truncate font-display text-base font-bold text-ink-50">
+                            <p class="mt-0.5 line-clamp-2 font-display text-base font-bold leading-snug text-ink-50 sm:truncate">
                                 {{ $clip->campaign?->title }}
                             </p>
 
@@ -127,28 +127,37 @@
                             </div>
                         </div>
 
-                        <div class="shrink-0 text-right">
+                        <div class="flex w-full shrink-0 items-baseline justify-between gap-3 border-t border-ink-700 pt-2 text-right sm:block sm:w-auto sm:border-0 sm:pt-0">
                             {{-- Sur un classement, rien n'est payé aux vues : le chiffre qui compte, ce sont les vues. --}}
                             @if ($clip->campaign?->isContest())
-                                <p class="font-display text-lg font-bold tabular text-ink-50 sm:text-xl">{{ Money::compactViews($clip->views_total) }}</p>
-                                <p class="text-xs text-ink-400">vues</p>
+                                <p class="font-display text-lg font-bold tabular text-ink-50 sm:text-xl">{{ Money::compactViews($clip->views_total) }}<span class="text-sm font-semibold sm:hidden"> vues</span></p>
                             @else
                                 <p class="font-display text-lg font-bold tabular text-ink-50 sm:text-xl">
                                     {{ Money::euros($clip->earned_cents) }}
                                 </p>
-                                <p class="text-xs tabular text-ink-400">{{ Money::views($clip->views_total) }} vues</p>
                             @endif
 
-                            @if (($pending[$clip->id] ?? 0) > 0)
-                                {{-- Estimation issue du moteur : plafonds et reliquat déjà appliqués. --}}
-                                <p class="mt-1 text-xs font-semibold tabular text-brand-400">
-                                    + {{ Money::euros($pending[$clip->id]) }} en attente
-                                </p>
-                            @elseif ($clip->unpaidViews() > 0)
-                                <p class="mt-1 text-xs tabular text-brand-300">
-                                    {{ Money::views($clip->unpaidViews()) }} vues non payées
-                                </p>
-                            @endif
+                            {{-- Les deux lignes de détail restent groupées à droite du montant sur
+                                 téléphone ; `sm:contents` efface le groupe plus haut, où elles
+                                 reprennent leur empilement sous le chiffre. --}}
+                            <div class="text-right sm:contents">
+                                @if ($clip->campaign?->isContest())
+                                    <p class="hidden text-xs text-ink-400 sm:block">vues</p>
+                                @else
+                                    <p class="text-xs tabular text-ink-400">{{ Money::views($clip->views_total) }} vues</p>
+                                @endif
+
+                                @if (($pending[$clip->id] ?? 0) > 0)
+                                    {{-- Estimation issue du moteur : plafonds et reliquat déjà appliqués. --}}
+                                    <p class="mt-1 text-xs font-semibold tabular text-brand-400">
+                                        + {{ Money::euros($pending[$clip->id]) }} en attente
+                                    </p>
+                                @elseif ($clip->unpaidViews() > 0)
+                                    <p class="mt-1 text-xs tabular text-brand-300">
+                                        {{ Money::views($clip->unpaidViews()) }} vues non payées
+                                    </p>
+                                @endif
+                            </div>
                         </div>
                     </a>
                 @endforeach

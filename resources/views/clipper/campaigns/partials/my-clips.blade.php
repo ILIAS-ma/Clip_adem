@@ -2,7 +2,7 @@
 
 {{-- Ses clips en vignettes, comme dans l'application : on reconnaît une vidéo à son image, pas à son identifiant. --}}
 @if ($clips->isEmpty())
-    <div class="card p-8 text-center">
+    <div class="card p-6 text-center sm:p-8">
         <p class="font-display text-lg font-bold text-ink-50">Aucun clip pour l'instant</p>
         <p class="mt-1 text-sm text-ink-400">Publiez sur TikTok, puis choisissez vos vidéos : elles comptent tout de suite.</p>
         @if ($canPick)

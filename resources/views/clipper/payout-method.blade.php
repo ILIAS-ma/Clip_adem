@@ -3,7 +3,7 @@
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
                 <h1 class="font-display text-2xl font-bold text-ink-50">Moyen de paiement</h1>
-                <p class="mt-1 text-ink-300">Où vos gains sont versés quand vous demandez un retrait.</p>
+                <p class="mt-1 text-sm text-ink-300 sm:text-base">Où vos gains sont versés quand vous demandez un retrait.</p>
             </div>
 
             <a href="{{ route('earnings.index') }}" wire:navigate class="btn-ghost">← Mes revenus</a>
@@ -36,7 +36,7 @@
             </div>
         @endif
 
-        <div class="card p-6 sm:p-8">
+        <div class="card p-4 sm:p-8">
             <form method="POST" action="{{ route('payout-method.update') }}" class="space-y-6">
                 @csrf
                 @method('PATCH')
@@ -56,7 +56,7 @@
 
         @php $business = old('legal_status', $user->legalStatus()->value) === \App\Enums\LegalStatus::Business->value; @endphp
 
-        <div class="card p-6 sm:p-8" id="statut-legal" x-data="{ business: @js($business) }">
+        <div class="card p-4 sm:p-8" id="statut-legal" x-data="{ business: @js($business) }">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <h2 class="font-display text-lg font-bold text-ink-50">Statut légal</h2>

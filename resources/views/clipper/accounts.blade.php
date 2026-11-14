@@ -3,7 +3,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h1 class="font-display text-2xl font-bold text-ink-50">Mes comptes réseaux</h1>
-        <p class="mt-1 text-ink-300">C'est par eux que vos vues sont relevées et vos gains calculés.</p>
+        <p class="mt-1 text-sm text-ink-300 sm:text-base">C'est par eux que vos vues sont relevées et vos gains calculés.</p>
     </x-slot>
 
     <div class="mx-auto max-w-4xl space-y-4 px-4 py-5 sm:space-y-6 sm:px-6 sm:py-8 lg:px-8">
@@ -18,13 +18,13 @@
 
         @if ($accounts->isNotEmpty())
             <div class="card">
-                <div class="border-b border-ink-700 px-6 py-4">
+                <div class="border-b border-ink-700 px-4 py-3.5 sm:px-6 sm:py-4">
                     <h2 class="font-display text-lg font-bold text-ink-50">Comptes liés</h2>
                 </div>
 
                 <ul class="divide-y divide-ink-700">
                     @foreach ($accounts as $account)
-                        <li class="flex flex-wrap items-center justify-between gap-4 px-6 py-5">
+                        <li class="flex flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 sm:py-5">
                             <div class="min-w-0">
                                 <p class="font-semibold text-ink-50">
                                     {{ $account->platform->label() }}
@@ -52,7 +52,7 @@
                                 @endif
                             </div>
 
-                            <div class="flex shrink-0 items-center gap-3">
+                            <div class="flex w-full shrink-0 flex-wrap items-center gap-3 sm:w-auto">
                                 @if ($account->needs_reconnect)
                                     <span class="chip-danger">Déconnecté</span>
                                     <a href="{{ route('social.redirect', $account->platform->value) }}" class="btn-brand">
@@ -75,7 +75,8 @@
                                         du bouton, et « Annuler » est le choix le
                                         plus facile à atteindre.
                                     --}}
-                                    <div x-data="{ confirming: false }" class="flex items-center gap-2">
+                                    <div x-data="{ confirming: false }" :class="confirming ? 'w-full sm:w-auto' : ''"
+                                         class="flex flex-wrap items-center gap-2">
                                         <button type="button"
                                                 x-show="! confirming"
                                                 x-on:click="confirming = true"
@@ -87,21 +88,21 @@
                                         <div x-show="confirming"
                                              x-cloak
                                              x-transition.opacity.duration.150ms
-                                             class="flex items-center gap-2">
-                                            <span class="text-sm text-ink-300">
+                                             class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+                                            <span class="w-full text-sm text-ink-300 sm:w-auto">
                                                 Les vues cesseront d’être relevées.
                                             </span>
 
                                             <button type="button"
                                                     x-on:click="confirming = false"
-                                                    class="btn-ghost">
+                                                    class="btn-ghost flex-1 sm:flex-none">
                                                 Annuler
                                             </button>
 
-                                            <form method="POST" action="{{ route('accounts.destroy', $account) }}">
+                                            <form method="POST" action="{{ route('accounts.destroy', $account) }}" class="flex-1 sm:flex-none">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn-danger">
+                                                <button type="submit" class="btn-danger w-full sm:w-auto">
                                                     Confirmer
                                                 </button>
                                             </form>
@@ -115,7 +116,7 @@
             </div>
         @endif
 
-        <div class="card p-6 sm:p-8">
+        <div class="card p-4 sm:p-8">
             <h2 class="font-display text-lg font-bold text-ink-50">
                 {{ $accounts->isEmpty() ? 'Liez votre premier compte' : 'Lier un autre compte' }}
             </h2>

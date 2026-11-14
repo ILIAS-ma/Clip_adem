@@ -7,7 +7,7 @@
                 <h1 class="font-display text-2xl font-bold text-ink-50">
                     Salut {{ $clipper->displayName() }}
                 </h1>
-                <p class="mt-1 text-ink-300">
+                <p class="mt-1 text-sm text-ink-300 sm:text-base">
                     {{ $openCampaigns > 0
                         ? $openCampaigns.' campagne'.($openCampaigns > 1 ? 's' : '').' ouverte'.($openCampaigns > 1 ? 's' : '').' en ce moment'
                         : 'Aucune campagne ouverte pour l\'instant' }}
@@ -25,7 +25,7 @@
         @endif
 
         @foreach ($bonuses as $bonus)
-            <div class="card relative overflow-hidden border-brand-500/50 p-6" id="prime-{{ $bonus->id }}">
+            <div class="card relative overflow-hidden border-brand-500/50 p-4 sm:p-6" id="prime-{{ $bonus->id }}">
                 <div aria-hidden="true" class="pointer-events-none absolute -right-10 -top-16 h-48 w-48 rounded-full bg-brand-500/25 blur-3xl"></div>
                 <div class="relative flex flex-wrap items-center justify-between gap-4">
                     <div class="flex items-center gap-4">
@@ -113,12 +113,12 @@
 
             {{-- Une seule carte d'argent, un seul chiffre : le total gagné, prix à recevoir compris. --}}
             <div class="hero-balance card relative flex flex-col overflow-hidden lg:col-span-3">
-                <div class="flex-1 p-7 sm:p-8">
+                <div class="flex-1 p-5 sm:p-8">
                     <p class="text-sm font-medium text-ink-300">Total gagné</p>
 
                     {{-- Un seul chiffre : tout ce qu'on a gagné sur les campagnes, prix à recevoir compris.
                          Le détail (retirable, en attente, déjà versé) est sur la page Revenus. --}}
-                    <p class="mt-2 font-display text-5xl font-extrabold tabular leading-none text-brand-400 sm:text-6xl"
+                    <p class="mt-2 font-display text-4xl font-extrabold tabular leading-none text-brand-400 sm:text-6xl"
                        data-count-up>{{ Money::euros($prizes['total_cents']) }}</p>
 
                     <p class="mt-1.5 text-sm text-ink-400">Sur toutes vos campagnes.</p>
@@ -235,7 +235,10 @@
                                 <li>
                                     <a href="{{ route('campaigns.show', $item['campaign']) }}" wire:navigate class="flex items-center justify-between gap-3 py-3">
                                         <span class="min-w-0">
-                                            <span class="block truncate text-sm font-semibold text-ink-50">{{ $item['campaign']->title }}</span>
+                                            {{-- Sur un écran étroit, « KAYZ — Les moments du mois »
+                                                 devenait « KAYZ — Les moments… » : deux lignes
+                                                 plutôt qu'un nom de campagne amputé. --}}
+                                            <span class="block text-sm font-semibold leading-snug text-ink-50 line-clamp-2 sm:truncate">{{ $item['campaign']->title }}</span>
                                             <span class="block text-xs text-ink-400">
                                                 {{ $item['campaign']->ends_at ? 'Se termine '.$item['campaign']->ends_at->diffForHumans() : 'Sans date de fin' }}
                                             </span>
@@ -289,13 +292,13 @@
             {{-- Anticiper plutôt que découvrir une campagne déjà à moitié
                  consommée par d'autres au moment où elle s'ouvre. --}}
             <div class="card">
-                <div class="border-b border-ink-700 px-6 py-4">
+                <div class="border-b border-ink-700 px-4 py-3.5 sm:px-6 sm:py-4">
                     <h2 class="font-display text-lg font-bold text-ink-50">Campagnes à venir</h2>
                     <p class="mt-0.5 text-sm text-ink-300">Déjà budgétées, pas encore ouvertes.</p>
                 </div>
                 <ul class="divide-y divide-ink-700">
                     @foreach ($upcomingCampaigns as $item)
-                        <li class="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
+                        <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-6 sm:py-4">
                             <div>
                                 <p class="font-semibold text-ink-50">{{ $item['campaign']->title }}</p>
                                 <p class="mt-0.5 text-sm text-ink-400">{{ $item['campaign']->creator?->name }}</p>
@@ -310,7 +313,7 @@
         @endif
 
         <div class="card">
-            <div class="flex items-center justify-between border-b border-ink-700 px-6 py-4">
+            <div class="flex items-center justify-between border-b border-ink-700 px-4 py-3.5 sm:px-6 sm:py-4">
                 <h2 class="font-display text-lg font-bold text-ink-50">Mes clips</h2>
                 @if ($clips->isNotEmpty())
                     <a href="{{ route('clips.index') }}" wire:navigate class="text-sm font-semibold text-ink-300 underline-offset-2 hover:text-ink-50 hover:underline">
@@ -320,7 +323,7 @@
             </div>
 
             @if ($clips->isEmpty())
-                <div class="px-6 py-12 text-center">
+                <div class="px-4 py-10 sm:px-6 sm:py-12 text-center">
                     <p class="font-display text-base font-bold text-ink-50">Aucun clip pour l'instant</p>
                     <p class="mx-auto mt-2 max-w-sm text-sm text-ink-300">
                         Rejoignez une campagne, publiez sur TikTok, puis choisissez vos vidéos.
