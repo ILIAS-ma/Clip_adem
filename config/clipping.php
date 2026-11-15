@@ -268,11 +268,11 @@ return [
          * journalise à chaque passage.
          */
         // Toute la durée du suivi (30 jours, voir `stop_after_days`) : les vues sont
-        // relevées toutes les 15 minutes tant que le clip est suivi. Les paliers
+        // relevées toutes les 5 minutes (le planificateur passe chaque minute) tant que le clip est suivi. Les paliers
         // « fresh » et « mature » ci-dessous ne servent plus qu'en cas de retour
         // à une cadence dégressive, en réduisant cette fenêtre.
         'hot_window_hours' => 720,
-        'hot_interval_minutes' => 15,
+        'hot_interval_minutes' => 5,
 
         // Un clip publié depuis moins de N heures est relevé toutes les
         // `fresh_interval_hours`.
@@ -293,7 +293,7 @@ return [
         // Aucune plateforme ne pousse les vues : entre deux passages
         // automatiques, ce bouton est le seul recours. Sans délai, il
         // deviendrait une attaque sur notre propre quota d'API.
-        'manual_cooldown_minutes' => 15,
+        'manual_cooldown_minutes' => 2,
     ],
 
     /*

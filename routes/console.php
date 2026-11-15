@@ -31,7 +31,7 @@ use Illuminate\Support\Facades\Schedule;
  * vues.
  */
 Schedule::command('clips:sync')
-    ->everyFiveMinutes()
+    ->everyMinute()
     ->withoutOverlapping()
     ->runInBackground();
 
