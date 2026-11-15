@@ -163,6 +163,47 @@ class ClipSyncService
      * publication, et la file de modération deviendrait illisible.
      */
     /**
+     * Premier relevé de clips qui viennent d'être soumis, pour que le clippeur
+     * voie leurs vues tout de suite plutôt que « 0 » jusqu'au prochain passage
+     * automatique. Un appel par tranche de vingt vidéos d'un même compte.
+     *
+     * Ne lève jamais : la soumission a réussi, le relevé automatique rattrapera
+     * ce que celui-ci n'a pas pu lire.
+     *
+     * @param  Collection<int, Clip>  $clips
+     */
+    public function syncFresh(Collection $clips): int
+    {
+        $synced = 0;
+
+        foreach ($clips->load('socialAccount')->groupBy('social_account_id') as $group) {
+            $account = $group->first()->socialAccount;
+
+            if (! $account || ! $account->isSyncable()) {
+                continue;
+            }
+
+            foreach ($group->groupBy(fn (Clip $clip) => $clip->platform->value) as $perPlatform) {
+                $provider = $this->providers->for($perPlatform->first()->platform);
+
+                foreach ($perPlatform->chunk(20) as $batch) {
+                    try {
+                        $metrics = $provider->fetchPosts($account, $batch->pluck('external_post_id')->all());
+                        $synced += $this->applyMetrics($batch->values(), $metrics);
+                    } catch (\Throwable $exception) {
+                        Log::warning('Premier relevé impossible', [
+                            'social_account_id' => $account->getKey(),
+                            'error' => $exception->getMessage(),
+                        ]);
+                    }
+                }
+            }
+        }
+
+        return $synced;
+    }
+
+    /**
      * Relève un clip précis, à la demande.
      *
      * TikTok ne pousse rien : il n'existe aucun webhook sur le compteur de

@@ -10,6 +10,7 @@ use App\Models\SocialAccount;
 use App\Services\Clips\ClipPicker;
 use App\Services\Clips\ClipSubmissionService;
 use App\Services\Clips\ParticipationService;
+use App\Services\Social\ClipSyncService;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 
@@ -127,6 +128,7 @@ class SubmitClip extends Component
         $added = 0;
         $removed = 0;
         $refusals = [];
+        $created = collect();
 
         // Les limites de la campagne (par envoi, par heure) : refusées en bloc, sans rien enregistrer à moitié.
         $wanted = count(array_unique($add));
@@ -165,7 +167,7 @@ class SubmitClip extends Component
                         $participations->existing($this->campaign, $account)
                             ?? $participations->join($this->campaign, auth()->user(), $account);
 
-                        $clips->submitPicked($this->campaign, auth()->user(), $account, $postId, $video['url'] ?? null, $video);
+                        $created->push($clips->submitPicked($this->campaign, auth()->user(), $account, $postId, $video['url'] ?? null, $video));
                         $added++;
                     } else {
                         if (! $video || ! $video['removable']) {
@@ -194,6 +196,16 @@ class SubmitClip extends Component
             $this->pickError = $refusals[0] ?? 'Aucun changement à enregistrer.';
 
             return;
+        }
+
+        // Les vues des clips tout juste soumis, lues maintenant : sans ça, la page de retour
+        // afficherait « 0 vue » partout jusqu'au prochain relevé automatique.
+        if ($created->isNotEmpty()) {
+            try {
+                app(ClipSyncService::class)->syncFresh($created);
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
         }
 
         $done = collect([
