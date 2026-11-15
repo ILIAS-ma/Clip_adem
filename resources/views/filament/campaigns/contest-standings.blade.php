@@ -136,6 +136,8 @@
                                         ⚠ {{ $row->flagged }} refusé{{ $row->flagged > 1 ? 's' : '' }}
                                     </span>
                                 @endif
+                                <a href="{{ \App\Filament\Pages\ClipReviewPage::getUrl(['campaignId' => $campaign->id, 'userId' => $row->user_id]) }}"
+                                   style="font-size:.78rem;font-weight:600;text-decoration:underline;color:var(--primary-600);">Vérifier ses clips</a>
                             </div>
                         </div>
                     @endforeach
@@ -177,7 +179,10 @@
                                         </td>
                                         <td style="padding:.55rem .6rem;text-align:right;font-variant-numeric:tabular-nums;{{ $metric === ContestMetric::Posts ? 'font-weight:700;' : '' }}">{{ $row->clips }}</td>
                                         <td style="padding:.55rem .6rem;text-align:right;font-variant-numeric:tabular-nums;{{ $metric === ContestMetric::Views ? 'font-weight:700;' : '' }}">{{ number_format($row->views, 0, ',', ' ') }}</td>
-                                        <td style="padding:.55rem 0 .55rem .6rem;text-align:right;">{{ $row->reward ?? '—' }}</td>
+                                        <td style="padding:.55rem 0 .55rem .6rem;text-align:right;">{{ $row->reward ?? '—' }}
+                                            <a href="{{ \App\Filament\Pages\ClipReviewPage::getUrl(['campaignId' => $campaign->id, 'userId' => $row->user_id]) }}"
+                                               style="display:block;font-size:.72rem;font-weight:600;text-decoration:underline;color:var(--primary-600);">Vérifier</a>
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>

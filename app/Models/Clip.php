@@ -44,6 +44,7 @@ class Clip extends Model
             'posted_at' => 'datetime',
             'submitted_at' => 'datetime',
             'last_synced_at' => 'datetime',
+            'reviewed_at' => 'datetime',
             'missing_since' => 'datetime',
             'missing_checks' => 'integer',
             'featured_at' => 'datetime',

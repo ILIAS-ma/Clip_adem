@@ -236,8 +236,31 @@ class EditCampaign extends EditRecord
                     }
                 }
 
+                // Un second regard avant de verser : les clips des gagnants ont-ils été vérifiés ?
+                $winners = [];
+
+                foreach (ContestMetric::cases() as $metric) {
+                    $standings = app(ContestService::class)->standings($campaign, board: $metric);
+
+                    foreach (array_keys($campaign->rewards($metric)) as $index) {
+                        if (isset($standings[$index])) {
+                            $winners[] = $standings[$index]->user_id;
+                        }
+                    }
+                }
+
+                $unchecked = $winners === [] ? 0 : \App\Models\Clip::where('campaign_id', $campaign->id)
+                    ->whereIn('user_id', array_unique($winners))
+                    ->where('status', \App\Enums\ClipStatus::Approved)
+                    ->whereNull('reviewed_at')
+                    ->count();
+
+                $warning = $unchecked > 0
+                    ? ' ⚠ '.$unchecked.' clip'.($unchecked > 1 ? 's' : '').' des gagnants ne sont pas encore vérifiés (page « Vérification finale »).'
+                    : '';
+
                 return implode(' · ', $lines).'. L’argent arrive tout de suite sur les soldes ; '
-                    .'les gagnants d’un lot reçoivent un message pour organiser la remise.';
+                    .'les gagnants d’un lot reçoivent un message pour organiser la remise.'.$warning;
             })
             ->action(function () {
                 try {
