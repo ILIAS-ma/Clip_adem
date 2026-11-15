@@ -256,14 +256,10 @@
         {{-- Les deux endroits où l'on va en plus des campagnes. --}}
         <div class="grid grid-cols-2 gap-2 sm:gap-4">
             @foreach ([
-                $studioOn
-                    ? ['href' => config('clipping.studio.url'), 'navigate' => false, 'titre' => 'Echo Studio',
-                       'texte' => 'Trouvez les meilleurs moments Twitch et montez-les en 9:16.',
-                       'icone' => 'M15 10l4.55-2.28A1 1 0 0121 8.62v6.76a1 1 0 01-1.45.9L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z']
-                    // Studio en pause : la formation prend sa place.
-                    : ['href' => route('training.index'), 'navigate' => true, 'titre' => 'Formation',
-                       'texte' => 'Les formats qui marchent et les règles, en quelques minutes.',
-                       'icone' => 'M12 14l9-5-9-5-9 5 9 5zm0 0v6m-6-9.2V16c0 1.1 2.7 3 6 3s6-1.9 6-3v-5.2'],
+                // Le raccourci Echo Studio a été retiré du tableau de bord : le menu garde le lien.
+                ['href' => route('training.index'), 'navigate' => true, 'titre' => 'Formation',
+                 'texte' => 'Les formats qui marchent et les règles, en quelques minutes.',
+                 'icone' => 'M12 14l9-5-9-5-9 5 9 5zm0 0v6m-6-9.2V16c0 1.1 2.7 3 6 3s6-1.9 6-3v-5.2'],
                 ['href' => route('messages.index'), 'navigate' => true, 'titre' => 'Messages',
                  'texte' => $unreadMessages > 0 ? $unreadMessages.' réponse'.($unreadMessages > 1 ? 's' : '').' de l\'équipe à lire.' : 'Une question ? L\'équipe vous répond ici.',
                  'icone' => 'M8 10h8M8 14h5m-9 6l2.5-3H18a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v14z',
