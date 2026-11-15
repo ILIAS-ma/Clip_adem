@@ -185,11 +185,9 @@ MD,
 
 Aucune plateforme ne nous envoie les vues en direct : on va les chercher.
 
-- **Moins de 48 h** : toutes les 30 minutes.
-- **De 2 à 7 jours** : toutes les 3 heures.
-- **Jusqu'à 30 jours** : une fois par jour.
+Pendant les 30 jours de suivi, les vues de chaque clip sont relevées **toutes les 5 minutes environ**.
 
-Pressé ? Le bouton **Actualiser les vues**, sur la page d'un clip, lance un relevé (une fois par quart d'heure).
+Pressé ? Le bouton **Actualiser les vues**, sur la page d'un clip, lance un relevé (toutes les 2 minutes au plus).
 
 ## Où voir ton argent
 
