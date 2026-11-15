@@ -59,7 +59,8 @@ class StudioGateTest extends TestCase
     {
         $this->actingAs($this->clipper())->get(route('dashboard'))
             ->assertSuccessful()
-            ->assertDontSee('Trouvez les meilleurs moments Twitch')
+            ->assertSee('https://echoprod.app/', escape: false)
+            ->assertSee('Echo Studio')
             ->assertDontSee('/fetchclip', escape: false);
     }
 

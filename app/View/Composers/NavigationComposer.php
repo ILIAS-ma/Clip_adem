@@ -68,23 +68,6 @@ class NavigationComposer
                     'icon' => 'M3 10v4a1 1 0 001 1h3l5 4V5L7 9H4a1 1 0 00-1 1zm13.5-3a5 5 0 010 10M19 4a9 9 0 010 16',
                 ],
                 [
-                    /*
-                     * FetchClip, servi tel quel par Nginx depuis son service
-                     * Node. Une adresse brute et non une route : la page
-                     * n'appartient pas à Laravel, et `wire:navigate` est
-                     * désactivé — Livewire tenterait d'échanger un document
-                     * qui n'est pas le sien.
-                     *
-                     * Avant « Mes clips » : on cherche le moment avant de le
-                     * publier, l'ordre du menu suit celui du travail.
-                     */
-                    'url' => config('clipping.studio.url'),
-                    'pattern' => 'fetchclip',
-                    'navigate' => false,
-                    'label' => 'Echo Studio',
-                    'icon' => 'M11 19a8 8 0 100-16 8 8 0 000 16zm10 2l-4.35-4.35M11 8v6m-3-3h6',
-                ],
-                [
                     'route' => 'clips.index',
                     'pattern' => 'clips.*',
                     'label' => 'Mes clips',
@@ -123,11 +106,6 @@ class NavigationComposer
                     'icon' => 'M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.2l5.9-.9L12 3z',
                 ],
             ];
-
-        // Echo Studio en pause (clipping.studio.enabled) : son lien disparaît.
-        if (! config('clipping.studio.enabled')) {
-            $links = array_values(array_filter($links, fn (array $link) => ($link['label'] ?? null) !== 'Echo Studio'));
-        }
 
         // Parrainage désactivé par l'équipe : l'onglet disparaît aussi.
         if (! config('clipping.referrals.enabled')) {

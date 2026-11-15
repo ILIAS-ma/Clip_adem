@@ -284,6 +284,14 @@
             @endforeach
         </div>
 
+        {{-- Echo Studio vit sur son propre site : un simple lien discret, plus d'entrée dans le menu. --}}
+        @if ($studioOn)
+            <p class="-mt-2 text-center text-xs text-ink-500">
+                Besoin de trouver ou de monter un clip ?
+                <a href="{{ config('clipping.studio.url') }}" class="font-medium text-ink-300 underline-offset-2 hover:text-ink-50 hover:underline">Echo Studio&nbsp;↗</a>
+            </p>
+        @endif
+
         @if ($upcomingCampaigns->isNotEmpty())
             {{-- Anticiper plutôt que découvrir une campagne déjà à moitié
                  consommée par d'autres au moment où elle s'ouvre. --}}
