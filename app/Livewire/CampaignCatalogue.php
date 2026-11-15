@@ -7,6 +7,7 @@ use App\Enums\CampaignStatus;
 use App\Enums\ClipStatus;
 use App\Enums\Platform;
 use App\Models\Campaign;
+use App\Models\Category;
 use App\Models\Creator;
 use App\Services\Social\SocialProviderManager;
 use Livewire\Attributes\Url;
@@ -30,6 +31,10 @@ class CampaignCatalogue extends Component
     #[Url(as: 'plateforme', except: '')]
     public string $platform = '';
 
+    /** Identifiant (slug) de la catégorie : youtube, streamer… */
+    #[Url(as: 'categorie', except: '')]
+    public string $category = '';
+
     #[Url(as: 'créateur', except: '')]
     public string $creator = '';
 
@@ -49,7 +54,7 @@ class CampaignCatalogue extends Component
 
     public function resetFilters(): void
     {
-        $this->reset(['search', 'platform', 'creator', 'minRate']);
+        $this->reset(['search', 'platform', 'creator', 'minRate', 'category']);
         $this->onlyOpen = true;
         $this->resetPage();
     }
@@ -63,7 +68,8 @@ class CampaignCatalogue extends Component
         // traîner les campagnes passées d'un autre créateur.
         $filtered = fn () => Campaign::query()
             ->visibleToClippers()
-            ->with(['creator', 'rates'])
+            ->with(['creator', 'rates', 'category'])
+            ->when($this->category, fn ($q) => $q->whereHas('category', fn ($c) => $c->where('slug', $this->category)))
             ->when($this->search, fn ($q) => $q->where(function ($query) {
                 $query->where('title', 'like', "%{$this->search}%")
                     ->orWhereHas('creator', fn ($a) => $a->where('name', 'like', "%{$this->search}%"));
@@ -106,7 +112,18 @@ class CampaignCatalogue extends Component
             ->limit(24)
             ->get();
 
+        // Les catégories qui ont au moins une campagne en ligne, avec leur nombre :
+        // c'est ce qui montre au clippeur qu'il y a plusieurs univers à explorer.
+        $categories = Category::query()
+            ->withCount(['campaigns as open_count' => fn ($q) => $q->visibleToClippers()->where('status', CampaignStatus::Active)])
+            ->ordered()
+            ->get()
+            ->filter(fn (Category $c) => $c->open_count > 0)
+            ->values();
+
         return view('livewire.campaign-catalogue', [
+            'categories' => $categories,
+            'openTotal' => $categories->sum('open_count'),
             'campaigns' => $campaigns,
             'past' => $past,
             'remaining' => $campaigns->mapWithKeys(fn (Campaign $campaign) => [

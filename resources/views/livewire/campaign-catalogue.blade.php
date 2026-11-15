@@ -2,6 +2,31 @@
 
 <div class="space-y-6">
 
+    {{-- Les catégories : youtube, streamer… Un clic filtre le catalogue. Affichées
+         dès qu'il y en a au moins une, pour que le clippeur voie qu'il existe plusieurs univers. --}}
+    @if ($categories->isNotEmpty())
+        <nav aria-label="Catégories" class="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+            <button type="button" wire:click="$set('category', '')"
+                    @class([
+                        'shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition',
+                        'bg-brand-500 text-white' => $category === '',
+                        'bg-ink-800 text-ink-300 hover:bg-ink-700 hover:text-ink-50' => $category !== '',
+                    ])>
+                Toutes <span class="ms-1 opacity-70">{{ $openTotal }}</span>
+            </button>
+            @foreach ($categories as $item)
+                <button type="button" wire:click="$set('category', '{{ $item->slug }}')"
+                        @class([
+                            'shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition',
+                            'bg-brand-500 text-white' => $category === $item->slug,
+                            'bg-ink-800 text-ink-300 hover:bg-ink-700 hover:text-ink-50' => $category !== $item->slug,
+                        ])>
+                    {{ $item->name }} <span class="ms-1 opacity-70">{{ $item->open_count }}</span>
+                </button>
+            @endforeach
+        </nav>
+    @endif
+
     {{-- Sous sm, les 3 filtres secondaires poussent les campagnes hors
          écran avant même le premier résultat : repliés derrière un bouton,
          ils restent à un tap tout en laissant voir des campagnes tout de
@@ -177,6 +202,9 @@
                             <span class="chip bg-brand-500/15 text-brand-300">
                                 Classement · vues + clips
                             </span>
+                        @endif
+                        @if ($campaign->category)
+                            <span class="chip bg-ink-700 text-ink-100">{{ $campaign->category->name }}</span>
                         @endif
                         @foreach ($campaign->rates->where('is_enabled', true) as $rate)
                             <span class="chip-neutral">{{ $rate->platform->label() }}</span>
