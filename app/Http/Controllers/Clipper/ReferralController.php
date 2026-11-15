@@ -24,6 +24,9 @@ class ReferralController extends Controller
             'code' => $referrals->codeFor($user),
             'link' => $referrals->linkFor($user),
             'ratePercent' => config('clipping.referrals.rate_bp') / 100,
+            'bonusCents' => (int) config('clipping.referrals.bonus_cents'),
+            'bonusMinClips' => (int) config('clipping.referrals.bonus_min_clips'),
+            'payday' => (int) config('clipping.referrals.payday'),
 
             'filleuls' => $filleuls,
             'earnedCents' => $user->referralEarnedCents(),

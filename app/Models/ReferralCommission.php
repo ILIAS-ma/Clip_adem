@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 #[Fillable([
     'referrer_id', 'referred_id', 'budget_transaction_id',
-    'amount_cents', 'base_cents', 'rate_bp',
+    'amount_cents', 'base_cents', 'rate_bp', 'bonus_month',
 ])]
 class ReferralCommission extends Model
 {

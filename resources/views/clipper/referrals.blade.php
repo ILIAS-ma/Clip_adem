@@ -4,8 +4,13 @@
     <x-slot name="header">
         <h1 class="font-display text-2xl font-bold text-ink-50">Parrainage</h1>
         <p class="mt-1 text-sm text-ink-300 sm:text-base">
-            Invitez d'autres clippeurs. Vous touchez {{ rtrim(rtrim(number_format($ratePercent, 1, ',', ' '), '0'), ',') }} %
-            de ce qu'ils gagnent — sans que cela leur coûte quoi que ce soit.
+            @if ($ratePercent > 0)
+                Invitez d'autres clippeurs. Vous touchez {{ rtrim(rtrim(number_format($ratePercent, 1, ',', ' '), '0'), ',') }} %
+                de ce qu'ils gagnent — sans que cela leur coûte quoi que ce soit.
+            @else
+                Invitez d'autres clippeurs. Vous touchez {{ Money::euros($bonusCents) }} pour chaque filleul qui poste
+                au moins {{ $bonusMinClips }} clips dans le mois, versés le {{ $payday }} du mois.
+            @endif
         </p>
     </x-slot>
 
@@ -50,8 +55,13 @@
             <x-stat label="Gagné en parrainage" :value="Money::euros($earnedCents)"
                     tone="money" highlight hint="Ajouté à votre solde" />
 
-            <x-stat label="Commission" :value="rtrim(rtrim(number_format($ratePercent, 1, ',', ' '), '0'), ',').' %'"
-                    class="col-span-2 sm:col-span-1" hint="De leurs gains" />
+            @if ($ratePercent > 0)
+                <x-stat label="Commission" :value="rtrim(rtrim(number_format($ratePercent, 1, ',', ' '), '0'), ',').' %'"
+                        class="col-span-2 sm:col-span-1" hint="De leurs gains" />
+            @else
+                <x-stat label="Prime par filleul" :value="Money::euros($bonusCents)"
+                        class="col-span-2 sm:col-span-1" :hint="$bonusMinClips.' clips minimum dans le mois'" />
+            @endif
         </div>
 
         <a href="{{ route('referrals.leaderboard') }}" wire:navigate
@@ -68,8 +78,14 @@
         <div class="alert-ok">
             <p class="font-semibold">Votre filleul ne perd rien</p>
             <p class="mt-1 leading-relaxed">
-                La commission est payée par iPlant Clip, pas prélevée sur ses gains ni sur le budget
-                de la campagne. Il touche exactement ce que ses vues valent.
+                @if ($ratePercent > 0)
+                    La commission est payée par iPlant Clip, pas prélevée sur ses gains ni sur le budget
+                    de la campagne. Il touche exactement ce que ses vues valent.
+                @else
+                    La prime est payée par la plateforme, pas prélevée sur ses gains ni sur le budget
+                    de la campagne. Il touche exactement ce que ses vues valent. Elle est versée une fois par filleul,
+                    le {{ $payday }} du mois, dès qu'il a posté {{ $bonusMinClips }} clips validés dans le mois.
+                @endif
             </p>
         </div>
 

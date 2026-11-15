@@ -328,7 +328,15 @@ return [
     */
 
     'referrals' => [
+        // Commission continue sur les gains du filleul : 0 = désactivée (c'est le cas en production, où le
+        // parrainage paie une prime fixe, voir `bonus_*` ci-dessous).
         'rate_bp' => env('REFERRAL_RATE_BP', 500),
+
+        // Prime fixe : un montant par filleul qui poste au moins `bonus_min_clips` clips validés dans le mois,
+        // une seule fois par filleul, versée par l'équipe le `payday` du mois.
+        'bonus_cents' => (int) env('REFERRAL_BONUS_CENTS', 700),
+        'bonus_min_clips' => (int) env('REFERRAL_BONUS_MIN_CLIPS', 12),
+        'payday' => (int) env('REFERRAL_PAYDAY', 25),
 
         // Le barème s'applique tant que le filleul gagne. Une durée limitée
         // serait plus prudente financièrement ; à trancher sur les chiffres
