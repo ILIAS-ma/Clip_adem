@@ -11,6 +11,8 @@
 <div x-data="{
         open: false,
         loaded: false,
+        // Le compte affiché dans la grille quand on en a lié plusieurs ; null = le premier.
+        account: null,
         selected: [],
         removed: [],
         limit: @js($this->allowance()),
@@ -89,13 +91,31 @@
                         @endfor
                     </ul>
                 @else
-                    @forelse ($groups as $group)
-                        <div wire:key="group-{{ $group['account_id'] }}" class="mb-4">
-                            @if (count($groups) > 1)
-                                <p class="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-ink-400">
+                    {{-- Plusieurs comptes liés : un onglet par compte, pour passer de l'un à l'autre
+                         sans faire défiler toute la grille du premier. Les vidéos cochées sont gardées. --}}
+                    @if (count($groups) > 1)
+                        <div class="mb-3 flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Compte">
+                            @foreach ($groups as $group)
+                                <button type="button" role="tab"
+                                        wire:key="tab-{{ $group['account_id'] }}"
+                                        @click="account = {{ $group['account_id'] }}"
+                                        :aria-selected="(account ?? {{ $groups[0]['account_id'] }}) === {{ $group['account_id'] }} ? 'true' : 'false'"
+                                        :class="(account ?? {{ $groups[0]['account_id'] }}) === {{ $group['account_id'] }} ? 'bg-brand-500 text-white' : 'bg-ink-800 text-ink-300 hover:bg-ink-700 hover:text-ink-50'"
+                                        class="shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition">
                                     {{ ucfirst($group['platform']) }}@if ($group['handle']) · &#64;{{ $group['handle'] }}@endif
-                                </p>
-                            @endif
+                                    <span class="ms-1 opacity-80"
+                                          x-show="selected.filter(k => k.startsWith('{{ $group['account_id'] }}:')).length"
+                                          x-text="'(' + selected.filter(k => k.startsWith('{{ $group['account_id'] }}:')).length + ')'"></span>
+                                </button>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    @forelse ($groups as $group)
+                        <div wire:key="group-{{ $group['account_id'] }}" class="mb-4"
+                             @if (count($groups) > 1)
+                                 x-show="(account ?? {{ $groups[0]['account_id'] }}) === {{ $group['account_id'] }}"
+                             @endif>
 
                             @if ($group['error'])
                                 <p class="rounded-xl bg-ink-900 p-4 text-sm text-ink-300">

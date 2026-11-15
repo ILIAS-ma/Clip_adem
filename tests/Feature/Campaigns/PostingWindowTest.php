@@ -121,6 +121,26 @@ class PostingWindowTest extends TestCase
     }
 
     #[Test]
+    public function the_grid_offers_a_tab_per_account_when_several_are_linked(): void
+    {
+        $campaign = $this->contest();
+        $clipper = $this->clipper();
+        [, $page] = $this->pickerFor($campaign, $clipper);
+
+        // Un seul compte : pas d'onglets.
+        $page->assertDontSee('role="tab"', escape: false);
+
+        $second = SocialAccount::factory()->create(['user_id' => $clipper->id, 'platform' => Platform::TikTok, 'handle' => 'deuxieme.compte']);
+        app(ParticipationService::class)->join($campaign, $clipper, $second);
+
+        Livewire::actingAs($clipper)->test(SubmitClip::class, ['campaign' => $campaign])
+            ->call('loadVideos')
+            ->assertSee('role="tab"', escape: false)
+            ->assertSee('lea.clips')
+            ->assertSee('deuxieme.compte');
+    }
+
+    #[Test]
     public function the_grid_locks_videos_published_before_the_start_and_says_why(): void
     {
         $campaign = $this->contest();
