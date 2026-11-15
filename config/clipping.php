@@ -193,6 +193,8 @@ return [
     */
     'studio' => [
         'enabled' => (bool) env('STUDIO_ENABLED', false),
+        // Là où mènent les liens « Echo Studio » du site.
+        'url' => env('STUDIO_URL', 'https://echoprod.app/'),
     ],
 
     /*

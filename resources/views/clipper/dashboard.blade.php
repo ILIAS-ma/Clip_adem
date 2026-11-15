@@ -98,7 +98,7 @@
                 $studioOn
                     ? ['fait' => $clips->isNotEmpty(), 'titre' => 'Publier votre premier clip',
                        'detail' => 'Trouvez-le et montez-le dans Echo Studio, puis collez son lien.',
-                       'lien' => url('/fetchclip'), 'action' => 'Studio', 'navigate' => false]
+                       'lien' => config('clipping.studio.url'), 'action' => 'Studio', 'navigate' => false]
                     : ['fait' => $clips->isNotEmpty(), 'titre' => 'Publier votre premier clip',
                        'detail' => 'Publiez-le sur votre compte, puis collez son lien sur la campagne.',
                        'lien' => route('campaigns.index'), 'action' => 'Campagnes', 'navigate' => true],
@@ -257,7 +257,7 @@
         <div class="grid grid-cols-2 gap-2 sm:gap-4">
             @foreach ([
                 $studioOn
-                    ? ['href' => url('/fetchclip'), 'navigate' => false, 'titre' => 'Echo Studio',
+                    ? ['href' => config('clipping.studio.url'), 'navigate' => false, 'titre' => 'Echo Studio',
                        'texte' => 'Trouvez les meilleurs moments Twitch et montez-les en 9:16.',
                        'icone' => 'M15 10l4.55-2.28A1 1 0 0121 8.62v6.76a1 1 0 01-1.45.9L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z']
                     // Studio en pause : la formation prend sa place.

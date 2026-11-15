@@ -51,6 +51,15 @@ class StudioGateTest extends TestCase
         // Et le site ne propose plus d'y aller.
         $this->actingAs($clipper)->get(route('dashboard'))
             ->assertSuccessful()
+            ->assertDontSee('echoprod.app', escape: false);
+    }
+
+    #[Test]
+    public function the_studio_links_point_to_the_new_address(): void
+    {
+        $this->actingAs($this->clipper())->get(route('dashboard'))
+            ->assertSuccessful()
+            ->assertSee('https://echoprod.app/', escape: false)
             ->assertDontSee('/fetchclip', escape: false);
     }
 

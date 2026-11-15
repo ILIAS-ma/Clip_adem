@@ -78,7 +78,7 @@ class NavigationComposer
                      * Avant « Mes clips » : on cherche le moment avant de le
                      * publier, l'ordre du menu suit celui du travail.
                      */
-                    'url' => '/fetchclip',
+                    'url' => config('clipping.studio.url'),
                     'pattern' => 'fetchclip',
                     'navigate' => false,
                     'label' => 'Echo Studio',
@@ -126,7 +126,7 @@ class NavigationComposer
 
         // Echo Studio en pause (clipping.studio.enabled) : son lien disparaît.
         if (! config('clipping.studio.enabled')) {
-            $links = array_values(array_filter($links, fn (array $link) => ($link['url'] ?? null) !== '/fetchclip'));
+            $links = array_values(array_filter($links, fn (array $link) => ($link['label'] ?? null) !== 'Echo Studio'));
         }
 
         // Parrainage désactivé par l'équipe : l'onglet disparaît aussi.
