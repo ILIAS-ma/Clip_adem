@@ -399,6 +399,32 @@ class ContestTest extends TestCase
     }
 
     #[Test]
+    public function the_admin_creates_a_paid_per_view_campaign_with_an_rpm(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::SuperAdmin, 'app_authentication_secret' => 'JBSWY3DPEHPK3PXP']);
+        $creator = Creator::factory()->create();
+
+        Livewire::actingAs($admin)
+            ->test(CreateCampaign::class)
+            ->fillForm([
+                'creator_id' => $creator->id,
+                'title' => 'Campagne RPM',
+                'slug' => 'campagne-rpm',
+                'mode' => 'cpm',
+                'budget_total_cents' => 100_000,
+                'rates' => [['platform' => 'tiktok', 'is_enabled' => true, 'rate_per_1k_cents' => 1.5]],
+                'brief' => 'Payé aux vues.',
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $campaign = Campaign::where('slug', 'campagne-rpm')->firstOrFail();
+
+        $this->assertFalse($campaign->isContest());
+        $this->assertSame(150, $campaign->rates()->first()->rate_per_1k_cents);
+    }
+
+    #[Test]
     public function the_admin_creates_a_contest_without_any_rate(): void
     {
         $admin = User::factory()->create(['role' => UserRole::SuperAdmin, 'app_authentication_secret' => 'JBSWY3DPEHPK3PXP']);

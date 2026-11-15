@@ -142,7 +142,8 @@ class CampaignForm
                         ->helperText(fn ($get) => static::isContest($get)
                             ? 'Aucune vue n’est payée au fil de l’eau. Deux classements courent en même temps — '
                                 .'les vues et le nombre de clips validés — et les récompenses ci-dessous vont aux premières places à la fin.'
-                            : 'Chaque tranche de 1 000 vues est payée au taux de la plateforme, jusqu’à épuisement du budget.')
+                            : 'RPM : chaque tranche de 1 000 vues est payée au taux fixé ci-dessous (« RPM · rémunération / 1000 vues »), '
+                                .'jusqu’à épuisement du budget. Ce choix se fait à la création et ne change plus une fois la campagne lancée.')
                         ->columnSpanFull(),
 
                     /*
@@ -223,7 +224,7 @@ class CampaignForm
                              * qu'aucune de ses règles ait à connaître ce mode.
                              */
                             static::money('rate_per_1k_cents')
-                                ->label('Rémunération / 1000 vues')
+                                ->label('RPM · rémunération / 1000 vues')
                                 ->required(fn ($get) => ! static::isContest($get, '../../'))
                                 ->minValue(fn ($get) => static::isContest($get, '../../') ? 0 : 0.01)
                                 ->hidden(fn ($get) => static::isContest($get, '../../'))
