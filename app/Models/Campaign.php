@@ -442,14 +442,14 @@ class Campaign extends Model
     /**
      * @throws InvalidCampaignTransition
      */
-    public function transitionTo(CampaignStatus $target): void
+    public function transitionTo(CampaignStatus $target, bool $onCredit = false): void
     {
         if (! $this->status->canTransitionTo($target)) {
             throw InvalidCampaignTransition::between($this->status, $target);
         }
 
         if ($target === CampaignStatus::Active) {
-            $this->guardActivation();
+            $this->guardActivation($onCredit);
         }
 
         $this->status = $target;
@@ -475,7 +475,7 @@ class Campaign extends Model
      *
      * @throws InvalidCampaignTransition
      */
-    protected function guardActivation(): void
+    protected function guardActivation(bool $onCredit = false): void
     {
         /*
          * Un classement sans récompense en argent — objets seulement, ou pour
@@ -522,7 +522,7 @@ class Campaign extends Model
          * annoncés d'avance : il n'a ni « consommé » ni « restant » à surveiller, ni
          * encaissement à enregistrer pour s'ouvrir.
          */
-        if ($needsBudget && ! $this->isContest() && config('clipping.onboarding.require_funded_campaigns') && $this->fundedCents() < $this->budget_total_cents) {
+        if (! $onCredit && $needsBudget && ! $this->isContest() && config('clipping.onboarding.require_funded_campaigns') && $this->fundedCents() < $this->budget_total_cents) {
             throw InvalidCampaignTransition::because(sprintf(
                 'le budget n’est pas couvert : %s € encaissés pour %s € engagés. '
                 .'Enregistrez l’encaissement du créateur avant d’activer.',

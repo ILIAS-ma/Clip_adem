@@ -8,7 +8,9 @@ use App\Exceptions\InvalidCampaignTransition;
 use App\Filament\Resources\Campaigns\CampaignResource;
 use App\Filament\Resources\Campaigns\Schemas\CampaignForm;
 use App\Filament\Widgets\CampaignBudgetOverview;
+use App\Enums\ModerationAction;
 use App\Models\Campaign;
+use App\Models\ModerationLog;
 use App\Services\Campaigns\CampaignStats;
 use App\Services\Campaigns\ContestReport;
 use App\Services\Campaigns\ContestService;
@@ -19,6 +21,7 @@ use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreAction;
+use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 
@@ -51,6 +54,7 @@ class EditCampaign extends EditRecord
                 ->button()
                 ->color('primary'),
 
+            $this->activateOnCreditAction(),
             $this->standingsAction(),
             $this->exportStatsAction(),
             $this->awardRewardsAction(),
@@ -103,6 +107,54 @@ class EditCampaign extends EditRecord
                 }))
             ->values()
             ->all();
+    }
+
+    /**
+     * Ouvre une campagne payée aux vues avant que le créateur ait payé : le
+     * super-admin avance l'argent. Motif obligatoire, trace dans le journal.
+     */
+    protected function activateOnCreditAction(): Action
+    {
+        return Action::make('activateOnCredit')
+            ->label('Activer à crédit')
+            ->icon('heroicon-o-bolt')
+            ->color('warning')
+            ->visible(function () {
+                $campaign = $this->getRecord();
+
+                return (auth()->user()?->isSuperAdmin() ?? false)
+                    && ! $campaign->isContest()
+                    && $campaign->status->canTransitionTo(CampaignStatus::Active)
+                    && $campaign->fundedCents() < $campaign->budget_total_cents;
+            })
+            ->modalHeading('Activer sans encaissement ?')
+            ->modalDescription('Le créateur n’a pas encore payé : les clippeurs seront payés sur ce budget alors que l’argent n’est pas reçu. '
+                .'C’est vous qui portez le risque. Pensez à enregistrer l’encaissement dès réception.')
+            ->schema([
+                Textarea::make('reason')->label('Motif')->placeholder('Ex. : paiement du créateur promis en fin de campagne')->required(),
+            ])
+            ->action(function (array $data) {
+                $campaign = $this->getRecord();
+
+                try {
+                    $campaign->transitionTo(CampaignStatus::Active, onCredit: true);
+                } catch (InvalidCampaignTransition $exception) {
+                    Notification::make()->danger()->title('Changement de statut refusé')->body($exception->getMessage())->send();
+
+                    return;
+                }
+
+                ModerationLog::record(ModerationAction::SettingsChanged, $campaign, auth()->user(), $data['reason'], [
+                    'activated_on_credit' => true,
+                    'budget_cents' => $campaign->budget_total_cents,
+                    'funded_cents' => $campaign->fundedCents(),
+                ]);
+
+                Notification::make()->success()->title('Campagne activée à crédit')
+                    ->body('Enregistrez l’encaissement du créateur dès qu’il aura payé.')->send();
+
+                $this->fillForm();
+            });
     }
 
     /** Toutes les statistiques de la campagne dans un classeur Excel : classements, clippeurs, clips, modération. */

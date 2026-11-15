@@ -425,6 +425,23 @@ class ContestTest extends TestCase
     }
 
     #[Test]
+    public function the_super_admin_can_activate_an_unfunded_campaign_on_credit(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::SuperAdmin, 'app_authentication_secret' => 'JBSWY3DPEHPK3PXP']);
+        $campaign = Campaign::factory()->create(['status' => CampaignStatus::Draft, 'budget_total_cents' => 20_000, 'mode' => 'cpm', 'brief' => 'Brief']);
+        $campaign->rates()->create(['platform' => 'tiktok', 'is_enabled' => true, 'rate_per_1k_cents' => 67]);
+        config(['clipping.onboarding.require_funded_campaigns' => true]);
+
+        Livewire::actingAs($admin)
+            ->test(EditCampaign::class, ['record' => $campaign->getRouteKey()])
+            ->callAction('activateOnCredit', ['reason' => 'Le créateur paiera à la fin'])
+            ->assertNotified();
+
+        $this->assertSame(CampaignStatus::Active, $campaign->fresh()->status);
+        $this->assertDatabaseHas('moderation_logs', ['subject_id' => $campaign->id, 'reason' => 'Le créateur paiera à la fin']);
+    }
+
+    #[Test]
     public function the_admin_creates_a_contest_without_any_rate(): void
     {
         $admin = User::factory()->create(['role' => UserRole::SuperAdmin, 'app_authentication_secret' => 'JBSWY3DPEHPK3PXP']);
