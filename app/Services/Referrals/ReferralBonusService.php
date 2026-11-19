@@ -89,7 +89,7 @@ class ReferralBonusService
     {
         $amount = $this->amountCents();
 
-        if ($amount <= 0) {
+        if ($amount <= 0 || ! config('clipping.referrals.enabled')) {
             return 0;
         }
 

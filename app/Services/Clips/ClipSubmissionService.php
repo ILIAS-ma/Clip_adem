@@ -266,10 +266,12 @@ class ClipSubmissionService
                 ...$details,
             ])->refresh());
         } catch (QueryException $exception) {
-            // L'unicité (platform, external_post_id) couvre aussi le cas où un
-            // autre clippeur a déjà soumis le même post.
+            // L'unicité (plateforme, vidéo, campagne) couvre aussi le cas où un
+            // autre clippeur a déjà soumis le même post à cette campagne. La même vidéo
+            // peut en revanche compter pour une autre campagne.
             $existant = Clip::where('platform', $parsed->platform)
                 ->where('external_post_id', $parsed->externalPostId)
+                ->where('campaign_id', $campaign->getKey())
                 ->first();
 
             if ($existant) {

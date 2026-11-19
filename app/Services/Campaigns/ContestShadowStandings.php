@@ -168,7 +168,8 @@ class ContestShadowStandings
             return [];
         }
 
-        $submitted = Clip::query()->pluck('external_post_id')->flip();
+        // Soumises à CETTE campagne : une vidéo prise par une autre campagne n'y compte pas encore.
+        $submitted = Clip::query()->where('campaign_id', $campaign->getKey())->pluck('external_post_id')->flip();
         $userIds = CampaignParticipation::where('campaign_id', $campaign->getKey())->pluck('user_id');
         $banned = User::whereIn('id', $userIds)->where('is_banned', true)->pluck('id')->flip();
         $tokens = $this->tokens($campaign);

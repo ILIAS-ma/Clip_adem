@@ -115,10 +115,12 @@ class CampaignForm
                         ->label('Début de diffusion')
                         ->seconds(false),
 
+                    // Une campagne payée aux vues n'a pas de date de fin : elle s'arrête quand son budget est épuisé.
                     DateTimePicker::make('ends_at')
                         ->label('Fin de diffusion')
                         ->seconds(false)
-                        ->after('starts_at'),
+                        ->after('starts_at')
+                        ->visible(fn ($get) => static::isContest($get)),
                 ]),
 
             Section::make('Budget et rémunération')
@@ -143,7 +145,7 @@ class CampaignForm
                             ? 'Aucune vue n’est payée au fil de l’eau. Deux classements courent en même temps — '
                                 .'les vues et le nombre de clips validés — et les récompenses ci-dessous vont aux premières places à la fin.'
                             : 'RPM : chaque tranche de 1 000 vues est payée au taux fixé ci-dessous (« RPM · rémunération / 1000 vues »), '
-                                .'jusqu’à épuisement du budget. Ce choix se fait à la création et ne change plus une fois la campagne lancée.')
+                                .'jusqu’à épuisement du budget, sans date de fin. Ce choix se fait à la création et ne change plus une fois la campagne lancée.')
                         ->columnSpanFull(),
 
                     /*
@@ -416,6 +418,8 @@ class CampaignForm
 
             $data['budget_total_cents'] = $budget;
         } else {
+            // Payée aux vues : pas de date de fin, la campagne s'arrête à l'épuisement du budget.
+            $data['ends_at'] = null;
             $data['contest_prizes'] = null;
             $data['contest_post_prizes'] = null;
         }

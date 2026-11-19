@@ -12,6 +12,9 @@ class ReferralController extends Controller
 {
     public function __invoke(Request $request, ReferralService $referrals): View
     {
+        // Parrainage suspendu (REFERRALS_ENABLED=false) : la page n'existe plus pour les clippeurs.
+        abort_unless(config('clipping.referrals.enabled'), 404);
+
         $user = $request->user();
 
         $filleuls = $user->referrals()

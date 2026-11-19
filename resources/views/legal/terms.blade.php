@@ -85,6 +85,7 @@
         </p>
     </section>
 
+    @if (config('clipping.referrals.enabled'))
     <section>
         <h2>Parrainage</h2>
         <p>
@@ -98,6 +99,7 @@
             commissions et la suspension du compte.
         </p>
     </section>
+    @endif
 
     <section>
         <h2>Contenus et droits</h2>

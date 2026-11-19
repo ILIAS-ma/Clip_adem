@@ -105,7 +105,7 @@ class ClipSyncService
                 }
 
                 try {
-                    $metrics = $provider->fetchPosts($account, $batch->pluck('external_post_id')->all());
+                    $metrics = $provider->fetchPosts($account, $batch->pluck('external_post_id')->unique()->values()->all());
                 } catch (\Throwable $exception) {
                     $error = $exception->getMessage();
                     $rateLimited = str_contains($error, '429');
@@ -188,7 +188,7 @@ class ClipSyncService
 
                 foreach ($perPlatform->chunk(20) as $batch) {
                     try {
-                        $metrics = $provider->fetchPosts($account, $batch->pluck('external_post_id')->all());
+                        $metrics = $provider->fetchPosts($account, $batch->pluck('external_post_id')->unique()->values()->all());
                         $synced += $this->applyMetrics($batch->values(), $metrics);
                     } catch (\Throwable $exception) {
                         Log::warning('Premier relevé impossible', [

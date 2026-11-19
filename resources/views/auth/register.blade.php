@@ -11,7 +11,7 @@
     <form method="POST" action="{{ route('register') }}" class="space-y-5">
         @csrf
 
-        @if ($parrain = request('parrain'))
+        @if (config('clipping.referrals.enabled') && ($parrain = request('parrain')))
             <input type="hidden" name="parrain" value="{{ $parrain }}" />
             <p class="rounded-xl border border-brand-500/40 bg-brand-500/10 px-4 py-3 text-sm text-brand-200">
                 Vous avez été invité avec le code <span class="font-semibold tabular">{{ $parrain }}</span>.

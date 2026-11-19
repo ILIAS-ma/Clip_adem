@@ -74,6 +74,11 @@ class ReferralService
      */
     public function attachFromRequest(User $user, Request $request): void
     {
+        // Parrainage suspendu : une inscription n'est rattachée à personne.
+        if (! config('clipping.referrals.enabled')) {
+            return;
+        }
+
         $code = $request->input('parrain')
             ?? $request->query('parrain')
             ?? $request->cookie(self::COOKIE);

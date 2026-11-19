@@ -369,6 +369,31 @@ class ParticipationTest extends TestCase
     }
 
     #[Test]
+    public function the_same_video_can_count_for_two_campaigns_but_not_twice_for_one(): void
+    {
+        // Deux streamers qui streament ensemble : le même moment concerne les deux campagnes.
+        $first = $this->campaign();
+        $second = $this->campaign();
+        $url = 'https://www.tiktok.com/@lina.clips/video/7123456789012345679';
+
+        $clipper = $this->clipper();
+        $account = $this->account($clipper);
+        $this->participations->join($first, $clipper, $account);
+        $this->participations->join($second, $clipper, $account);
+
+        $one = $this->submissions->submit($first, $clipper, $url);
+        $two = $this->submissions->submit($second, $clipper, $url);
+
+        $this->assertNotSame($one->id, $two->id);
+        $this->assertSame($one->external_post_id, $two->external_post_id);
+        $this->assertSame(2, Clip::where('external_post_id', $one->external_post_id)->count());
+
+        // Mais pas deux fois à la même campagne.
+        $this->expectException(ClipSubmissionRefused::class);
+        $this->submissions->submit($first, $clipper, $url);
+    }
+
+    #[Test]
     public function a_closed_campaign_refuses_submissions(): void
     {
         $campaign = $this->campaign();

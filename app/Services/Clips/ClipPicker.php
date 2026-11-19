@@ -75,7 +75,10 @@ class ClipPicker
             // Déjà soumises : montrées, pas sélectionnables comme les autres.
             // Les siennes, sur cette campagne et encore sans gain, se retirent
             // d'un toucher ; le reste — pris par un autre, ou déjà payé — est verrouillé.
+            // Seulement sur cette campagne : une vidéo déjà prise par une autre campagne reste
+            // soumettable ici.
             $taken = Clip::where('platform', $account->platform)
+                ->where('campaign_id', $campaign->getKey())
                 ->whereIn('external_post_id', array_column($videos, 'id'))
                 ->get(['id', 'external_post_id', 'campaign_id', 'user_id', 'earned_cents'])
                 ->keyBy('external_post_id');

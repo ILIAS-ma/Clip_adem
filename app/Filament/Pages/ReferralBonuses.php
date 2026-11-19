@@ -37,7 +37,7 @@ class ReferralBonuses extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()?->isSuperAdmin() ?? false;
+        return (config('clipping.referrals.enabled') && auth()->user()?->isSuperAdmin()) ?? false;
     }
 
     public function mount(): void
