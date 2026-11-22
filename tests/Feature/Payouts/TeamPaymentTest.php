@@ -78,6 +78,29 @@ class TeamPaymentTest extends TestCase
     }
 
     #[Test]
+    public function the_earnings_of_a_campaign_join_the_cagnotte_only_when_it_ends(): void
+    {
+        $clipper = $this->clipper(7_500);
+
+        $running = Campaign::factory()->create(['status' => CampaignStatus::Active, 'starts_at' => now()->subDay(), 'ends_at' => now()->addDays(3)]);
+        Clip::factory()->create([
+            'campaign_id' => $running->id, 'user_id' => $clipper->id, 'platform' => Platform::TikTok,
+            'social_account_id' => SocialAccount::where('user_id', $clipper->id)->value('id'),
+            'status' => ClipStatus::Approved, 'views_total' => 500, 'earned_cents' => 3_000,
+            'url' => 'https://www.tiktok.com/@x/video/'.fake()->unique()->numerify('##########'),
+        ]);
+
+        // La campagne en cours ne compte pas encore : seule la terminée est dans la cagnotte.
+        $this->assertSame(7_500, $clipper->cagnotteCents());
+
+        $running->forceFill(['status' => CampaignStatus::Completed, 'ends_at' => now()->subMinute()])->save();
+
+        $this->assertSame(10_500, $clipper->fresh()->cagnotteCents());
+
+        $this->actingAs($clipper)->get(route('earnings.index'))->assertSee('105,00');
+    }
+
+    #[Test]
     public function the_team_pays_a_clipper_and_the_cagnotte_goes_down_once(): void
     {
         $clipper = $this->clipper(7_500);

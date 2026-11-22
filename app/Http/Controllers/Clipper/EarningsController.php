@@ -32,6 +32,7 @@ class EarningsController extends Controller
             ),
 
             'balanceCents' => $clipper->availableBalanceCents(),
+            'cagnotteCents' => $clipper->cagnotteCents(),
             'prizes' => app(ClipperPrizes::class)->for($clipper),
             // Séparés, pas regroupés sous « demandé ou versé » : pour le
             // clippeur, un virement en route et un virement reçu n'ont rien à

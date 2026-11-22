@@ -24,15 +24,9 @@
 
         @unless (config('clipping.payouts.self_service'))
             {{-- La cagnotte, et rien d'autre à gérer : l'équipe paie à la fin de chaque campagne. --}}
-            <div class="grid grid-cols-2 gap-3 sm:gap-4">
-                <x-stat label="Ma cagnotte" :value="Money::euros($balanceCents)"
-                        tone="money" highlight class="col-span-2"
-                        hint="Payée par l'équipe à la fin de chaque campagne" />
-                <x-stat label="Estimé à venir" :value="Money::euros($pendingCents)"
-                        tone="brand" hint="Vues pas encore créditées" />
-                <x-stat label="Déjà versé" :value="Money::euros($paidPayoutCents)"
-                        :hint="$pendingPayoutCents > 0 ? Money::euros($pendingPayoutCents).' en route' : 'Total reçu'" />
-            </div>
+            <x-stat label="Ma cagnotte" :value="Money::euros($cagnotteCents)"
+                    tone="money" highlight
+                    hint="Les gains d'une campagne s'ajoutent quand elle se termine. L'équipe te paie ensuite." />
         @endunless
 
         <div @class(['grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4', 'hidden' => ! config('clipping.payouts.self_service')])>

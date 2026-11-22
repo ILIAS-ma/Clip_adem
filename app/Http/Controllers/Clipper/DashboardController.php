@@ -40,6 +40,7 @@ class DashboardController extends Controller
             // Ce qui reste à toucher : le solde fait autorité, jamais un calcul
             // refait dans la vue.
             'balanceCents' => $clipper->availableBalanceCents(),
+            'cagnotteCents' => $clipper->cagnotteCents(),
 
             // Les deux moitiés de ce qui a quitté le solde. Sans elles, un
             // clippeur qui demande 50 € voit son solde baisser d'autant sans

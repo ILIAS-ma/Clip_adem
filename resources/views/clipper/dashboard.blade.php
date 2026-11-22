@@ -114,14 +114,14 @@
             {{-- Une seule carte d'argent, un seul chiffre : le total gagné, prix à recevoir compris. --}}
             <div class="hero-balance card relative flex flex-col overflow-hidden lg:col-span-3">
                 <div class="flex-1 p-5 sm:p-8">
-                    <p class="text-sm font-medium text-ink-300">Total gagné</p>
+                    <p class="text-sm font-medium text-ink-300">{{ config('clipping.payouts.self_service') ? 'Total gagné' : 'Ma cagnotte' }}</p>
 
                     {{-- Un seul chiffre : tout ce qu'on a gagné sur les campagnes, prix à recevoir compris.
                          Le détail (retirable, en attente, déjà versé) est sur la page Revenus. --}}
                     <p class="mt-2 font-display text-4xl font-extrabold tabular leading-none text-brand-400 sm:text-6xl"
-                       data-count-up>{{ Money::euros($prizes['total_cents']) }}</p>
+                       data-count-up>{{ Money::euros(config('clipping.payouts.self_service') ? $prizes['total_cents'] : $cagnotteCents) }}</p>
 
-                    <p class="mt-1.5 text-sm text-ink-400">Sur toutes vos campagnes.</p>
+                    <p class="mt-1.5 text-sm text-ink-400">{{ config('clipping.payouts.self_service') ? 'Sur toutes vos campagnes.' : 'Les gains de chaque campagne arrivent quand elle se termine.' }}</p>
 
                     {{-- Les prix d'un classement terminé : acquis, pas encore versés. Au même endroit que le
                          solde, pour qu'il n'y ait pas deux cartes d'argent avec deux chiffres différents. --}}

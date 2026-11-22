@@ -361,6 +361,25 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     }
 
     /**
+     * La cagnotte : ce que le clippeur a gagné sur les campagnes TERMINÉES et qui ne lui a pas encore été payé.
+     *
+     * Les gains d'une campagne s'y ajoutent d'un coup quand elle se termine (terminée, épuisée ou date de fin passée) ;
+     * pendant qu'elle court, ils ne comptent pas encore. C'est le seul chiffre d'argent montré au clippeur.
+     */
+    public function cagnotteCents(): int
+    {
+        $finished = \App\Models\Campaign::query()
+            ->where(fn ($q) => $q
+                ->whereIn('status', [\App\Enums\CampaignStatus::Completed->value, \App\Enums\CampaignStatus::Exhausted->value])
+                ->orWhere(fn ($d) => $d->whereNotNull('ends_at')->where('ends_at', '<', now())))
+            ->select('id');
+
+        $earned = (int) $this->clips()->whereIn('campaign_id', $finished)->sum('earned_cents') + $this->referralEarnedCents();
+
+        return max(0, $earned - $this->lockedPayoutCents());
+    }
+
+    /**
      * Solde retirable, en centimes. Toujours calculé, jamais stocké :
      * un solde dénormalisé finit toujours par diverger du grand livre.
      */
