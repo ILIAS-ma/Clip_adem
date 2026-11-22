@@ -208,7 +208,7 @@ class OutsideWindowFlagTest extends TestCase
             'report' => app(ContestReport::class)->for($this->campaign->fresh()),
         ])->render();
 
-        foreach (['Clips comptés', 'Clips écartés', 'Vrai replay.zone', '90,00 €', '1 clippeur signalé', 'Vrai 7fluxyy'] as $expected) {
+        foreach (['Clips écartés', 'Vrai replay.zone', '90,00 €', '1 clippeur signalé', 'Vrai 7fluxyy'] as $expected) {
             $this->assertStringContainsString($expected, $html);
         }
     }

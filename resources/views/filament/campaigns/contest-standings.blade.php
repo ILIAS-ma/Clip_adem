@@ -34,8 +34,8 @@
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.75rem;">
         @foreach ([
             ['Participants', number_format($stats['participants'], 0, ',', ' '), null],
-            ['Clips comptés', number_format($stats['clips'], 0, ',', ' '), null],
-            ['Vues comptées', number_format($stats['views'], 0, ',', ' '), null],
+            ['Clips', number_format($stats['clips'], 0, ',', ' '), null],
+            ['Vues générées', number_format($stats['views'], 0, ',', ' '), null],
             ['Récompenses', $stats['prize_pool_cents'] > 0 ? number_format($stats['prize_pool_cents'] / 100, 0, ',', ' ').' €' : 'Lots', null],
             ['Clips écartés', number_format($stats['refused'], 0, ',', ' '), $stats['refused'] > 0 ? 'danger' : null],
         ] as [$label, $value, $tone])

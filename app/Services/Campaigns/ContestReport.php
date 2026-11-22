@@ -2,6 +2,7 @@
 
 namespace App\Services\Campaigns;
 
+use App\Enums\ClipStatus;
 use App\Enums\ContestMetric;
 use App\Enums\ModerationAction;
 use App\Enums\UserRole;
@@ -74,8 +75,10 @@ class ContestReport
         return [
             'stats' => [
                 'participants' => $everyone->count(),
-                'clips' => (int) $everyone->sum('clips'),
-                'views' => (int) $everyone->sum('views'),
+                // Les mêmes chiffres que la fiche de la campagne (« Vues générées », nombre de clips) :
+                // un seul total, celui d'aujourd'hui, pour ne jamais avoir deux versions à comparer.
+                'clips' => Clip::where('campaign_id', $campaign->getKey())->where('status', ClipStatus::Approved)->count(),
+                'views' => (int) Clip::where('campaign_id', $campaign->getKey())->where('status', ClipStatus::Approved)->sum('views_total'),
                 'refused' => (int) $flagged->sum('n'),
                 'prize_pool_cents' => $campaign->prizePoolCents(),
             ],
