@@ -43,12 +43,6 @@ Schedule::command('clips:detect-reuploads')
     ->withoutOverlapping()
     ->runInBackground();
 
-// Le classement qui compterait aussi les vidéos non soumises : lecture du super-admin, pas
-// d'attribution. Il lit TikTok compte par compte, d'où l'heure plutôt que le quart d'heure.
-Schedule::command('contests:shadow-standings')
-    ->hourly()
-    ->withoutOverlapping()
-    ->runInBackground();
 
 // Avant l'expiration, pas après : un jeton mort ne se découvre sinon qu'au
 // moment où la synchronisation renvoie des 401.
