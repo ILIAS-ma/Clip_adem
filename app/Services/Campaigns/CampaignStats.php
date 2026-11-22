@@ -152,6 +152,85 @@ class CampaignStats
         return $path;
     }
 
+    /**
+     * Le tableau « une ligne par clippeur », en deux versions.
+     *
+     * Version équipe : pseudo et numéro, comptes, clips, vues, moyen de paiement et coordonnées : tout
+     * ce qu'il faut pour payer. Version client : seulement les comptes, les clips et les vues. Les
+     * coordonnées de paiement et le numéro de téléphone ne sortent jamais de l'équipe.
+     *
+     * @return string chemin du fichier temporaire
+     */
+    public function payoutSheet(Campaign $campaign, bool $forClient = false): string
+    {
+        $clips = Clip::query()
+            ->where('campaign_id', $campaign->getKey())
+            ->where('status', ClipStatus::Approved)
+            ->with(['user', 'socialAccount:id,handle'])
+            ->get();
+
+        $rows = $clips->groupBy('user_id')->map(function (Collection $group) {
+            $user = $group->first()->user;
+
+            return [
+                'user' => $user,
+                'accounts' => $group->pluck('socialAccount.handle')->filter()->map(fn ($h) => ltrim((string) $h, '@'))->unique()->implode(', '),
+                'clips' => $group->count(),
+                'views' => (int) $group->sum('views_total'),
+            ];
+        })->sortByDesc('views')->values();
+
+        $now = now()->timezone(config('app.timezone'))->format('d/m/Y H:i:s');
+
+        $options = new Options;
+        $options->setColumnWidth(20, 1);
+        $options->setColumnWidth($forClient ? 34 : 30, 2);
+        $options->setColumnWidth(30, 3);
+        $options->setColumnWidth(26, 4, 5, 6);
+        $options->setColumnWidth(44, 7);
+
+        $path = tempnam(sys_get_temp_dir(), 'tableau-').'.xlsx';
+        $writer = new Writer($options);
+        $writer->openToFile($path);
+        $writer->getCurrentSheet()->setName('Form_Responses');
+
+        $header = (new Style)->setFontBold()->setFontColor(Color::WHITE)->setBackgroundColor(Color::rgb(90, 50, 130));
+
+        if ($forClient) {
+            $writer->addRow(Row::fromValues(['Horodateur', '@ DU COMPTES/DES COMPTES', 'NOMBRE DE CLIPS POSTÉ', 'NOMBRE DE VUES COMBINÉ'], $header));
+
+            foreach ($rows as $row) {
+                $writer->addRow(Row::fromValues([$now, $row['accounts'], $row['clips'], $row['views']]));
+            }
+        } else {
+            $writer->addRow(Row::fromValues(['Horodateur', 'PSEUDO DISCORD + NUM', '@ DU COMPTES/DES COMPTES', 'NOMBRE DE CLIPS POSTÉ', 'NOMBRE DE VUES COMBINÉ', 'MOYEN DE PAIEMENT', '(PAYPAL, RIB, AUTRE) À STIPULER'], $header));
+
+            foreach ($rows as $row) {
+                /** @var User $user */
+                $user = $row['user'];
+
+                $writer->addRow(Row::fromValues([
+                    $now,
+                    trim(($user->pseudo ?: $user->name).' '.$user->phone),
+                    $row['accounts'],
+                    $row['clips'],
+                    $row['views'],
+                    $user->payoutDestination() ? $user->payoutMethod()->label() : '',
+                    $user->payoutDestination() ?? '',
+                ]));
+            }
+        }
+
+        $writer->close();
+
+        return $path;
+    }
+
+    public function payoutSheetFilename(Campaign $campaign, bool $forClient): string
+    {
+        return ($forClient ? 'client-' : 'equipe-').(Str::slug($campaign->title) ?: 'campagne-'.$campaign->getKey()).'-'.now()->format('Y-m-d').'.xlsx';
+    }
+
     public function filename(Campaign $campaign): string
     {
         // Le titre, pas l'identifiant technique : « DJIBRIL94 x LIGUE1 » se lit, son slug non.

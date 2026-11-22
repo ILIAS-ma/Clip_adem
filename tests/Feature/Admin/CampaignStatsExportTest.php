@@ -129,6 +129,54 @@ class CampaignStatsExportTest extends TestCase
     }
 
     #[Test]
+    public function the_team_table_has_the_payment_columns_and_the_client_table_does_not(): void
+    {
+        $this->yass->forceFill(['phone' => '0661571716', 'paypal_email' => 'yass@paypal.test'])->save();
+
+        $stats = app(CampaignStats::class);
+
+        $path = $stats->payoutSheet($this->campaign, forClient: false);
+        $team = $this->read($path)['Form_Responses'];
+        @unlink($path);
+
+        $this->assertSame(
+            ['Horodateur', 'PSEUDO DISCORD + NUM', '@ DU COMPTES/DES COMPTES', 'NOMBRE DE CLIPS POSTÉ', 'NOMBRE DE VUES COMBINÉ', 'MOYEN DE PAIEMENT', '(PAYPAL, RIB, AUTRE) À STIPULER'],
+            $team[0],
+        );
+        // Une ligne par clippeur, le plus vu d'abord : Yss a 2 clips validés pour 70 000 vues.
+        $this->assertSame('Yss 0661571716', $team[1][1]);
+        $this->assertSame('yss', $team[1][2]);
+        $this->assertSame(2, $team[1][3]);
+        $this->assertSame(70_000, $team[1][4]);
+        $this->assertSame('PayPal', $team[1][5]);
+        $this->assertSame('yass@paypal.test', $team[1][6]);
+
+        $path = $stats->payoutSheet($this->campaign, forClient: true);
+        $client = $this->read($path)['Form_Responses'];
+        @unlink($path);
+
+        // Sans les colonnes B, F et G : ni pseudo + numéro, ni moyen de paiement, ni coordonnées.
+        $this->assertSame(['Horodateur', '@ DU COMPTES/DES COMPTES', 'NOMBRE DE CLIPS POSTÉ', 'NOMBRE DE VUES COMBINÉ'], $client[0]);
+        $this->assertSame(['yss', 2, 70_000], array_slice($client[1], 1));
+        $this->assertStringNotContainsString('0661571716', json_encode($client));
+        $this->assertStringNotContainsString('paypal.test', json_encode($client));
+    }
+
+    #[Test]
+    public function the_payment_table_is_for_the_super_admin_only(): void
+    {
+        $moderator = $this->staff(UserRole::Moderator);
+
+        Livewire::actingAs($moderator)->test(CampaignStatsPage::class)
+            ->call('exportTable', false)
+            ->assertNoFileDownloaded();
+
+        Livewire::actingAs($this->staff())->test(CampaignStatsPage::class)
+            ->call('exportTable', false)
+            ->assertFileDownloaded();
+    }
+
+    #[Test]
     public function the_clippers_sheet_gives_one_line_per_person_with_their_flags(): void
     {
         $path = app(CampaignStats::class)->export($this->campaign);

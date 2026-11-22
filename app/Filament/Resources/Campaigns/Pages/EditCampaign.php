@@ -56,6 +56,8 @@ class EditCampaign extends EditRecord
             $this->activateOnCreditAction(),
             $this->standingsAction(),
             $this->exportStatsAction(),
+            $this->exportTableAction(forClient: false),
+            $this->exportTableAction(forClient: true),
             $this->awardRewardsAction(),
 
             DeleteAction::make(),
@@ -168,6 +170,22 @@ class EditCampaign extends EditRecord
                 $campaign = $this->getRecord();
 
                 return response()->download($stats->export($campaign), $stats->filename($campaign))->deleteFileAfterSend(true);
+            });
+    }
+
+    /** Le tableau « une ligne par clippeur » : version équipe (avec les paiements, super-admin) ou version client. */
+    protected function exportTableAction(bool $forClient): Action
+    {
+        return Action::make($forClient ? 'exportClient' : 'exportTeam')
+            ->label($forClient ? 'Tableau client (Excel)' : 'Tableau équipe (Excel)')
+            ->icon($forClient ? 'heroicon-o-user-group' : 'heroicon-o-banknotes')
+            ->color('gray')
+            ->visible(fn () => $forClient || (auth()->user()?->isSuperAdmin() ?? false))
+            ->action(function () use ($forClient) {
+                $stats = app(CampaignStats::class);
+                $campaign = $this->getRecord();
+
+                return response()->download($stats->payoutSheet($campaign, $forClient), $stats->payoutSheetFilename($campaign, $forClient))->deleteFileAfterSend(true);
             });
     }
 

@@ -76,4 +76,19 @@ class CampaignStatsPage extends Page
 
         return response()->download($stats->export($campaign), $stats->filename($campaign))->deleteFileAfterSend(true);
     }
+
+    /** Le tableau « une ligne par clippeur » : version équipe (avec les paiements) ou version client. */
+    public function exportTable(bool $forClient): ?BinaryFileResponse
+    {
+        $campaign = $this->campaign();
+
+        // Les coordonnées de paiement : le super-admin seul.
+        if (! $campaign || (! $forClient && ! (auth()->user()?->isSuperAdmin() ?? false))) {
+            return null;
+        }
+
+        $stats = app(CampaignStats::class);
+
+        return response()->download($stats->payoutSheet($campaign, $forClient), $stats->payoutSheetFilename($campaign, $forClient))->deleteFileAfterSend(true);
+    }
 }

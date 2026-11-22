@@ -38,9 +38,19 @@
             </div>
 
             @if ($campaign)
-                <x-filament::button wire:click="export" icon="heroicon-o-arrow-down-tray" wire:loading.attr="disabled" wire:target="export">
-                    Télécharger l'Excel
-                </x-filament::button>
+                <div style="display:flex;flex-wrap:wrap;gap:.5rem;">
+                    <x-filament::button wire:click="export" icon="heroicon-o-arrow-down-tray" wire:loading.attr="disabled" wire:target="export">
+                        Télécharger l'Excel
+                    </x-filament::button>
+                    @if (auth()->user()?->isSuperAdmin())
+                        <x-filament::button wire:click="exportTable(false)" color="gray" icon="heroicon-o-banknotes" wire:loading.attr="disabled" wire:target="exportTable">
+                            Tableau équipe (paiements)
+                        </x-filament::button>
+                    @endif
+                    <x-filament::button wire:click="exportTable(true)" color="gray" icon="heroicon-o-user-group" wire:loading.attr="disabled" wire:target="exportTable">
+                        Tableau client
+                    </x-filament::button>
+                </div>
             @endif
         </div>
 
