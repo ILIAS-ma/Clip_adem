@@ -384,6 +384,10 @@ return [
     ],
 
     'payouts' => [
+        // Le clippeur demande lui-même un retrait (true), ou l'équipe le paie à la fin de chaque campagne (false).
+        // En production : false. La cagnotte du clippeur reste visible dans les deux cas.
+        'self_service' => (bool) env('PAYOUTS_SELF_SERVICE', true),
+
         // Montant minimum d'une demande de retrait, en centimes.
         'minimum_cents' => 2_000,
 

@@ -48,7 +48,7 @@
                     @endif
                 @endforeach
 
-                @if ($canWithdraw)
+                @if ($canWithdraw && config('clipping.payouts.self_service'))
                     <a href="{{ route('earnings.index') }}" wire:navigate class="btn-brand">Demander un retrait</a>
                 @endif
             </div>

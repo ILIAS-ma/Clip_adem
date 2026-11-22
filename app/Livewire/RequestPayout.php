@@ -24,6 +24,9 @@ class RequestPayout extends Component
 
     public function request(PayoutService $payouts): void
     {
+        // Retraits à la demande fermés : l'équipe paie à la fin de chaque campagne.
+        abort_unless(config('clipping.payouts.self_service'), 403);
+
         $this->validate([
             'amount' => ['required', 'numeric', 'min:0.01'],
         ], [

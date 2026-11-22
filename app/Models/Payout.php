@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * échoué rend le solde au clippeur, pas au budget.
  */
 #[Fillable([
-    'user_id', 'amount_cents', 'currency', 'status', 'method', 'destination', 'paypal_email',
+    'user_id', 'campaign_id', 'amount_cents', 'currency', 'status', 'method', 'destination', 'paypal_email',
     'paypal_batch_id', 'paypal_payout_item_id',
     'requested_at', 'approved_at', 'processed_at', 'failure_reason', 'approved_by',
 ])]

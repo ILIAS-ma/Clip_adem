@@ -22,7 +22,20 @@
             <div class="alert-ok">{{ session('status') }}</div>
         @endif
 
-        <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        @unless (config('clipping.payouts.self_service'))
+            {{-- La cagnotte, et rien d'autre à gérer : l'équipe paie à la fin de chaque campagne. --}}
+            <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                <x-stat label="Ma cagnotte" :value="Money::euros($balanceCents)"
+                        tone="money" highlight class="col-span-2"
+                        hint="Payée par l'équipe à la fin de chaque campagne" />
+                <x-stat label="Estimé à venir" :value="Money::euros($pendingCents)"
+                        tone="brand" hint="Vues pas encore créditées" />
+                <x-stat label="Déjà versé" :value="Money::euros($paidPayoutCents)"
+                        :hint="$pendingPayoutCents > 0 ? Money::euros($pendingPayoutCents).' en route' : 'Total reçu'" />
+            </div>
+        @endunless
+
+        <div @class(['grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4', 'hidden' => ! config('clipping.payouts.self_service')])>
             <x-stat label="Gains validés" :value="Money::euros($earnedCents)"
                     tone="money" hint="Définitivement acquis" />
 
@@ -48,6 +61,27 @@
 
         <div class="grid gap-6 lg:grid-cols-3">
 
+            @unless (config('clipping.payouts.self_service'))
+                <div class="card p-4 sm:p-6">
+                    <h2 class="font-display text-lg font-bold text-ink-50">Comment tu es payé</h2>
+                    <p class="mt-3 text-sm leading-relaxed text-ink-300">
+                        Rien à demander : à la fin de chaque campagne, l'équipe vérifie le classement puis te verse ta cagnotte.
+                    </p>
+                    @if ($clipper->hasPayoutDestination())
+                        <p class="mt-3 text-sm text-ink-300">
+                            Paiement par {{ $clipper->payoutMethod()->label() }} sur
+                            <span class="tabular text-ink-100">{{ $clipper->payoutDestinationLabel() }}</span>.
+                        </p>
+                    @else
+                        <div class="alert-warn mt-4">
+                            <p class="font-semibold">Moyen de paiement manquant</p>
+                            <p class="mt-1 leading-relaxed">Indique ton PayPal ou ton RIB pour être payé.</p>
+                            <a href="{{ route('payout-method.edit') }}" wire:navigate
+                               class="mt-2 inline-block font-semibold underline underline-offset-2">Renseigner mon moyen de paiement</a>
+                        </div>
+                    @endif
+                </div>
+            @else
             <div class="card p-4 sm:p-6">
                 <h2 class="font-display text-lg font-bold text-ink-50">Demander un retrait</h2>
 
@@ -70,9 +104,11 @@
                 @endif
             </div>
 
+            @endunless
+
             <div class="card lg:col-span-2">
                 <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-ink-700 px-4 py-3.5 sm:px-6 sm:py-4">
-                    <h2 class="font-display text-lg font-bold text-ink-50">Mes retraits</h2>
+                    <h2 class="font-display text-lg font-bold text-ink-50">{{ config('clipping.payouts.self_service') ? 'Mes retraits' : 'Mes paiements' }}</h2>
 
                     {{-- Le cumul reçu, là où le clippeur regarde déjà ses virements,
                          plutôt qu'une cinquième carte en haut de page. --}}
@@ -85,7 +121,7 @@
                 </div>
 
                 @if ($payouts->isEmpty())
-                    <p class="px-4 py-8 sm:px-6 sm:py-10 text-center text-sm text-ink-300">Aucun retrait demandé.</p>
+                    <p class="px-4 py-8 sm:px-6 sm:py-10 text-center text-sm text-ink-300">{{ config('clipping.payouts.self_service') ? 'Aucun retrait demandé.' : 'Aucun paiement pour le moment.' }}</p>
                 @else
                     <ul class="divide-y divide-ink-700">
                         @foreach ($payouts as $payout)

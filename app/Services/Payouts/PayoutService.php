@@ -7,6 +7,8 @@ use App\Enums\PayoutMethod;
 use App\Enums\PayoutStatus;
 use App\Exceptions\PayoutRefused;
 use App\Exceptions\PayPalException;
+use App\Models\Campaign;
+use App\Models\Clip;
 use App\Models\ModerationLog;
 use App\Models\Payout;
 use App\Models\User;
@@ -107,6 +109,96 @@ class PayoutService
 
             return $payout;
         });
+    }
+
+    /**
+     * Ce que ce clippeur a gagné sur la campagne, moins ce que l'équipe lui a déjà payé pour elle.
+     *
+     * Les gains d'une campagne sont ceux de ses clips, prix compris une fois attribués.
+     */
+    public function dueForCampaign(Campaign $campaign, User $clipper): int
+    {
+        $earned = (int) Clip::where('campaign_id', $campaign->getKey())->where('user_id', $clipper->getKey())->sum('earned_cents');
+
+        $paid = (int) Payout::where('campaign_id', $campaign->getKey())
+            ->where('user_id', $clipper->getKey())
+            ->whereIn('status', array_map(fn (PayoutStatus $s) => $s->value, array_filter(PayoutStatus::cases(), fn (PayoutStatus $s) => $s->locksBalance())))
+            ->sum('amount_cents');
+
+        return max(0, $earned - $paid);
+    }
+
+    /**
+     * L'équipe paie un clippeur pour une campagne terminée.
+     *
+     * Elle a envoyé l'argent de son côté (virement, PayPal) et le dit ici : le paiement est enregistré
+     * comme versé, la cagnotte du clippeur baisse d'autant, et il est prévenu. Rien ne part tout seul.
+     * Le montant est ce qui reste dû sur la campagne, sans jamais dépasser la cagnotte du clippeur.
+     *
+     * @throws PayoutRefused
+     */
+    public function payByTeam(User $clipper, Campaign $campaign, ?User $by = null, ?string $reference = null): Payout
+    {
+        $payout = DB::transaction(function () use ($clipper, $campaign, $by, $reference) {
+            $clipper = User::whereKey($clipper->getKey())->lockForUpdate()->firstOrFail();
+
+            if ($clipper->is_banned) {
+                throw PayoutRefused::bannedClipper();
+            }
+
+            $method = $clipper->payoutMethod();
+
+            if (! $clipper->hasPayoutDestination()) {
+                throw PayoutRefused::missingPayoutDestination($method);
+            }
+
+            $amount = min($this->dueForCampaign($campaign, $clipper), $clipper->availableBalanceCents());
+
+            if ($amount <= 0) {
+                throw PayoutRefused::nothingDue();
+            }
+
+            // Le plafond annuel sans SIRET vérifié vaut aussi pour l'équipe : c'est une règle légale.
+            if ($this->allowance->appliesTo($clipper)) {
+                $usage = $this->allowance->usage($clipper);
+
+                if ($usage->payoutsLeft() === 0) {
+                    throw PayoutRefused::yearlyPayoutCountReached($usage->maxPayouts);
+                }
+
+                if ($amount > $usage->centsLeft()) {
+                    throw PayoutRefused::yearlyAmountReached($usage->centsLeft(), $usage->maxCents);
+                }
+            }
+
+            return Payout::create([
+                'user_id' => $clipper->getKey(),
+                'campaign_id' => $campaign->getKey(),
+                'amount_cents' => $amount,
+                'currency' => 'EUR',
+                'status' => PayoutStatus::Paid,
+                'method' => $method,
+                'destination' => $clipper->payoutDestinationLabel(),
+                'paypal_email' => $method === PayoutMethod::PayPal ? $clipper->paypal_email : null,
+                'requested_at' => now(),
+                'approved_at' => now(),
+                'processed_at' => now(),
+                'approved_by' => $by?->getKey(),
+                'paypal_payout_item_id' => $reference ?: null,
+            ]);
+        });
+
+        ModerationLog::record(ModerationAction::PayoutApproved, $payout, $by, sprintf(
+            'Paiement de la campagne « %s » : %s € par %s%s.',
+            $campaign->title,
+            number_format($payout->amount_cents / 100, 2, ',', ' '),
+            $payout->payoutMethod()->label(),
+            $reference ? ', référence '.$reference : '',
+        ));
+
+        $this->tellTheClipper($payout, new PayoutPaid($payout));
+
+        return $payout;
     }
 
     /**

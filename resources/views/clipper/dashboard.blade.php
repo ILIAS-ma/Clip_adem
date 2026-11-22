@@ -150,7 +150,9 @@
                         </div>
                     @endif
 
-                    @if ($manque > 0)
+                    @unless (config('clipping.payouts.self_service'))
+                        <p class="mt-6 text-sm text-ink-300">Ta cagnotte est versée par l'équipe à la fin de chaque campagne.</p>
+                    @elseif ($manque > 0)
                         <div class="mt-6 max-w-sm">
                             {{-- La barre répond à « c'est encore loin ? », qu'un simple
                                  « minimum 20 € » laisse calculer de tête. --}}
@@ -168,7 +170,7 @@
                             <a href="{{ route('earnings.index') }}" wire:navigate class="btn-brand">Demander un retrait</a>
                             <span class="text-sm text-ink-300">Vous avez atteint le minimum.</span>
                         </div>
-                    @endif
+                    @endunless
                 </div>
 
                 @if ($prizes['rows'] !== [])

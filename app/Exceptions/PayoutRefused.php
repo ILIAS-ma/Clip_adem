@@ -8,6 +8,11 @@ use RuntimeException;
 
 class PayoutRefused extends RuntimeException
 {
+    public static function nothingDue(): self
+    {
+        return new self('Il n’y a plus rien à payer à ce clippeur pour cette campagne.');
+    }
+
     public static function bannedClipper(): self
     {
         return new self('Ce compte est banni : aucun retrait ne peut être demandé.');

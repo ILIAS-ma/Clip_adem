@@ -55,6 +55,7 @@ class EditCampaign extends EditRecord
 
             $this->activateOnCreditAction(),
             $this->standingsAction(),
+            $this->paymentsAction(),
             $this->exportStatsAction(),
             $this->exportTableAction(forClient: false),
             $this->exportTableAction(forClient: true),
@@ -171,6 +172,18 @@ class EditCampaign extends EditRecord
 
                 return response()->download($stats->export($campaign), $stats->filename($campaign))->deleteFileAfterSend(true);
             });
+    }
+
+    /** Une campagne terminée : le classement, puis le paiement des clippeurs (super-admin). */
+    protected function paymentsAction(): Action
+    {
+        return Action::make('payments')
+            ->label('Payer les clippeurs')
+            ->icon('heroicon-o-banknotes')
+            ->color('success')
+            ->visible(fn () => (auth()->user()?->isSuperAdmin() ?? false)
+                && ($this->getRecord()->hasEnded() || $this->getRecord()->status === CampaignStatus::Exhausted))
+            ->url(fn () => \App\Filament\Pages\CampaignPayments::getUrl(['campaignId' => $this->getRecord()->getKey()]));
     }
 
     /** Le tableau « une ligne par clippeur » : version équipe (avec les paiements, super-admin) ou version client. */
