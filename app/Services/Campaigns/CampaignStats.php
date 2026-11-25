@@ -185,6 +185,7 @@ class CampaignStats
             ->selectRaw('user_id, SUM(earned_cents) as cents')->groupBy('user_id')->pluck('cents', 'user_id');
         $ranks = [];
         $prizes = [];
+        $prizeCents = [];
 
         if ($campaign->isContest()) {
             foreach (ContestMetric::cases() as $metric) {
@@ -195,6 +196,7 @@ class CampaignStats
 
                     if ($reward = $campaign->rewardFor($standing->rank, $metric)) {
                         $prizes[$standing->user_id][] = $reward->display();
+                        $prizeCents[$standing->user_id] = ($prizeCents[$standing->user_id] ?? 0) + ($reward->isMoney() ? $reward->amountCents : 0);
                     }
                 }
             }
@@ -205,6 +207,11 @@ class CampaignStats
         }
 
         $now = now()->timezone(config('app.timezone'))->format('d/m/Y H:i:s');
+
+        // Tant que les prix ne sont pas attribués, ils ne sont pas encore dans les gains : on les y ajoute,
+        // pour que la colonne dise combien payer à chacun.
+        $gains = fn (int $userId): int => (int) ($earned[$userId] ?? 0)
+            + ($campaign->prizes_paid_at === null ? (int) ($prizeCents[$userId] ?? 0) : 0);
 
         $options = new Options;
         $options->setColumnWidth(20, 1);
@@ -232,7 +239,7 @@ class CampaignStats
             // Les vues cumulées et le nombre de clips de toute la campagne, en bas.
             $writer->addRow(Row::fromValues(['TOTAL', $rows->count().' clippeur(s)', $rows->sum('clips'), $rows->sum('views')], (new Style)->setFontBold()));
         } else {
-            $writer->addRow(Row::fromValues(['Horodateur', 'PSEUDO DISCORD + NUM', '@ DU COMPTES/DES COMPTES', 'NOMBRE DE CLIPS POSTÉ', 'NOMBRE DE VUES COMBINÉ', 'MOYEN DE PAIEMENT', '(PAYPAL, RIB, AUTRE) À STIPULER', 'CLASSEMENT', 'GAINS (€)', 'PRIX DU CLASSEMENT'], $header));
+            $writer->addRow(Row::fromValues(['Horodateur', 'PSEUDO DISCORD + NUM', '@ DU COMPTES/DES COMPTES', 'NOMBRE DE CLIPS POSTÉ', 'NOMBRE DE VUES COMBINÉ', 'MOYEN DE PAIEMENT', 'PAYPAL, RIB, AUTRE À STIPULER', 'CLASSEMENT', 'GAINS EN €', 'PRIX DU CLASSEMENT'], $header));
 
             foreach ($rows as $row) {
                 /** @var User $user */
@@ -247,14 +254,14 @@ class CampaignStats
                     $user->payoutDestination() ? $user->payoutMethod()->label() : '',
                     $user->payoutDestination() ?? '',
                     $ranks[$user->getKey()] ?? '',
-                    ((int) ($earned[$user->getKey()] ?? 0)) / 100,
+                    $gains($user->getKey()) / 100,
                     implode(' + ', $prizes[$user->getKey()] ?? []),
                 ]));
             }
 
             $writer->addRow(Row::fromValues([
                 'TOTAL', $rows->count().' clippeur(s)', '', $rows->sum('clips'), $rows->sum('views'), '', '', '',
-                $rows->sum(fn (array $row) => (int) ($earned[$row['user']->getKey()] ?? 0)) / 100, '',
+                $rows->sum(fn (array $row) => $gains($row['user']->getKey())) / 100, '',
             ], (new Style)->setFontBold()));
         }
 

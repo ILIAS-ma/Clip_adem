@@ -140,7 +140,7 @@ class CampaignStatsExportTest extends TestCase
         @unlink($path);
 
         $this->assertSame(
-            ['Horodateur', 'PSEUDO DISCORD + NUM', '@ DU COMPTES/DES COMPTES', 'NOMBRE DE CLIPS POSTÉ', 'NOMBRE DE VUES COMBINÉ', 'MOYEN DE PAIEMENT', '(PAYPAL, RIB, AUTRE) À STIPULER', 'CLASSEMENT', 'GAINS (€)', 'PRIX DU CLASSEMENT'],
+            ['Horodateur', 'PSEUDO DISCORD + NUM', '@ DU COMPTES/DES COMPTES', 'NOMBRE DE CLIPS POSTÉ', 'NOMBRE DE VUES COMBINÉ', 'MOYEN DE PAIEMENT', 'PAYPAL, RIB, AUTRE À STIPULER', 'CLASSEMENT', 'GAINS EN €', 'PRIX DU CLASSEMENT'],
             $team[0],
         );
         // Une ligne par clippeur, le plus vu d'abord : Yss a 2 clips validés pour 70 000 vues.
@@ -152,7 +152,9 @@ class CampaignStatsExportTest extends TestCase
         $this->assertSame('yass@paypal.test', $team[1][6]);
         // Sa place au classement, ses gains et le prix que cette place promet, puis la ligne de total.
         $this->assertSame(1, $team[1][7]);
-        $this->assertEquals(0, $team[1][8]);
+        // Prix pas encore attribués : les gains les comptent déjà (80 € aux vues, plus un éventuel prix aux clips).
+        $this->assertGreaterThanOrEqual(80, $team[1][8]);
+        $this->assertEquals(array_sum(array_column(array_slice($team, 1, -1), 8)), end($team)[8]);
         $this->assertStringContainsString('80,00', $team[1][9]);
         $this->assertSame('TOTAL', end($team)[0]);
         $this->assertSame(3, end($team)[3]);
