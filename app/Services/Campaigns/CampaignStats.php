@@ -180,6 +180,30 @@ class CampaignStats
             ];
         })->sortByDesc('views')->values();
 
+        // Le classement et les gains, pour l'équipe : la place officielle sur un classement, sinon l'ordre des vues.
+        $earned = Clip::where('campaign_id', $campaign->getKey())
+            ->selectRaw('user_id, SUM(earned_cents) as cents')->groupBy('user_id')->pluck('cents', 'user_id');
+        $ranks = [];
+        $prizes = [];
+
+        if ($campaign->isContest()) {
+            foreach (ContestMetric::cases() as $metric) {
+                foreach ($this->contest->standings($campaign, null, $metric) as $standing) {
+                    if ($metric === ContestMetric::Views) {
+                        $ranks[$standing->user_id] = $standing->rank;
+                    }
+
+                    if ($reward = $campaign->rewardFor($standing->rank, $metric)) {
+                        $prizes[$standing->user_id][] = $reward->display();
+                    }
+                }
+            }
+        } else {
+            foreach ($rows as $i => $row) {
+                $ranks[$row['user']->getKey()] = $i + 1;
+            }
+        }
+
         $now = now()->timezone(config('app.timezone'))->format('d/m/Y H:i:s');
 
         $options = new Options;
@@ -188,6 +212,8 @@ class CampaignStats
         $options->setColumnWidth(30, 3);
         $options->setColumnWidth(26, 4, 5, 6);
         $options->setColumnWidth(44, 7);
+        $options->setColumnWidth(16, 8, 9);
+        $options->setColumnWidth(28, 10);
 
         $path = tempnam(sys_get_temp_dir(), 'tableau-').'.xlsx';
         $writer = new Writer($options);
@@ -202,8 +228,11 @@ class CampaignStats
             foreach ($rows as $row) {
                 $writer->addRow(Row::fromValues([$now, $row['accounts'], $row['clips'], $row['views']]));
             }
+
+            // Les vues cumulées et le nombre de clips de toute la campagne, en bas.
+            $writer->addRow(Row::fromValues(['TOTAL', $rows->count().' clippeur(s)', $rows->sum('clips'), $rows->sum('views')], (new Style)->setFontBold()));
         } else {
-            $writer->addRow(Row::fromValues(['Horodateur', 'PSEUDO DISCORD + NUM', '@ DU COMPTES/DES COMPTES', 'NOMBRE DE CLIPS POSTÉ', 'NOMBRE DE VUES COMBINÉ', 'MOYEN DE PAIEMENT', '(PAYPAL, RIB, AUTRE) À STIPULER'], $header));
+            $writer->addRow(Row::fromValues(['Horodateur', 'PSEUDO DISCORD + NUM', '@ DU COMPTES/DES COMPTES', 'NOMBRE DE CLIPS POSTÉ', 'NOMBRE DE VUES COMBINÉ', 'MOYEN DE PAIEMENT', '(PAYPAL, RIB, AUTRE) À STIPULER', 'CLASSEMENT', 'GAINS (€)', 'PRIX DU CLASSEMENT'], $header));
 
             foreach ($rows as $row) {
                 /** @var User $user */
@@ -217,8 +246,16 @@ class CampaignStats
                     $row['views'],
                     $user->payoutDestination() ? $user->payoutMethod()->label() : '',
                     $user->payoutDestination() ?? '',
+                    $ranks[$user->getKey()] ?? '',
+                    ((int) ($earned[$user->getKey()] ?? 0)) / 100,
+                    implode(' + ', $prizes[$user->getKey()] ?? []),
                 ]));
             }
+
+            $writer->addRow(Row::fromValues([
+                'TOTAL', $rows->count().' clippeur(s)', '', $rows->sum('clips'), $rows->sum('views'), '', '', '',
+                $rows->sum(fn (array $row) => (int) ($earned[$row['user']->getKey()] ?? 0)) / 100, '',
+            ], (new Style)->setFontBold()));
         }
 
         $writer->close();
